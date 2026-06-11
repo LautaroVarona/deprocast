@@ -140,7 +140,7 @@ export function UploadDropzone({ onUploaded }: UploadDropzoneProps) {
             Arrastrá audios o seleccioná varios archivos
           </p>
           <p className="text-sm text-muted-foreground">
-            Formatos permitidos: .mp3, .m4a, .wav
+            Formatos permitidos: .mp3, .m4a, .wav, .ogg
           </p>
         </div>
         <Button
@@ -154,7 +154,7 @@ export function UploadDropzone({ onUploaded }: UploadDropzoneProps) {
           ref={inputRef}
           type="file"
           multiple
-          accept=".mp3,.m4a,.wav,audio/*"
+          accept=".mp3,.m4a,.wav,.ogg,audio/*"
           className="hidden"
           onChange={(event) => {
             handleFiles(event.target.files);

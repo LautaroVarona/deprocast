@@ -17,6 +17,7 @@ export async function GET() {
         partialText: true,
         createdAt: true,
         updatedAt: true,
+        transcript: { select: { id: true } },
       },
     });
 

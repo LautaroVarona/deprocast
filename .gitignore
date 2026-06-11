@@ -32,6 +32,10 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+!.env.example
+
+# GCP service account credentials
+local-transcriber-*.json
 
 # database
 /prisma/dev.db
@@ -40,6 +44,9 @@ yarn-error.log*
 # uploaded audio files
 /public/uploads/*
 !/public/uploads/.gitkeep
+
+# local raw documents inbox
+/data/
 
 # vercel
 .vercel

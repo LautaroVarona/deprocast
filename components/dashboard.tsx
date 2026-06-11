@@ -1,6 +1,7 @@
 "use client";
 
 import { AssetsTable } from "@/components/assets-table";
+import { TextIngestForm } from "@/components/text-ingest-form";
 import { UploadDropzone } from "@/components/upload-dropzone";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useState } from "react";
@@ -29,6 +30,8 @@ export function Dashboard() {
           <AssetsTable refreshKey={refreshKey} />
         </CardContent>
       </Card>
+
+      <TextIngestForm />
     </div>
   );
 }

@@ -1,4 +1,5 @@
 import { AudioDetailActions } from "@/components/audio-detail-actions";
+import { DownloadTranscriptButton } from "@/components/download-transcript-button";
 import { LiveTranscript } from "@/components/live-transcript";
 import { StatusBadge } from "@/components/status-badge";
 import {
@@ -11,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
+  CardAction,
   CardContent,
   CardDescription,
   CardHeader,
@@ -195,8 +197,11 @@ export default async function AudioDetailPage({ params }: PageProps) {
             <CardHeader>
               <CardTitle>Transcript crudo</CardTitle>
               <CardDescription>
-                Texto completo generado por el motor de simulación.
+                Texto completo generado por el motor de transcripción.
               </CardDescription>
+              <CardAction>
+                <DownloadTranscriptButton assetId={asset.id} />
+              </CardAction>
             </CardHeader>
             <CardContent>
               <Accordion>

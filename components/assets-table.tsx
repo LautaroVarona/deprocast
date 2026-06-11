@@ -1,6 +1,8 @@
 "use client";
 
 import { DeleteAssetButton } from "@/components/delete-asset-button";
+import { DownloadAllTranscriptsButton } from "@/components/download-all-transcripts-button";
+import { DownloadTranscriptButton } from "@/components/download-transcript-button";
 import { LiveProcessingPanel } from "@/components/live-processing-panel";
 import { ProcessAllButton } from "@/components/process-all-button";
 import { ProcessButton } from "@/components/process-button";
@@ -24,6 +26,7 @@ export type AudioAssetRow = {
   filename: string;
   originalCreatedAt: string;
   status: string;
+  transcript: { id: string } | null;
 };
 
 type ProcessStatus = {
@@ -117,6 +120,8 @@ export function AssetsTable({ refreshKey }: AssetsTableProps) {
       asset.id !== activeId,
   ).length;
 
+  const completedCount = assets.filter((asset) => asset.transcript).length;
+
   function getDisplayStatus(asset: AudioAssetRow) {
     if (asset.status === "PROCESSING" || asset.id === activeId) {
       return "PROCESSING";
@@ -158,7 +163,8 @@ export function AssetsTable({ refreshKey }: AssetsTableProps) {
         }}
       />
 
-      <div className="flex justify-end">
+      <div className="flex flex-wrap items-center justify-end gap-2">
+        <DownloadAllTranscriptsButton completedCount={completedCount} />
         <ProcessAllButton
           pendingCount={pendingCount}
           onQueued={() => {
@@ -228,7 +234,17 @@ export function AssetsTable({ refreshKey }: AssetsTableProps) {
                         />
                       </>
                     )}
-                    {asset.status === "COMPLETED" && (
+                    {asset.transcript && (
+                      <>
+                        <ViewDetailsLink assetId={asset.id} />
+                        <DownloadTranscriptButton
+                          assetId={asset.id}
+                          label="Descargar .md"
+                          size="sm"
+                        />
+                      </>
+                    )}
+                    {asset.status === "COMPLETED" && !asset.transcript && (
                       <ViewDetailsLink assetId={asset.id} />
                     )}
                     {isQueued && (

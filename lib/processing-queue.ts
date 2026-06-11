@@ -1,5 +1,5 @@
 import { requestCancellation } from "@/lib/processing-cancellation";
-import { processAssetWhisper } from "@/lib/whisper-processor";
+import { processAssetGcpSpeech } from "@/lib/gcp-speech-processor";
 import { prisma } from "@/lib/prisma";
 
 type QueueStatus = {
@@ -109,7 +109,7 @@ class ProcessingQueue {
         data: { status: "PROCESSING", partialText: null },
       });
 
-      await processAssetWhisper(assetId);
+      await processAssetGcpSpeech(assetId);
     } catch (error) {
       console.error(`Error en cola procesando ${assetId}:`, error);
 
