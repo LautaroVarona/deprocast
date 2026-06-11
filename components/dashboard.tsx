@@ -18,6 +18,14 @@ export function Dashboard() {
           Subí varios audios a la vez, procesalos en cola y seguí la
           transcripción en vivo mientras Whisper los transcribe.
         </p>
+        <p>
+          <a
+            href="/laboral"
+            className="text-sm font-medium text-amber-600 underline-offset-4 hover:underline"
+          >
+            Sección Laboral (Varona) → retos IA del despacho
+          </a>
+        </p>
       </header>
 
       <UploadDropzone onUploaded={() => setRefreshKey((key) => key + 1)} />
