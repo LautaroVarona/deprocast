@@ -1,3 +1,4 @@
+import { AppHeader } from "@/components/app-header";
 import { Providers } from "@/components/providers";
 import { Toaster } from "@/components/ui/sonner";
 import type { Metadata } from "next";
@@ -33,7 +34,8 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col bg-background text-foreground">
         <Providers>
-          {children}
+          <AppHeader />
+          <main className="flex-1">{children}</main>
           <Toaster richColors closeButton position="top-right" />
         </Providers>
       </body>

@@ -17,11 +17,22 @@ export async function GET() {
         partialText: true,
         createdAt: true,
         updatedAt: true,
-        transcript: { select: { id: true } },
+        transcript: { select: { id: true, rawText: true } },
       },
     });
 
-    return NextResponse.json(assets);
+    const mapped = assets.map((asset) => ({
+      ...asset,
+      transcript: asset.transcript
+        ? {
+            id: asset.transcript.id,
+            preview: asset.transcript.rawText.slice(0, 180).trim() +
+              (asset.transcript.rawText.length > 180 ? "…" : ""),
+          }
+        : null,
+    }));
+
+    return NextResponse.json(mapped);
   } catch (error) {
     console.error("Assets list error:", error);
     return NextResponse.json(

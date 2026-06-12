@@ -4,6 +4,7 @@ import {
   isSourceType,
 } from "@/lib/document-constants";
 import { saveRawDocument } from "@/lib/documents";
+import { isCampoSlug, resolveCampoSlug } from "@/lib/projects/campos";
 import { NextRequest, NextResponse } from "next/server";
 
 export const runtime = "nodejs";
@@ -19,11 +20,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { title, source_type, base_weight, content } = body as {
+    const { title, source_type, base_weight, content, field } = body as {
       title?: unknown;
       source_type?: unknown;
       base_weight?: unknown;
       content?: unknown;
+      field?: unknown;
     };
 
     if (typeof content !== "string" || content.trim().length === 0) {
@@ -54,11 +56,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    if (field !== undefined && !isCampoSlug(field)) {
+      return NextResponse.json({ error: "field inválido." }, { status: 400 });
+    }
+
     const { filename } = await saveRawDocument({
       title: typeof title === "string" ? title : "",
       sourceType: source_type,
       baseWeight: base_weight,
       content,
+      field: resolveCampoSlug(typeof field === "string" ? field : undefined),
     });
 
     return NextResponse.json({ filename }, { status: 201 });

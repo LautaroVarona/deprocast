@@ -20,7 +20,7 @@ field: "cognitive-exo-cortex"
 1. [Filosofía del Sistema y Núcleo Binario](#-1-filosofía-del-sistema-y-núcleo-binario)
 2. [El Agente del Todo y las Siete Dimensiones](#-2-el-agente-del-todo-y-las-siete-dimensiones)
 3. [El Atanor Local: Ingesta y el Tacho de la Boludez](#-3-el-atanor-local-ingesta-de-datos-y-el-tacho-de-la-boludez)
-4. [Módulo Laboral Integrado (Despacho Varona)](#-4-módulo-laboral-integrado-ingeniería-inversa-al-despacho-varona)
+4. [Módulo Laboral e Ingesta de Proyectos](#-4-módulo-laboral-e-ingesta-de-proyectos)
 5. [La Trituradora de Fricción: Gamificación](#-5-la-trituradora-de-fricción-gamificación-y-manipulación-de-dopamina)
 6. [Estrategia de Producto y Plan de Cierre](#-6-estrategia-de-producto-y-plan-de-cierre-hito-7-de-julio)
 7. [Anexo Técnico: Estado del Repositorio y Contratos](#-anexo-técnico-estado-del-repositorio-y-contratos)
@@ -236,76 +236,274 @@ La extensión laboral añadirá `source_type: "labor_boss"` y las siete dimensio
 
 ---
 
-## 💼 4. Módulo Laboral Integrado (Ingeniería Inversa al Despacho Varona)
+## 💼 4. Módulo Laboral e Ingesta de Proyectos
 
-### 4.1 Fuente de Verdad
+El módulo laboral no es un importador de Excel disfrazado. Es la **capa de organización del conocimiento accionable** — el mapa donde el Observador declara qué retos existen, dónde viven, cuánto pesan en la gravedad atencional del sistema, y cómo cada fragmento de voz o texto futuro encontrará su hogar semántico. Todo ocurre en circuito cerrado: el despacho no sube nada a la nube; el Observador trae el archivo, DeProcast lo transmuta en estructura viva.
 
-Archivo corporativo: `Control_IA_Despacho_Profesional.xlsx`  
-Cada **fila con datos** se transmuta en un **Boss** (reto de alta señal). Las filas vacías o incompletas se marcan como `estado: semilla` hasta completar Prioridad e Impacto.
+### 4.1 Campos y Proyectos: La Arquitectura de Contención
 
-### 4.2 Esquema del CSV Plano
-
-Columnas origen → destino:
-
-| Columna Excel | Campo Boss / Documento | Dimensión |
-|---------------|------------------------|-----------|
-| `ID` | `particula: "boss-varona-{ID}"` | Partícula |
-| `Área` | `onda` | Onda |
-| `Proyecto / Reto IA` | `title` | — |
-| `Responsable` | segmento Jugador en `posicion` | Posición |
-| `Fecha Inicio` / `Fecha Objetivo` | `tiempo` (rango) | Tiempo |
-| `Prioridad (1-5)` | entrada de cálculo de gravedad | — |
-| `Impacto (1-5)` | entrada de cálculo de gravedad | — |
-| `Dificultad (1-5)` | `difficulty` (factor de fragmentación) | — |
-| `Horas Estimadas` / `Horas Realizadas` | telemetría del Boss | — |
-| `% Avance` | `progress_pct` | — |
-| `Estado` | `boss_status` | — |
-| `Observaciones (ventajas)` | cuerpo RAG → `historical_context` | Field |
-| `Puntos de mejora` | cuerpo RAG → `improvement_directives` | Field |
-
-### 4.3 Cálculo de Gravedad (`base_weight`: 1–12)
-
-Las variables **Prioridad** (P) e **Impacto** (I) son enteros en [1, 5]. El peso base del Boss se calcula por **suma normalizada** al rango implementado en `lib/document-constants.ts` (`MIN_BASE_WEIGHT = 1`, `MAX_BASE_WEIGHT = 12`):
+Antes de hablar de Bosses, microtareas o Focus Work, el sistema necesita una **jerarquía de dos niveles** que el Observador reconoce intuitivamente:
 
 ```
-suma = P + I                          # rango [2, 10]
-base_weight = round((suma / 10) * 12) # rango [2, 12] → clamp a [1, 12]
+┌─────────────────────────────────────────────────────────────────┐
+│                         CAMPO (contenedor global)                 │
+│  "Laboral — Varona"  ·  "Proyectos Personales"  ·  "Estudianta" │
+│                                                                   │
+│   ┌──────────────┐  ┌──────────────┐  ┌──────────────┐           │
+│   │  PROYECTO    │  │  PROYECTO    │  │  PROYECTO    │           │
+│   │  (Boss/Reto) │  │  (Boss/Reto) │  │  (semilla)   │           │
+│   └──────────────┘  └──────────────┘  └──────────────┘           │
+└─────────────────────────────────────────────────────────────────┘
 ```
 
-**Ejemplos:**
+#### Qué es un Campo
 
-| Prioridad | Impacto | Suma | base_weight |
-|-----------|---------|------|-------------|
-| 5 | 5 | 10 | **12** |
-| 5 | 4 | 9 | **11** |
-| 4 | 3 | 7 | **8** |
-| 3 | 2 | 5 | **6** |
-| 1 | 1 | 2 | **2** |
+Un **Campo** es un contenedor soberano de influencia. No es una carpeta del disco ni una etiqueta suelta: es el **marco de gravedad** dentro del cual los proyectos compiten por atención y acumulan contexto cruzado.
 
-Si Prioridad o Impacto están ausentes, el importador asigna `base_weight = 6` (neutro) y flag `gravity_incomplete: true` para revisión HITL del Observador.
+| Campo ejemplo | Naturaleza | Quién lo gobierna |
+|---------------|------------|-------------------|
+| **Laboral — Varona** | Retos del despacho profesional, importados o creados manualmente | Observador + Jugadores (Margarita, Mantvydas, etc.) |
+| **Proyectos Personales** | Escritura, salud, aprendizaje, side projects sin vínculo laboral | Solo el Observador |
+| **Estudianta** (futuro) | Retos de fragmentación y hábitos del avatar gamificado | Observador delega ejecución al Avatar |
 
-### 4.4 Mapeo Dimensional
+Los Campos **no se mezclan en la UI por defecto**. Un audio capturado en el trayecto a casa sobre la causa penal de 25.000 páginas pertenece al Campo laboral; una nota de voz sobre el protocolo de sueño pertenece al Campo personal. La separación protege al RAG de contaminación cruzada y protege al Observador de la parálisis de "¿esto era trabajo o era yo?".
 
-```yaml
----
-materia: "application/vnd.ms-excel"
-particula: "boss-varona-001"
-posicion: "observador|margarita|estudianta"
-onda: "PROCESAL"
-tiempo: "2026-04-15/2026-04-25"
-espacio: "despacho-varona"
-field: "rag-laboral+procesal+masc-validation"
-title: "Comprobar datos de 1.916 matrículas"
-source_type: "labor_boss"
-base_weight: 12
-difficulty: 2
-boss_status: "implantado"
-progress_pct: 100
-jugador: "Margarita"
----
+#### Qué es un Proyecto
+
+Un **Proyecto** es la unidad atómica de reto dentro de un Campo. En el lenguaje del grimorio, un Proyecto de gravedad alta es un **Boss**; uno de gravedad baja o incompleta es una **semilla**. Todo Proyecto porta obligatoriamente:
+
+- **Título** — la formulación humana del reto ("Comprobar 1.916 matrículas", "Resumir causa penal 25.000 páginas").
+- **Área (Onda)** — la taxonomía temática que agrupa proyectos afines: PROCESAL, LABORAL, TRIBUTARIO, PROCESAL LABORAL, personal-health, etc.
+- **Gravedad (1–12)** — el peso dopaminérgico del reto en el ecosistema. No es urgencia subjetiva del Observador en el momento: es la **densidad de señal** que el sistema usará para priorizar Focus Work, fragmentación y recompensas.
+- **Campo padre** — el contenedor al que pertenece; inmutable tras la creación salvo acción explícita de reubicación.
+
+Un Proyecto sin Campo asignado **no existe** en DeProcast. Es ruido esperando clasificación.
+
+#### Relación Campo ↔ Proyecto ↔ Fragmento
+
+Cada pieza de conocimiento ingerida — audio del móvil, texto de chat, fila de Excel — debe poder responder tres preguntas antes de entrar al Atanor:
+
+1. **¿A qué Campo pertenece?** (¿laboral, personal, otro?)
+2. **¿A qué Proyecto alimenta?** (¿cuál reto concreto?)
+3. **¿Qué Área (Onda) lo contextualiza?** (heredada del Proyecto salvo override HITL)
+
+Esta tríada es el **ancla semántica** que evita que la Súper Máquina de Contexto produzca luz difusa.
+
+### 4.2 Interfaz de Ingesta de Proyectos
+
+La ingesta de proyectos es una **sección dedicada** del dashboard — no un modal escondido ni un script de terminal. El Observador debe poder poblar su universo de retos en dos modos complementarios, sin fricción y sin salir del localhost.
+
+#### Modo A — Arrastre Masivo (Población del Campo Laboral)
+
+Pensado para el ritual de inicio de ciclo o actualización trimestral del despacho.
+
+```
+┌────────────────────────────────────────────────────────────┐
+│  INGESTA DE PROYECTOS                                      │
+│                                                            │
+│  Campo destino: [ Laboral — Varona          ▼ ]           │
+│                                                            │
+│  ┌ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ┐  │
+│  │                                                     │  │
+│  │     Arrastrá acá el CSV / Excel del despacho        │  │
+│  │     Control_IA_Despacho_Profesional.xlsx          │  │
+│  │                                                     │  │
+│  └ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ┘  │
+│                                                            │
+│  Vista previa: 10 filas detectadas · 6 Bosses · 4 semillas│
+│  [ Confirmar ingesta ]   [ Cancelar ]                     │
+└────────────────────────────────────────────────────────────┘
 ```
 
-El texto combinado de **Observaciones** y **Puntos de mejora** se inyecta como contexto histórico en el cuerpo del Markdown y, tras indexación, como `ParentChunk` con `field` cruzado para que futuros retos de lectura PDF hereden las lecciones aprendidas.
+**Flujo lógico:**
+
+1. El Observador selecciona el **Campo destino** (por defecto: Laboral — Varona).
+2. Arrastra el archivo corporativo (`Control_IA_Despacho_Profesional.xlsx` o su exportación CSV).
+3. El sistema muestra **vista previa no destructiva**: cuántas filas se convertirán en Proyectos, cuáles tienen gravedad calculable, cuáles quedan como semillas por datos incompletos.
+4. El Observador confirma. Cada fila con datos se transmuta en un Proyecto dentro del Campo elegido.
+5. Filas vacías o sin Prioridad/Impacto nacen como **semillas** — visibles en el panel pero sin entrar a la cola de Focus Work hasta que el Observador complete su gravedad.
+
+**Mapeo conceptual Excel → Proyecto** (sin magia, solo traducción):
+
+| Columna del despacho | Se convierte en |
+|---------------------|-----------------|
+| ID | Identificador estable del Proyecto |
+| Área | Onda temática |
+| Proyecto / Reto IA | Título |
+| Responsable | Jugador (quién ejecuta en el mundo real) |
+| Fecha Inicio / Fecha Objetivo | Ventana temporal del reto |
+| Prioridad + Impacto | Entrada para calcular Gravedad (1–12) |
+| Dificultad | Factor de fragmentación (microtareas más finas si es alta) |
+| Horas Estimadas / Realizadas | Telemetría de avance |
+| % Avance | Progreso visible en el panel |
+| Estado | Ciclo de vida (idea, pruebas, implantado, etc.) |
+| Observaciones + Puntos de mejora | Contexto histórico que alimentará el RAG |
+
+#### Modo B — Formulario Limpio (Creación Manual en Cualquier Campo)
+
+Para proyectos que no vienen del Excel: retos personales, ideas espontáneas, semillas que el Observador quiere plantar sin esperar al próximo export del despacho.
+
+```
+┌────────────────────────────────────────────────────────────┐
+│  NUEVO PROYECTO                                            │
+│                                                            │
+│  Campo:      [ Proyectos Personales        ▼ ]            │
+│  Título:     [ Protocolo de sueño Q3 2026            ]    │
+│  Área:       [ personal-health              ▼ ]            │
+│  Gravedad:   [ ●●●●●●○○○○○○ ]  6 / 12                     │
+│  Jugador:    [ Observador                   ]            │
+│                                                            │
+│  [ Crear Proyecto ]                                        │
+└────────────────────────────────────────────────────────────┘
+```
+
+**Flujo lógico:**
+
+1. El Observador elige **cualquier Campo** — laboral, personal u otro definido.
+2. Completa título, área y gravedad con un control visual de 1 a 12 (slider o dial, no un campo numérico crudo).
+3. Opcionalmente asigna Jugador y fechas.
+4. Al crear, el Proyecto aparece inmediatamente en el panel de visualización del Campo correspondiente, listo para recibir fragmentos de voz o texto.
+
+**Principio de diseño:** el formulario manual y el arrastre masivo son **dos puertas al mismo santuario**. No compiten; se complementan. El despacho se actualiza en bloque; la vida personal se siembra en un clic.
+
+#### Cálculo de Gravedad (1–12)
+
+Cuando el Proyecto viene del Excel, la gravedad se deriva de **Prioridad** (1–5) e **Impacto** (1–5): a mayor suma, mayor peso en el espectro 1–12. Un reto 5+5 alcanza gravedad **12** — máxima atracción gravitacional en el sistema. Si faltan datos, el sistema asigna gravedad neutra (6) y marca el Proyecto para **revisión HITL** del Observador antes de que entre en Focus Work.
+
+En creación manual, el Observador fija la gravedad directamente. La recomendación filosófica: reservar 10–12 para retos que genuinamente paralizan si se miran enteros; usar 1–4 para mantenimiento y hábitos de baja carga cognitiva.
+
+### 4.3 La Súper Máquina de Contexto Integrada
+
+DeProcast no procesa inputs aislados. Procesa **convergencia semántica** — tres ríos independientes que desembocan en el mismo océano situado, siempre anclados a un Proyecto y un Campo.
+
+```
+                    ┌─────────────────────┐
+                    │   RÍO 1: VOZ        │
+                    │   (móvil → tacho)   │
+                    └──────────┬──────────┘
+                               │
+    ┌─────────────────────┐    │    ┌─────────────────────┐
+    │   RÍO 3: ESTRUCTURA│    │    │   RÍO 2: TEXTO      │
+    │   (Excel / Proyectos)│◄───┼───►│   (chats / informes)│
+    └──────────┬──────────┘    │    └──────────┬──────────┘
+               │               │               │
+               └───────────────┼───────────────┘
+                               ▼
+              ┌────────────────────────────────┐
+              │   SÚPER MÁQUINA DE CONTEXTO   │
+              │   (convergencia semántica)    │
+              │                                │
+              │   Campo + Proyecto + Onda      │
+              │   → fragmento situado          │
+              │   → luz indexable              │
+              └────────────────────────────────┘
+```
+
+#### Los Tres Inputs
+
+| Input | Origen típico | Qué aporta al contexto |
+|-------|---------------|------------------------|
+| **Voz del móvil** | `data/tacho/celulares/` — audios de WhatsApp, notas de voz, dictados en trayecto | Intención cruda, matices, urgencia emocional, detalles que nunca se tipean |
+| **Texto de chats e informes** | Exports de ChatGPT, informes IA, escritura personal, clips web | Argumentación estructurada, conclusiones, errores documentados, QA sobre causas |
+| **Estructura de Proyectos / Excel** | Ingesta de proyectos, catálogo de Bosses | El **esqueleto** — qué retos existen, quién es responsable, qué peso tienen, qué se aprendió antes |
+
+Ninguno de los tres es suficiente solo. La voz sin Proyecto es un audio huérfano. El Excel sin fragmentos de texto es un cementerio de buenas intenciones. El chat sin ancla laboral es una alucinación esperando ocurrir.
+
+#### Regla de Asociación Obligatoria
+
+**Cada audio o texto que entra al sistema debe estar vinculado a un Proyecto y a un Campo antes de completar su ciclo de ingesta.**
+
+Esto no es burocracia: es la diferencia entre un exoesqueleto cognitivo y un gestor de archivos glorificado.
+
+**Flujo de asociación en la UI:**
+
+1. El Observador sube un audio o pega un texto (o el daemon lo detecta en el tacho).
+2. Antes de procesar, aparece el **selector de anclaje**: Campo → Proyecto (filtrado por Campo) → confirmación de Onda heredada.
+3. Si el contenido menciona explícitamente un reto conocido ("seguimos con lo de las matrículas"), el sistema **sugiere** el Proyecto correspondiente; el Observador valida (HITL).
+4. Si no hay Proyecto adecuado, el Observador puede crear uno en el acto desde el mismo flujo — sin abandonar la ingesta.
+5. Solo tras confirmar el anclaje, el fragmento entra a esterilización (audio) o a `pending/` (texto) con sus siete dimensiones completas.
+
+**Convergencia en acción — ejemplo Boss 002:**
+
+- La **estructura** declara: Proyecto "Resumir causa penal 25.000 páginas", Onda PROCESAL LABORAL, gravedad alta, Jugador Mantvydas.
+- Un **texto** de chat documenta: "24 partes, alucinaciones en resúmenes parciales, necesidad de citar folio exacto".
+- Una **nota de voz** del móvil captura: "la parte 7 tiene un error en la cronología, revisar antes de seguir".
+
+Los tres fragmentos, anclados al mismo Proyecto dentro del Campo Laboral — Varona, forman un **campo de contexto cruzado** que el RAG consultará con filtros por Onda y Campo antes de responder. La Súper Máquina no fusiona archivos: **teje relaciones** entre luz del mismo reto.
+
+### 4.4 Visualización y Flujo de Trabajo Funcional
+
+La sección laboral y personal del dashboard es el **panel de gravedad** del Observador — no una lista de tareas, sino un mapa topográfico de retos donde la altura representa peso atencional.
+
+#### Estructura Visual del Panel
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│  PANEL DE PROYECTOS                                    [ + Nuevo ]      │
+│                                                                         │
+│  ▼ CAMPO: Laboral — Varona                                              │
+│  ├─ ONDA: PROCESAL                                                      │
+│  │   ├─ ● Boss 001 — 1.916 matrículas          ████████████ 12  [100%] │
+│  │   ├─ ● Boss 003 — Remitente MASC            ████████░░░░  9   [ 40%] │
+│  │   └─ ○ Boss 004 — Cartel de camiones        ██████░░░░░░  7   [ 15%] │
+│  ├─ ONDA: PROCESAL LABORAL                                              │
+│  │   ├─ ★ Boss 002 — Causa 25.000 páginas      ███████████░ 11  [ 60%] │
+│  │   └─ ○ Boss 005 — Cruce cualitativo         █████░░░░░░░  6   [  5%] │
+│  └─ ONDA: TRIBUTARIO                                                    │
+│      └─ ○ Boss 006 — Rentas                    ███████░░░░░  8   [ 20%] │
+│                                                                         │
+│  ▼ CAMPO: Proyectos Personales                                          │
+│  └─ ONDA: personal-health                                               │
+│      └─ ○ Protocolo de sueño Q3                ██████░░░░░░  6   [  — ] │
+└─────────────────────────────────────────────────────────────────────────┘
+
+  ★ = Boss Activo (gravedad 10–12)    ● = Boss estándar    ○ = semilla o baja gravedad
+```
+
+**Principios de agrupación:**
+
+1. **Primer nivel: Campo** — separación visual clara entre laboral y personal (colores o secciones plegables distintas).
+2. **Segundo nivel: Área (Onda)** — dentro de cada Campo, los Proyectos se agrupan por taxonomía temática. El Observador ve de un vistazo que tiene tres frentes procesales abiertos y uno tributario, no una lista plana de diez ítems.
+3. **Tercer nivel: Proyecto** — cada tarjeta muestra título, barra de gravedad (1–12), porcentaje de avance y estado visual.
+
+#### Bosses Activos — La Gravedad que Manda
+
+Los Proyectos con **gravedad 10 a 12** no son filas más en una tabla. Son **Bosses Activos**: entidades gravitacionales que el sistema trata de forma diferenciada.
+
+| Comportamiento | Boss estándar (1–9) | Boss Activo (10–12) |
+|----------------|---------------------|---------------------|
+| Visualización | Tarjeta normal en su Onda | Destacado con indicador ★, borde de alta señal, posición privilegiada |
+| Focus Work | Entra en cola según rotación y Puntos de Señal | **Demanda atención prioritaria** — aparece en la cabecera de la pantalla de Focus Work |
+| Fragmentación | Microtareas estándar (< 15 min) | La Trituradora corta más agresivamente; el Observador nunca ve el reto entero de golpe |
+| Dopamina | Recompensa proporcional al peso | Recompensa amplificada + riesgo de frustración monitorizado (bucle HITL más sensible) |
+
+**Ejemplos canónicos de Boss Activo en Varona:**
+
+- **Boss 001 — 1.916 matrículas** (gravedad 12): validación masiva MASC. Un reto que paralizaría si se presentara como bloque único; la Trituradora lo convirtió en unidades de 3 días de jornada con marcado exacto de errores.
+- **Boss 002 — Causa 25.000 páginas** (gravedad 11): compresión causal penal. La magnitud activa amígdala; el sistema lo mantiene visible como Boss Activo hasta que el Observador declare resolución o downgrade de gravedad.
+
+Los Bosses Activos son el **termómetro de carga cognitiva** del Campo. Si hay más de tres simultáneos, el panel muestra una advertencia suave: el Observador está operando por encima de la capacidad prefrontal sostenible. No es castigo; es espejo.
+
+#### Flujo de Trabajo Diario del Observador
+
+```
+  Mañana                          Durante el día                    Cierre
+  ───────                         ──────────────                    ──────
+  Abrir panel        ──►    Asociar voz/texto        ──►    Revisar Bosses
+  de Proyectos              a Proyecto + Campo              Activos pendientes
+       │                           │                              │
+       ▼                           ▼                              ▼
+  Ver Bosses           Iniciar Focus Work con         Calibrar gravedad
+  Activos ★            microtarea del Boss            de semillas (HITL)
+                       de mayor peso
+```
+
+1. **Apertura:** el Observador consulta el panel. Los Bosses Activos (★) son lo primero que ve dentro del Campo laboral.
+2. **Ingesta situada:** cualquier captura del día se ancla antes de procesar. No hay "procesar después".
+3. **Focus Work:** al entrar en sesión, la cola prioriza microtareas de Bosses Activos. Una sola microtarea visible; timer ≤ 15 min; Estudianta acumula Puntos de Señal.
+4. **Cierre:** semillas sin gravedad, frustraciones altas del día, y Bosses estancados quedan marcados para la próxima sesión de calibración.
+
+Este flujo cierra el circuito entre **estructura** (qué retos existen), **contexto** (qué se sabe de ellos) y **acción** (qué micro-unidad ejecutar ahora) — sin que ningún byte salga de la máquina local.
 
 ### 4.5 Catálogo de Bosses Reales (Varona)
 
@@ -362,32 +560,19 @@ El texto combinado de **Observaciones** y **Puntos de mejora** se inyecta como c
 | Revisión en confección de nóminas | Begoña | Idea |
 | Confección de nóminas | Nacho | Pruebas |
 
-### 4.6 Script de Transmutación (Contrato)
+### 4.6 Contrato de Transmutación (Excel → Proyectos Vivos)
 
-```typescript
-// scripts/import-varona-bosses.ts (por implementar)
-type VaronaRow = {
-  id: string;
-  area: string;
-  title: string;
-  responsable: string;
-  prioridad?: number;
-  impacto?: number;
-  dificultad?: number;
-  observaciones?: string;
-  puntosMejora?: string;
-  estado?: string;
-  avance?: number;
-};
+La ingesta masiva no termina cuando el archivo se parsea. Termina cuando cada fila válida existe como **Proyecto anclado** dentro del Campo elegido, con su gravedad calculada o marcada para revisión, y con el contexto histórico (Observaciones + Puntos de mejora) disponible para la Súper Máquina.
 
-function computeBaseWeight(prioridad?: number, impacto?: number): number {
-  if (prioridad == null || impacto == null) return 6;
-  const suma = prioridad + impacto;
-  return Math.min(12, Math.max(1, Math.round((suma / 10) * 12)));
-}
-```
+**Entradas:** archivo del despacho + Campo destino + confirmación HITL del Observador.
 
-Salida: un archivo `.md` por Boss en `data/raw_documents/pending/` + registro en tabla `Boss` (Prisma, por implementar) vinculado a `Project`.
+**Salidas por fila:**
+
+- Un Proyecto en el catálogo del Campo, con Onda, título, gravedad, Jugador y estado de avance.
+- Un fragmento de conocimiento estructurado (Markdown con las siete dimensiones) listo para indexación RAG.
+- Semillas visibles pero inactivas para filas incompletas — el Observador las completa desde el formulario manual o desde el panel.
+
+**Regla de idempotencia:** reimportar el mismo Excel no duplica Proyectos; actualiza los existentes por identificador estable y preserva el historial de fragmentos ya asociados.
 
 ---
 

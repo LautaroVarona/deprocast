@@ -13,9 +13,15 @@ import {
   MIN_BASE_WEIGHT,
   type SourceType,
 } from "@/lib/document-constants";
+import {
+  DEFAULT_CAMPO_SLUG,
+  getDefaultCampo,
+  type CampoInfo,
+  type CampoSlug,
+} from "@/lib/projects/campos";
 import { cn } from "@/lib/utils";
 import { Loader2Icon, SaveIcon } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 const SOURCE_TYPE_OPTIONS: { value: SourceType; label: string }[] = [
@@ -33,8 +39,30 @@ export function TextIngestForm() {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [sourceType, setSourceType] = useState<SourceType>(DEFAULT_SOURCE_TYPE);
+  const [campos, setCampos] = useState<CampoInfo[]>([getDefaultCampo()]);
+  const [field, setField] = useState<CampoSlug>(DEFAULT_CAMPO_SLUG);
   const [baseWeight, setBaseWeight] = useState(DEFAULT_WEIGHT);
   const [isSaving, setIsSaving] = useState(false);
+
+  useEffect(() => {
+    void (async () => {
+      try {
+        const response = await fetch("/api/proyectos", { cache: "no-store" });
+        if (!response.ok) return;
+        const data: { campos?: CampoInfo[] } = await response.json();
+        if (!data.campos?.length) return;
+        setCampos(data.campos);
+        if (!data.campos.some((campo) => campo.slug === field)) {
+          setField(
+            data.campos.find((campo) => campo.slug === DEFAULT_CAMPO_SLUG)?.slug ??
+              data.campos[0].slug,
+          );
+        }
+      } catch {
+        // Mantener el default local
+      }
+    })();
+  }, [field]);
 
   const canSave = content.trim().length > 0 && !isSaving;
 
@@ -51,6 +79,7 @@ export function TextIngestForm() {
           source_type: sourceType,
           base_weight: baseWeight,
           content,
+          field,
         }),
       });
 
@@ -64,6 +93,7 @@ export function TextIngestForm() {
       setTitle("");
       setContent("");
       setSourceType(DEFAULT_SOURCE_TYPE);
+      setField(DEFAULT_CAMPO_SLUG);
       setBaseWeight(DEFAULT_WEIGHT);
     } catch (error) {
       const message =
@@ -137,6 +167,28 @@ export function TextIngestForm() {
                 )}
               >
                 {option.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="space-y-1.5">
+          <p className="text-sm font-medium text-foreground">Campo</p>
+          <div className="flex flex-wrap gap-2">
+            {campos.map((campo) => (
+              <button
+                key={campo.slug}
+                type="button"
+                onClick={() => setField(campo.slug)}
+                aria-pressed={field === campo.slug}
+                className={cn(
+                  "rounded-full border px-3 py-1 text-sm transition-colors",
+                  field === campo.slug
+                    ? "border-primary bg-primary text-primary-foreground"
+                    : "border-border bg-background text-muted-foreground hover:bg-muted hover:text-foreground",
+                )}
+              >
+                {campo.label}
               </button>
             ))}
           </div>

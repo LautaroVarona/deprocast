@@ -35,10 +35,18 @@ export function DownloadAllTranscriptsButton({
       }
 
       const blob = await response.blob();
+      const disposition = response.headers.get("Content-Disposition") ?? "";
+      const filenameMatch = disposition.match(
+        /filename\*=UTF-8''([^;]+)|filename="([^"]+)"/i,
+      );
+      const filename = decodeURIComponent(
+        filenameMatch?.[1] ?? filenameMatch?.[2] ?? "transcripciones.md",
+      );
+
       const url = URL.createObjectURL(blob);
       const anchor = document.createElement("a");
       anchor.href = url;
-      anchor.download = "transcripciones.zip";
+      anchor.download = filename;
       anchor.click();
       URL.revokeObjectURL(url);
       toast.success("Descarga iniciada.");
@@ -59,7 +67,7 @@ export function DownloadAllTranscriptsButton({
       onClick={() => void handleDownloadAll()}
     >
       {isDownloading ? <Loader2Icon className="animate-spin" /> : <DownloadIcon />}
-      Descargar todo
+      Descargar todo (.md)
     </Button>
   );
 }

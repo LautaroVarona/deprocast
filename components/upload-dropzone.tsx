@@ -9,6 +9,7 @@ import { toast } from "sonner";
 
 type UploadDropzoneProps = {
   onUploaded: () => void;
+  variant?: "default" | "embedded";
 };
 
 type FileUploadState = {
@@ -17,7 +18,10 @@ type FileUploadState = {
   error?: string;
 };
 
-export function UploadDropzone({ onUploaded }: UploadDropzoneProps) {
+export function UploadDropzone({
+  onUploaded,
+  variant = "default",
+}: UploadDropzoneProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [uploads, setUploads] = useState<FileUploadState[]>([]);
@@ -113,6 +117,82 @@ export function UploadDropzone({ onUploaded }: UploadDropzoneProps) {
     },
     [uploadFiles],
   );
+
+  if (variant === "embedded") {
+    return (
+      <div
+        className={cn(
+          "flex h-28 shrink-0 flex-col items-center justify-center gap-2 rounded-md border border-dashed border-border bg-muted/30 px-4 text-center transition-colors",
+          isDragging && "border-primary/50 bg-accent",
+        )}
+        onDragOver={(event) => {
+          event.preventDefault();
+          setIsDragging(true);
+        }}
+        onDragLeave={() => setIsDragging(false)}
+        onDrop={(event) => {
+          event.preventDefault();
+          setIsDragging(false);
+          handleFiles(event.dataTransfer.files);
+        }}
+      >
+        {isUploading ? (
+          <Loader2Icon className="size-8 animate-spin text-primary" />
+        ) : (
+          <UploadCloudIcon className="size-8 text-muted-foreground" />
+        )}
+        <div className="space-y-1">
+          <p className="text-sm font-medium">
+            Arrastrá audios o seleccioná archivos
+          </p>
+          <p className="font-mono text-[10px] text-muted-foreground">
+            .mp3 · .m4a · .wav · .ogg
+          </p>
+        </div>
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          disabled={isUploading}
+          onClick={() => inputRef.current?.click()}
+        >
+          {isUploading ? "Subiendo..." : "Seleccionar archivos"}
+        </Button>
+        <input
+          ref={inputRef}
+          type="file"
+          multiple
+          accept=".mp3,.m4a,.wav,.ogg,audio/*"
+          className="hidden"
+          onChange={(event) => {
+            handleFiles(event.target.files);
+            event.target.value = "";
+          }}
+        />
+        {uploads.length > 0 && (
+          <ul className="w-full max-w-sm space-y-1 text-left font-mono text-[10px]">
+            {uploads.map((item) => (
+              <li
+                key={`${item.file.name}-${item.file.size}`}
+                className="flex items-center gap-2 truncate text-muted-foreground"
+              >
+                {item.status === "uploading" && (
+                  <Loader2Icon className="size-3 shrink-0 animate-spin" />
+                )}
+                {item.status === "done" && (
+                  <CheckCircle2Icon className="size-3 shrink-0 text-emerald-400" />
+                )}
+                {item.status === "error" && (
+                  <XCircleIcon className="size-3 shrink-0 text-red-400" />
+                )}
+                <span className="truncate">{item.file.name}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    );
+  }
 
   return (
     <Card

@@ -36,6 +36,7 @@ yarn-error.log*
 
 # GCP service account credentials
 local-transcriber-*.json
+varonapi-*.json
 
 # database
 /prisma/dev.db

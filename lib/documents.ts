@@ -1,6 +1,11 @@
+import type { SourceType } from "@/lib/document-constants";
+import {
+  getCampoLabel,
+  MATERIA_PRIMA_ESTADO,
+  resolveCampoSlug,
+} from "@/lib/projects/campos";
 import { access, mkdir, writeFile } from "fs/promises";
 import path from "path";
-import type { SourceType } from "@/lib/document-constants";
 
 const PENDING_DIR = path.join(
   process.cwd(),
@@ -36,6 +41,8 @@ type SaveRawDocumentInput = {
   sourceType: SourceType;
   baseWeight: number;
   content: string;
+  field?: string;
+  onda?: string;
 };
 
 export async function saveRawDocument({
@@ -43,6 +50,8 @@ export async function saveRawDocument({
   sourceType,
   baseWeight,
   content,
+  field,
+  onda,
 }: SaveRawDocumentInput): Promise<{ filename: string }> {
   await mkdir(PENDING_DIR, { recursive: true });
 
@@ -58,11 +67,18 @@ export async function saveRawDocument({
     suffix += 1;
   }
 
+  const resolvedField = resolveCampoSlug(field);
+  const campoLabel = getCampoLabel(resolvedField);
+
   const frontmatter = [
     "---",
     `title: ${JSON.stringify(displayTitle)}`,
+    `campo: ${JSON.stringify(campoLabel)}`,
+    `estado: ${JSON.stringify(MATERIA_PRIMA_ESTADO)}`,
     `source_type: "${sourceType}"`,
     `base_weight: ${baseWeight}`,
+    `field: "${resolvedField}"`,
+    ...(onda ? [`onda: "${onda}"`] : []),
     `created_at: "${createdAt.toISOString()}"`,
     "---",
   ].join("\n");
