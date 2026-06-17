@@ -9,8 +9,10 @@ import { usePathname } from "next/navigation";
 const NAV_LINKS = [
   { href: "/", label: "Dashboard" },
   { href: "/ingesta", label: "Ingesta" },
+  { href: "/diario", label: "Diario" },
   { href: "/validar", label: "Validar" },
   { href: "/proyectos", label: "Proyectos" },
+  { href: "/grafo", label: "Grafo" },
 ] as const;
 
 export function AppHeader() {

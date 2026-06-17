@@ -8,6 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "context": "tsx scripts/generate-context.ts",
+    "kg:scan": "tsx scripts/kg/scan-code.ts",
+    "kg:backfill": "tsx scripts/kg/backfill.ts",
     "postinstall": "prisma generate && node scripts/rebuild-native.js"
   },
   "dependencies": {

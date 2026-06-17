@@ -95,3 +95,77 @@ model ParentChunkTag {
 
   @@id([parentChunkId, tagId])
 }
+
+model KgNode {
+  id          String   @id @default(uuid())
+  primaryName String
+  type        String
+  aliases     Json
+  metadata    Json
+  confidence  Float    @default(0.6)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  outgoingEdges KgEdge[]    @relation("KgEdgeSource")
+  incomingEdges KgEdge[]    @relation("KgEdgeTarget")
+  mentions      KgMention[]
+
+  @@unique([primaryName, type])
+  @@index([type])
+  @@index([primaryName])
+}
+
+model KgEdge {
+  id           String   @id @default(uuid())
+  sourceNodeId String
+  targetNodeId String
+  relationType String
+  context      String
+  weight       Int?
+  confidence   Float    @default(0.6)
+  metadata     Json
+  createdAt    DateTime @default(now())
+
+  sourceNode KgNode @relation("KgEdgeSource", fields: [sourceNodeId], references: [id], onDelete: Cascade)
+  targetNode KgNode @relation("KgEdgeTarget", fields: [targetNodeId], references: [id], onDelete: Cascade)
+
+  @@unique([sourceNodeId, targetNodeId, relationType])
+  @@index([sourceNodeId])
+  @@index([targetNodeId])
+  @@index([relationType])
+}
+
+model KgMention {
+  id          String   @id @default(uuid())
+  nodeId      String
+  sourceType  String
+  sourceId    String
+  fragment    String
+  offsetStart Int?
+  offsetEnd   Int?
+  confidence  Float    @default(0.6)
+  metadata    Json
+  createdAt   DateTime @default(now())
+
+  node KgNode @relation(fields: [nodeId], references: [id], onDelete: Cascade)
+
+  @@index([sourceType, sourceId])
+  @@index([nodeId])
+}
+
+// Registro de fuentes ingeridas para ingesta incremental basada en hash.
+model KgSource {
+  id             String   @id @default(uuid())
+  sourceType     String
+  sourceId       String
+  contentHash    String
+  nodeCount      Int      @default(0)
+  edgeCount      Int      @default(0)
+  mentionCount   Int      @default(0)
+  metadata       Json
+  lastIngestedAt DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([sourceType, sourceId])
+  @@index([sourceType])
+}

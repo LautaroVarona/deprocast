@@ -3,6 +3,7 @@ import { PROJECT_STATUSES } from "@/lib/projects/types";
 import { clampScale } from "@/lib/projects/priority";
 import { createProject, listCampos, listProjects } from "@/lib/projects/service";
 import type { CreateProjectInput, ProjectStatus } from "@/lib/projects/types";
+import { ingestSingleProject } from "@/lib/kg/sources";
 import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
@@ -71,6 +72,12 @@ export async function POST(request: Request) {
     };
 
     const project = await createProject(input);
+
+    // Hook KG no bloqueante: ingiere el nuevo proyecto al grafo.
+    void ingestSingleProject(project).catch((error) => {
+      console.error("KG project hook error:", error);
+    });
+
     return NextResponse.json({ project }, { status: 201 });
   } catch (error) {
     console.error("Create project error:", error);

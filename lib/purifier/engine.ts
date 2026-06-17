@@ -17,6 +17,9 @@ import {
 } from "@/lib/vertex-gemini/client";
 import { isRetryableVertexError } from "@/lib/vertex-gemini/errors";
 
+import { extractKgFromText } from "@/lib/kg/extract";
+import { ingestKgExtraction } from "@/lib/kg/ingest";
+import type { IngestResult, LlmKgExtraction, MentionSourceType } from "@/lib/kg/types";
 import type {
   FractalParent,
   GravityInput,
@@ -111,7 +114,40 @@ Reglas:
 - Devuelve SOLO el Markdown completo.`;
 
 // ---------------------------------------------------------------------------
-// Utilities
+// KG source resolution
+// ---------------------------------------------------------------------------
+
+function resolveKgSource(
+  input: PurifierInput,
+  reviewId: string,
+): { type: MentionSourceType; id: string; metadata?: Record<string, unknown> } {
+  const journalId = input.metadata?.journalId;
+  if (journalId) {
+    return {
+      type: "journal",
+      id: journalId,
+      metadata: {
+        campoSlug: input.gravity?.campoSlug,
+        journalPath: input.metadata?.journalPath,
+      },
+    };
+  }
+
+  if (input.assetId) {
+    return {
+      type: "transcript",
+      id: input.assetId,
+      metadata: { campoSlug: input.gravity?.campoSlug },
+    };
+  }
+
+  return {
+    type: "raw_document",
+    id: reviewId,
+    metadata: { campoSlug: input.gravity?.campoSlug },
+  };
+}
+
 // ---------------------------------------------------------------------------
 
 function sleep(ms: number): Promise<void> {
@@ -648,7 +684,7 @@ export async function deleteReviewRecord(reviewId: string): Promise<boolean> {
 
 export async function runPurificationPipeline(
   input: PurifierInput,
-  options: { model?: GenerativeModel; saveReview?: boolean } = {},
+  options: { model?: GenerativeModel; saveReview?: boolean; extractKg?: boolean } = {},
 ): Promise<PurifierReviewRecord> {
   const gravity = resolveGravity(input.gravity);
   const filename = input.filename ?? `asset-${input.assetId ?? randomUUID().slice(0, 8)}`;
@@ -685,6 +721,29 @@ export async function runPurificationPipeline(
     output: JSON.stringify(metaTags),
     meta: { count: metaTags.length },
   });
+
+  let kgExtraction: LlmKgExtraction | undefined;
+  let kgIngest: IngestResult | undefined;
+
+  if (options.extractKg) {
+    kgExtraction = await extractKgFromText(dedupResult.text, options.model);
+    stages.push({
+      station: 41,
+      name: "Extracción KG",
+      output: JSON.stringify(kgExtraction),
+      meta: {
+        entityCount: kgExtraction.entities.length,
+        relationCount: kgExtraction.relations.length,
+      },
+    });
+
+    if (kgExtraction.entities.length > 0) {
+      kgIngest = await ingestKgExtraction({
+        extraction: kgExtraction,
+        source: resolveKgSource(input, reviewId),
+      });
+    }
+  }
 
   // Station 5
   const { normalizedMarkdown, dimensions } = await station5Normalize(
@@ -735,6 +794,8 @@ export async function runPurificationPipeline(
     regex: { removedCount: regexResult.removedCount },
     processedAt: new Date().toISOString(),
     model: getVertexModelName(),
+    kgExtraction,
+    kgIngest,
   };
 
   if (options.saveReview !== false) {

@@ -1,4 +1,5 @@
 import { addProgressEntry } from "@/lib/projects/service";
+import { ingestSingleProject } from "@/lib/kg/sources";
 import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
@@ -22,6 +23,11 @@ export async function POST(request: Request, context: RouteContext) {
     const project = await addProgressEntry({
       projectId: id,
       nota: body.nota,
+    });
+
+    // Hook KG no bloqueante: re-ingiere el proyecto con el nuevo progreso.
+    void ingestSingleProject(project, { force: true }).catch((error) => {
+      console.error("KG project progress hook error:", error);
     });
 
     return NextResponse.json({ project });

@@ -4,7 +4,9 @@ import {
   isSourceType,
 } from "@/lib/document-constants";
 import { saveRawDocument } from "@/lib/documents";
+import { ingestRawDocumentFile } from "@/lib/kg/sources";
 import { isCampoSlug, resolveCampoSlug } from "@/lib/projects/campos";
+import path from "node:path";
 import { NextRequest, NextResponse } from "next/server";
 
 export const runtime = "nodejs";
@@ -66,6 +68,18 @@ export async function POST(request: NextRequest) {
       baseWeight: base_weight,
       content,
       field: resolveCampoSlug(typeof field === "string" ? field : undefined),
+    });
+
+    // Hook KG no bloqueante: ingiere el documento crudo al grafo.
+    const absPath = path.join(
+      process.cwd(),
+      "data",
+      "raw_documents",
+      "pending",
+      filename,
+    );
+    void ingestRawDocumentFile(absPath).catch((error) => {
+      console.error("KG document hook error:", error);
     });
 
     return NextResponse.json({ filename }, { status: 201 });

@@ -1,4 +1,5 @@
 import type { SourceType } from "@/lib/document-constants";
+import type { IngestResult, LlmKgExtraction } from "@/lib/kg/types";
 import type { CampoSlug } from "@/lib/projects/campos";
 
 export const DUDA_MARKER_REGEX = /==DUDA:\s*(.+?)==/gs;
@@ -78,6 +79,8 @@ export type PurifierReviewRecord = {
   regex: { removedCount: number };
   processedAt: string;
   model: string;
+  kgExtraction?: LlmKgExtraction;
+  kgIngest?: IngestResult;
 };
 
 export type PurifierInput = {

@@ -13,6 +13,7 @@ export async function POST(request: NextRequest) {
       assetId?: string;
       filename?: string;
       gravity?: GravityInput;
+      extractKg?: boolean;
     };
 
     let rawText = body.rawText?.trim() ?? "";
@@ -52,13 +53,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const record = await runPurificationPipeline({
-      rawText,
-      assetId: body.assetId,
-      filename,
-      metadata,
-      gravity: body.gravity,
-    });
+    const record = await runPurificationPipeline(
+      {
+        rawText,
+        assetId: body.assetId,
+        filename,
+        metadata,
+        gravity: body.gravity,
+      },
+      // KG activo por defecto; solo se desactiva con extractKg: false explicito.
+      { extractKg: body.extractKg !== false },
+    );
 
     return NextResponse.json(
       {
