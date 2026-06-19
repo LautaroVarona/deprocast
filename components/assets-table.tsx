@@ -19,6 +19,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { formatDate } from "@/lib/format";
+import { fetchJson } from "@/lib/fetch-json";
 import { useCallback, useEffect, useState } from "react";
 
 export type AudioAssetRow = {
@@ -51,13 +52,7 @@ export function AssetsTable({ refreshKey }: AssetsTableProps) {
     }
 
     try {
-      const response = await fetch("/api/assets");
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error ?? "Error al cargar audios");
-      }
-
+      const data = await fetchJson<AudioAssetRow[]>("/api/assets");
       setAssets(data);
     } catch (error) {
       console.error(error);
@@ -73,13 +68,7 @@ export function AssetsTable({ refreshKey }: AssetsTableProps) {
 
   const loadQueueStatus = useCallback(async () => {
     try {
-      const response = await fetch("/api/process/status");
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error ?? "Error al cargar cola");
-      }
-
+      const data = await fetchJson<ProcessStatus>("/api/process/status");
       setQueueStatus(data);
     } catch (error) {
       console.error(error);

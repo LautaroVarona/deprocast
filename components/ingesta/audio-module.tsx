@@ -2,6 +2,7 @@
 
 import { UploadDropzone } from "@/components/upload-dropzone";
 import { Badge } from "@/components/ui/badge";
+import { fetchJson } from "@/lib/fetch-json";
 import { AudioLinesIcon } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 
@@ -15,9 +16,7 @@ export function AudioModule() {
 
   const loadStatus = useCallback(async () => {
     try {
-      const response = await fetch("/api/process/status");
-      if (!response.ok) return;
-      const data: QueueStatus = await response.json();
+      const data = await fetchJson<QueueStatus>("/api/process/status");
       setQueueStatus(data);
     } catch {
       // Indicador no crítico.

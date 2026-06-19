@@ -9,6 +9,7 @@ import { UploadDropzone } from "@/components/upload-dropzone";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { CAPTURE_SUCCESS_TOAST } from "@/lib/purifier/constants";
+import { fetchJson } from "@/lib/fetch-json";
 import { cn } from "@/lib/utils";
 import {
   CheckCircle2Icon,
@@ -68,9 +69,7 @@ export function AudioChannel() {
 
   const loadStatus = useCallback(async () => {
     try {
-      const response = await fetch("/api/process/status");
-      if (!response.ok) return;
-      const data: QueueStatus = await response.json();
+      const data = await fetchJson<QueueStatus>("/api/process/status");
       setQueueStatus(data);
     } catch {
       // no crítico

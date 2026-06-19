@@ -1,5 +1,4 @@
 import { requestCancellation } from "@/lib/processing-cancellation";
-import { processAssetGcpSpeech } from "@/lib/gcp-speech-processor";
 import { prisma } from "@/lib/prisma";
 
 type QueueStatus = {
@@ -109,6 +108,7 @@ class ProcessingQueue {
         data: { status: "PROCESSING", partialText: null },
       });
 
+      const { processAssetGcpSpeech } = await import("@/lib/gcp-speech-processor");
       await processAssetGcpSpeech(assetId);
     } catch (error) {
       console.error(`Error en cola procesando ${assetId}:`, error);
@@ -134,6 +134,4 @@ const globalForQueue = globalThis as typeof globalThis & {
 export const processingQueue =
   globalForQueue.processingQueue ?? new ProcessingQueue();
 
-if (process.env.NODE_ENV !== "production") {
-  globalForQueue.processingQueue = processingQueue;
-}
+globalForQueue.processingQueue = processingQueue;

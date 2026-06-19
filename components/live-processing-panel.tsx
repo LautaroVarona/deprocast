@@ -10,6 +10,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Loader2Icon } from "lucide-react";
+import { fetchJson } from "@/lib/fetch-json";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 
@@ -38,13 +39,7 @@ export function LiveProcessingPanel({
 
   const loadStatus = useCallback(async () => {
     try {
-      const response = await fetch("/api/process/status");
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error ?? "Error al cargar estado");
-      }
-
+      const data = await fetchJson<ProcessStatus>("/api/process/status");
       setStatus(data);
     } catch (error) {
       console.error(error);
