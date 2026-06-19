@@ -28,6 +28,8 @@ const nextConfig: NextConfig = {
       "./node_modules/google-auth-library/**",
       "./node_modules/gaxios/**",
       "./node_modules/google-logging-utils/**",
+      "./node_modules/json-bigint/**",
+      "./node_modules/bignumber.js/**",
     ],
     "/api/**/*": [
       "./prisma/vercel-build.db",
@@ -42,6 +44,8 @@ const nextConfig: NextConfig = {
       "./node_modules/google-auth-library/**",
       "./node_modules/gaxios/**",
       "./node_modules/google-logging-utils/**",
+      "./node_modules/json-bigint/**",
+      "./node_modules/bignumber.js/**",
     ],
   },
   outputFileTracingExcludes: {
