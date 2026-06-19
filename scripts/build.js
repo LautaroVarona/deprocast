@@ -36,6 +36,15 @@ if (process.env.VERCEL === "1") {
   const bundledSeedPath = path.join(bundledSeedDir, "vercel-build.db");
   fs.mkdirSync(bundledSeedDir, { recursive: true });
   fs.copyFileSync(seedPath, bundledSeedPath);
+
+  const seedBuffer = fs.readFileSync(bundledSeedPath);
+  if (!seedBuffer.includes(Buffer.from("AudioAsset"))) {
+    console.error(
+      "Build abortado: vercel-build.db no contiene el esquema AudioAsset.",
+    );
+    process.exit(1);
+  }
+
   console.log(
     `prisma/vercel-build.db listo (${size} bytes) y copiado a lib/db/.`,
   );

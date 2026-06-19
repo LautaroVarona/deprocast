@@ -13,10 +13,11 @@ export async function GET() {
     return NextResponse.json(status);
   } catch (error) {
     console.error("Process status error:", error);
+    const message =
+      error instanceof Error
+        ? error.message
+        : "No se pudo obtener el estado de procesamiento.";
 
-    return NextResponse.json(
-      { error: "No se pudo obtener el estado de procesamiento." },
-      { status: 500 },
-    );
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

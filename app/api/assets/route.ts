@@ -38,9 +38,8 @@ export async function GET() {
     return NextResponse.json(mapped);
   } catch (error) {
     console.error("Assets list error:", error);
-    return NextResponse.json(
-      { error: "No se pudieron cargar los audios." },
-      { status: 500 },
-    );
+    const message =
+      error instanceof Error ? error.message : "No se pudieron cargar los audios.";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

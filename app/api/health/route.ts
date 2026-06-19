@@ -1,5 +1,5 @@
 import { getDatabaseFilePath, getDatabaseSeedPath, isVercelRuntime } from "@/lib/runtime-paths";
-import { ensureRuntimeReady } from "@/lib/runtime-setup";
+import { databaseHasAppSchema, ensureRuntimeReady } from "@/lib/runtime-setup";
 import fs from "node:fs";
 import { NextResponse } from "next/server";
 
@@ -17,7 +17,9 @@ export async function GET() {
     checks.databasePath = getDatabaseFilePath();
     checks.seedPath = getDatabaseSeedPath();
     checks.seedExists = fs.existsSync(getDatabaseSeedPath());
+    checks.seedHasSchema = databaseHasAppSchema(getDatabaseSeedPath());
     checks.databaseExists = fs.existsSync(getDatabaseFilePath());
+    checks.databaseHasSchema = databaseHasAppSchema(getDatabaseFilePath());
   } catch (error) {
     checks.runtime = {
       ok: false,

@@ -47,9 +47,10 @@ export async function GET() {
     });
   } catch (error) {
     console.error("Metrics error:", error);
-    return NextResponse.json(
-      { error: "No se pudieron calcular las métricas." },
-      { status: 500 },
-    );
+    const message =
+      error instanceof Error
+        ? error.message
+        : "No se pudieron calcular las métricas.";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

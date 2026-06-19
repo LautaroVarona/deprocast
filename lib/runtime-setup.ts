@@ -11,8 +11,9 @@ import {
 let setupPromise: Promise<void> | null = null;
 
 const SQLITE_MAGIC = "SQLite format 3";
+const SCHEMA_MARKER = "AudioAsset";
 
-function isValidSqliteFile(dbPath: string): boolean {
+export function databaseHasAppSchema(dbPath: string): boolean {
   if (!fs.existsSync(dbPath)) {
     return false;
   }
@@ -23,22 +24,22 @@ function isValidSqliteFile(dbPath: string): boolean {
       return false;
     }
 
-    const header = Buffer.alloc(SQLITE_MAGIC.length);
-    const fd = fs.openSync(dbPath, "r");
+    const file = fs.readFileSync(dbPath);
+    const header = file.subarray(0, SQLITE_MAGIC.length).toString("utf8");
 
-    try {
-      fs.readSync(fd, header, 0, header.length, 0);
-    } finally {
-      fs.closeSync(fd);
-    }
-
-    return header.toString("utf8") === SQLITE_MAGIC;
+    return header === SQLITE_MAGIC && file.includes(SCHEMA_MARKER);
   } catch {
     return false;
   }
 }
 
 async function copySeedDatabase(targetPath: string, seedPath: string): Promise<void> {
+  if (!databaseHasAppSchema(seedPath)) {
+    throw new Error(
+      "El seed SQLite del deploy no contiene el esquema de Deprocast. Revisá que el build use npm run vercel-build.",
+    );
+  }
+
   await fs.promises.mkdir(path.dirname(targetPath), { recursive: true });
 
   if (fs.existsSync(targetPath)) {
@@ -47,11 +48,14 @@ async function copySeedDatabase(targetPath: string, seedPath: string): Promise<v
 
   await fs.promises.copyFile(seedPath, targetPath);
 
-  if (!isValidSqliteFile(targetPath)) {
+  if (!databaseHasAppSchema(targetPath)) {
     throw new Error(
-      "La copia de prisma/vercel-build.db a /tmp falló o el archivo está corrupto.",
+      "La copia de vercel-build.db a /tmp falló o quedó sin tablas de la app.",
     );
   }
+
+  const { resetPrismaClient } = await import("@/lib/prisma");
+  resetPrismaClient();
 }
 
 async function ensureDatabase(): Promise<void> {
@@ -60,14 +64,14 @@ async function ensureDatabase(): Promise<void> {
   }
 
   const targetPath = getDatabaseFilePath();
-  if (isValidSqliteFile(targetPath)) {
+  if (databaseHasAppSchema(targetPath)) {
     return;
   }
 
   const seedPath = getDatabaseSeedPath();
   if (!fs.existsSync(seedPath)) {
     throw new Error(
-      "Falta prisma/vercel-build.db en el deploy. Configurá Build Command: npm run vercel-build.",
+      "Falta vercel-build.db en el deploy. Configurá Build Command: npm run vercel-build.",
     );
   }
 
