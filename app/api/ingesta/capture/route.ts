@@ -6,6 +6,7 @@ import {
 import { isSourceType } from "@/lib/document-constants";
 import { isCampoSlug } from "@/lib/projects/campos";
 import { prisma } from "@/lib/prisma";
+import { ensureRuntimeReady } from "@/lib/runtime-setup";
 import { NextRequest, NextResponse } from "next/server";
 
 export const runtime = "nodejs";
@@ -38,6 +39,8 @@ function parseGravity(body: Record<string, unknown>): CaptureGravity | undefined
 
 export async function POST(request: NextRequest) {
   try {
+    await ensureRuntimeReady();
+
     const body = (await request.json().catch(() => null)) as Record<
       string,
       unknown

@@ -25,7 +25,19 @@ export async function postIngestaCapture(body: CaptureRequestBody) {
     body: JSON.stringify(body),
   });
 
-  const data = await response.json();
+  const raw = await response.text();
+  let data: { error?: string; reviewId?: string; captureId?: string; particula?: string };
+
+  try {
+    data = JSON.parse(raw) as typeof data;
+  } catch {
+    throw new Error(
+      response.ok
+        ? "La respuesta del servidor no es JSON válido."
+        : `Error del servidor (${response.status}). Revisá el deploy en Vercel.`,
+    );
+  }
+
   if (!response.ok) {
     throw new Error(data.error ?? "No se pudo capturar la prima materia");
   }

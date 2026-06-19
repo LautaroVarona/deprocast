@@ -1,10 +1,13 @@
 import { prisma } from "@/lib/prisma";
+import { ensureRuntimeReady } from "@/lib/runtime-setup";
 import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
 
 export async function GET() {
   try {
+    await ensureRuntimeReady();
+
     const assets = await prisma.audioAsset.findMany({
       orderBy: { createdAt: "desc" },
       select: {

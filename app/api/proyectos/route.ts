@@ -3,7 +3,7 @@ import { PROJECT_STATUSES } from "@/lib/projects/types";
 import { clampScale } from "@/lib/projects/priority";
 import { createProject, listCampos, listProjects } from "@/lib/projects/service";
 import type { CreateProjectInput, ProjectStatus } from "@/lib/projects/types";
-import { ingestSingleProject } from "@/lib/kg/sources";
+import { ensureRuntimeReady } from "@/lib/runtime-setup";
 import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
@@ -22,6 +22,8 @@ function parseStatus(value: unknown): ProjectStatus {
 
 export async function GET() {
   try {
+    await ensureRuntimeReady();
+
     const [projects, campos] = await Promise.all([listProjects(), listCampos()]);
     return NextResponse.json({ projects, campos });
   } catch (error) {
@@ -35,6 +37,8 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
+    await ensureRuntimeReady();
+
     const body = (await request.json()) as Partial<CreateProjectInput>;
 
     if (!body.title?.trim()) {
@@ -74,6 +78,7 @@ export async function POST(request: Request) {
     const project = await createProject(input);
 
     // Hook KG no bloqueante: ingiere el nuevo proyecto al grafo.
+    const { ingestSingleProject } = await import("@/lib/kg/sources");
     void ingestSingleProject(project).catch((error) => {
       console.error("KG project hook error:", error);
     });

@@ -1,10 +1,13 @@
 import { processingQueue } from "@/lib/processing-queue";
+import { ensureRuntimeReady } from "@/lib/runtime-setup";
 import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
 
 export async function GET() {
   try {
+    await ensureRuntimeReady();
+
     const status = await processingQueue.getStatusWithActive();
 
     return NextResponse.json(status);
