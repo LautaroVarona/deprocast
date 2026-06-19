@@ -9,6 +9,11 @@ function run(command, options = {}) {
 run("prisma generate");
 
 if (process.env.VERCEL === "1") {
+  const seedPath = path.join(__dirname, "../prisma/vercel-build.db");
+  if (fs.existsSync(seedPath)) {
+    fs.unlinkSync(seedPath);
+  }
+
   run("prisma migrate deploy", {
     env: {
       ...process.env,
@@ -16,7 +21,6 @@ if (process.env.VERCEL === "1") {
     },
   });
 
-  const seedPath = path.join(__dirname, "../prisma/vercel-build.db");
   if (!fs.existsSync(seedPath)) {
     console.error(
       "Build abortado: no se generó prisma/vercel-build.db tras migrate deploy.",
