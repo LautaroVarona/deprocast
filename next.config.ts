@@ -15,7 +15,18 @@ const nextConfig: NextConfig = {
     "@prisma/adapter-better-sqlite3",
   ],
   outputFileTracingIncludes: {
-    "/api/**/*": ["./prisma/vercel-build.db"],
+    "*": [
+      "./prisma/vercel-build.db",
+      "./lib/db/vercel-build.db",
+      "./node_modules/better-sqlite3/**",
+      "./node_modules/@prisma/adapter-better-sqlite3/**",
+    ],
+    "/api/**/*": [
+      "./prisma/vercel-build.db",
+      "./lib/db/vercel-build.db",
+      "./node_modules/better-sqlite3/**",
+      "./node_modules/@prisma/adapter-better-sqlite3/**",
+    ],
   },
   outputFileTracingExcludes: {
     "*": [

@@ -1,11 +1,7 @@
 import { type IngestaChannel } from "@/lib/purifier/constants";
-import {
-  captureAndPurify,
-  type CaptureGravity,
-} from "@/lib/purifier/capture";
+import type { CaptureGravity } from "@/lib/purifier/capture";
 import { isSourceType } from "@/lib/document-constants";
 import { isCampoSlug } from "@/lib/projects/campos";
-import { prisma } from "@/lib/prisma";
 import { ensureRuntimeReady } from "@/lib/runtime-setup";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -40,6 +36,11 @@ function parseGravity(body: Record<string, unknown>): CaptureGravity | undefined
 export async function POST(request: NextRequest) {
   try {
     await ensureRuntimeReady();
+
+    const [{ prisma }, { captureAndPurify }] = await Promise.all([
+      import("@/lib/prisma"),
+      import("@/lib/purifier/capture"),
+    ]);
 
     const body = (await request.json().catch(() => null)) as Record<
       string,

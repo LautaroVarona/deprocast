@@ -106,6 +106,11 @@ export function getDatabaseUrl(): string {
 }
 
 export function getDatabaseSeedPath(): string {
+  const bundledSeed = path.join(APP_ROOT, "lib", "db", "vercel-build.db");
+  if (fs.existsSync(bundledSeed)) {
+    return bundledSeed;
+  }
+
   return path.join(APP_ROOT, "prisma", "vercel-build.db");
 }
 

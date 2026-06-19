@@ -28,10 +28,11 @@ export async function GET() {
     return NextResponse.json({ projects, campos });
   } catch (error) {
     console.error("List projects error:", error);
-    return NextResponse.json(
-      { error: "No se pudieron cargar los proyectos del Atanor." },
-      { status: 500 },
-    );
+    const message =
+      error instanceof Error
+        ? error.message
+        : "No se pudieron cargar los proyectos del Atanor.";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
 

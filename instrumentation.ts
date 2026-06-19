@@ -8,6 +8,10 @@ export async function register() {
     return;
   }
 
-  const { ensureRuntimeReady } = await import("@/lib/runtime-setup");
-  await ensureRuntimeReady();
+  try {
+    const { ensureRuntimeReady } = await import("@/lib/runtime-setup");
+    await ensureRuntimeReady();
+  } catch (error) {
+    console.error("[instrumentation] ensureRuntimeReady failed:", error);
+  }
 }

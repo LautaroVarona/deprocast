@@ -1,9 +1,8 @@
-import { execSync } from "node:child_process";
 import fs from "node:fs";
+import path from "node:path";
 
 import {
   ensureRuntimeDirs,
-  getAppRoot,
   getDatabaseFilePath,
   getDatabaseSeedPath,
   isVercelRuntime,
@@ -11,50 +10,46 @@ import {
 
 let setupPromise: Promise<void> | null = null;
 
-function databaseHasSchema(dbPath: string): boolean {
+const SQLITE_MAGIC = "SQLite format 3";
+
+function isValidSqliteFile(dbPath: string): boolean {
   if (!fs.existsSync(dbPath)) {
     return false;
   }
 
   try {
     const stat = fs.statSync(dbPath);
-    if (stat.size < 64) {
+    if (stat.size < 1024) {
       return false;
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const Database = require("better-sqlite3") as typeof import("better-sqlite3");
-    const db = new Database(dbPath, { readonly: true });
+    const header = Buffer.alloc(SQLITE_MAGIC.length);
+    const fd = fs.openSync(dbPath, "r");
 
     try {
-      const row = db
-        .prepare(
-          "SELECT name FROM sqlite_master WHERE type='table' AND name='AudioAsset'",
-        )
-        .get() as { name?: string } | undefined;
-
-      return Boolean(row?.name);
+      fs.readSync(fd, header, 0, header.length, 0);
     } finally {
-      db.close();
+      fs.closeSync(fd);
     }
+
+    return header.toString("utf8") === SQLITE_MAGIC;
   } catch {
     return false;
   }
 }
 
-function bootstrapDatabaseWithMigrations(targetPath: string): void {
-  execSync("npx prisma migrate deploy", {
-    cwd: getAppRoot(),
-    stdio: "pipe",
-    env: {
-      ...process.env,
-      DATABASE_URL: `file:${targetPath}`,
-    },
-  });
+async function copySeedDatabase(targetPath: string, seedPath: string): Promise<void> {
+  await fs.promises.mkdir(path.dirname(targetPath), { recursive: true });
 
-  if (!databaseHasSchema(targetPath)) {
+  if (fs.existsSync(targetPath)) {
+    await fs.promises.unlink(targetPath);
+  }
+
+  await fs.promises.copyFile(seedPath, targetPath);
+
+  if (!isValidSqliteFile(targetPath)) {
     throw new Error(
-      "No se pudo inicializar SQLite en runtime: faltan tablas tras migrate deploy.",
+      "La copia de prisma/vercel-build.db a /tmp falló o el archivo está corrupto.",
     );
   }
 }
@@ -65,33 +60,18 @@ async function ensureDatabase(): Promise<void> {
   }
 
   const targetPath = getDatabaseFilePath();
-  if (databaseHasSchema(targetPath)) {
+  if (isValidSqliteFile(targetPath)) {
     return;
   }
 
-  if (fs.existsSync(targetPath)) {
-    await fs.promises.unlink(targetPath).catch(() => undefined);
-  }
-
   const seedPath = getDatabaseSeedPath();
-  if (fs.existsSync(seedPath)) {
-    await fs.promises.copyFile(seedPath, targetPath);
-
-    if (databaseHasSchema(targetPath)) {
-      return;
-    }
-
-    await fs.promises.unlink(targetPath).catch(() => undefined);
-    console.warn(
-      "prisma/vercel-build.db no tiene el esquema esperado; se intentará migrate deploy en runtime.",
-    );
-  } else {
-    console.warn(
-      "No se encontró prisma/vercel-build.db; se intentará migrate deploy en runtime.",
+  if (!fs.existsSync(seedPath)) {
+    throw new Error(
+      "Falta prisma/vercel-build.db en el deploy. Configurá Build Command: npm run vercel-build.",
     );
   }
 
-  bootstrapDatabaseWithMigrations(targetPath);
+  await copySeedDatabase(targetPath, seedPath);
 }
 
 export async function ensureRuntimeReady(): Promise<void> {
