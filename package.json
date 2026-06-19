@@ -25,6 +25,7 @@
     "clsx": "^2.1.1",
     "diff": "^8.0.2",
     "dotenv": "^17.4.2",
+    "gcp-metadata": "^8.1.2",
     "ffmpeg-static": "^5.2.0",
     "ffprobe-static": "^3.1.0",
     "jszip": "^3.10.1",

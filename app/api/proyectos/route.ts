@@ -79,10 +79,14 @@ export async function POST(request: Request) {
     const project = await createProject(input);
 
     // Hook KG no bloqueante: ingiere el nuevo proyecto al grafo.
-    const { ingestSingleProject } = await import("@/lib/kg/sources");
-    void ingestSingleProject(project).catch((error) => {
-      console.error("KG project hook error:", error);
-    });
+    void (async () => {
+      try {
+        const { ingestSingleProject } = await import("@/lib/kg/sources");
+        await ingestSingleProject(project);
+      } catch (error) {
+        console.error("KG project hook error:", error);
+      }
+    })();
 
     return NextResponse.json({ project }, { status: 201 });
   } catch (error) {
