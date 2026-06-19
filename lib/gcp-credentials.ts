@@ -2,6 +2,8 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 
+const APP_ROOT = path.join(/* turbopackIgnore: true */ process.cwd());
+
 type ResolveCredentialsOptions = {
   pathEnvName: string;
   jsonEnvName: string;
@@ -36,6 +38,12 @@ export function resolveGcpCredentialsPath(
     return targetPath;
   }
 
+  if (process.env.VERCEL === "1") {
+    throw new Error(
+      `${options.missingMessage} En Vercel usá ${options.jsonEnvName} con el JSON completo.`,
+    );
+  }
+
   const raw = process.env[options.pathEnvName];
   if (!raw?.trim()) {
     throw new Error(options.missingMessage);
@@ -43,7 +51,7 @@ export function resolveGcpCredentialsPath(
 
   const resolved = path.isAbsolute(raw)
     ? raw
-    : path.resolve(process.cwd(), raw);
+    : path.join(APP_ROOT, raw.replace(/^\.\//, ""));
 
   if (!fs.existsSync(resolved)) {
     throw new Error(options.notFoundMessage(resolved));

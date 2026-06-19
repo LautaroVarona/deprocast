@@ -2,12 +2,14 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 
+const APP_ROOT = path.join(/* turbopackIgnore: true */ process.cwd());
+
 export function isVercelRuntime(): boolean {
   return process.env.VERCEL === "1";
 }
 
 export function getAppRoot(): string {
-  return process.cwd();
+  return APP_ROOT;
 }
 
 function getWritableBase(): string {
@@ -20,7 +22,7 @@ function getWritableBase(): string {
     return path.join(os.tmpdir(), "deprocast");
   }
 
-  return getAppRoot();
+  return APP_ROOT;
 }
 
 /** Raíz de `data/` (journal, projects, raw_documents, etc.). */
@@ -29,7 +31,7 @@ export function getDataRoot(): string {
     return path.join(getWritableBase(), "data");
   }
 
-  return path.join(getAppRoot(), "data");
+  return path.join(APP_ROOT, "data");
 }
 
 export function getDataPath(...segments: string[]): string {
@@ -50,7 +52,7 @@ export function getUploadDir(): string {
     return path.join(getWritableBase(), "uploads");
   }
 
-  return path.join(getAppRoot(), "public", "uploads");
+  return path.join(APP_ROOT, "public", "uploads");
 }
 
 export function getUploadPublicUrl(filename: string): string {
@@ -73,7 +75,7 @@ export function resolveUploadPath(fileUrl: string): string {
   }
 
   const relativePath = fileUrl.startsWith("/") ? fileUrl.slice(1) : fileUrl;
-  return path.resolve(getAppRoot(), "public", relativePath);
+  return path.join(APP_ROOT, "public", relativePath);
 }
 
 export function getDatabaseFilePath(): string {
@@ -89,18 +91,22 @@ export function getDatabaseFilePath(): string {
       return path.join(getWritableBase(), "deprocast.db");
     }
 
-    return path.resolve(getAppRoot(), filePath);
+    return path.join(APP_ROOT, filePath);
   }
 
   if (isVercelRuntime()) {
     return path.join(getWritableBase(), "deprocast.db");
   }
 
-  return path.resolve(getAppRoot(), "prisma/dev.db");
+  return path.join(APP_ROOT, "prisma", "dev.db");
 }
 
 export function getDatabaseUrl(): string {
   return `file:${getDatabaseFilePath()}`;
+}
+
+export function getDatabaseSeedPath(): string {
+  return path.join(APP_ROOT, "prisma", "vercel-build.db");
 }
 
 export async function ensureRuntimeDirs(): Promise<void> {

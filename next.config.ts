@@ -15,10 +15,16 @@ const nextConfig: NextConfig = {
     "@prisma/adapter-better-sqlite3",
   ],
   outputFileTracingIncludes: {
-    "/api/**/*": [
-      "./node_modules/better-sqlite3/**/*",
-      "./node_modules/ffmpeg-static/**/*",
-      "./node_modules/ffprobe-static/**/*",
+    "/api/**/*": ["./prisma/vercel-build.db"],
+  },
+  outputFileTracingExcludes: {
+    "*": [
+      "./datainfo.md",
+      "./resumen integral deprocast.md",
+      "./deprocast_master_plan.md",
+      "./data/**",
+      "./prisma/dev.db",
+      "./prisma/dev.db-journal",
     ],
   },
 };

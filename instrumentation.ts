@@ -1,6 +1,13 @@
 export async function register() {
-  if (process.env.NEXT_RUNTIME === "nodejs") {
-    const { ensureRuntimeReady } = await import("@/lib/runtime-setup");
-    await ensureRuntimeReady();
+  if (process.env.NEXT_RUNTIME !== "nodejs") {
+    return;
   }
+
+  // Evita trabajo de filesystem durante `next build`.
+  if (process.env.NEXT_PHASE === "phase-production-build") {
+    return;
+  }
+
+  const { ensureRuntimeReady } = await import("@/lib/runtime-setup");
+  await ensureRuntimeReady();
 }
