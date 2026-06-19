@@ -3,6 +3,7 @@ import { isCampoSlug } from "@/lib/projects/campos";
 import { NextRequest, NextResponse } from "next/server";
 
 export const runtime = "nodejs";
+export const maxDuration = 120;
 
 export async function POST(request: NextRequest) {
   try {
@@ -45,7 +46,7 @@ export async function POST(request: NextRequest) {
       markdownBody: body.markdownBody,
       metaTagsSecundarios: body.metaTagsSecundarios ?? [],
       dimensions: {
-        materia: String(d.materia ?? "audio/transcript"),
+        materia: String(d.materia ?? "texto/documento"),
         particula: String(d.particula ?? body.reviewId),
         posicion: String(d.posicion ?? "observador"),
         onda: String(d.onda ?? "sin-clasificar"),

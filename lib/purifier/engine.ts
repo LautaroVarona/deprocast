@@ -1,3 +1,4 @@
+import "server-only";
 import "dotenv/config";
 
 import type { GenerativeModel } from "@google-cloud/vertexai";
@@ -19,6 +20,7 @@ import { isRetryableVertexError } from "@/lib/vertex-gemini/errors";
 
 import { extractKgFromText } from "@/lib/kg/extract";
 import { ingestKgExtraction } from "@/lib/kg/ingest";
+import { ingestDocumentSource } from "@/lib/kg/sources/common";
 import type { IngestResult, LlmKgExtraction, MentionSourceType } from "@/lib/kg/types";
 import type {
   FractalParent,
@@ -29,18 +31,14 @@ import type {
   SevenDimensions,
 } from "@/lib/purifier/types";
 import { DUDA_MARKER_REGEX } from "@/lib/purifier/types";
+import { getRawDocumentsPath } from "@/lib/runtime-paths";
 
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
 
 export const PURIFIER_DEDUP_THRESHOLD = 0.82;
-export const REVIEW_DIR = path.join(
-  process.cwd(),
-  "data",
-  "raw_documents",
-  "review",
-);
+export const REVIEW_DIR = getRawDocumentsPath("review");
 
 const WHISPER_LOOP_PHRASES = [
   "qué es lo que está pasando",
@@ -138,6 +136,19 @@ function resolveKgSource(
       type: "transcript",
       id: input.assetId,
       metadata: { campoSlug: input.gravity?.campoSlug },
+    };
+  }
+
+  const captureId = input.metadata?.captureId;
+  if (captureId) {
+    return {
+      type: "raw_document",
+      id: captureId,
+      metadata: {
+        campoSlug: input.gravity?.campoSlug,
+        channel: input.metadata?.channel,
+        pendingPurificationFile: input.metadata?.pendingPurificationFile,
+      },
     };
   }
 
@@ -696,21 +707,40 @@ export async function runPurificationPipeline(
   stages.push({
     station: 1,
     name: "Limpieza Regex",
+    input: input.rawText,
     output: regexResult.text,
-    meta: { removedCount: regexResult.removedCount },
+    meta: {
+      removedCount: regexResult.removedCount,
+      inputChars: input.rawText.length,
+      outputChars: regexResult.text.length,
+    },
   });
 
   // Station 2
   const semanticText = await station2SemanticCleanup(regexResult.text, options.model);
-  stages.push({ station: 2, name: "Limpieza Semántica", output: semanticText });
+  stages.push({
+    station: 2,
+    name: "Limpieza Semántica",
+    input: regexResult.text,
+    output: semanticText,
+    meta: {
+      inputChars: regexResult.text.length,
+      outputChars: semanticText.length,
+      doubtCount: extractDoubts(semanticText).length,
+    },
+  });
 
   // Station 3
   const dedupResult = station3Deduplicate(semanticText);
   stages.push({
     station: 3,
     name: "Deduplicación",
+    input: semanticText,
     output: dedupResult.text,
-    meta: { mergedCount: dedupResult.mergedCount },
+    meta: {
+      mergedCount: dedupResult.mergedCount,
+      paragraphsRemoved: dedupResult.mergedCount,
+    },
   });
 
   // Station 4
@@ -718,8 +748,9 @@ export async function runPurificationPipeline(
   stages.push({
     station: 4,
     name: "Extracción de Esencias",
+    input: dedupResult.text,
     output: JSON.stringify(metaTags),
-    meta: { count: metaTags.length },
+    meta: { count: metaTags.length, tags: metaTags.slice(0, 5) },
   });
 
   let kgExtraction: LlmKgExtraction | undefined;
@@ -730,18 +761,47 @@ export async function runPurificationPipeline(
     stages.push({
       station: 41,
       name: "Extracción KG",
+      input: dedupResult.text,
       output: JSON.stringify(kgExtraction),
       meta: {
         entityCount: kgExtraction.entities.length,
         relationCount: kgExtraction.relations.length,
+        inputChars: dedupResult.text.length,
       },
     });
 
     if (kgExtraction.entities.length > 0) {
-      kgIngest = await ingestKgExtraction({
-        extraction: kgExtraction,
-        source: resolveKgSource(input, reviewId),
-      });
+      const captureId = input.metadata?.captureId;
+      const pendingFile = input.metadata?.pendingPurificationFile;
+
+      if (captureId && pendingFile) {
+        const documentPath = `data/raw_documents/pending_purification/${pendingFile}`;
+        const outcome = await ingestDocumentSource({
+          sourceType: "raw_document",
+          sourceId: captureId,
+          documentPath,
+          title: input.gravity?.title ?? filename,
+          documentMeta: {
+            captureId,
+            channel: input.metadata?.channel,
+            reviewId,
+          },
+          body: "",
+          structured: kgExtraction,
+          sourceMetadata: {
+            campoSlug: input.gravity?.campoSlug,
+            channel: input.metadata?.channel,
+            reviewId,
+          },
+          model: options.model,
+        });
+        kgIngest = outcome.result;
+      } else {
+        kgIngest = await ingestKgExtraction({
+          extraction: kgExtraction,
+          source: resolveKgSource(input, reviewId),
+        });
+      }
     }
   }
 
@@ -753,7 +813,17 @@ export async function runPurificationPipeline(
     filename,
     options.model,
   );
-  stages.push({ station: 5, name: "Normalización", output: normalizedMarkdown });
+  stages.push({
+    station: 5,
+    name: "Normalización",
+    input: dedupResult.text,
+    output: normalizedMarkdown,
+    meta: {
+      inputChars: dedupResult.text.length,
+      outputChars: normalizedMarkdown.length,
+      doubtCount: extractDoubts(normalizedMarkdown).length,
+    },
+  });
 
   // Station 6
   const bodyMatch = normalizedMarkdown.match(
@@ -761,11 +831,13 @@ export async function runPurificationPipeline(
   );
   const bodyText = bodyMatch?.[1]?.trim() ?? dedupResult.text;
   const fractalSegments = station6FractalSegmentation(bodyText);
+  const childCount = fractalSegments.reduce((sum, p) => sum + p.children.length, 0);
   stages.push({
     station: 6,
     name: "Segmentación Fractal",
+    input: bodyText,
     output: JSON.stringify(fractalSegments),
-    meta: { parentCount: fractalSegments.length },
+    meta: { parentCount: fractalSegments.length, childCount },
   });
 
   const record: PurifierReviewRecord = {

@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { ForceGraph } from "@/components/grafo/force-graph";
+import { GraphSemanticSearch } from "@/components/grafo/graph-semantic-search";
 import {
   colorForType,
   type DuplicateCandidate,
@@ -15,6 +16,7 @@ import {
   type NeighborhoodResult,
   type StatsResponse,
 } from "@/components/grafo/types";
+import { searchGraphSnapshot } from "@/lib/kg/graph-search";
 
 type Tab = "grafo" | "proyectos" | "stats" | "duplicados";
 
@@ -47,6 +49,7 @@ export function GrafoWorkspace() {
   const [projectPeople, setProjectPeople] = useState<ProjectPeopleItem[]>([]);
   const [relatedProjects, setRelatedProjects] = useState<RelatedProjectItem[]>([]);
   const [loadingProjectPanels, setLoadingProjectPanels] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const loadGraph = useCallback(async () => {
     setLoadingGraph(true);
@@ -127,7 +130,7 @@ export function GrafoWorkspace() {
     return [...counts.entries()].sort((a, b) => b[1] - a[1]);
   }, [snapshot]);
 
-  const filteredSnapshot = useMemo<GraphSnapshot>(() => {
+  const typeFilteredSnapshot = useMemo<GraphSnapshot>(() => {
     if (enabledTypes.size === 0) return snapshot;
     const nodes = snapshot.nodes.filter((n) => enabledTypes.has(n.type));
     const ids = new Set(nodes.map((n) => n.id));
@@ -136,6 +139,11 @@ export function GrafoWorkspace() {
     );
     return { nodes, edges };
   }, [snapshot, enabledTypes]);
+
+  const { snapshot: filteredSnapshot, matches: searchMatches } = useMemo(
+    () => searchGraphSnapshot(typeFilteredSnapshot, searchQuery),
+    [typeFilteredSnapshot, searchQuery],
+  );
 
   const projectNodes = useMemo(
     () => snapshot.nodes.filter((n) => n.type === "proyecto"),
@@ -262,7 +270,15 @@ export function GrafoWorkspace() {
       {tab === "grafo" && (
         <div className="flex min-h-0 flex-1">
           <div className="flex min-w-0 flex-1 flex-col">
-            <div className="flex flex-wrap items-center gap-1.5 border-b border-border px-4 py-2">
+            <div className="flex flex-wrap items-center gap-2 border-b border-border px-4 py-2">
+              <GraphSemanticSearch
+                query={searchQuery}
+                onQueryChange={setSearchQuery}
+                matches={searchMatches}
+                visibleCount={filteredSnapshot.nodes.length}
+                totalCount={typeFilteredSnapshot.nodes.length}
+                onSelectMatch={setSelectedId}
+              />
               <label className="flex items-center gap-1 text-xs text-muted-foreground">
                 <input
                   type="checkbox"
@@ -293,6 +309,14 @@ export function GrafoWorkspace() {
               })}
               {loadingGraph && (
                 <span className="text-xs text-muted-foreground">cargando…</span>
+              )}
+              {searchQuery.trim() && (
+                <span className="text-xs text-muted-foreground">
+                  {filteredSnapshot.nodes.length} nodo
+                  {filteredSnapshot.nodes.length === 1 ? "" : "s"} ·{" "}
+                  {filteredSnapshot.edges.length} relación
+                  {filteredSnapshot.edges.length === 1 ? "" : "es"}
+                </span>
               )}
             </div>
             <div className="relative min-h-0 flex-1 bg-muted/20">
@@ -505,13 +529,17 @@ function NodeDetailPanel({
             </h3>
             <ul className="mt-1 space-y-1">
               {detail.edges.slice(0, 60).map((edge) => (
-                <li key={edge.id} className="text-sm">
+                <li key={`${edge.id}:${edge.direction}`} className="text-sm">
                   <button
                     className="text-left hover:underline"
                     onClick={() => onSelect(edge.neighbor.id)}
                   >
                     <span className="text-muted-foreground">
-                      {edge.direction === "outgoing" ? "→ " : "← "}
+                      {edge.direction === "outgoing"
+                        ? "→ "
+                        : edge.direction === "incoming"
+                          ? "← "
+                          : "↔ "}
                       {edge.relationType}:{" "}
                     </span>
                     {edge.neighbor.primaryName}

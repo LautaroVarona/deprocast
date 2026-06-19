@@ -41,6 +41,8 @@ varonapi-*.json
 # database
 /prisma/dev.db
 /prisma/dev.db-journal
+/prisma/vercel-build.db
+/prisma/vercel-build.db-journal
 
 # uploaded audio files
 /public/uploads/*

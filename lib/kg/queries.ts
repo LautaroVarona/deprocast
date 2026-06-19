@@ -77,7 +77,7 @@ export type NeighborhoodEdge = {
   relationType: string;
   context: string;
   weight: number | null;
-  direction: "outgoing" | "incoming";
+  direction: "outgoing" | "incoming" | "self";
   neighbor: KgNodeSummary;
 };
 
@@ -105,24 +105,33 @@ export async function getNeighborhood(nodeId: string): Promise<NeighborhoodResul
 
   if (!node) return null;
 
-  const edges: NeighborhoodEdge[] = [
-    ...node.outgoingEdges.map((edge) => ({
+  const edges: NeighborhoodEdge[] = [];
+  const seenEdgeIds = new Set<string>();
+
+  for (const edge of node.outgoingEdges) {
+    const isSelf = edge.sourceNodeId === edge.targetNodeId;
+    seenEdgeIds.add(edge.id);
+    edges.push({
       id: edge.id,
       relationType: edge.relationType,
       context: edge.context,
       weight: edge.weight,
-      direction: "outgoing" as const,
+      direction: isSelf ? "self" : "outgoing",
       neighbor: toNodeSummary(edge.targetNode),
-    })),
-    ...node.incomingEdges.map((edge) => ({
+    });
+  }
+
+  for (const edge of node.incomingEdges) {
+    if (seenEdgeIds.has(edge.id)) continue;
+    edges.push({
       id: edge.id,
       relationType: edge.relationType,
       context: edge.context,
       weight: edge.weight,
-      direction: "incoming" as const,
+      direction: "incoming",
       neighbor: toNodeSummary(edge.sourceNode),
-    })),
-  ];
+    });
+  }
 
   return {
     node: toNodeSummary(node),

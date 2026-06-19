@@ -1,7 +1,9 @@
 import "dotenv/config";
-import fs from "fs";
-import path from "path";
-import { GcpSpeechError } from "@/lib/gcp-speech/errors";
+
+import {
+  readProjectIdFromCredentials,
+  resolveGcpCredentialsPath,
+} from "@/lib/gcp-credentials";
 
 export type GcpSpeechConfig = {
   projectId: string;
@@ -20,47 +22,6 @@ function parsePositiveInt(value: string | undefined, fallback: number): number {
   return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
 }
 
-function resolveCredentialsPath(): string {
-  const raw = process.env.GOOGLE_APPLICATION_CREDENTIALS;
-  if (!raw?.trim()) {
-    throw new GcpSpeechError(
-      "Falta GOOGLE_APPLICATION_CREDENTIALS. Configúrala en .env apuntando al JSON de la cuenta de servicio.",
-    );
-  }
-
-  const resolved = path.isAbsolute(raw)
-    ? raw
-    : path.resolve(process.cwd(), raw);
-
-  if (!fs.existsSync(resolved)) {
-    throw new GcpSpeechError(
-      `No se encontró el archivo de credenciales: ${resolved}`,
-    );
-  }
-
-  return resolved;
-}
-
-function readProjectIdFromCredentials(credentialsPath: string): string {
-  try {
-    const raw = fs.readFileSync(credentialsPath, "utf-8");
-    const parsed = JSON.parse(raw) as { project_id?: string };
-    if (!parsed.project_id) {
-      throw new GcpSpeechError(
-        "El JSON de credenciales no contiene project_id.",
-      );
-    }
-    return parsed.project_id;
-  } catch (error) {
-    if (error instanceof GcpSpeechError) {
-      throw error;
-    }
-    throw new GcpSpeechError(
-      `No se pudo leer el JSON de credenciales: ${credentialsPath}`,
-    );
-  }
-}
-
 let cachedConfig: GcpSpeechConfig | null = null;
 
 export function getGcpSpeechConfig(): GcpSpeechConfig {
@@ -68,8 +29,20 @@ export function getGcpSpeechConfig(): GcpSpeechConfig {
     return cachedConfig;
   }
 
-  const credentialsPath = resolveCredentialsPath();
-  const projectIdFromFile = readProjectIdFromCredentials(credentialsPath);
+  const credentialsPath = resolveGcpCredentialsPath({
+    pathEnvName: "GOOGLE_APPLICATION_CREDENTIALS",
+    jsonEnvName: "GCP_SPEECH_CREDENTIALS_JSON",
+    cacheFileName: "speech-credentials.json",
+    missingMessage:
+      "Falta GOOGLE_APPLICATION_CREDENTIALS o GCP_SPEECH_CREDENTIALS_JSON. Configurá las credenciales de Speech-to-Text.",
+    notFoundMessage: (resolved) =>
+      `No se encontró el archivo de credenciales: ${resolved}`,
+  });
+
+  const projectIdFromFile = readProjectIdFromCredentials(
+    credentialsPath,
+    "Speech",
+  );
   const projectId =
     process.env.GOOGLE_CLOUD_PROJECT?.trim() || projectIdFromFile;
 

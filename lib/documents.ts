@@ -4,15 +4,11 @@ import {
   MATERIA_PRIMA_ESTADO,
   resolveCampoSlug,
 } from "@/lib/projects/campos";
+import { getRawDocumentsPath } from "@/lib/runtime-paths";
 import { access, mkdir, writeFile } from "fs/promises";
 import path from "path";
 
-const PENDING_DIR = path.join(
-  process.cwd(),
-  "data",
-  "raw_documents",
-  "pending",
-);
+const PENDING_DIR = getRawDocumentsPath("pending");
 
 function sanitizeTitle(title: string): string {
   const slug = title

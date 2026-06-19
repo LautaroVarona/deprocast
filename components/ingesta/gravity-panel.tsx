@@ -1,12 +1,7 @@
 "use client";
 
 import { useIngesta } from "@/components/ingesta/ingesta-context";
-import {
-  MAX_BASE_WEIGHT,
-  MIN_BASE_WEIGHT,
-  SOURCE_TYPES,
-  type SourceType,
-} from "@/lib/document-constants";
+import { SOURCE_TYPES, type SourceType } from "@/lib/document-constants";
 import { BABEL_CAMPO_LABEL } from "@/lib/projects/campos";
 import { cn } from "@/lib/utils";
 import { MagnetIcon } from "lucide-react";
@@ -30,61 +25,12 @@ const ONDA_SUGGESTIONS = [
   "finanzas",
 ];
 
-function GravitySlider({
-  id,
-  label,
-  value,
-  onChange,
-  critical,
-}: {
-  id: string;
-  label: string;
-  value: number;
-  onChange: (value: number) => void;
-  critical?: boolean;
-}) {
-  return (
-    <div className="space-y-0.5">
-      <div className="flex items-center justify-between gap-2">
-        <label
-          htmlFor={id}
-          className="text-[10px] font-medium tracking-wide text-muted-foreground uppercase"
-        >
-          {label}
-        </label>
-        <span
-          className={cn(
-            "font-mono text-[11px] font-semibold tabular-nums",
-            critical ? "text-destructive" : "text-foreground",
-          )}
-        >
-          {value}
-        </span>
-      </div>
-      <input
-        id={id}
-        type="range"
-        min={MIN_BASE_WEIGHT}
-        max={MAX_BASE_WEIGHT}
-        step={1}
-        value={value}
-        onChange={(event) => onChange(Number(event.target.value))}
-        className={cn(
-          "h-1 w-full appearance-none rounded-full bg-muted accent-primary",
-          critical && "accent-destructive",
-        )}
-      />
-    </div>
-  );
-}
-
 export function GravityPanel() {
-  const { gravity, setGravity, campos, baseWeight } = useIngesta();
-  const isCritical = baseWeight >= 10;
+  const { gravity, setGravity, campos } = useIngesta();
   const isBabel = gravity.campoSlug === "babel";
 
   return (
-    <aside className="flex h-full w-[35%] shrink-0 flex-col border-r border-border bg-card">
+    <aside className="flex h-full w-[20%] min-w-[200px] max-w-[260px] shrink-0 flex-col border-r border-border bg-card">
       <div className="shrink-0 border-b border-border px-3 py-2">
         <div className="flex items-center gap-2">
           <span className="flex size-6 items-center justify-center rounded bg-muted text-muted-foreground">
@@ -94,7 +40,7 @@ export function GravityPanel() {
             <p className="font-mono text-[9px] tracking-[0.2em] text-muted-foreground uppercase">
               Anclaje
             </p>
-            <h2 className="text-xs font-semibold">Configuración de Gravedad</h2>
+            <h2 className="text-xs font-semibold">Configuración</h2>
           </div>
         </div>
       </div>
@@ -112,7 +58,7 @@ export function GravityPanel() {
             type="text"
             value={gravity.title}
             onChange={(event) => setGravity({ title: event.target.value })}
-            placeholder="Sin título..."
+            placeholder="Opcional…"
             className="h-7 w-full rounded border border-input bg-background px-2 font-mono text-[11px] outline-none placeholder:text-muted-foreground focus:border-ring focus:ring-1 focus:ring-ring"
           />
         </div>
@@ -134,7 +80,7 @@ export function GravityPanel() {
           </select>
           {isBabel && (
             <p className="font-mono text-[9px] text-amber-600/90 dark:text-amber-400/90">
-              Sumidero universal · {BABEL_CAMPO_LABEL}
+              Sumidero · {BABEL_CAMPO_LABEL}
             </p>
           )}
         </div>
@@ -185,49 +131,10 @@ export function GravityPanel() {
           </div>
         </div>
 
-        <div
-          className={cn(
-            "space-y-2 rounded border p-2.5",
-            isCritical
-              ? "border-destructive/40 bg-destructive/10 shadow-[0_0_12px] shadow-destructive/10"
-              : "border-border bg-muted/40",
-          )}
-        >
-          <div className="flex items-center justify-between">
-            <p className="text-[10px] font-medium tracking-wide text-muted-foreground uppercase">
-              Vectores de gravedad
-            </p>
-            <span
-              className={cn(
-                "font-mono text-[9px] tabular-nums",
-                isCritical ? "text-destructive" : "text-muted-foreground",
-              )}
-            >
-              peso {baseWeight}
-            </span>
-          </div>
-          <GravitySlider
-            id="ingesta-prioridad"
-            label="Prioridad"
-            value={gravity.prioridad}
-            onChange={(prioridad) => setGravity({ prioridad })}
-            critical={gravity.prioridad >= 10}
-          />
-          <GravitySlider
-            id="ingesta-impacto"
-            label="Impacto"
-            value={gravity.impacto}
-            onChange={(impacto) => setGravity({ impacto })}
-            critical={gravity.impacto >= 10}
-          />
-          <GravitySlider
-            id="ingesta-dificultad"
-            label="Dificultad"
-            value={gravity.dificultad}
-            onChange={(dificultad) => setGravity({ dificultad })}
-            critical={gravity.dificultad >= 10}
-          />
-        </div>
+        <p className="mt-auto font-mono text-[9px] leading-relaxed text-muted-foreground">
+          Los vectores de gravedad se calibran en Validar, después de la
+          purificación.
+        </p>
       </div>
     </aside>
   );

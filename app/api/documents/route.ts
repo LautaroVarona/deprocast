@@ -1,15 +1,10 @@
-import {
-  MAX_BASE_WEIGHT,
-  MIN_BASE_WEIGHT,
-  isSourceType,
-} from "@/lib/document-constants";
-import { saveRawDocument } from "@/lib/documents";
-import { ingestRawDocumentFile } from "@/lib/kg/sources";
+import { isSourceType } from "@/lib/document-constants";
+import { captureAndPurify } from "@/lib/purifier/capture";
 import { isCampoSlug, resolveCampoSlug } from "@/lib/projects/campos";
-import path from "node:path";
 import { NextRequest, NextResponse } from "next/server";
 
 export const runtime = "nodejs";
+export const maxDuration = 120;
 
 export async function POST(request: NextRequest) {
   try {
@@ -22,12 +17,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { title, source_type, base_weight, content, field } = body as {
+    const { title, source_type, content, field, onda } = body as {
       title?: unknown;
       source_type?: unknown;
-      base_weight?: unknown;
       content?: unknown;
       field?: unknown;
+      onda?: unknown;
     };
 
     if (typeof content !== "string" || content.trim().length === 0) {
@@ -44,49 +39,33 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (
-      typeof base_weight !== "number" ||
-      !Number.isInteger(base_weight) ||
-      base_weight < MIN_BASE_WEIGHT ||
-      base_weight > MAX_BASE_WEIGHT
-    ) {
-      return NextResponse.json(
-        {
-          error: `base_weight debe ser un entero entre ${MIN_BASE_WEIGHT} y ${MAX_BASE_WEIGHT}.`,
-        },
-        { status: 400 },
-      );
-    }
-
     if (field !== undefined && !isCampoSlug(field)) {
       return NextResponse.json({ error: "field inválido." }, { status: 400 });
     }
 
-    const { filename } = await saveRawDocument({
-      title: typeof title === "string" ? title : "",
-      sourceType: source_type,
-      baseWeight: base_weight,
-      content,
-      field: resolveCampoSlug(typeof field === "string" ? field : undefined),
+    const result = await captureAndPurify({
+      channel: "texto",
+      rawText: content,
+      gravity: {
+        title: typeof title === "string" ? title : undefined,
+        campoSlug: resolveCampoSlug(typeof field === "string" ? field : undefined),
+        sourceType: source_type,
+        onda: typeof onda === "string" ? onda : undefined,
+      },
     });
 
-    // Hook KG no bloqueante: ingiere el documento crudo al grafo.
-    const absPath = path.join(
-      process.cwd(),
-      "data",
-      "raw_documents",
-      "pending",
-      filename,
+    return NextResponse.json(
+      {
+        reviewId: result.reviewId,
+        captureId: result.captureId,
+        particula: result.particula,
+      },
+      { status: 201 },
     );
-    void ingestRawDocumentFile(absPath).catch((error) => {
-      console.error("KG document hook error:", error);
-    });
-
-    return NextResponse.json({ filename }, { status: 201 });
   } catch (error) {
     console.error("Save document error:", error);
     return NextResponse.json(
-      { error: "No se pudo guardar el documento." },
+      { error: "No se pudo capturar el documento." },
       { status: 500 },
     );
   }

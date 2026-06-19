@@ -132,3 +132,29 @@
     @apply font-sans;
   }
 }
+
+/* Vibe Calibrator — flip in-card */
+.calibrator-card-scene {
+  perspective: 1200px;
+}
+
+.calibrator-card-inner {
+  position: relative;
+  transform-style: preserve-3d;
+  transition: transform 450ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.calibrator-card-inner.is-flipped {
+  transform: rotateY(180deg);
+}
+
+.calibrator-card-face {
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.calibrator-card-back {
+  position: absolute;
+  inset: 0;
+  transform: rotateY(180deg);
+}

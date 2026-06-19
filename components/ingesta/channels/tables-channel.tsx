@@ -1,13 +1,13 @@
 "use client";
 
-import { importTableFileAction } from "@/app/ingesta/actions";
+import { captureTableFileAction } from "@/app/ingesta/actions";
 import { useIngesta } from "@/components/ingesta/ingesta-context";
 import { Button } from "@/components/ui/button";
+import { CAPTURE_SUCCESS_TOAST } from "@/lib/purifier/constants";
 import { cn } from "@/lib/utils";
 import {
-  CheckCircle2Icon,
   Loader2Icon,
-  Rows3Icon,
+  SparklesIcon,
   UploadCloudIcon,
   XCircleIcon,
 } from "lucide-react";
@@ -17,16 +17,6 @@ import { toast } from "sonner";
 
 type UploadState = "idle" | "uploading" | "done" | "error";
 
-type ImportResponse = {
-  imported: number;
-  skipped: number;
-  totalRows: number;
-  files: string[];
-  errors: string[];
-  columnMapping: Record<string, string>;
-  error?: string;
-};
-
 export function TablesChannel() {
   const { gravity } = useIngesta();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -34,7 +24,7 @@ export function TablesChannel() {
   const [fileName, setFileName] = useState<string | null>(null);
   const [status, setStatus] = useState<UploadState>("idle");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [lastResult, setLastResult] = useState<ImportResponse | null>(null);
+  const [lastReviewId, setLastReviewId] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
   const uploadFile = useCallback(
@@ -42,38 +32,51 @@ export function TablesChannel() {
       setFileName(file.name);
       setStatus("uploading");
       setErrorMessage(null);
-      setLastResult(null);
+      setLastReviewId(null);
 
       const formData = new FormData();
       formData.append("file", file);
       formData.append("campoSlug", gravity.campoSlug);
+      formData.append("onda", gravity.onda);
+      formData.append("sourceType", gravity.sourceType);
+      if (gravity.title.trim()) {
+        formData.append("title", gravity.title.trim());
+      }
 
       startTransition(async () => {
         try {
-          const data = await importTableFileAction(formData);
+          const data = await captureTableFileAction(formData);
 
           if (data.error) {
             throw new Error(data.error);
           }
 
-          const result = data as ImportResponse & { success?: boolean };
-          setLastResult(result);
+          const reviewId = "reviewId" in data ? data.reviewId : null;
+          setLastReviewId(reviewId ?? null);
           setStatus("done");
-          toast.success(
-            `${result.imported} proyecto${result.imported === 1 ? "" : "s"} importado${result.imported === 1 ? "" : "s"}`,
-          );
+          toast.success(CAPTURE_SUCCESS_TOAST, {
+            description: "Tabla capturada · purificación en curso.",
+            action: reviewId
+              ? {
+                  label: "Validar →",
+                  onClick: () => {
+                    window.location.href = `/validar?id=${reviewId}`;
+                  },
+                }
+              : undefined,
+          });
         } catch (error) {
           setStatus("error");
           const message =
             error instanceof Error
               ? error.message
-              : "No se pudo transmutar la tabla";
+              : "No se pudo capturar la tabla";
           setErrorMessage(message);
           toast.error(message);
         }
       });
     },
-    [gravity.campoSlug],
+    [gravity],
   );
 
   const handleFiles = useCallback(
@@ -90,10 +93,7 @@ export function TablesChannel() {
   return (
     <div className="flex h-full min-h-0 flex-col gap-2">
       <p className="shrink-0 font-mono text-[10px] text-muted-foreground">
-        Destino:{" "}
-        <span className="text-foreground/80">
-          data/projects/{gravity.campoSlug}/
-        </span>
+        .xlsx · .csv → prima materia → purificación automática
       </p>
 
       <div
@@ -123,7 +123,7 @@ export function TablesChannel() {
             {fileName ?? "Arrastrá .xlsx o .csv"}
           </p>
           <p className="font-mono text-[9px] text-muted-foreground">
-            Mapeo dinámico: Nombre · Prioridad · Tags → proyectos .md
+            La tabla se convierte en prima materia y pasa por el purificador
           </p>
         </div>
         <Button
@@ -133,7 +133,17 @@ export function TablesChannel() {
           disabled={isUploading}
           onClick={() => inputRef.current?.click()}
         >
-          Seleccionar archivo
+          {isUploading ? (
+            <>
+              <Loader2Icon className="animate-spin" />
+              Purificando…
+            </>
+          ) : (
+            <>
+              <SparklesIcon />
+              Seleccionar archivo
+            </>
+          )}
         </Button>
         <input
           ref={inputRef}
@@ -154,26 +164,16 @@ export function TablesChannel() {
         </p>
       )}
 
-      {lastResult && status === "done" && (
-        <div className="shrink-0 space-y-1 rounded border border-border bg-muted/50 p-2 font-mono text-[9px] text-muted-foreground">
-          <p className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400">
-            <CheckCircle2Icon className="size-3" />
-            {lastResult.imported} importados · {lastResult.skipped} omitidos ·{" "}
-            {lastResult.totalRows} filas
-          </p>
-          <div className="flex flex-wrap gap-2">
-            <span className="inline-flex items-center gap-1">
-              <Rows3Icon className="size-3" />
-              {Object.keys(lastResult.columnMapping).length} columnas
-            </span>
-            <Link
-              href="/proyectos"
-              className="text-foreground underline-offset-2 hover:underline"
-            >
-              Ver tablero →
-            </Link>
-          </div>
-        </div>
+      {lastReviewId && status === "done" && (
+        <p className="shrink-0 font-mono text-[9px] text-muted-foreground">
+          En cola de validación ·{" "}
+          <Link
+            href={`/validar?id=${lastReviewId}`}
+            className="text-primary underline-offset-2 hover:underline"
+          >
+            Revisar →
+          </Link>
+        </p>
       )}
     </div>
   );

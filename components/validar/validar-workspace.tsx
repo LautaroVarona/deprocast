@@ -1,439 +1,1081 @@
 "use client";
 
+
+
+import { PurificationAuditStepper } from "@/components/validar/purification-audit-stepper";
+
+import { ProjectLinkCombobox } from "@/components/validar/project-link-combobox";
+
+import { TagPillsInput } from "@/components/validar/tag-pills-input";
+
 import { Button } from "@/components/ui/button";
 import {
-  MAX_BASE_WEIGHT,
-  MIN_BASE_WEIGHT,
-} from "@/lib/document-constants";
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+
 import type { CampoInfo } from "@/lib/projects/campos";
-import type { PurifierReviewRecord } from "@/lib/purifier/types";
-import { cn } from "@/lib/utils";
+
+import type { Project } from "@/lib/projects/types";
+
 import {
+
+  formatIngestTimestamp,
+
+  MATERIA_OPTIONS,
+
+  normalizeMateria,
+
+  normalizeOrigen,
+
+  ORIGEN_OPTIONS,
+
+  resolveIngestTimestamp,
+
+  toIsoDate,
+
+} from "@/lib/purifier/hitl-metadata";
+
+import type { PurifierReviewRecord } from "@/lib/purifier/types";
+
+import { cn } from "@/lib/utils";
+
+import {
+
   CheckCircle2Icon,
+
   Loader2Icon,
+
   ShieldCheckIcon,
+
+  XCircleIcon,
+
 } from "lucide-react";
+
 import { useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useMemo, useState } from "react";
+
+import { useCallback, useEffect, useState } from "react";
+
 import { toast } from "sonner";
 
+
+
 function extractBodyFromMarkdown(markdown: string): string {
+
   const match = markdown.match(/##\s+Transcripción purificada\s*\n+([\s\S]*?)$/i);
+
   if (match?.[1]) return match[1].trim();
 
+
+
   const afterFrontmatter = markdown.replace(/^---\n[\s\S]*?\n---\n*/, "");
+
   const afterTitle = afterFrontmatter.replace(/^#\s+.+\n+/, "");
+
   return afterTitle.trim();
+
 }
 
-function highlightDudaLines(text: string): Array<{ line: string; isDuda: boolean }> {
-  return text.split("\n").map((line) => ({
-    line,
-    isDuda: /==DUDA:/i.test(line) || /===DUDA:/i.test(line),
-  }));
+
+
+function FieldLabel({ children }: { children: React.ReactNode }) {
+
+  return (
+
+    <label className="text-[9px] font-medium tracking-wide text-muted-foreground uppercase">
+
+      {children}
+
+    </label>
+
+  );
+
 }
 
-function DimensionInput({
+
+
+function SelectField({
+
   label,
+
   value,
+
   onChange,
+
+  options,
+
 }: {
+
   label: string;
+
   value: string;
+
   onChange: (value: string) => void;
+
+  options: ReadonlyArray<{ value: string; label: string }>;
+
 }) {
+
   return (
+
     <div className="space-y-0.5">
-      <label className="text-[9px] font-medium tracking-wide text-muted-foreground uppercase">
-        {label}
-      </label>
-      <input
-        type="text"
+
+      <FieldLabel>{label}</FieldLabel>
+
+      <select
+
         value={value}
-        onChange={(e) => onChange(e.target.value)}
+
+        onChange={(event) => onChange(event.target.value)}
+
         className="h-7 w-full rounded border border-input bg-background px-2 font-mono text-[10px] outline-none focus:border-ring focus:ring-1 focus:ring-ring"
-      />
+
+      >
+
+        {options.map((option) => (
+
+          <option key={option.value} value={option.value}>
+
+            {option.label}
+
+          </option>
+
+        ))}
+
+      </select>
+
     </div>
+
   );
+
 }
 
-function GravitySlider({
+
+
+function TextField({
+
   label,
+
   value,
+
   onChange,
+
 }: {
+
   label: string;
-  value: number;
-  onChange: (value: number) => void;
+
+  value: string;
+
+  onChange: (value: string) => void;
+
 }) {
+
   return (
+
     <div className="space-y-0.5">
-      <div className="flex justify-between">
-        <span className="text-[9px] font-medium text-muted-foreground uppercase">
-          {label}
-        </span>
-        <span className="font-mono text-[10px] tabular-nums">{value}</span>
-      </div>
+
+      <FieldLabel>{label}</FieldLabel>
+
       <input
-        type="range"
-        min={MIN_BASE_WEIGHT}
-        max={MAX_BASE_WEIGHT}
-        step={1}
+
+        type="text"
+
         value={value}
-        onChange={(e) => onChange(Number(e.target.value))}
-        className="h-1 w-full appearance-none rounded-full bg-muted accent-primary"
+
+        onChange={(event) => onChange(event.target.value)}
+
+        className="h-7 w-full rounded border border-input bg-background px-2 font-mono text-[10px] outline-none focus:border-ring focus:ring-1 focus:ring-ring"
+
       />
+
     </div>
+
   );
+
 }
+
+
+
+function ReadOnlyField({
+
+  label,
+
+  value,
+
+}: {
+
+  label: string;
+
+  value: string;
+
+}) {
+
+  return (
+
+    <div className="space-y-0.5">
+
+      <FieldLabel>{label}</FieldLabel>
+
+      <p className="rounded border border-border/60 bg-muted/20 px-2 py-1.5 font-mono text-[10px] text-foreground/90">
+
+        {value}
+
+      </p>
+
+    </div>
+
+  );
+
+}
+
+
 
 export function ValidarWorkspace() {
+
   const router = useRouter();
+
   const searchParams = useSearchParams();
+
   const selectedId = searchParams.get("id");
 
+
+
   const [records, setRecords] = useState<
+
     Array<{ reviewId: string; title: string; processedAt: string }>
+
   >([]);
+
   const [record, setRecord] = useState<PurifierReviewRecord | null>(null);
+
   const [campos, setCampos] = useState<CampoInfo[]>([]);
+
+  const [projects, setProjects] = useState<Project[]>([]);
+
   const [loading, setLoading] = useState(true);
+
   const [approving, setApproving] = useState(false);
 
+  const [rejecting, setRejecting] = useState(false);
+
+
+
   const [title, setTitle] = useState("");
+
   const [campoSlug, setCampoSlug] = useState("babel");
+
   const [body, setBody] = useState("");
-  const [metaTags, setMetaTags] = useState("");
+
+  const [metaTags, setMetaTags] = useState<string[]>([]);
+
+  const [linkedProjectIds, setLinkedProjectIds] = useState<string[]>([]);
+
+  const [ingestTimestamp, setIngestTimestamp] = useState("");
+
   const [dimensions, setDimensions] = useState({
-    materia: "",
-    particula: "",
+
+    materia: "texto",
+
     posicion: "",
+
     onda: "",
-    tiempo: "",
-    espacio: "",
+
+    origen: "web",
+
     field: "",
-    prioridad: 6,
-    impacto: 6,
-    dificultad: 6,
+
   });
 
+
+
   const loadQueue = useCallback(async () => {
+
     try {
+
       const response = await fetch("/api/purifier/review", { cache: "no-store" });
+
       if (!response.ok) return;
+
       const data = await response.json();
+
       setRecords(data.records ?? []);
+
     } catch {
+
       // no crítico
+
     }
+
   }, []);
+
+
 
   const loadRecord = useCallback(async (reviewId: string) => {
+
     setLoading(true);
+
     try {
+
       const response = await fetch(`/api/purifier/review/${reviewId}`, {
+
         cache: "no-store",
+
       });
+
       if (!response.ok) {
+
         setRecord(null);
+
         return;
+
       }
 
+
+
       const data = await response.json();
+
       const r = data.record as PurifierReviewRecord;
+
       setRecord(r);
 
+
+
+      const channel = r.source.metadata.channel;
+
       const d = r.suggestedDimensions;
+
+      const timestamp = resolveIngestTimestamp(r);
+
+
+
       setTitle(d.title);
-      setCampoSlug(r.gravity.campoSlug);
+
+      setCampoSlug(r.gravity.campoSlug ?? "babel");
+
       setBody(extractBodyFromMarkdown(r.normalizedMarkdown));
-      setMetaTags(r.metaTagsSecundarios.join(", "));
+
+      setMetaTags([...r.metaTagsSecundarios]);
+
+      setLinkedProjectIds([]);
+
+      setIngestTimestamp(timestamp);
+
       setDimensions({
-        materia: d.materia,
-        particula: d.particula,
+
+        materia: normalizeMateria(d.materia, channel),
+
         posicion: d.posicion,
+
         onda: d.onda,
-        tiempo: d.tiempo,
-        espacio: d.espacio,
+
+        origen: normalizeOrigen(d.espacio, channel),
+
         field: d.field,
-        prioridad: d.prioridad,
-        impacto: d.impacto,
-        dificultad: d.dificultad,
+
       });
+
     } catch {
+
       setRecord(null);
+
     } finally {
+
       setLoading(false);
+
     }
+
   }, []);
 
+
+
   useEffect(() => {
+
     void loadQueue();
+
     void (async () => {
+
       const response = await fetch("/api/proyectos", { cache: "no-store" });
+
       if (response.ok) {
+
         const data = await response.json();
+
         setCampos(data.campos ?? []);
+
+        setProjects(data.projects ?? []);
+
       }
+
     })();
+
   }, [loadQueue]);
 
+
+
   useEffect(() => {
+
     if (selectedId) {
+
       void loadRecord(selectedId);
+
     } else if (records.length > 0) {
+
       router.replace(`/validar?id=${records[0].reviewId}`);
+
     } else {
+
       setLoading(false);
+
     }
+
   }, [selectedId, records, loadRecord, router]);
 
-  const dudaPreview = useMemo(() => highlightDudaLines(body), [body]);
+
+
+  const dudaCount = record?.doubts.length ?? 0;
+
+
 
   const handleApprove = async () => {
+
     if (!record) return;
+
     setApproving(true);
 
+
+
     try {
+
       const response = await fetch("/api/purifier/approve", {
+
         method: "POST",
+
         headers: { "Content-Type": "application/json" },
+
         body: JSON.stringify({
+
           reviewId: record.reviewId,
+
           campoSlug,
+
           title,
+
           markdownBody: body,
-          metaTagsSecundarios: metaTags
-            .split(",")
-            .map((t) => t.trim())
-            .filter(Boolean),
-          dimensions,
+
+          metaTagsSecundarios: metaTags,
+
+          linkedProjectIds,
+
+          dimensions: {
+
+            materia: dimensions.materia,
+
+            particula: record.particula,
+
+            posicion: dimensions.posicion,
+
+            onda: dimensions.onda,
+
+            tiempo: toIsoDate(ingestTimestamp),
+
+            espacio: dimensions.origen,
+
+            field: dimensions.field || campoSlug,
+
+            prioridad: record.gravity.prioridad,
+
+            impacto: record.gravity.impacto,
+
+            dificultad: record.gravity.dificultad,
+
+          },
+
         }),
+
       });
+
+
 
       const data = await response.json();
+
       if (!response.ok) {
+
         throw new Error(data.error ?? "No se pudo aprobar el documento");
+
       }
+
+
 
       toast.success("Conocimiento coagulado.", {
-        description: data.relativePath,
+        description: data.kg?.skipped
+          ? `${data.relativePath} · KG sin cambios`
+          : data.kg
+            ? `${data.relativePath} · ${data.kg.nodes} nodos, ${data.kg.edges} relaciones en KG`
+            : data.relativePath,
       });
 
+
+
       await loadQueue();
+
       const remaining = records.filter((r) => r.reviewId !== record.reviewId);
+
       if (remaining.length > 0) {
+
         router.replace(`/validar?id=${remaining[0].reviewId}`);
+
       } else {
+
         setRecord(null);
+
         router.replace("/validar");
+
       }
+
     } catch (error) {
+
       toast.error(
+
         error instanceof Error ? error.message : "Error al aprobar",
+
       );
+
     } finally {
+
       setApproving(false);
+
     }
+
   };
 
+
+
+  const handleReject = async () => {
+
+    if (!record) return;
+
+    const confirmed = window.confirm(
+
+      "¿Rechazar esta validación? Se eliminará de la cola y no se coagulará conocimiento.",
+
+    );
+
+    if (!confirmed) return;
+
+    setRejecting(true);
+
+    toast.info("Rechazando validación…", {
+
+      description: "Esta validación está siendo rechazada y será eliminada.",
+
+    });
+
+
+
+    try {
+
+      const response = await fetch("/api/purifier/reject", {
+
+        method: "POST",
+
+        headers: { "Content-Type": "application/json" },
+
+        body: JSON.stringify({ reviewId: record.reviewId }),
+
+      });
+
+
+
+      const data = await response.json();
+
+      if (!response.ok) {
+
+        throw new Error(data.error ?? "No se pudo rechazar la validación");
+
+      }
+
+
+
+      toast.success("Validación rechazada.", {
+
+        description: "El registro fue eliminado de la cola de revisión.",
+
+      });
+
+
+
+      await loadQueue();
+
+      const remaining = records.filter((r) => r.reviewId !== record.reviewId);
+
+      if (remaining.length > 0) {
+
+        router.replace(`/validar?id=${remaining[0].reviewId}`);
+
+      } else {
+
+        setRecord(null);
+
+        router.replace("/validar");
+
+      }
+
+    } catch (error) {
+
+      toast.error(
+
+        error instanceof Error ? error.message : "Error al rechazar",
+
+      );
+
+    } finally {
+
+      setRejecting(false);
+
+    }
+
+  };
+
+
+
   return (
+
     <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden">
+
       <header className="flex shrink-0 items-center justify-between gap-3 border-b border-border px-4 py-2">
+
         <div className="flex items-center gap-2">
+
           <ShieldCheckIcon className="size-4 text-primary" />
+
           <div>
+
             <p className="font-mono text-[9px] tracking-[0.2em] text-muted-foreground uppercase">
+
               Aduana Humana · HITL
+
             </p>
+
             <h1 className="text-sm font-semibold">Validar y Coagular</h1>
+
           </div>
+
         </div>
+
+
 
         {records.length > 0 && (
+
           <select
+
             value={selectedId ?? ""}
+
             onChange={(e) => router.push(`/validar?id=${e.target.value}`)}
+
             className="h-7 max-w-xs rounded border border-input bg-background px-2 font-mono text-[10px] outline-none"
+
           >
+
             {records.map((r) => (
+
               <option key={r.reviewId} value={r.reviewId}>
+
                 {r.title}
+
               </option>
+
             ))}
+
           </select>
+
         )}
+
       </header>
 
+
+
       {loading ? (
+
         <div className="flex flex-1 items-center justify-center">
+
           <Loader2Icon className="size-6 animate-spin text-muted-foreground" />
+
         </div>
+
       ) : !record ? (
+
         <div className="flex flex-1 items-center justify-center p-6 text-center">
+
           <p className="font-mono text-xs text-muted-foreground">
-            Cola de revisión vacía. Enviá materia desde el canal de Audio.
+
+            Cola de revisión vacía. Ingestá prima materia desde cualquier canal
+
+            (texto, audio, tablas o visión) y aparecerá acá tras la purificación.
+
           </p>
+
         </div>
+
       ) : (
+
         <>
-          <div className="flex min-h-0 flex-1 overflow-hidden">
-            {/* Columna izquierda — materia cruda */}
-            <aside className="flex w-[40%] shrink-0 flex-col border-r border-border">
-              <div className="shrink-0 border-b border-border px-3 py-1.5">
+
+          <div className="grid min-h-0 flex-1 grid-cols-[minmax(220px,26%)_minmax(0,1fr)_minmax(260px,30%)] overflow-hidden">
+
+            <aside className="flex min-h-0 flex-col border-r border-border">
+
+              <div className="shrink-0 border-b border-border px-3 py-2">
+
                 <p className="font-mono text-[9px] tracking-wide text-muted-foreground uppercase">
+
                   Materia Prima Cruda
+
                 </p>
+
                 <p className="truncate font-mono text-[10px] text-foreground/80">
+
                   {record.source.filename}
+
                 </p>
+
               </div>
+
               <pre className="min-h-0 flex-1 overflow-y-auto p-3 font-mono text-[10px] leading-relaxed whitespace-pre-wrap text-muted-foreground">
+
                 {record.originalText}
+
               </pre>
+
             </aside>
 
-            {/* Columna derecha — formulario */}
-            <div className="flex min-w-0 flex-[60] flex-col overflow-hidden">
-              <div className="min-h-0 flex-1 overflow-y-auto p-3">
-                <div className="mb-3 grid grid-cols-2 gap-2">
-                  <DimensionInput
-                    label="Título"
-                    value={title}
-                    onChange={setTitle}
-                  />
-                  <div className="space-y-0.5">
-                    <label className="text-[9px] font-medium tracking-wide text-muted-foreground uppercase">
-                      Campo destino
-                    </label>
-                    <select
-                      value={campoSlug}
-                      onChange={(e) => setCampoSlug(e.target.value)}
-                      className="h-7 w-full rounded border border-input bg-background px-2 font-mono text-[10px] outline-none"
-                    >
-                      {campos.map((c) => (
-                        <option key={c.slug} value={c.slug}>
-                          {c.label}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <DimensionInput
-                    label="Materia"
-                    value={dimensions.materia}
-                    onChange={(v) => setDimensions((d) => ({ ...d, materia: v }))}
-                  />
-                  <DimensionInput
-                    label="Partícula"
-                    value={dimensions.particula}
-                    onChange={(v) => setDimensions((d) => ({ ...d, particula: v }))}
-                  />
-                  <DimensionInput
-                    label="Posición"
-                    value={dimensions.posicion}
-                    onChange={(v) => setDimensions((d) => ({ ...d, posicion: v }))}
-                  />
-                  <DimensionInput
-                    label="Onda"
-                    value={dimensions.onda}
-                    onChange={(v) => setDimensions((d) => ({ ...d, onda: v }))}
-                  />
-                  <DimensionInput
-                    label="Tiempo"
-                    value={dimensions.tiempo}
-                    onChange={(v) => setDimensions((d) => ({ ...d, tiempo: v }))}
-                  />
-                  <DimensionInput
-                    label="Espacio"
-                    value={dimensions.espacio}
-                    onChange={(v) => setDimensions((d) => ({ ...d, espacio: v }))}
-                  />
-                  <DimensionInput
-                    label="Field"
-                    value={dimensions.field}
-                    onChange={(v) => setDimensions((d) => ({ ...d, field: v }))}
-                  />
-                  <DimensionInput
-                    label="Meta tags"
-                    value={metaTags}
-                    onChange={setMetaTags}
-                  />
+
+
+            <section className="flex min-h-0 min-w-0 flex-col border-r border-border">
+
+              <PurificationAuditStepper
+                snapshots={record.stages}
+                originalText={record.originalText}
+                defaultExpanded={false}
+              />
+
+              <div className="shrink-0 border-b border-border px-4 py-2">
+
+                <p className="font-mono text-[9px] tracking-wide text-muted-foreground uppercase">
+
+                  Cuerpo Purificado
+
+                </p>
+
+                <p className="text-[10px] text-muted-foreground">
+
+                  Revisá y editá lo que la IA estructuró. Las líneas con{" "}
+
+                  <span className="rounded bg-yellow-300/80 px-1 font-mono text-yellow-950">
+
+                    ==DUDA:==
+
+                  </span>{" "}
+
+                  requieren atención humana.
+
+                </p>
+
+              </div>
+
+              <div className="relative min-h-0 flex-1 p-3">
+
+                <textarea
+
+                  value={body}
+
+                  onChange={(event) => setBody(event.target.value)}
+
+                  spellCheck={false}
+
+                  className={cn(
+
+                    "h-full min-h-[280px] w-full resize-none rounded border border-input bg-background p-3 font-mono text-[11px] leading-relaxed outline-none focus:border-ring focus:ring-1 focus:ring-ring",
+
+                    dudaCount > 0 && "focus:ring-yellow-400/40",
+
+                  )}
+
+                />
+
+              </div>
+
+            </section>
+
+
+
+            <aside className="flex min-h-0 flex-col overflow-hidden">
+
+              <div className="shrink-0 border-b border-border px-3 py-2">
+
+                <p className="font-mono text-[9px] tracking-wide text-muted-foreground uppercase">
+
+                  Metadatos y Relaciones
+
+                </p>
+
+              </div>
+
+
+
+              <div className="min-h-0 flex-1 space-y-3 overflow-y-auto p-3">
+
+                <TextField label="Título" value={title} onChange={setTitle} />
+
+
+
+                <div className="space-y-0.5">
+
+                  <FieldLabel>Campo destino</FieldLabel>
+
+                  <select
+
+                    value={campoSlug}
+
+                    onChange={(event) => setCampoSlug(event.target.value)}
+
+                    className="h-7 w-full rounded border border-input bg-background px-2 font-mono text-[10px] outline-none"
+
+                  >
+
+                    {campos.map((campo) => (
+
+                      <option key={campo.slug} value={campo.slug}>
+
+                        {campo.label}
+
+                      </option>
+
+                    ))}
+
+                  </select>
+
                 </div>
 
-                <div className="mb-3 grid grid-cols-3 gap-2 rounded border border-border bg-muted/30 p-2">
-                  <GravitySlider
-                    label="Prioridad"
-                    value={dimensions.prioridad}
-                    onChange={(v) => setDimensions((d) => ({ ...d, prioridad: v }))}
+
+
+                <SelectField
+
+                  label="Materia"
+
+                  value={dimensions.materia}
+
+                  onChange={(value) =>
+
+                    setDimensions((current) => ({ ...current, materia: value }))
+
+                  }
+
+                  options={MATERIA_OPTIONS}
+
+                />
+
+
+
+                <ReadOnlyField
+
+                  label="Tiempo"
+
+                  value={formatIngestTimestamp(ingestTimestamp)}
+
+                />
+
+
+
+                <SelectField
+
+                  label="Origen"
+
+                  value={dimensions.origen}
+
+                  onChange={(value) =>
+
+                    setDimensions((current) => ({ ...current, origen: value }))
+
+                  }
+
+                  options={ORIGEN_OPTIONS}
+
+                />
+
+
+
+                <Accordion className="rounded border border-border">
+                  <AccordionItem value="avanzado">
+                    <AccordionTrigger className="px-2 py-1.5 font-mono text-[9px] tracking-wide text-muted-foreground uppercase hover:no-underline">
+                      Avanzado
+                    </AccordionTrigger>
+                    <AccordionContent className="px-2">
+                      <div className="grid grid-cols-2 gap-2">
+                        <TextField
+                          label="Onda"
+                          value={dimensions.onda}
+                          onChange={(value) =>
+                            setDimensions((current) => ({ ...current, onda: value }))
+                          }
+                        />
+                        <TextField
+                          label="Posición"
+                          value={dimensions.posicion}
+                          onChange={(value) =>
+                            setDimensions((current) => ({
+                              ...current,
+                              posicion: value,
+                            }))
+                          }
+                        />
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
+                </Accordion>
+
+
+
+                <div className="space-y-1.5 rounded border border-border bg-muted/20 p-2">
+
+                  <FieldLabel>Conexiones</FieldLabel>
+
+                  <ProjectLinkCombobox
+
+                    projects={projects}
+
+                    selectedIds={linkedProjectIds}
+
+                    onChange={setLinkedProjectIds}
+
                   />
-                  <GravitySlider
-                    label="Impacto"
-                    value={dimensions.impacto}
-                    onChange={(v) => setDimensions((d) => ({ ...d, impacto: v }))}
-                  />
-                  <GravitySlider
-                    label="Dificultad"
-                    value={dimensions.dificultad}
-                    onChange={(v) => setDimensions((d) => ({ ...d, dificultad: v }))}
-                  />
+
                 </div>
+
+
 
                 <div className="space-y-1">
-                  <p className="font-mono text-[9px] tracking-wide text-muted-foreground uppercase">
-                    Cuerpo purificado
-                  </p>
-                  <div className="mb-2 max-h-24 overflow-y-auto rounded border border-border bg-muted/20 p-2">
-                    {dudaPreview.map((item, index) => (
-                      <div
-                        key={index}
-                        className={cn(
-                          "font-mono text-[10px] leading-relaxed",
-                          item.isDuda &&
-                            "bg-yellow-300/90 px-1 text-yellow-950 dark:bg-yellow-400/90 dark:text-yellow-950",
-                        )}
-                      >
-                        {item.line || "\u00a0"}
-                      </div>
-                    ))}
-                  </div>
-                  <textarea
-                    value={body}
-                    onChange={(e) => setBody(e.target.value)}
-                    className="min-h-[120px] w-full resize-y rounded border border-input bg-background p-2 font-mono text-[10px] leading-relaxed outline-none focus:border-ring focus:ring-1 focus:ring-ring"
-                  />
+
+                  <FieldLabel>Meta tags</FieldLabel>
+
+                  <TagPillsInput tags={metaTags} onChange={setMetaTags} />
+
                 </div>
+
               </div>
-            </div>
+
+            </aside>
+
           </div>
 
+
+
           <footer className="flex shrink-0 items-center justify-between border-t border-border bg-card px-4 py-2">
+
             <p className="font-mono text-[9px] text-muted-foreground">
-              {record.doubts.length > 0
-                ? `${record.doubts.length} zona${record.doubts.length === 1 ? "" : "s"} de duda · revisar líneas amarillas`
+
+              {dudaCount > 0
+
+                ? `${dudaCount} zona${dudaCount === 1 ? "" : "s"} de duda · revisar marcadores ==DUDA:== en el cuerpo`
+
                 : "Sin zonas de duda detectadas"}
+
             </p>
-            <Button
-              type="button"
-              size="default"
-              disabled={approving}
-              onClick={() => void handleApprove()}
-              className="gap-2 font-medium"
-            >
-              {approving ? (
-                <>
-                  <Loader2Icon className="size-4 animate-spin" />
-                  Coagulando…
-                </>
-              ) : (
-                <>
-                  <CheckCircle2Icon className="size-4" />
-                  Aprobar y Coagular Conocimiento
-                </>
-              )}
-            </Button>
+
+            <div className="flex items-center gap-2">
+
+              <Button
+
+                type="button"
+
+                size="default"
+
+                variant="destructive"
+
+                disabled={rejecting || approving}
+
+                onClick={() => void handleReject()}
+
+                className="gap-2 font-medium"
+
+              >
+
+                {rejecting ? (
+
+                  <>
+
+                    <Loader2Icon className="size-4 animate-spin" />
+
+                    Rechazando…
+
+                  </>
+
+                ) : (
+
+                  <>
+
+                    <XCircleIcon className="size-4" />
+
+                    Rechazado
+
+                  </>
+
+                )}
+
+              </Button>
+
+
+
+              <Button
+
+                type="button"
+
+                size="default"
+
+                disabled={approving || rejecting || !title.trim() || !body.trim()}
+
+                onClick={() => void handleApprove()}
+
+                className="gap-2 font-medium"
+
+              >
+
+                {approving ? (
+
+                  <>
+
+                    <Loader2Icon className="size-4 animate-spin" />
+
+                    Coagulando…
+
+                  </>
+
+                ) : (
+
+                  <>
+
+                    <CheckCircle2Icon className="size-4" />
+
+                    Aprobar y Coagular Conocimiento
+
+                  </>
+
+                )}
+
+              </Button>
+
+            </div>
+
           </footer>
+
         </>
+
       )}
+
     </div>
+
   );
+
 }
+

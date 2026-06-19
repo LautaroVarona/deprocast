@@ -1,3 +1,43 @@
+import type { NodeType } from "@/lib/kg/types";
+import { isNodeType } from "@/lib/kg/types";
+
+/** Mapeo de tipos del mock processor / modelo Entity legacy → NODE_TYPES. */
+const LEGACY_ENTITY_TYPE_MAP: Record<string, NodeType> = {
+  project: "proyecto",
+  proyecto: "proyecto",
+  technology: "tecnologia",
+  tecnologia: "tecnologia",
+  person: "persona",
+  persona: "persona",
+  organization: "organizacion",
+  organizacion: "organizacion",
+  place: "lugar",
+  lugar: "lugar",
+  idea: "idea",
+  law: "ley",
+  ley: "ley",
+  process: "proceso",
+  proceso: "proceso",
+  concept: "concepto",
+  concepto: "concepto",
+  document: "documento",
+  documento: "documento",
+  file: "archivo",
+  archivo: "archivo",
+  module: "modulo",
+  modulo: "modulo",
+};
+
+/**
+ * Convierte un tipo de entidad legacy (p. ej. "Project", "Technology") al
+ * vocabulario canónico del grafo (NODE_TYPES).
+ */
+export function mapLegacyEntityType(legacyType: string): NodeType {
+  const key = legacyType.trim().toLowerCase();
+  if (isNodeType(key)) return key;
+  return LEGACY_ENTITY_TYPE_MAP[key] ?? "concepto";
+}
+
 export function normalizeName(name: string): string {
   return name
     .trim()

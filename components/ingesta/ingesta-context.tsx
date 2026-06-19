@@ -26,9 +26,6 @@ export type IngestaGravity = {
   campoSlug: CampoSlug;
   onda: string;
   sourceType: SourceType;
-  prioridad: number;
-  impacto: number;
-  dificultad: number;
 };
 
 type IngestaContextValue = {
@@ -38,7 +35,6 @@ type IngestaContextValue = {
   campos: CampoInfo[];
   activeChannel: IngestaChannel;
   setActiveChannel: (channel: IngestaChannel) => void;
-  baseWeight: number;
 };
 
 const DEFAULT_GRAVITY: IngestaGravity = {
@@ -46,9 +42,6 @@ const DEFAULT_GRAVITY: IngestaGravity = {
   campoSlug: DEFAULT_CAMPO_SLUG,
   onda: "sin-clasificar",
   sourceType: "ai_chat",
-  prioridad: 6,
-  impacto: 6,
-  dificultad: 6,
 };
 
 const IngestaContext = createContext<IngestaContextValue | null>(null);
@@ -90,11 +83,6 @@ export function IngestaProvider({ children }: { children: ReactNode }) {
     setGravityState(DEFAULT_GRAVITY);
   }, []);
 
-  const baseWeight = useMemo(
-    () => Math.max(gravity.prioridad, gravity.impacto),
-    [gravity.prioridad, gravity.impacto],
-  );
-
   const value = useMemo(
     () => ({
       gravity,
@@ -103,9 +91,8 @@ export function IngestaProvider({ children }: { children: ReactNode }) {
       campos,
       activeChannel,
       setActiveChannel,
-      baseWeight,
     }),
-    [gravity, setGravity, resetGravity, campos, activeChannel, baseWeight],
+    [gravity, setGravity, resetGravity, campos, activeChannel],
   );
 
   return (

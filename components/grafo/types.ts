@@ -5,6 +5,7 @@ export type SnapshotNode = {
   confidence: number;
   degree: number;
   aliasesCount: number;
+  aliases?: string[];
 };
 
 export type SnapshotEdge = {
@@ -37,7 +38,7 @@ export type NeighborhoodEdge = {
   relationType: string;
   context: string;
   weight: number | null;
-  direction: "outgoing" | "incoming";
+  direction: "outgoing" | "incoming" | "self";
   neighbor: NodeSummary;
 };
 

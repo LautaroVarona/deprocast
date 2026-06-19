@@ -1,9 +1,14 @@
 "use client";
 
+import {
+  buildCaptureGravity,
+  postIngestaCapture,
+} from "@/components/ingesta/capture-client";
 import { useIngesta } from "@/components/ingesta/ingesta-context";
 import { UploadDropzone } from "@/components/upload-dropzone";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { CAPTURE_SUCCESS_TOAST } from "@/lib/purifier/constants";
 import { cn } from "@/lib/utils";
 import {
   CheckCircle2Icon,
@@ -27,21 +32,6 @@ type QueueStatus = {
 };
 
 type PurifyingState = Record<string, boolean>;
-
-function buildGravityPayload(
-  gravity: ReturnType<typeof useIngesta>["gravity"],
-  asset: AssetRow,
-) {
-  return {
-    title: gravity.title || asset.filename.replace(/\.[^.]+$/, ""),
-    campoSlug: gravity.campoSlug,
-    onda: gravity.onda,
-    sourceType: gravity.sourceType,
-    prioridad: gravity.prioridad,
-    impacto: gravity.impacto,
-    dificultad: gravity.dificultad,
-  };
-}
 
 export function AudioChannel() {
   const { gravity } = useIngesta();
@@ -125,30 +115,27 @@ export function AudioChannel() {
     (a) => !queuedAssetIds.has(a.id),
   ).length;
 
-  const purifyAsset = useCallback(
+  const ingestAsset = useCallback(
     async (asset: AssetRow, silent = false): Promise<boolean> => {
       setPurifying((current) => ({ ...current, [asset.id]: true }));
 
       try {
-        const response = await fetch("/api/purifier/purify", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            assetId: asset.id,
-            gravity: buildGravityPayload(gravity, asset),
-          }),
+        const data = await postIngestaCapture({
+          channel: "audio",
+          assetId: asset.id,
+          gravity: {
+            ...buildCaptureGravity(gravity),
+            title:
+              gravity.title ||
+              asset.filename.replace(/\.[^.]+$/, ""),
+          },
         });
-
-        const data = await response.json();
-        if (!response.ok) {
-          throw new Error(data.error ?? "No se pudo purificar la transcripción");
-        }
 
         setQueuedAssetIds((current) => new Set([...current, asset.id]));
 
         if (!silent) {
-          toast.success("Materia enviada a la aduana humana.", {
-            description: `Revisión: ${data.reviewId.slice(0, 8)}…`,
+          toast.success(CAPTURE_SUCCESS_TOAST, {
+            description: "El sistema está estructurando la transcripción.",
             action: {
               label: "Validar →",
               onClick: () => {
@@ -163,7 +150,7 @@ export function AudioChannel() {
         const message =
           error instanceof Error
             ? error.message
-            : "No se pudo purificar la transcripción";
+            : "No se pudo enviar el audio a purificación";
         if (!silent) toast.error(message);
         return false;
       } finally {
@@ -173,12 +160,12 @@ export function AudioChannel() {
     [gravity],
   );
 
-  const handlePurify = useCallback(
-    (asset: AssetRow) => void purifyAsset(asset),
-    [purifyAsset],
+  const handleIngest = useCallback(
+    (asset: AssetRow) => void ingestAsset(asset),
+    [ingestAsset],
   );
 
-  const handlePurifyAll = useCallback(async () => {
+  const handleIngestAll = useCallback(async () => {
     const pending = transcribedAssets.filter((a) => !queuedAssetIds.has(a.id));
     if (pending.length === 0) return;
 
@@ -187,7 +174,7 @@ export function AudioChannel() {
     let errorCount = 0;
 
     for (const asset of pending) {
-      const ok = await purifyAsset(asset, true);
+      const ok = await ingestAsset(asset, true);
       if (ok) successCount += 1;
       else errorCount += 1;
     }
@@ -195,24 +182,22 @@ export function AudioChannel() {
     setPurifyingAll(false);
 
     if (successCount > 0) {
-      toast.success(
-        `${successCount} transcripción${successCount === 1 ? "" : "es"} enviada${successCount === 1 ? "" : "s"} a purificación`,
-        {
-          action: {
-            label: "Validar →",
-            onClick: () => {
-              window.location.href = "/validar";
-            },
+      toast.success(CAPTURE_SUCCESS_TOAST, {
+        description: `${successCount} audio${successCount === 1 ? "" : "s"} en cola de purificación.`,
+        action: {
+          label: "Validar →",
+          onClick: () => {
+            window.location.href = "/validar";
           },
         },
-      );
+      });
     }
     if (errorCount > 0) {
       toast.error(
         `${errorCount} archivo${errorCount === 1 ? "" : "s"} no se pudo${errorCount === 1 ? "" : "ieron"} purificar`,
       );
     }
-  }, [transcribedAssets, queuedAssetIds, purifyAsset]);
+  }, [transcribedAssets, queuedAssetIds, ingestAsset]);
 
   const isAnyPurifying =
     purifyingAll || Object.values(purifying).some(Boolean);
@@ -221,7 +206,7 @@ export function AudioChannel() {
     <div className="flex h-full min-h-0 flex-col gap-2">
       <div className="flex shrink-0 items-center justify-between gap-2">
         <p className="font-mono text-[10px] text-muted-foreground">
-          .wav · .m4a · .mp3 · GCP Speech
+          .wav · .m4a · .mp3 · transcripción → purificación
         </p>
         <Badge variant="outline" className="font-mono text-[9px]">
           {queueLabel}
@@ -243,7 +228,7 @@ export function AudioChannel() {
               {queuedAssetIds.size > 0 && (
                 <span className="normal-case text-foreground/50">
                   {" "}
-                  · {queuedAssetIds.size} en HITL
+                  · {queuedAssetIds.size} en purificación
                 </span>
               )}
             </p>
@@ -254,7 +239,7 @@ export function AudioChannel() {
                   size="sm"
                   variant="secondary"
                   disabled={isAnyPurifying}
-                  onClick={() => void handlePurifyAll()}
+                  onClick={() => void handleIngestAll()}
                   className="h-6 gap-1 font-mono text-[9px]"
                 >
                   {purifyingAll ? (
@@ -265,7 +250,7 @@ export function AudioChannel() {
                   ) : (
                     <>
                       <SparklesIcon className="size-3" />
-                      Enviar todo a purificación
+                      Ingestar todo
                     </>
                   )}
                 </Button>
@@ -274,7 +259,7 @@ export function AudioChannel() {
                 href="/validar"
                 className="font-mono text-[9px] text-primary underline-offset-2 hover:underline"
               >
-                Aduana HITL →
+                Validar →
               </Link>
             </div>
           </div>
@@ -286,7 +271,7 @@ export function AudioChannel() {
               </p>
             ) : transcribedAssets.length === 0 ? (
               <p className="py-4 text-center font-mono text-[10px] text-muted-foreground">
-                Sin transcripciones listas para purificar.
+                Sin transcripciones listas para ingestar.
               </p>
             ) : (
               <ul className="space-y-2">
@@ -317,7 +302,7 @@ export function AudioChannel() {
                         {isQueued ? (
                           <span className="flex shrink-0 items-center gap-1 font-mono text-[9px] text-muted-foreground">
                             <CheckCircle2Icon className="size-3" />
-                            En cola HITL
+                            En purificación
                           </span>
                         ) : (
                           <Button
@@ -325,7 +310,7 @@ export function AudioChannel() {
                             size="sm"
                             variant="default"
                             disabled={isPurifying || isAnyPurifying}
-                            onClick={() => handlePurify(asset)}
+                            onClick={() => handleIngest(asset)}
                             className={cn(
                               "shrink-0 gap-1 font-mono text-[9px]",
                               isPurifying && "opacity-80",
@@ -334,12 +319,12 @@ export function AudioChannel() {
                             {isPurifying ? (
                               <>
                                 <Loader2Icon className="size-3 animate-spin" />
-                                Purificando Materia…
+                                Purificando…
                               </>
                             ) : (
                               <>
                                 <SparklesIcon className="size-3" />
-                                ✨ Enviar a Purificación
+                                Ingestar
                               </>
                             )}
                           </Button>

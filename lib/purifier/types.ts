@@ -39,8 +39,10 @@ export type FractalParent = {
 export type PurifierStageSnapshot = {
   station: number;
   name: string;
+  input?: string;
   output: string;
   meta?: Record<string, unknown>;
+  error?: string;
 };
 
 export type PurifierReviewRecord = {

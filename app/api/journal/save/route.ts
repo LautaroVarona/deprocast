@@ -3,7 +3,8 @@ import { isJournalOnda } from "@/lib/journal/types";
 import { ingestJournalFile } from "@/lib/kg/sources";
 import { DEFAULT_CAMPO_SLUG } from "@/lib/projects/campos";
 import { runPurificationPipeline } from "@/lib/purifier/engine";
-import path from "node:path";
+import { resolveDataRelativePath } from "@/lib/runtime-paths";
+import { ensureRuntimeReady } from "@/lib/runtime-setup";
 import { NextRequest, NextResponse } from "next/server";
 
 export const runtime = "nodejs";
@@ -11,6 +12,8 @@ export const maxDuration = 120;
 
 export async function POST(request: NextRequest) {
   try {
+    await ensureRuntimeReady();
+
     const body = (await request.json()) as {
       content?: string;
       onda?: string;
@@ -40,7 +43,7 @@ export async function POST(request: NextRequest) {
 
     // Hook KG no bloqueante: ingiere la entrada del diario al grafo.
     if (body.extractKg !== false) {
-      const absPath = path.join(process.cwd(), "data", entry.relativePath);
+      const absPath = resolveDataRelativePath(entry.relativePath);
       void ingestJournalFile(absPath).catch((error) => {
         console.error("KG journal hook error:", error);
       });

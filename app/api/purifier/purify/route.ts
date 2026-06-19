@@ -1,4 +1,4 @@
-import { runPurificationPipeline } from "@/lib/purifier/engine";
+import { captureAndPurify } from "@/lib/purifier/capture";
 import type { GravityInput } from "@/lib/purifier/types";
 import { prisma } from "@/lib/prisma";
 import { NextRequest, NextResponse } from "next/server";
@@ -14,13 +14,16 @@ export async function POST(request: NextRequest) {
       filename?: string;
       gravity?: GravityInput;
       extractKg?: boolean;
+      channel?: "texto" | "audio" | "tablas" | "vision";
     };
 
     let rawText = body.rawText?.trim() ?? "";
     let filename = body.filename ?? "transcripcion";
     const metadata: Record<string, string | null> = {};
+    let channel = body.channel ?? "texto";
 
     if (body.assetId) {
+      channel = "audio";
       const asset = await prisma.audioAsset.findUnique({
         where: { id: body.assetId },
         include: { transcript: true },
@@ -53,26 +56,23 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const record = await runPurificationPipeline(
+    const result = await captureAndPurify(
       {
+        channel,
         rawText,
         assetId: body.assetId,
         filename,
         metadata,
         gravity: body.gravity,
       },
-      // KG activo por defecto; solo se desactiva con extractKg: false explicito.
       { extractKg: body.extractKg !== false },
     );
 
     return NextResponse.json(
       {
-        reviewId: record.reviewId,
-        particula: record.particula,
-        doubts: record.doubts,
-        metaTagsSecundarios: record.metaTagsSecundarios,
-        suggestedDimensions: record.suggestedDimensions,
-        processedAt: record.processedAt,
+        reviewId: result.reviewId,
+        particula: result.particula,
+        captureId: result.captureId,
       },
       { status: 201 },
     );

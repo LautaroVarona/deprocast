@@ -1,10 +1,10 @@
-import {
-  confirmVisionContext,
-  processVisionUpload,
-} from "@/lib/ingesta/vision/extract";
+import { processVisionUpload } from "@/lib/ingesta/vision/extract";
+import { captureAndPurify } from "@/lib/purifier/capture";
+import { isCampoSlug, type CampoSlug } from "@/lib/projects/campos";
 import { NextRequest, NextResponse } from "next/server";
 
 export const runtime = "nodejs";
+export const maxDuration = 120;
 
 const ALLOWED_EXTENSIONS = [".png", ".jpg", ".jpeg", ".webp", ".gif", ".pdf", ".heic"];
 
@@ -15,49 +15,9 @@ function isAllowedVisionFile(filename: string): boolean {
 
 export async function POST(request: NextRequest) {
   try {
-    const contentType = request.headers.get("content-type") ?? "";
-
-    if (contentType.includes("application/json")) {
-      const body = (await request.json()) as {
-        action?: string;
-        projectId?: string;
-        markdown?: string;
-        originalFilename?: string;
-        tachoPath?: string;
-        mimeType?: string;
-      };
-
-      if (body.action !== "confirm") {
-        return NextResponse.json({ error: "Acción no reconocida." }, { status: 400 });
-      }
-
-      if (!body.projectId?.trim()) {
-        return NextResponse.json(
-          { error: "Seleccioná un proyecto de destino." },
-          { status: 400 },
-        );
-      }
-
-      if (!body.markdown?.trim()) {
-        return NextResponse.json(
-          { error: "No hay contenido purificado para confirmar." },
-          { status: 400 },
-        );
-      }
-
-      const result = await confirmVisionContext({
-        projectId: body.projectId.trim(),
-        markdown: body.markdown,
-        originalFilename: String(body.originalFilename ?? "documento"),
-        tachoPath: String(body.tachoPath ?? ""),
-        mimeType: String(body.mimeType ?? "application/octet-stream"),
-      });
-
-      return NextResponse.json(result, { status: 201 });
-    }
-
     const formData = await request.formData();
     const file = formData.get("file");
+    const rawCampo = formData.get("campoSlug");
 
     if (!(file instanceof File)) {
       return NextResponse.json(
@@ -76,21 +36,43 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    let campoSlug: CampoSlug | undefined;
+    if (typeof rawCampo === "string" && rawCampo.trim()) {
+      const trimmedCampo = rawCampo.trim();
+      if (!isCampoSlug(trimmedCampo)) {
+        return NextResponse.json(
+          { error: "El Campo seleccionado no es válido." },
+          { status: 400 },
+        );
+      }
+      campoSlug = trimmedCampo;
+    }
+
     const buffer = Buffer.from(await file.arrayBuffer());
 
     if (buffer.length === 0) {
       return NextResponse.json({ error: "El archivo está vacío." }, { status: 400 });
     }
 
-    const result = await processVisionUpload(buffer, file.name);
+    const extracted = await processVisionUpload(buffer, file.name);
+    const result = await captureAndPurify({
+      channel: "vision",
+      rawText: extracted.markdown,
+      filename: file.name,
+      metadata: {
+        tachoPath: extracted.tachoPath,
+        mimeType: extracted.mimeType,
+      },
+      gravity: { campoSlug },
+    });
 
-    return NextResponse.json(result, { status: 200 });
+    return NextResponse.json(result, { status: 201 });
   } catch (error) {
     console.error("Vision ingest error:", error);
     const message =
       error instanceof Error
         ? error.message
-        : "No se pudo procesar el documento visual.";
+        : "No se pudo capturar el documento visual.";
 
     return NextResponse.json({ error: message }, { status: 500 });
   }

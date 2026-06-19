@@ -1,3 +1,4 @@
+import { getDataPath } from "@/lib/runtime-paths";
 import { access, mkdir, readdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { parseLaboralCsv } from "@/lib/laboral/csv-parser";
@@ -8,13 +9,7 @@ import {
 } from "@/lib/laboral/markdown";
 import type { ImportResult, LaboralChallenge } from "@/lib/laboral/types";
 
-export const LABORAL_PENDING_DIR = path.join(
-  process.cwd(),
-  "data",
-  "projects",
-  "laboral",
-  "pending",
-);
+export const LABORAL_PENDING_DIR = getDataPath("projects", "laboral", "pending");
 
 async function fileExists(filePath: string): Promise<boolean> {
   try {

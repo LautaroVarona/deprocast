@@ -10,6 +10,7 @@ import {
   getVertexModelName,
 } from "@/lib/vertex-gemini/client";
 import { isRetryableVertexError } from "@/lib/vertex-gemini/errors";
+import { getRawDocumentsPath } from "@/lib/runtime-paths";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -19,12 +20,7 @@ export const PURIFIER_DEDUP_THRESHOLD = 0.82;
 export const DEFAULT_VERTEX_MODEL = "gemini-2.5-flash";
 export const DUDA_MARKER_REGEX = /===DUDA:\s*(.+?)===/gs;
 
-const REVIEW_DIR = path.join(
-  process.cwd(),
-  "data",
-  "raw_documents",
-  "review",
-);
+const REVIEW_DIR = getRawDocumentsPath("review");
 
 const SEVEN_DIMENSION_KEYS = [
   "materia",

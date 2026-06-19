@@ -37,22 +37,8 @@ export default async function AudioDetailPage({ params }: PageProps) {
   }
 
   const parentChunks = asset.transcript?.parentChunks ?? [];
-
-  const entities = Array.from(
-    new Map(
-      parentChunks
-        .flatMap((chunk) => chunk.entities.map((item) => item.entity))
-        .map((entity) => [entity.id, entity]),
-    ).values(),
-  );
-
-  const tags = Array.from(
-    new Map(
-      parentChunks
-        .flatMap((chunk) => chunk.tags.map((item) => item.tag))
-        .map((tag) => [tag.id, tag]),
-    ).values(),
-  );
+  const entities = asset.kgEntities;
+  const tags = asset.kgTags;
 
   return (
     <div className="mx-auto flex w-full max-w-4xl flex-col gap-8 px-4 py-10">
@@ -128,7 +114,7 @@ export default async function AudioDetailPage({ params }: PageProps) {
                   {entities.length > 0 ? (
                     entities.map((entity) => (
                       <Badge key={entity.id} variant="secondary">
-                        {entity.name}
+                        {entity.primaryName}
                         <span className="text-muted-foreground">
                           · {entity.type}
                         </span>
@@ -147,7 +133,7 @@ export default async function AudioDetailPage({ params }: PageProps) {
                   {tags.length > 0 ? (
                     tags.map((tag) => (
                       <Badge key={tag.id} variant="outline">
-                        {tag.name}
+                        {tag.primaryName}
                       </Badge>
                     ))
                   ) : (

@@ -1,5 +1,5 @@
 export * from "@/lib/kg/types";
-export { normalizeName, namesMatchFuzzy } from "@/lib/kg/normalize";
+export { normalizeName, namesMatchFuzzy, mapLegacyEntityType } from "@/lib/kg/normalize";
 export { KG_EXTRACT_PROMPT } from "@/lib/kg/prompts";
 export { parseLlmKgExtraction } from "@/lib/kg/parse";
 export {
@@ -45,3 +45,4 @@ export {
   getKgStats,
 } from "@/lib/kg/analytics";
 export { exportGraphJson, exportGraphML } from "@/lib/kg/export";
+export { reconcileLegacyEntities, type ReconcileReport } from "@/lib/kg/reconcile-legacy";

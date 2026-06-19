@@ -6,10 +6,11 @@ import {
   ingestDocumentSource,
   type SourceIngestSummary,
 } from "@/lib/kg/sources/common";
+import { getRawDocumentsPath } from "@/lib/runtime-paths";
 
 const RAW_DOCUMENT_DIRS = [
-  path.join(process.cwd(), "data", "raw_documents", "pending"),
-  path.join(process.cwd(), "data", "raw_documents", "completed"),
+  getRawDocumentsPath("pending"),
+  getRawDocumentsPath("completed"),
 ];
 
 function parseFrontmatter(source: string): Record<string, string> {

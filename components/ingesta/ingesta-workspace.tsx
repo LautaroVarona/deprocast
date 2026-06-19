@@ -30,7 +30,7 @@ function IngestaWorkspaceInner() {
     <div className="flex h-full min-h-0 flex-1 overflow-hidden bg-background text-foreground">
       <GravityPanel />
 
-      <div className="flex min-w-0 flex-[65] flex-col">
+      <div className="flex min-w-0 flex-[80] flex-col">
         <header className="flex shrink-0 items-center justify-between gap-3 border-b border-border px-4 py-2">
           <div className="min-w-0">
             <p className="font-mono text-[10px] tracking-[0.25em] text-muted-foreground uppercase">

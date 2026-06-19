@@ -2,10 +2,10 @@ import fs from "fs";
 import path from "path";
 import { GcpSpeechError } from "@/lib/gcp-speech/errors";
 import { getFfmpegPath, runFfmpeg, runFfprobe } from "@/lib/gcp-speech/ffmpeg-bin";
+import { resolveUploadPath } from "@/lib/runtime-paths";
 
 export function resolveInputPath(fileUrl: string): string {
-  const relativePath = fileUrl.startsWith("/") ? fileUrl.slice(1) : fileUrl;
-  return path.resolve(process.cwd(), "public", relativePath);
+  return resolveUploadPath(fileUrl);
 }
 
 export async function convertToWav(

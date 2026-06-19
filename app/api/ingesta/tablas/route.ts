@@ -1,8 +1,10 @@
 import { isCampoSlug, type CampoSlug } from "@/lib/projects/campos";
-import { importStructuredTable } from "@/lib/ingesta/tablas/import";
+import { tableBufferToRawText } from "@/lib/ingesta/tablas/to-raw-text";
+import { captureAndPurify } from "@/lib/purifier/capture";
 import { NextRequest, NextResponse } from "next/server";
 
 export const runtime = "nodejs";
+export const maxDuration = 120;
 
 const ALLOWED_EXTENSIONS = [".csv", ".tsv", ".txt", ".xlsx", ".xls"];
 
@@ -31,7 +33,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    let campoSlug: CampoSlug | null = null;
+    let campoSlug: CampoSlug | undefined;
     if (typeof rawCampo === "string" && rawCampo.trim()) {
       const trimmedCampo = rawCampo.trim();
       if (!isCampoSlug(trimmedCampo)) {
@@ -49,22 +51,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "El archivo está vacío." }, { status: 400 });
     }
 
-    const result = await importStructuredTable({
-      buffer,
+    const rawText = await tableBufferToRawText(buffer, file.name);
+    const result = await captureAndPurify({
+      channel: "tablas",
+      rawText,
       filename: file.name,
-      campoSlug,
+      gravity: { campoSlug },
     });
-
-    if (result.imported === 0 && result.totalRows > 0) {
-      return NextResponse.json(
-        {
-          error: "No se pudo estructurar ningún proyecto desde la tabla.",
-          details: result.errors,
-          ...result,
-        },
-        { status: 422 },
-      );
-    }
 
     return NextResponse.json(result, { status: 201 });
   } catch (error) {
@@ -72,7 +65,7 @@ export async function POST(request: NextRequest) {
     const message =
       error instanceof Error
         ? error.message
-        : "No se pudo procesar la tabla estructurada.";
+        : "No se pudo capturar la tabla.";
 
     return NextResponse.json({ error: message }, { status: 500 });
   }

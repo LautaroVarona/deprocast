@@ -1,7 +1,8 @@
 import { getCampoLabel, getCampoSlugFromLabel, type CampoSlug } from "@/lib/projects/campos";
+import { getDataPath } from "@/lib/runtime-paths";
 import path from "node:path";
 
-export const PROJECTS_ROOT_DIR = path.join(process.cwd(), "data", "projects");
+export const PROJECTS_ROOT_DIR = getDataPath("projects");
 
 export { getCampoLabel, getCampoSlugFromLabel };
 

@@ -1,6 +1,7 @@
+import { getDataPath } from "@/lib/runtime-paths";
 import path from "node:path";
 
-export const JOURNAL_ROOT = path.join(process.cwd(), "data", "journal");
+export const JOURNAL_ROOT = getDataPath("journal");
 
 export function getMonthDirName(year: number, month: number): string {
   return `${year}-${String(month).padStart(2, "0")}`;

@@ -15,9 +15,14 @@ export type TranscriptionResult = {
   confidence: number | null;
 };
 
-type V2RecognizeResponse = Awaited<
-  ReturnType<v2.SpeechClient["recognize"]>
->[0];
+type V2RecognizeResponse = {
+  results?: Array<{
+    alternatives?: Array<{
+      transcript?: string | null;
+      confidence?: number | null;
+    }> | null;
+  }> | null;
+};
 
 function extractV2Result(response: V2RecognizeResponse): TranscriptionResult {
   const results = response.results ?? [];

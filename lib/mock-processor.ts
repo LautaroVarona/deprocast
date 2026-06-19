@@ -1,3 +1,6 @@
+import { ingestKgExtraction } from "@/lib/kg/ingest";
+import { mapLegacyEntityType } from "@/lib/kg/normalize";
+import type { LlmEntity, LlmKgExtraction, LlmRelation } from "@/lib/kg/types";
 import { prisma } from "@/lib/prisma";
 
 const MOCK_TRANSCRIPT = `Hoy quiero hablar sobre la preproducción de El Fotographer, un proyecto audiovisual que estamos desarrollando para Deprocast. La clave está en el guion: cada escena debe tener intención cinematográfica, pensando en el ritmo narrativo y la paleta visual antes de grabar un solo frame. La cinematografía no es decoración, es parte del lenguaje que usa el director para contar la historia.
@@ -70,31 +73,61 @@ const MOCK_PARENT_CHUNKS: MockParentChunk[] = [
   },
 ];
 
-type TransactionClient = Parameters<
-  Parameters<typeof prisma.$transaction>[0]
->[0];
+function buildCoOccurrenceRelations(names: string[]): LlmRelation[] {
+  const relations: LlmRelation[] = [];
+  const unique = [...new Set(names.map((n) => n.trim()).filter(Boolean))];
 
-async function upsertEntity(
-  tx: TransactionClient,
-  name: string,
-  type: string,
-) {
-  return tx.entity.upsert({
-    where: { name },
-    update: { type },
-    create: { name, type },
-  });
+  for (let i = 0; i < unique.length; i += 1) {
+    for (let j = i + 1; j < unique.length; j += 1) {
+      relations.push({
+        fromName: unique[i],
+        toName: unique[j],
+        relationType: "relacionado_con",
+        context: "Co-ocurrencia en el mismo parent chunk (mock processor).",
+        weight: 2,
+        confidence: 0.6,
+      });
+    }
+  }
+
+  return relations;
 }
 
-async function upsertTag(tx: TransactionClient, name: string) {
-  return tx.tag.upsert({
-    where: { name },
-    update: {},
-    create: { name },
-  });
+function buildChunkExtraction(parent: MockParentChunk): LlmKgExtraction {
+  const entities: LlmEntity[] = parent.entities.map((entity) => ({
+    name: entity.name,
+    type: mapLegacyEntityType(entity.type),
+    metadata: { source: "mock_processor", legacyType: entity.type },
+    mentions: [{ fragment: entity.name }],
+    confidence: 0.7,
+  }));
+
+  for (const tagName of parent.tags) {
+    const name = tagName.trim();
+    if (!name) continue;
+    entities.push({
+      name,
+      type: "concepto",
+      metadata: { rol: "meta_tag", source: "mock_processor" },
+      mentions: [{ fragment: name }],
+      confidence: 0.65,
+    });
+  }
+
+  const allNames = [
+    ...parent.entities.map((e) => e.name),
+    ...parent.tags,
+  ];
+
+  return {
+    entities,
+    relations: buildCoOccurrenceRelations(allNames),
+  };
 }
 
 export async function processAssetMock(assetId: string): Promise<void> {
+  const createdChunkIds: string[] = [];
+
   await prisma.$transaction(async (tx) => {
     await tx.transcript.deleteMany({ where: { assetId } });
 
@@ -119,26 +152,7 @@ export async function processAssetMock(assetId: string): Promise<void> {
           },
         },
       });
-
-      for (const entityData of parent.entities) {
-        const entity = await upsertEntity(tx, entityData.name, entityData.type);
-        await tx.parentChunkEntity.create({
-          data: {
-            parentChunkId: parentChunk.id,
-            entityId: entity.id,
-          },
-        });
-      }
-
-      for (const tagName of parent.tags) {
-        const tag = await upsertTag(tx, tagName);
-        await tx.parentChunkTag.create({
-          data: {
-            parentChunkId: parentChunk.id,
-            tagId: tag.id,
-          },
-        });
-      }
+      createdChunkIds.push(parentChunk.id);
     }
 
     await tx.audioAsset.update({
@@ -146,6 +160,46 @@ export async function processAssetMock(assetId: string): Promise<void> {
       data: { status: "COMPLETED" },
     });
   });
+
+  for (let i = 0; i < MOCK_PARENT_CHUNKS.length; i += 1) {
+    const parent = MOCK_PARENT_CHUNKS[i];
+    const parentChunkId = createdChunkIds[i];
+
+    await ingestKgExtraction({
+      extraction: buildChunkExtraction(parent),
+      source: {
+        type: "parent_chunk",
+        id: parentChunkId,
+        metadata: { assetId, source: "mock_processor" },
+        confidence: 0.7,
+      },
+    });
+  }
+
+  const assetEntities = dedupeEntities(
+    MOCK_PARENT_CHUNKS.flatMap((p) => buildChunkExtraction(p).entities),
+  );
+
+  if (assetEntities.length > 0) {
+    await ingestKgExtraction({
+      extraction: { entities: assetEntities, relations: [] },
+      source: {
+        type: "audio_asset",
+        id: assetId,
+        metadata: { source: "mock_processor" },
+        confidence: 0.7,
+      },
+    });
+  }
+}
+
+function dedupeEntities(entities: LlmEntity[]): LlmEntity[] {
+  const seen = new Map<string, LlmEntity>();
+  for (const entity of entities) {
+    const key = `${entity.type}:${entity.name.trim().toLowerCase()}`;
+    if (!seen.has(key)) seen.set(key, entity);
+  }
+  return [...seen.values()];
 }
 
 export function delay(ms: number): Promise<void> {

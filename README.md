@@ -1,36 +1,69 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Deprocast
 
-## Getting Started
+Aplicación Next.js para ingesta de audio, transcripción, purificación con Vertex AI y grafo de conocimiento.
 
-First, run the development server:
+## Desarrollo local
 
 ```bash
+npm install
+cp .env.example .env
+# Completá las credenciales GCP en .env
+npx prisma migrate deploy
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Abrí [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Subir a GitHub
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+git add .
+git commit -m "Preparar despliegue en Vercel"
+git push origin main
+```
 
-## Learn More
+No subas `.env` ni los archivos `*.json` de cuentas de servicio (ya están en `.gitignore`).
 
-To learn more about Next.js, take a look at the following resources:
+## Desplegar en Vercel
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+1. Importá el repo en [vercel.com/new](https://vercel.com/new).
+2. Framework: **Next.js** (detectado automáticamente).
+3. Build Command: `npm run vercel-build`
+4. Variables de entorno (Settings → Environment Variables):
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+| Variable | Descripción |
+|----------|-------------|
+| `GCP_SPEECH_CREDENTIALS_JSON` | JSON completo de la cuenta de servicio Speech-to-Text |
+| `GOOGLE_CLOUD_PROJECT` | ID del proyecto GCP Speech |
+| `VERTEX_CREDENTIALS_JSON` | JSON completo de la cuenta de servicio Vertex AI |
+| `GOOGLE_CLOUD_PROJECT2` | ID del proyecto Vertex (varonapi) |
+| `VERTEX_LOCATION` | `europe-west1` |
+| `VERTEX_MODEL` | `gemini-2.5-flash` |
+| `GCP_SPEECH_LOCATION` | `us-central1` |
+| `GCP_SPEECH_MODEL` | `chirp_2` |
+| `GCP_SPEECH_LANGUAGE` | `es-ES` |
 
-## Deploy on Vercel
+Opcional: `DATABASE_URL` (por defecto usa SQLite en `/tmp` en Vercel).
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+5. Deploy.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### Rutas de la app
+
+| Ruta | Módulo |
+|------|--------|
+| `/` | Dashboard |
+| `/ingesta` | Captura multimodal |
+| `/diario` | Diario |
+| `/validar` | Revisión HITL |
+| `/calibrador` | Calibrador de vibe |
+| `/proyectos` | Proyectos |
+| `/grafo` | Grafo de conocimiento |
+| `/laboral` | Desafíos laborales |
+| `/audio/[id]` | Detalle de audio |
+
+Los audios subidos en Vercel se sirven por `/api/uploads/[filename]` (en local siguen en `/uploads/`).
+
+### Limitaciones en Vercel
+
+- Los datos (SQLite, journal, documentos, uploads) viven en `/tmp` y **no persisten** entre cold starts ni entre instancias. Es adecuado para demo; para producción conviene Turso/Postgres y almacenamiento externo (S3, Vercel Blob).
+- Las rutas de API con procesamiento largo requieren plan **Pro** (`maxDuration: 120`).

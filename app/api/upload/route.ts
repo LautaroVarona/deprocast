@@ -1,5 +1,10 @@
 import { isAllowedAudioFile } from "@/lib/audio-validation";
 import { prisma } from "@/lib/prisma";
+import {
+  getUploadDir,
+  getUploadPublicUrl,
+} from "@/lib/runtime-paths";
+import { ensureRuntimeReady } from "@/lib/runtime-setup";
 import { randomUUID } from "crypto";
 import { mkdir, stat, writeFile } from "fs/promises";
 import { NextRequest, NextResponse } from "next/server";
@@ -7,10 +12,10 @@ import path from "path";
 
 export const runtime = "nodejs";
 
-const UPLOAD_DIR = path.join(process.cwd(), "public", "uploads");
-
 export async function POST(request: NextRequest) {
   try {
+    await ensureRuntimeReady();
+
     const formData = await request.formData();
     const file = formData.get("file");
 
@@ -28,11 +33,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    await mkdir(UPLOAD_DIR, { recursive: true });
+    const uploadDir = getUploadDir();
+    await mkdir(uploadDir, { recursive: true });
 
     const extension = path.extname(file.name).toLowerCase();
     const storedFilename = `${randomUUID()}${extension}`;
-    const filePath = path.join(UPLOAD_DIR, storedFilename);
+    const filePath = path.join(uploadDir, storedFilename);
 
     const buffer = Buffer.from(await file.arrayBuffer());
     await writeFile(filePath, buffer);
@@ -42,7 +48,7 @@ export async function POST(request: NextRequest) {
     const asset = await prisma.audioAsset.create({
       data: {
         filename: file.name,
-        fileUrl: `/uploads/${storedFilename}`,
+        fileUrl: getUploadPublicUrl(storedFilename),
         originalCreatedAt: fileStats.birthtime,
         status: "PENDING",
       },

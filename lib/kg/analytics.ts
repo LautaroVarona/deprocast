@@ -245,6 +245,7 @@ export type GraphSnapshotNode = {
   confidence: number;
   degree: number;
   aliasesCount: number;
+  aliases: string[];
 };
 
 export type GraphSnapshotEdge = {
@@ -294,14 +295,18 @@ export async function getGraphSnapshot(input: {
   }
 
   return {
-    nodes: nodes.map((node) => ({
-      id: node.id,
-      primaryName: node.primaryName,
-      type: node.type,
-      confidence: node.confidence,
-      degree: degree.get(node.id) ?? 0,
-      aliasesCount: parseAliasesJson(node.aliases).length,
-    })),
+    nodes: nodes.map((node) => {
+      const aliases = parseAliasesJson(node.aliases);
+      return {
+        id: node.id,
+        primaryName: node.primaryName,
+        type: node.type,
+        confidence: node.confidence,
+        degree: degree.get(node.id) ?? 0,
+        aliasesCount: aliases.length,
+        aliases,
+      };
+    }),
     edges: filteredEdges.map((edge) => ({
       id: edge.id,
       source: edge.sourceNodeId,
