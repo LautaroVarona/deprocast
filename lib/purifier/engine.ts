@@ -3,8 +3,6 @@ import "dotenv/config";
 
 import type { GenerativeModel } from "@google-cloud/vertexai";
 import { randomUUID } from "node:crypto";
-import { access, mkdir, readdir, readFile, unlink, writeFile } from "node:fs/promises";
-import path from "node:path";
 
 import { clampScale } from "@/lib/projects/priority";
 import {
@@ -31,14 +29,23 @@ import type {
   SevenDimensions,
 } from "@/lib/purifier/types";
 import { DUDA_MARKER_REGEX } from "@/lib/purifier/types";
-import { getRawDocumentsPath } from "@/lib/runtime-paths";
+import {
+  saveReviewRecord,
+} from "@/lib/purifier/review-store";
+export {
+  REVIEW_DIR,
+  deleteReviewRecord,
+  getReviewQueueAssetIds,
+  listReviewRecords,
+  loadReviewRecord,
+  saveReviewRecord,
+} from "@/lib/purifier/review-store";
 
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
 
 export const PURIFIER_DEDUP_THRESHOLD = 0.82;
-export const REVIEW_DIR = getRawDocumentsPath("review");
 
 const WHISPER_LOOP_PHRASES = [
   "qué es lo que está pasando",
@@ -577,116 +584,6 @@ export function extractDoubts(text: string): string[] {
   }
 
   return doubts;
-}
-
-// ---------------------------------------------------------------------------
-// Review persistence
-// ---------------------------------------------------------------------------
-
-async function fileExists(filePath: string): Promise<boolean> {
-  try {
-    await access(filePath);
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-export async function saveReviewRecord(
-  record: PurifierReviewRecord,
-): Promise<{ filepath: string; reviewId: string }> {
-  await mkdir(REVIEW_DIR, { recursive: true });
-
-  const reviewId = record.reviewId;
-  let filename = `${reviewId}.json`;
-  let suffix = 0;
-
-  while (await fileExists(path.join(REVIEW_DIR, filename))) {
-    suffix += 1;
-    filename = `${reviewId}_${suffix}.json`;
-    if (suffix > 50) break;
-  }
-
-  const filepath = path.join(REVIEW_DIR, filename);
-  await writeFile(filepath, `${JSON.stringify(record, null, 2)}\n`, "utf-8");
-
-  return { filepath, reviewId };
-}
-
-export async function listReviewRecords(): Promise<
-  Array<{
-    reviewId: string;
-    filename: string;
-    title: string;
-    processedAt: string;
-    assetId?: string;
-  }>
-> {
-  await mkdir(REVIEW_DIR, { recursive: true });
-
-  const entries = await readdir(REVIEW_DIR, { withFileTypes: true });
-  const records: Array<{
-    reviewId: string;
-    filename: string;
-    title: string;
-    processedAt: string;
-    assetId?: string;
-  }> = [];
-
-  for (const entry of entries) {
-    if (!entry.isFile() || !entry.name.endsWith(".json")) continue;
-
-    try {
-      const content = await readFile(path.join(REVIEW_DIR, entry.name), "utf-8");
-      const parsed = JSON.parse(content) as PurifierReviewRecord;
-      records.push({
-        reviewId: parsed.reviewId,
-        filename: entry.name,
-        title: parsed.suggestedDimensions?.title ?? parsed.particula,
-        processedAt: parsed.processedAt,
-        assetId: parsed.assetId,
-      });
-    } catch {
-      // skip corrupt files
-    }
-  }
-
-  return records.sort(
-    (a, b) => new Date(b.processedAt).getTime() - new Date(a.processedAt).getTime(),
-  );
-}
-
-export async function getReviewQueueAssetIds(): Promise<string[]> {
-  const records = await listReviewRecords();
-  return records
-    .map((r) => r.assetId)
-    .filter((id): id is string => Boolean(id));
-}
-
-export async function loadReviewRecord(
-  reviewId: string,
-): Promise<{ record: PurifierReviewRecord; filename: string } | null> {
-  await mkdir(REVIEW_DIR, { recursive: true });
-  const entries = await readdir(REVIEW_DIR);
-
-  for (const entry of entries) {
-    if (!entry.endsWith(".json")) continue;
-    if (!entry.startsWith(reviewId)) continue;
-
-    const content = await readFile(path.join(REVIEW_DIR, entry), "utf-8");
-    const record = JSON.parse(content) as PurifierReviewRecord;
-    return { record, filename: entry };
-  }
-
-  return null;
-}
-
-export async function deleteReviewRecord(reviewId: string): Promise<boolean> {
-  const loaded = await loadReviewRecord(reviewId);
-  if (!loaded) return false;
-
-  await unlink(path.join(REVIEW_DIR, loaded.filename));
-  return true;
 }
 
 // ---------------------------------------------------------------------------

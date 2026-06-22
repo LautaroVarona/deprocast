@@ -193,3 +193,143 @@ model VibeCalibrationVote {
   @@index([sessionId])
   @@index([cardId])
 }
+
+// Cola de validación de proyectos (incubadora / bandeja de entrada).
+model ProjectProposal {
+  id                 String    @id @default(uuid())
+  title              String
+  status             String    @default("pending")
+  originContext      String
+  originType         String
+  originRef          String?
+
+  description        String    @default("")
+  suggestedCampoSlug String?
+  suggestedTipo      String?
+
+  mvp                String?
+  firstStep          String?
+  priorityReason     String?
+
+  sourcePayload      Json?
+
+  activatedProjectId String?
+  activatedAt        DateTime?
+  archivedAt         DateTime?
+
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  @@index([status])
+  @@index([createdAt])
+}
+
+// Módulo Chat Exocórtex — sesiones, mensajes y relaciones de contexto (@mentions).
+model ChatSession {
+  id        String        @id @default(uuid())
+  title     String        @default("Nueva conversación")
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+  messages  ChatMessage[]
+
+  @@index([updatedAt])
+}
+
+model ChatMessage {
+  id              String               @id @default(uuid())
+  sessionId       String
+  role            String
+  content         String
+  contentDisplay  String?
+  injectedContext String?
+  model           String?
+  tokenCount      Int?
+  createdAt       DateTime             @default(now())
+
+  session           ChatSession           @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  contextRelations  ChatContextRelation[]
+
+  @@index([sessionId, createdAt])
+}
+
+model ChatContextRelation {
+  id          String   @id @default(uuid())
+  messageId   String
+  entityType  String
+  entityId    String
+  entityLabel String
+  createdAt   DateTime @default(now())
+
+  message ChatMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  @@index([messageId])
+  @@index([entityType, entityId, createdAt])
+}
+
+// Event log unificado — cruza Chat, Diario, Salud y Proyectos.
+model ContextEvent {
+  id             String   @id @default(uuid())
+  occurredAt     DateTime
+  source         String
+  sourceRef      String?
+  content        String
+  structuredData Json
+  pillar         String
+  status         String   @default("proposed")
+  correlationId  String?
+  createdAt      DateTime @default(now())
+
+  links         ContextEventLink[]
+  healthRecords HealthRecord[]
+
+  @@index([source, sourceRef])
+  @@index([status, occurredAt])
+  @@index([pillar, occurredAt])
+  @@index([correlationId])
+}
+
+model ContextEventLink {
+  id          String   @id @default(uuid())
+  eventId     String
+  entityType  String
+  entityId    String
+  entityLabel String?
+  linkRole    String   @default("primary")
+  createdAt   DateTime @default(now())
+
+  event ContextEvent @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@index([eventId])
+  @@index([entityType, entityId])
+}
+
+// Telemetría de salud estructurada (4 pilares).
+model HealthRecord {
+  id            String   @id @default(uuid())
+  pillar        String
+  occurredAt    DateTime
+  summary       String
+  metrics       Json
+  sourceEventId String?
+  createdAt     DateTime @default(now())
+
+  sourceEvent ContextEvent? @relation(fields: [sourceEventId], references: [id], onDelete: SetNull)
+
+  @@index([pillar, occurredAt])
+  @@index([sourceEventId])
+}
+
+// Cola HITL del purificador (reemplaza JSON en data/raw_documents/review/).
+model PurifierReview {
+  reviewId    String   @id
+  particula   String
+  assetId     String?
+  title       String
+  processedAt DateTime
+  payload     Json
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([processedAt])
+  @@index([assetId])
+}

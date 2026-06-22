@@ -1,10 +1,12 @@
 import { deleteReviewRecord } from "@/lib/purifier/engine";
+import { ensureRuntimeReady } from "@/lib/runtime-setup";
 import { NextRequest, NextResponse } from "next/server";
 
 export const runtime = "nodejs";
 
 export async function POST(request: NextRequest) {
   try {
+    await ensureRuntimeReady();
     const body = (await request.json()) as { reviewId?: string };
 
     if (!body.reviewId?.trim()) {

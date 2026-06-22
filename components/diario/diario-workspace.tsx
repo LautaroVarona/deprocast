@@ -1,7 +1,9 @@
 "use client";
 
+import { EventProposalsPanel } from "@/components/events/event-proposals-panel";
 import { JournalCanvas } from "@/components/diario/journal-canvas";
 import { JournalSidebar } from "@/components/diario/journal-sidebar";
+import type { ContextEventDto } from "@/lib/events/types";
 import type {
   JournalEntryDetail,
   JournalEntrySummary,
@@ -35,6 +37,7 @@ export function DiarioWorkspace() {
     null,
   );
   const [isPreviewLoading, setIsPreviewLoading] = useState(false);
+  const [proposedEvents, setProposedEvents] = useState<ContextEventDto[]>([]);
 
   const fetchEntries = useCallback(async () => {
     setIsLoadingList(true);
@@ -134,6 +137,12 @@ export function DiarioWorkspace() {
         });
       }
 
+      if (Array.isArray(data.proposedEvents) && data.proposedEvents.length > 0) {
+        setProposedEvents(data.proposedEvents as ContextEventDto[]);
+      } else {
+        setProposedEvents([]);
+      }
+
       setContent("");
       await fetchEntries();
     } catch (error) {
@@ -182,6 +191,11 @@ export function DiarioWorkspace() {
           setPreviewEntry(null);
           setSelectedEntryId(null);
         }}
+      />
+
+      <EventProposalsPanel
+        events={proposedEvents}
+        onResolved={() => setProposedEvents([])}
       />
     </div>
   );

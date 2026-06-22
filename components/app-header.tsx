@@ -1,7 +1,6 @@
 "use client";
 
 import { ThemeToggle } from "@/components/theme-toggle";
-import { getDeployLabel } from "@/lib/deploy-env";
 import { cn } from "@/lib/utils";
 import { FlaskConicalIcon } from "lucide-react";
 import Link from "next/link";
@@ -11,10 +10,15 @@ const NAV_LINKS = [
   { href: "/", label: "Dashboard" },
   { href: "/ingesta", label: "Ingesta" },
   { href: "/diario", label: "Diario" },
+  { href: "/salud", label: "Salud" },
+  { href: "/chat", label: "Chat" },
   { href: "/validar", label: "Validar" },
   { href: "/calibrador", label: "Calibrador" },
   { href: "/proyectos", label: "Proyectos" },
+  { href: "/personas", label: "Personas" },
   { href: "/grafo", label: "Grafo" },
+  { href: "/agentes", label: "Agentes" },
+  { href: "/respaldo", label: "Respaldo" },
 ] as const;
 
 export function AppHeader() {
@@ -58,9 +62,6 @@ export function AppHeader() {
         </nav>
 
         <div className="ml-auto flex items-center gap-1">
-          <span className="hidden text-xs text-muted-foreground md:block">
-            Exoesqueleto Cognitivo · {getDeployLabel()}
-          </span>
           <ThemeToggle />
         </div>
       </div>

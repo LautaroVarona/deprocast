@@ -144,7 +144,10 @@ export async function addProgressEntry(input: AddProgressInput): Promise<Project
     throw new Error("La nota de progreso no puede estar vacía.");
   }
 
-  const entry = buildInitialProgressEntry(nota);
+  const entry = buildInitialProgressEntry(
+    nota,
+    input.fecha ? new Date(input.fecha) : new Date(),
+  );
   const content = await readFile(project.filePath, "utf8");
   const updatedContent = appendProgressToMarkdown(content, entry);
   await writeFile(project.filePath, updatedContent, "utf8");

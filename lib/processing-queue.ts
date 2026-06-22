@@ -21,6 +21,16 @@ class ProcessingQueue {
     return this.queue.includes(assetId) || this.activeId === assetId;
   }
 
+  hasActiveJobs(): boolean {
+    return this.running || this.queue.length > 0 || this.activeId !== null;
+  }
+
+  clearQueue(): void {
+    this.queue = [];
+    this.running = false;
+    this.activeId = null;
+  }
+
   getStatus(): QueueStatus {
     return {
       active: null,

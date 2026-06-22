@@ -2,10 +2,12 @@ import { getCampoLabel, getCampoSlugFromLabel } from "@/lib/projects/paths";
 import { clampScale } from "@/lib/projects/priority";
 import {
   PROJECT_STATUSES,
+  PROJECT_TIPOS,
   type CreateProjectInput,
   type ProgressEntry,
   type Project,
   type ProjectStatus,
+  type ProjectTipo,
 } from "@/lib/projects/types";
 import type { CampoSlug } from "@/lib/projects/campos";
 import path from "node:path";
@@ -45,6 +47,7 @@ export function buildProjectMarkdown(
     "---",
     `id: ${yamlString(project.id)}`,
     `title: ${yamlString(project.title)}`,
+    ...(project.tipo ? [`tipo: ${yamlString(project.tipo)}`] : []),
     `campo: ${yamlString(project.campo)}`,
     `meta_tags_secundarios: ${yamlArray(project.metaTagsSecundarios)}`,
     `description: ${yamlString(project.description)}`,
@@ -79,6 +82,7 @@ export function createProjectFromInput(
   return {
     id,
     title: input.title.trim(),
+    tipo: input.tipo ?? null,
     campo,
     campoSlug: input.campoSlug,
     metaTagsSecundarios: input.metaTagsSecundarios,
@@ -181,6 +185,11 @@ function resolveCampoSlug(
   return fromDir;
 }
 
+function parseProjectTipo(value: unknown): ProjectTipo | null {
+  const tipo = String(value ?? "");
+  return PROJECT_TIPOS.includes(tipo as ProjectTipo) ? (tipo as ProjectTipo) : null;
+}
+
 function parseStatus(value: unknown): ProjectStatus {
   const estado = String(value ?? "Idea");
   return PROJECT_STATUSES.includes(estado as ProjectStatus)
@@ -204,6 +213,7 @@ export function parseProjectFile(filePath: string, content: string): Project | n
   return {
     id: id || path.basename(filePath, ".md"),
     title: title || id,
+    tipo: parseProjectTipo(frontmatter.tipo),
     campo: String(frontmatter.campo ?? getCampoLabel(campoSlug)),
     campoSlug,
     metaTagsSecundarios: Array.isArray(frontmatter.meta_tags_secundarios)

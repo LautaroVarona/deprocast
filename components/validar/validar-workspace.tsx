@@ -508,12 +508,16 @@ export function ValidarWorkspace() {
 
 
 
-      toast.success("Conocimiento coagulado.", {
-        description: data.kg?.skipped
-          ? `${data.relativePath} · KG sin cambios`
-          : data.kg
-            ? `${data.relativePath} · ${data.kg.nodes} nodos, ${data.kg.edges} relaciones en KG`
-            : data.relativePath,
+      toast.success("Enviado a incubadora de proyectos.", {
+        description: data.proposalId
+          ? `${data.title} · Revisá en Proyectos → Propuestas`
+          : undefined,
+        action: data.proposalId
+          ? {
+              label: "Ver propuestas",
+              onClick: () => router.push("/proyectos?view=propuestas"),
+            }
+          : undefined,
       });
 
 
@@ -658,7 +662,7 @@ export function ValidarWorkspace() {
 
             </p>
 
-            <h1 className="text-sm font-semibold">Validar y Coagular</h1>
+            <h1 className="text-sm font-semibold">Validar y Enviar a Incubadora</h1>
 
           </div>
 
@@ -1047,7 +1051,7 @@ export function ValidarWorkspace() {
 
                     <Loader2Icon className="size-4 animate-spin" />
 
-                    Coagulando…
+                    Enviando…
 
                   </>
 
@@ -1057,7 +1061,7 @@ export function ValidarWorkspace() {
 
                     <CheckCircle2Icon className="size-4" />
 
-                    Aprobar y Coagular Conocimiento
+                    Aprobar y enviar a incubadora
 
                   </>
 

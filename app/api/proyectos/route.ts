@@ -40,13 +40,32 @@ export async function POST(request: Request) {
   try {
     await ensureRuntimeReady();
 
-    const body = (await request.json()) as Partial<CreateProjectInput>;
+    const body = (await request.json()) as Partial<CreateProjectInput> & {
+      mode?: string;
+    };
 
     if (!body.title?.trim()) {
       return NextResponse.json(
         { error: "El título del proyecto es obligatorio." },
         { status: 400 },
       );
+    }
+
+    const isQuickMode = body.mode === "quick";
+
+    if (isQuickMode) {
+      const { createProposal } = await import("@/lib/projects/proposal-store");
+      const campoSlug =
+        body.campoSlug && isCampoSlug(body.campoSlug) ? body.campoSlug : undefined;
+
+      const proposal = await createProposal({
+        title: body.title.trim(),
+        description: String(body.description ?? ""),
+        originType: "quick_create",
+        suggestedCampoSlug: campoSlug,
+      });
+
+      return NextResponse.json({ proposal }, { status: 201 });
     }
 
     if (!body.campoSlug || !isCampoSlug(body.campoSlug)) {

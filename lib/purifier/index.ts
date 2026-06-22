@@ -17,7 +17,7 @@ export {
   REVIEW_DIR,
 } from "@/lib/purifier/engine";
 
-export { approveAndCoagulate } from "@/lib/purifier/approve";
+export { approveToProposal, approveAndCoagulate } from "@/lib/purifier/approve";
 
 export {
   CAPTURE_SUCCESS_TOAST,

@@ -1,5 +1,6 @@
-import { approveAndCoagulate } from "@/lib/purifier/approve";
+import { approveToProposal } from "@/lib/purifier/approve";
 import { isCampoSlug } from "@/lib/projects/campos";
+import { ensureRuntimeReady } from "@/lib/runtime-setup";
 import { NextRequest, NextResponse } from "next/server";
 
 export const runtime = "nodejs";
@@ -7,6 +8,7 @@ export const maxDuration = 120;
 
 export async function POST(request: NextRequest) {
   try {
+    await ensureRuntimeReady();
     const body = (await request.json()) as {
       reviewId?: string;
       campoSlug?: string;
@@ -39,7 +41,7 @@ export async function POST(request: NextRequest) {
 
     const d = body.dimensions ?? {};
 
-    const result = await approveAndCoagulate({
+    const result = await approveToProposal({
       reviewId: body.reviewId.trim(),
       campoSlug: body.campoSlug,
       title: body.title.trim(),
@@ -65,7 +67,7 @@ export async function POST(request: NextRequest) {
     const message =
       error instanceof Error
         ? error.message
-        : "No se pudo aprobar y coagular el conocimiento.";
+        : "No se pudo aprobar y enviar a la incubadora.";
 
     return NextResponse.json({ error: message }, { status: 500 });
   }

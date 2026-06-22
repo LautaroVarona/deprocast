@@ -42,6 +42,8 @@ export const MENTION_SOURCE_TYPES = [
   "raw_document",
   "code_file",
   "master_plan",
+  "chat",
+  "health_event",
 ] as const;
 
 // Tipos de nodo que pertenecen al subgrafo de codigo.

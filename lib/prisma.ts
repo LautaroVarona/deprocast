@@ -15,6 +15,15 @@ function createPrismaClient() {
   return new PrismaClient({ adapter });
 }
 
+export async function disconnectPrismaClient(): Promise<void> {
+  if (!globalForPrisma.prisma) {
+    return;
+  }
+
+  await globalForPrisma.prisma.$disconnect().catch(() => undefined);
+  globalForPrisma.prisma = undefined;
+}
+
 export function resetPrismaClient(): void {
   if (!globalForPrisma.prisma) {
     return;

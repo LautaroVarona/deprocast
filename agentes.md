@@ -1,0 +1,379 @@
+# Agentes — Única Fuente de Verdad (Deprocast)
+
+> **Documento:** `agentes.md`  
+> **Ámbito:** ecosistema de agentes y motores cognitivos de `deprocast2`  
+> **Última verificación de código:** 22 de junio de 2026  
+> **Principio:** este archivo describe **solo** lo que existe o está explícitamente en desarrollo en el repositorio. No sustituye al grimorio arquitectónico (`deprocast_master_plan.md`) ni a la especificación del KG (`docs/knowledge-graph.md`).
+
+---
+
+## Tabla de contenidos
+
+1. [Visión general](#1-visión-general)
+2. [Mapa de dependencias](#2-mapa-de-dependencias)
+3. [Agentes operativos](#3-agentes-operativos)
+4. [Subprocesadores determinísticos del Purifier](#4-subprocesadores-determinísticos-del-purifier)
+5. [Ingesta y persistencia del Knowledge Graph](#5-ingesta-y-persistencia-del-knowledge-graph)
+6. [Agentes en fase de diseño](#6-agentes-en-fase-de-diseño)
+
+---
+
+## 1. Visión general
+
+Deprocast implementa un **exoesqueleto cognitivo local-first**: la materia prima (audio, texto, tablas, visión, diario) pasa por motores de transcripción y purificación, se somete a validación humana (HITL) y alimenta un Knowledge Graph en SQLite. El único agente conversacional de cara al usuario es el **Exocórtex Interactivo** (`/chat`).
+
+| Capa | Rol | ¿Usa LLM? |
+|------|-----|-----------|
+| Conversacional | Copiloto con contexto inyectado | Sí — Vertex Gemini |
+| Transcripción | Audio → texto crudo | No — GCP Speech (`chirp_2`) |
+| Purificación | Esterilización, metadatos, chunks | Mixto — 3 estaciones LLM + 3 determinísticas |
+| Visión | OCR multimodal | Sí — Vertex Gemini |
+| Knowledge Graph | Entidades, relaciones, menciones | Mixto — extracción LLM + ingesta determinística |
+| Calibración | Pesos de gravedad 1–12 | No — HITL humano |
+
+**Proveedor LLM unificado:** `@google-cloud/vertexai` vía `lib/vertex-gemini/client.ts` (modelo por defecto: `gemini-2.5-flash`, temperatura `0.2`).
+
+---
+
+## 2. Mapa de dependencias
+
+```mermaid
+flowchart LR
+    subgraph captura [Captura]
+        Audio[Audio upload]
+        Texto[Texto / Diario]
+        Vision[Visión OCR]
+        Tablas[CSV / XLSX]
+    end
+
+    subgraph stt [Transcripción]
+        Queue[processing-queue]
+        GCP[GCP Speech chirp_2]
+    end
+
+    subgraph purifier [Purifier]
+        S1[Est.1 Regex]
+        S2[Est.2 Editor Semántico]
+        S3[Est.3 Dedup]
+        S4[Est.4 Esencias]
+        S41[Est.4.1 Motor KG]
+        S5[Est.5 Archivista]
+        S6[Est.6 Fractal]
+    end
+
+    subgraph hitl [HITL]
+        Review[data/raw_documents/review]
+        Validar[/validar]
+    end
+
+    subgraph kg [Knowledge Graph]
+        SQLite[(prisma/dev.db)]
+    end
+
+    subgraph chat [Conversación]
+        Exocortex[Exocórtex /chat]
+    end
+
+    Audio --> Queue --> GCP
+    GCP --> purifier
+    Texto --> purifier
+    Vision --> purifier
+    Tablas --> purifier
+    purifier --> Review --> Validar
+    S41 --> SQLite
+    Validar --> SQLite
+    SQLite --> Exocortex
+```
+
+---
+
+## 3. Agentes operativos
+
+### 🧠 Exocórtex Interactivo
+
+**Funciones:**
+- Recibir mensajes del usuario con segmentos de texto y menciones `@` tipadas.
+- Resolver menciones a proyectos, retos, áreas, personas, campos y retos laborales.
+- Ejecutar búsqueda híbrida (menciones KG, aristas, diario) sobre la consulta en lenguaje natural.
+- Inyectar bloques de contexto truncados en el system prompt.
+- Mantener historial de sesión (últimos 10 turnos) y persistir intercambios en SQLite.
+- Generar título automático de sesión en el primer mensaje.
+
+**Descripción:**  
+Asistente cognitivo de Deprocast. Por cada turno construye un `contextBlock` a partir de entidades mencionadas (`buildChatContext`) y de hits de `hybridSearch` (scoring léxico sobre `KgMention`, `KgEdge` y entradas del diario). Concatena `CHAT_SYSTEM_PROMPT` + contexto y envía el historial formateado a Vertex Gemini. No inventa datos fuera del contexto inyectado; declara explícitamente cuando falta información.
+
+**Ubicación:**
+- Motor: `lib/chat/engine.ts`, `lib/chat/context-retriever.ts`, `lib/chat/hybrid-search.ts`, `lib/chat/prompts.ts`, `lib/chat/service.ts`, `lib/chat/mention-index.ts`
+- API: `app/api/chat/send/route.ts`, `app/api/chat/sessions/`, `app/api/chat/mentions/route.ts`
+- UI: `app/chat/page.tsx`, `components/chat/`
+
+**Tecnologías/Dependencias:**  
+Vertex AI Gemini (`lib/vertex-gemini/`), Prisma (`ChatSession`, `ChatMessage`, `ChatContextRelation`), KG (`lib/kg/queries`), proyectos (`lib/projects/service`), laboral (`lib/laboral/challenges`), diario (`lib/journal/`).
+
+---
+
+### 🎙️ Motor de Transcripción STT
+
+**Funciones:**
+- Encolar `AudioAsset` en cola in-process (`ProcessingQueue`).
+- Convertir audio a WAV con FFmpeg/FFprobe.
+- Transcribir sincrónicamente o por chunks según duración.
+- Persistir `Transcript.rawText` y actualizar estado del asset (`PROCESSING` → `COMPLETED` / `ERROR`).
+- Guardar transcripciones parciales ante fallos recuperables.
+
+**Descripción:**  
+No es un agente LLM: convierte voz a texto crudo mediante Google Cloud Speech API con el modelo `chirp_2` (es-ES). El texto resultante alimenta manual o automáticamente el Purifier vía `POST /api/purifier/purify` con `assetId`. La cola no es persistente entre reinicios del proceso Node.
+
+**Ubicación:**
+- Procesador: `lib/gcp-speech-processor.ts`
+- Cola: `lib/processing-queue.ts`
+- STT: `lib/gcp-speech/` (`client.ts`, `transcribe-sync.ts`, `transcribe-chunked.ts`, `audio-prep.ts`, `config.ts`)
+- API: `app/api/upload/route.ts`, `app/api/process/`
+- UI: `app/audio/[id]/page.tsx`, `components/ingesta/channels/audio-channel.tsx`
+
+**Tecnologías/Dependencias:**  
+`@google-cloud/speech`, FFmpeg (`ffmpeg-static`, `ffprobe-static`), Prisma (`AudioAsset`, `Transcript`), variables `GOOGLE_APPLICATION_CREDENTIALS`, `GCP_SPEECH_*`.
+
+---
+
+### 👁️ Agente de Visión OCR
+
+**Funciones:**
+- Aceptar imágenes (PNG, JPG, WEBP, GIF, HEIC) y PDF.
+- Almacenar binario original en `data/tacho/`.
+- Enviar contenido multimodal (inline base64) a Gemini con `VISION_EXTRACTION_PROMPT`.
+- Devolver Markdown purificado (tachones como `~~texto~~`, descripción analítica de diagramas).
+- Opcionalmente confirmar contexto y anexarlo como `.md` al proyecto destino.
+- Encadenar captura → Purifier vía `captureAndPurify`.
+
+**Descripción:**  
+Agente de extracción y purificación de data de alta fidelidad. Prioriza fidelidad sobre interpretación: transcribe tachones, describe relaciones visuales en gráficos y evita suposiciones. Tras la extracción, el flujo estándar de ingesta dispara el pipeline Purifier completo.
+
+**Ubicación:**
+- Motor: `lib/ingesta/vision/extract.ts`
+- API: `app/api/ingesta/vision/route.ts`
+- UI: `components/ingesta/channels/vision-channel.tsx`
+
+**Tecnologías/Dependencias:**  
+Vertex AI Gemini (entrada multimodal `inlineData`), filesystem (`data/tacho/`), Purifier (`lib/purifier/capture.ts`).
+
+---
+
+### ✂️ Editor Semántico STT (Purifier · Estación 2)
+
+**Funciones:**
+- Recibir texto post-limpieza regex (Estación 1).
+- Eliminar muletillas vacías sin alterar significado.
+- Corregir puntuación y oralidad → prosa escrita.
+- Marcar segmentos incomprensibles como `==DUDA: fragmento==`.
+- Preservar bloques `==DUDA:...==` preexistentes.
+
+**Descripción:**  
+Primera capa semántica del Purifier. Usa `CLEANUP_SYSTEM_PROMPT` como system instruction de Gemini. Es invocado por `station2SemanticCleanup` dentro de `runPurificationPipeline`. No inventa contenido; cuando hay ambigüedad, deja evidencia explícita para revisión HITL.
+
+**Ubicación:** `lib/purifier/engine.ts` (prompt y `station2SemanticCleanup`)
+
+**Tecnologías/Dependencias:** Vertex AI Gemini, orquestador `runPurificationPipeline`.
+
+---
+
+### 🏷️ Extractor de Esencias (Purifier · Estación 4)
+
+**Funciones:**
+- Analizar texto deduplicado (Estación 3).
+- Devolver array JSON de conceptos atómicos (nombres propios, leyes, bugs, tecnologías, procesos).
+- Limitar salida a 30 tags máximo con fallback de parseo tolerante.
+
+**Descripción:**  
+Extracción ligera de metadatos secundarios (`meta_tags_secundarios`) que alimentan la normalización de la Estación 5. Prompt: `EXTRACT_ESSENCES_PROMPT`. Salida consumida por `station5Normalize`.
+
+**Ubicación:** `lib/purifier/engine.ts` (`station4ExtractEssences`, `EXTRACT_ESSENCES_PROMPT`)
+
+**Tecnologías/Dependencias:** Vertex AI Gemini.
+
+---
+
+### 🕸️ Motor de Extracción KG (Purifier · Estación 4.1)
+
+**Funciones:**
+- Analizar texto purificado y devolver JSON estructurado de entidades y relaciones.
+- Tipificar nodos (`persona`, `proyecto`, `idea`, `tecnologia`, etc.) con aliases y `personaKind`.
+- Exigir `context` obligatorio en cada relación y `weight` 1–12.
+- Parsear y validar respuesta (`parseLlmKgExtraction`).
+- Ingerir resultado en SQLite (`ingestKgExtraction` / `ingestDocumentSource`) cuando `extractKg: true`.
+
+**Descripción:**  
+Motor de extracción del Grafo de Conocimiento. Identidad definida en `KG_EXTRACT_PROMPT` (`lib/kg/prompts.ts`). Puede ejecutarse embebido en el Purifier (estación 41) o de forma directa vía `extractKgFromText` / `POST /api/kg/ingest`. Respeta límites de 25 entidades y 40 relaciones por fragmento. Distingue personas físicas/jurídicas, proyectos del Observador y avatar Estudianta cuando el texto lo evidencia.
+
+**Ubicación:**
+- Extracción: `lib/kg/extract.ts`, `lib/kg/prompts.ts`, `lib/kg/parse.ts`
+- Ingesta: `lib/kg/ingest.ts`, `lib/kg/identity.ts`, `lib/kg/merge.ts`
+- Integración Purifier: `lib/purifier/engine.ts` (bloque `extractKg`)
+- API: `app/api/kg/ingest/route.ts`
+
+**Tecnologías/Dependencias:** Vertex AI Gemini, Prisma (`KgNode`, `KgEdge`, `KgMention`, `KgSource`), SQLite local.
+
+---
+
+### 📜 Archivista Deprocast (Purifier · Estación 5)
+
+**Funciones:**
+- Recibir texto purificado + meta tags + vectores de gravedad sugeridos.
+- Generar Markdown completo con frontmatter YAML de las **Siete Dimensiones**.
+- Asignar `prioridad`, `impacto`, `dificultad` (1–12), `title`, `particula`.
+- Preservar marcadores `==DUDA:...==` en el cuerpo.
+- Parsear frontmatter resultante para construir `PurifierReviewRecord`.
+
+**Descripción:**  
+Archivista del sistema. Prompt: `NORMALIZE_SYSTEM_PROMPT`. Transforma transcripciones en documentos coagulables con contrato YAML unificado (`materia`, `particula`, `posicion`, `onda`, `tiempo`, `espacio`, `field`). Valores por defecto: `field: babel`, `materia: audio/transcript`, `espacio: local-atanor`.
+
+**Ubicación:** `lib/purifier/engine.ts` (`station5Normalize`, `NORMALIZE_SYSTEM_PROMPT`, `parseFrontmatterFromMarkdown`)
+
+**Tecnologías/Dependencias:** Vertex AI Gemini, `lib/projects/priority` (`clampScale`), `lib/projects/campos`.
+
+---
+
+### 🔥 Orquestador Purifier
+
+**Funciones:**
+- Ejecutar secuencialmente estaciones 1 → 6 (+ 4.1 opcional).
+- Resolver gravedad de entrada (`GravityInput`) y fuente KG (`journal`, `transcript`, `raw_document`).
+- Registrar snapshot por estación (`PurifierStageSnapshot[]`) en `PurifierReviewRecord` schema v2.
+- Persistir revisión en `data/raw_documents/review/{reviewId}.json`.
+- Exponer aprobación HITL (`approveAndCoagulate`, `approveToProposal`).
+
+**Descripción:**  
+Pipeline central de esterilización. Punto de entrada único: `runPurificationPipeline`. La captura unificada (`captureAndPurify`) escribe prima materia en `data/raw_documents/pending_purification/` y dispara el pipeline. Invocado desde ingesta (texto, audio post-STT, tablas, visión), diario, documentos y API directa.
+
+**Ubicación:**
+- Orquestador: `lib/purifier/engine.ts`, `lib/purifier/capture.ts`
+- Tipos y review store: `lib/purifier/types.ts`, `lib/purifier/review-store.ts`
+- Aprobación: `lib/purifier/approve.ts`
+- API: `app/api/purifier/`
+- UI HITL: `app/validar/page.tsx`, `components/validar/`
+
+**Tecnologías/Dependencias:** Todos los sub-agentes anteriores, filesystem (`data/raw_documents/`), Prisma al aprobar.
+
+> **Nota de deuda:** existe `lib/purifier-pipeline.ts` (implementación legacy duplicada) sin importadores activos en el código actual. La fuente de verdad operativa es `lib/purifier/engine.ts`.
+
+---
+
+### ⚖️ Calibrador de Vibe
+
+**Funciones:**
+- Construir cola de tarjetas desde fuentes `validated` (proyectos + retos laborales) y `generated` (stub vacío).
+- Filtrar por `campoSlug` y límite configurable.
+- Registrar sesiones y votos de peso 1–12 en SQLite.
+- Completar sesión de calibración humana.
+
+**Descripción:**  
+Módulo **HITL de calibración atencional**, no usa LLM. El Observador asigna pesos de gravedad a ítems validados para alinear priorización del sistema. El adaptador `generated` está en stub (`fetchGeneratedCards` retorna `[]`) — pendiente de conectar a un generador propio.
+
+**Ubicación:**
+- Lógica: `lib/vibe-calibrator/` (`build-queue.ts`, `persist.ts`, `adapters/`)
+- API: `app/api/vibe-calibrator/`
+- UI: `app/calibrador/page.tsx`, `components/vibe-calibrator/`
+- DB: migración `prisma/migrations/20260619120000_vibe_calibration/`
+
+**Tecnologías/Dependencias:** Prisma (`VibeCalibrationSession`, `VibeCalibrationVote`), `lib/projects/service`, `lib/laboral/challenges`.
+
+---
+
+## 4. Subprocesadores determinísticos del Purifier
+
+Estaciones sin LLM que forman parte del pipeline pero no son agentes semánticos:
+
+| Estación | Nombre | Qué hace | Ubicación |
+|----------|--------|----------|-----------|
+| 1 | Limpieza Regex | Amputa loops Whisper, elimina oraciones duplicadas consecutivas | `station1RegexCleanup` en `lib/purifier/engine.ts` |
+| 3 | Deduplicación | Fusiona párrafos con similitud Jaccard ≥ 0.82 | `station3Deduplicate` |
+| 6 | Segmentación Fractal | Divide cuerpo en bloques padre/hijo (4 líneas por hijo) | `station6FractalSegmentation` |
+
+---
+
+## 5. Ingesta y persistencia del Knowledge Graph
+
+Motores **determinísticos** que alimentan el grafo sin llamadas LLM (complementan al Motor de Extracción KG):
+
+| Componente | Función | Ubicación |
+|------------|---------|-----------|
+| Escáner de código | AST de imports en `app/`, `lib/`, `components/`, `scripts/`, `types/` → nodos `archivo`/`modulo`, aristas `importa` | `lib/kg/code/scan.ts`, `lib/kg/code/ingest.ts` |
+| Fuente diario | Ingesta entradas Markdown del diario | `lib/kg/sources/journal.ts` |
+| Fuente proyectos | Ingesta frontmatter y metadatos de `.md` en `data/projects/` | `lib/kg/sources/projects.ts` |
+| Fuente documentos | Ingesta `data/raw_documents/` | `lib/kg/sources/documents.ts` |
+| Master plan | Ingesta `deprocast_master_plan.md` | `lib/kg/sources/master-plan.ts` |
+| Incremental | Skip por hash (`KgSource.contentHash`) | `lib/kg/incremental.ts` |
+
+**Scripts de mantenimiento:** `npm run kg:scan`, `npm run kg:backfill` (ver `docs/knowledge-graph.md`).
+
+**Hooks automáticos post-guardado:** diario (`POST /api/journal/save`), proyectos, documentos — ingesta KG no bloqueante.
+
+---
+
+## 6. Agentes en fase de diseño
+
+Los siguientes módulos **no tienen implementación en el repositorio** (búsqueda sin coincidencias en código ni documentación técnica verificable). Se documentan como pipeline de diseño acordado para potenciar el **corpus unificado** del exoesqueleto cognitivo.
+
+### 🩺 Somatometrón
+
+**Funciones previstas:**
+- Capturar telemetría de salud del Observador (biométrica, hábitos, señales fisiológicas).
+- Normalizar lecturas en fragmentos con las Siete Dimensiones (`onda: personal-health`).
+- Correlacionar estado somático con priorización atencional y ventanas de Focus Work.
+
+**Descripción:**  
+Módulo de telemetría de salud para cerrar el circuito entre cuerpo y atención. En el grimorio (`deprocast_master_plan.md`) el binario local menciona telemetría biométrica futura en el daemon de ingesta; no hay API, schema Prisma ni rutas implementadas.
+
+**Ubicación prevista:** daemon local + hooks en `data/tacho/` / futuro módulo `lib/somatometron/` (inexistente).
+
+**Tecnologías previstas:** periféricos locales, posible integración NFC/hábitos (`field: nfc-habit-loop`), ingestión vía Purifier.
+
+---
+
+### 🎲 LudusDirector
+
+**Funciones previstas:**
+- Orquestar mecánicas 4X y dinámicas tipo Reddit sobre el corpus de retos y proyectos.
+- Modelar loops de delegación Observador → Jugador → Avatar (Estudianta).
+- Generar microtareas atómicas (< 15 min) y Puntos de Señal.
+
+**Descripción:**  
+Director de juego para la capa gamificada del ecosistema. El avatar **Estudianta**, Focus Work y Puntos de Señal están especificados en `deprocast_master_plan.md` y referenciados en UI (`components/home/gnosis-metrics.tsx` como “en preparación”), pero sin motor ejecutor ni agente LLM operativo.
+
+**Ubicación prevista:** futuro `lib/ludus/` o integración con módulo laboral (`app/laboral/`, `app/api/laboral/focus/route.ts` hoy solo expone datos).
+
+**Tecnologías previstas:** cola de microtareas, Prisma (modelos Boss/Microtask/FocusSession aún no implementados), posible señal desde KG y Calibrador de Vibe.
+
+---
+
+### 🧬 Mnemosyne
+
+**Funciones previstas:**
+- Archivar y re-hidratar **memoria líquida**: contexto de largo plazo no rígido, re-indexable.
+- Gestionar compostaje continuo de fragmentos (re-pesado, re-encadenamiento).
+- Servir como capa de memoria para el Exocórtex más allá del historial de 10 turnos y la búsqueda híbrida actual.
+
+**Descripción:**  
+Subsistema de archivado de memoria líquida para el corpus unificado. Hoy el grafo (`KgMention`, `confidence`, `context` en aristas) y los chunks fractales del Purifier son el sustrato más cercano, pero **sin embeddings vectoriales ni RAG operativo** (brecha documentada en `datainfo.md`). Mnemosyne cerraría el loop Información → Conocimiento → Sabiduría.
+
+**Ubicación prevista:** extensión sobre `lib/kg/` + almacén vectorial local (no implementado).
+
+**Tecnologías previstas:** embeddings locales, `ParentChunk`/`ChildChunk` (modelos legacy en Prisma), integración con Exocórtex y Purifier post-aprobación.
+
+---
+
+## Apéndice: rutas de UI por agente
+
+| Ruta | Agente / módulo |
+|------|-----------------|
+| `/chat` | Exocórtex Interactivo |
+| `/ingesta` | Captura → Purifier / Visión |
+| `/validar` | HITL Purifier |
+| `/grafo` | Visualización KG |
+| `/calibrador` | Calibrador de Vibe |
+| `/diario` | Diario → Purifier + KG |
+| `/audio/[id]` | Motor STT + revisión de transcripción |
+
+---
+
+*Este documento debe actualizarse cuando se añada, renombre o retire un agente en el código. Ante conflicto con otro `.md`, prevalece la verificación directa del repositorio.*

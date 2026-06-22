@@ -1,3 +1,4 @@
+import { processJournalForEvents } from "@/lib/events/process";
 import { saveJournalEntry } from "@/lib/journal/service";
 import { isJournalOnda } from "@/lib/journal/types";
 import { ingestJournalFile } from "@/lib/kg/sources";
@@ -19,6 +20,7 @@ export async function POST(request: NextRequest) {
       onda?: string;
       purify?: boolean;
       extractKg?: boolean;
+      extractEvents?: boolean;
     };
 
     const content = body.content?.trim() ?? "";
@@ -51,6 +53,19 @@ export async function POST(request: NextRequest) {
 
     let reviewId: string | undefined;
     let validarUrl: string | undefined;
+    let proposedEvents: Awaited<ReturnType<typeof processJournalForEvents>> = [];
+
+    if (body.extractEvents !== false) {
+      try {
+        proposedEvents = await processJournalForEvents({
+          journalId: entry.id,
+          content,
+          occurredAt: new Date(entry.fechaRegistro),
+        });
+      } catch (error) {
+        console.error("Journal event extraction error:", error);
+      }
+    }
 
     if (body.purify) {
       const record = await runPurificationPipeline(
@@ -84,6 +99,7 @@ export async function POST(request: NextRequest) {
         entry,
         reviewId,
         validarUrl,
+        proposedEvents,
       },
       { status: 201 },
     );

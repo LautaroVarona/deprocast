@@ -1,4 +1,5 @@
 import { ProyectosDashboard } from "@/components/proyectos/proyectos-dashboard";
+import { Suspense } from "react";
 
 export const metadata = {
   title: "Proyectos · Deprocast",
@@ -6,5 +7,15 @@ export const metadata = {
 };
 
 export default function ProyectosPage() {
-  return <ProyectosDashboard />;
+  return (
+    <Suspense
+      fallback={
+        <div className="flex h-[calc(100dvh-3.5rem)] items-center justify-center font-mono text-[10px] text-muted-foreground">
+          Cargando proyectos…
+        </div>
+      }
+    >
+      <ProyectosDashboard />
+    </Suspense>
+  );
 }
