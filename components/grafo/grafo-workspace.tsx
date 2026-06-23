@@ -194,12 +194,19 @@ export function GrafoWorkspace() {
     };
   }, [projectId]);
 
-  function toggleType(type: string) {
+  function toggleType(type: string, addToSelection: boolean) {
     setEnabledTypes((prev) => {
-      const next = new Set(prev);
-      if (next.has(type)) next.delete(type);
-      else next.add(type);
-      return next;
+      if (addToSelection) {
+        const next = new Set(prev);
+        if (next.has(type)) {
+          next.delete(type);
+          if (next.size === 0) return new Set([type]);
+        } else {
+          next.add(type);
+        }
+        return next;
+      }
+      return new Set([type]);
     });
   }
 
@@ -287,12 +294,17 @@ export function GrafoWorkspace() {
                 />
                 Ocultar código
               </label>
+              <span className="text-xs text-muted-foreground">
+                Clic = un tipo · Ctrl+clic = varios
+              </span>
               {availableTypes.map(([type, count]) => {
                 const enabled = enabledTypes.has(type);
                 return (
                   <button
                     key={type}
-                    onClick={() => toggleType(type)}
+                    onClick={(event) =>
+                      toggleType(type, event.ctrlKey || event.metaKey)
+                    }
                     className={cn(
                       "flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs transition-opacity",
                       enabled ? "border-border" : "border-transparent opacity-40",

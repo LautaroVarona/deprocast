@@ -3,14 +3,20 @@ import {
   getCampoLabel,
   getDefaultCampo,
   isCampoSlug,
+  slugifyCampoInput,
+  type Campo,
   type CampoInfo,
+  type CreateCampoInput,
+  type UpdateCampoInput,
 } from "@/lib/projects/campos";
+import { readCampoMeta, resolveCampoLabel, writeCampoMeta } from "@/lib/projects/campo-meta";
 import {
   appendProgressToMarkdown,
   buildInitialProgressEntry,
   buildProjectMarkdown,
   createProjectFromInput,
   parseProjectFile,
+  updateCampoInMarkdown,
 } from "@/lib/projects/markdown";
 import {
   getProjectDir,
@@ -23,7 +29,7 @@ import type {
   Project,
 } from "@/lib/projects/types";
 import { randomUUID } from "node:crypto";
-import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
+import { access, mkdir, readdir, readFile, unlink, writeFile } from "node:fs/promises";
 import path from "node:path";
 
 async function readProjectsFromDir(dir: string): Promise<Project[]> {
@@ -94,19 +100,151 @@ export async function listCampos(): Promise<CampoInfo[]> {
     return [getDefaultCampo()];
   }
 
-  const campos = [...slugs]
-    .sort((a, b) => {
-      if (a === DEFAULT_CAMPO_SLUG) return -1;
-      if (b === DEFAULT_CAMPO_SLUG) return 1;
-      return getCampoLabel(a).localeCompare(getCampoLabel(b), "es");
-    })
-    .map((slug) => ({
-      slug,
-      label: getCampoLabel(slug),
-      count: counts.get(slug) ?? 0,
-    }));
+  const campos = await Promise.all(
+    [...slugs]
+      .sort((a, b) => {
+        if (a === DEFAULT_CAMPO_SLUG) return -1;
+        if (b === DEFAULT_CAMPO_SLUG) return 1;
+        return getCampoLabel(a).localeCompare(getCampoLabel(b), "es");
+      })
+      .map(async (slug) => {
+        const meta = await readCampoMeta(slug);
+        return {
+          slug,
+          label: meta?.label ?? getCampoLabel(slug),
+          description: meta?.description,
+          count: counts.get(slug) ?? 0,
+        };
+      }),
+  );
 
   return campos;
+}
+
+export async function getCampo(slug: string): Promise<Campo | null> {
+  if (!isCampoSlug(slug)) return null;
+
+  const campos = await listCampos();
+  const info = campos.find((campo) => campo.slug === slug);
+  if (!info) return null;
+
+  const projects = (await listProjects()).filter((project) => project.campoSlug === slug);
+  const meta = await readCampoMeta(slug);
+
+  return {
+    ...info,
+    description: meta?.description ?? info.description ?? "",
+    createdAt: meta?.createdAt ?? "",
+    projectIds: projects.map((project) => project.id),
+  };
+}
+
+export async function createCampo(input: CreateCampoInput): Promise<Campo> {
+  const label = input.label.trim();
+  if (!label) {
+    throw new Error("El nombre del Campo es obligatorio.");
+  }
+
+  const slug = slugifyCampoInput(label);
+  if (!isCampoSlug(slug)) {
+    throw new Error("El nombre del Campo no genera un slug válido.");
+  }
+
+  const existing = await readCampoMeta(slug);
+  const dirExists = await access(getProjectDir(slug))
+    .then(() => true)
+    .catch(() => false);
+  if (existing || dirExists) {
+    throw new Error("Ya existe un Campo con ese identificador.");
+  }
+
+  await mkdir(getProjectDir(slug), { recursive: true });
+  const meta = {
+    slug,
+    label,
+    description: input.description?.trim() ?? "",
+    createdAt: new Date().toISOString().slice(0, 10),
+  };
+  await writeCampoMeta(meta);
+
+  return {
+    slug,
+    label,
+    description: meta.description,
+    createdAt: meta.createdAt,
+    count: 0,
+    projectIds: [],
+  };
+}
+
+export async function updateCampo(slug: string, input: UpdateCampoInput): Promise<Campo> {
+  if (!isCampoSlug(slug)) {
+    throw new Error("Slug de Campo inválido.");
+  }
+
+  const current = await getCampo(slug);
+  if (!current) {
+    throw new Error("Campo no encontrado.");
+  }
+
+  const label = input.label?.trim() || current.label;
+  const description =
+    input.description !== undefined ? input.description.trim() : current.description;
+
+  const meta = {
+    slug,
+    label,
+    description,
+    createdAt: current.createdAt || new Date().toISOString().slice(0, 10),
+  };
+  await writeCampoMeta(meta);
+
+  if (label !== current.label) {
+    const dir = getProjectDir(slug);
+    const entries = await readdir(dir, { withFileTypes: true }).catch(() => []);
+    for (const entry of entries) {
+      if (!entry.isFile() || !entry.name.endsWith(".md")) continue;
+      const filePath = path.join(dir, entry.name);
+      const content = await readFile(filePath, "utf8");
+      await writeFile(filePath, updateCampoInMarkdown(content, label), "utf8");
+    }
+  }
+
+  return (await getCampo(slug))!;
+}
+
+export async function assignProjectToCampo(
+  projectId: string,
+  campoSlug: CampoSlug,
+): Promise<Project> {
+  if (!isCampoSlug(campoSlug)) {
+    throw new Error("Seleccioná un Campo válido.");
+  }
+
+  const project = await findProjectById(projectId);
+  if (!project) {
+    throw new Error("Proyecto no encontrado en el Atanor local.");
+  }
+
+  if (project.campoSlug === campoSlug) {
+    return project;
+  }
+
+  const campoLabel = await resolveCampoLabel(campoSlug);
+  const content = await readFile(project.filePath, "utf8");
+  const updatedContent = updateCampoInMarkdown(content, campoLabel);
+  const newPath = getProjectFilePath(campoSlug, project.id);
+
+  await mkdir(getProjectDir(campoSlug), { recursive: true });
+  await writeFile(newPath, updatedContent, "utf8");
+  await unlink(project.filePath).catch(() => {});
+
+  const updated = parseProjectFile(newPath, updatedContent);
+  if (!updated) {
+    throw new Error("No se pudo reasignar el proyecto al Campo.");
+  }
+
+  return updated;
 }
 
 export async function createProject(input: CreateProjectInput): Promise<Project> {
@@ -115,7 +253,8 @@ export async function createProject(input: CreateProjectInput): Promise<Project>
   }
 
   const id = randomUUID();
-  const projectData = createProjectFromInput(input, id);
+  const campoLabel = await resolveCampoLabel(input.campoSlug);
+  const projectData = createProjectFromInput(input, id, campoLabel);
   const filePath = getProjectFilePath(input.campoSlug, id);
 
   await mkdir(getProjectDir(input.campoSlug), { recursive: true });

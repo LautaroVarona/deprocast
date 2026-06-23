@@ -19,6 +19,29 @@ export type CampoInfo = {
   slug: CampoSlug;
   label: string;
   count: number;
+  description?: string;
+};
+
+/** Campo con sus proyectos vinculados (vista detallada). */
+export type Campo = CampoInfo & {
+  description: string;
+  createdAt: string;
+  projectIds: string[];
+};
+
+export type CreateCampoInput = {
+  label: string;
+  description?: string;
+};
+
+export type UpdateCampoInput = {
+  label?: string;
+  description?: string;
+};
+
+export type AssignProjectCampoInput = {
+  projectId: string;
+  campoSlug: CampoSlug;
 };
 
 export function isCampoSlug(value: unknown): value is CampoSlug {

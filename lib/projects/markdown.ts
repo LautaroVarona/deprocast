@@ -73,8 +73,9 @@ export function buildProjectMarkdown(
 export function createProjectFromInput(
   input: CreateProjectInput,
   id: string,
+  campoLabel?: string,
 ): Omit<Project, "filename" | "filePath"> {
-  const campo = getCampoLabel(input.campoSlug);
+  const campo = campoLabel ?? getCampoLabel(input.campoSlug);
   const initialNote =
     input.notasIniciales?.trim() ||
     "Creación del proyecto. Inicialización del contexto en el Atanor local.";
@@ -256,6 +257,19 @@ export function parseProjectFile(filePath: string, content: string): Project | n
     filename: path.basename(filePath),
     filePath,
   };
+}
+
+export function updateCampoInMarkdown(content: string, campoLabel: string): string {
+  const frontmatterMatch = content.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n([\s\S]*)$/);
+  if (!frontmatterMatch) return content;
+
+  const [, frontmatterBlock, body] = frontmatterMatch;
+  const updatedBlock = frontmatterBlock.replace(
+    /^campo:\s*.+$/m,
+    `campo: ${yamlString(campoLabel)}`,
+  );
+
+  return `---\n${updatedBlock}\n---\n${body}`;
 }
 
 export function appendProgressToMarkdown(

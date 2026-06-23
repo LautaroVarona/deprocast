@@ -1,5 +1,6 @@
 "use client";
 
+import { CamposWorkspace } from "@/components/proyectos/campos-workspace";
 import { ProjectBoard } from "@/components/proyectos/project-board";
 import { ProposalsWorkspace } from "@/components/proyectos/proposals-workspace";
 import { buttonVariants } from "@/components/ui/button";
@@ -12,10 +13,10 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-type DashboardView = "activos" | "propuestas" | "archivo";
+type DashboardView = "activos" | "campos" | "propuestas" | "archivo";
 
 function parseView(value: string | null): DashboardView {
-  if (value === "propuestas" || value === "archivo") return value;
+  if (value === "campos" || value === "propuestas" || value === "archivo") return value;
   return "activos";
 }
 
@@ -79,6 +80,7 @@ export function ProyectosDashboard() {
 
   const tabs: { id: DashboardView; label: string; href: string; badge?: number }[] = [
     { id: "activos", label: "Activos", href: "/proyectos" },
+    { id: "campos", label: "Campos", href: "/proyectos?view=campos" },
     {
       id: "propuestas",
       label: "Propuestas",
@@ -100,11 +102,13 @@ export function ProyectosDashboard() {
               Atanor · Proyectos
             </p>
             <h1 className="truncate text-sm font-semibold">
-              {view === "propuestas"
-                ? "Incubadora de propuestas"
-                : view === "archivo"
-                  ? "Ideas archivadas"
-                  : "Tablero por Campos"}
+              {view === "campos"
+                ? "Gestión de Campos"
+                : view === "propuestas"
+                  ? "Incubadora de propuestas"
+                  : view === "archivo"
+                    ? "Ideas archivadas"
+                    : "Tablero por Campos"}
             </h1>
           </div>
         </div>
@@ -171,6 +175,12 @@ export function ProyectosDashboard() {
             />
           </div>
         </>
+      )}
+
+      {view === "campos" && (
+        <div className="flex min-h-0 flex-1 flex-col px-4 py-3 sm:px-6">
+          <CamposWorkspace onRefresh={() => setRefreshKey((key) => key + 1)} />
+        </div>
       )}
 
       {view === "propuestas" && (

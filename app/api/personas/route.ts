@@ -1,5 +1,5 @@
-import { createPersona } from "@/lib/personas/service";
 import { listPersonas } from "@/lib/personas/queries";
+import { createPersona, createPersonaEntity } from "@/lib/personas/service";
 import { isPersonaKind } from "@/lib/kg/types";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -23,18 +23,30 @@ export async function POST(request: NextRequest) {
   try {
     const body = (await request.json()) as {
       name?: string;
+      nombrePrincipal?: string;
       role?: string;
       personaKind?: string;
       aliases?: string[];
+      notasGenerales?: string;
       campoSlug?: string;
     };
 
-    const name = body.name?.trim();
-    if (!name) {
+    const nombre =
+      body.nombrePrincipal?.trim() || body.name?.trim() || "";
+    if (!nombre) {
       return NextResponse.json(
         { error: "El nombre es obligatorio." },
         { status: 400 },
       );
+    }
+
+    if (body.notasGenerales !== undefined || body.nombrePrincipal) {
+      const persona = await createPersonaEntity({
+        nombrePrincipal: nombre,
+        aliases: Array.isArray(body.aliases) ? body.aliases : undefined,
+        notasGenerales: body.notasGenerales,
+      });
+      return NextResponse.json({ persona }, { status: 201 });
     }
 
     const personaKind =
@@ -43,7 +55,7 @@ export async function POST(request: NextRequest) {
         : undefined;
 
     const persona = await createPersona({
-      name,
+      name: nombre,
       role: body.role?.trim(),
       personaKind,
       aliases: Array.isArray(body.aliases) ? body.aliases : undefined,

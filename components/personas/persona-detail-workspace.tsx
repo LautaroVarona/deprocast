@@ -1,8 +1,12 @@
 "use client";
 
 import { ActivityFeed } from "@/components/personas/activity-feed";
+import { PersonaRelationsSheet } from "@/components/personas/persona-relations-sheet";
+import { PersonaFormSheet } from "@/components/personas/persona-form-sheet";
 import { Badge } from "@/components/ui/badge";
-import { buttonVariants } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
+import type { Persona } from "@/lib/personas/model";
+import type { PersonaRelationListItem } from "@/lib/personas/model";
 import type { PersonaDetailDto } from "@/lib/personas/types";
 import { cn } from "@/lib/utils";
 import {
@@ -10,10 +14,14 @@ import {
   CircleDotIcon,
   LinkIcon,
   Loader2Icon,
+  PencilIcon,
+  Trash2Icon,
   UserRoundIcon,
 } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
+import { toast } from "sonner";
 
 type PersonaDetailWorkspaceProps = {
   idOrSlug: string;
@@ -36,9 +44,15 @@ function formatWhen(iso: string | null): string {
 }
 
 export function PersonaDetailWorkspace({ idOrSlug }: PersonaDetailWorkspaceProps) {
+  const router = useRouter();
   const [persona, setPersona] = useState<PersonaDetailDto | null>(null);
+  const [entity, setEntity] = useState<Persona | null>(null);
+  const [relations, setRelations] = useState<PersonaRelationListItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
+  const [showEdit, setShowEdit] = useState(false);
+  const [showRelations, setShowRelations] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const loadPersona = useCallback(async () => {
     setIsLoading(true);
@@ -50,13 +64,21 @@ export function PersonaDetailWorkspace({ idOrSlug }: PersonaDetailWorkspaceProps
       if (response.status === 404) {
         setNotFound(true);
         setPersona(null);
+        setEntity(null);
         return;
       }
       if (!response.ok) return;
-      const data: { persona: PersonaDetailDto } = await response.json();
+      const data: {
+        persona: PersonaDetailDto;
+        entity: Persona;
+        relations: PersonaRelationListItem[];
+      } = await response.json();
       setPersona(data.persona);
+      setEntity(data.entity);
+      setRelations(data.relations ?? []);
     } catch {
       setPersona(null);
+      setEntity(null);
     } finally {
       setIsLoading(false);
     }
@@ -127,16 +149,36 @@ export function PersonaDetailWorkspace({ idOrSlug }: PersonaDetailWorkspaceProps
               </span>
             </div>
           </div>
-          <Link
-            href={`/grafo?node=${persona.id}`}
-            className={cn(
-              buttonVariants({ variant: "outline", size: "sm" }),
-              "shrink-0",
-            )}
-          >
-            <LinkIcon />
-            Ver en grafo
-          </Link>
+          <div className="flex shrink-0 gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setShowEdit(true)}
+            >
+              <PencilIcon />
+              Editar
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setShowRelations(true)}
+            >
+              <LinkIcon />
+              Vincular
+            </Button>
+            <Link
+              href="/personas?tab=grafo"
+              className={cn(
+                buttonVariants({ variant: "outline", size: "sm" }),
+                "shrink-0",
+              )}
+            >
+              <LinkIcon />
+              Ver grafo
+            </Link>
+          </div>
         </div>
       </header>
 
@@ -148,6 +190,75 @@ export function PersonaDetailWorkspace({ idOrSlug }: PersonaDetailWorkspaceProps
             </h2>
           </div>
           <div className="max-h-[40vh] space-y-4 overflow-y-auto p-4 lg:max-h-none">
+            {entity?.notasGenerales && (
+              <section className="rounded-lg border border-border bg-muted/20 p-3">
+                <h3 className="mb-1 text-xs font-semibold">Notas generales</h3>
+                <p className="text-xs whitespace-pre-wrap text-muted-foreground">
+                  {entity.notasGenerales}
+                </p>
+              </section>
+            )}
+
+            )}
+
+            <section>
+              <div className="mb-2 flex items-center justify-between gap-2">
+                <h3 className="text-xs font-semibold">
+                  Vínculos ({relations.length})
+                </h3>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="xs"
+                  onClick={() => setShowRelations(true)}
+                >
+                  <LinkIcon />
+                  Añadir
+                </Button>
+              </div>
+              {relations.length === 0 ? (
+                <p className="text-xs text-muted-foreground">
+                  Sin relaciones en el grafo.
+                </p>
+              ) : (
+                <ul className="space-y-1.5">
+                  {relations.map((rel) => (
+                    <li
+                      key={rel.id}
+                      className="flex items-start gap-2 rounded-md border border-border px-2.5 py-2 text-xs"
+                    >
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-1">
+                          <Badge variant="outline" className="font-mono text-[10px]">
+                            {rel.kind}
+                          </Badge>
+                          <span className="font-medium">{rel.label}</span>
+                        </div>
+                        <p className="mt-0.5 text-muted-foreground">
+                          {rel.rolPrincipal ?? rel.relationType}
+                          {rel.contexto ? ` · ${rel.contexto}` : ""}
+                        </p>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon-sm"
+                        onClick={async () => {
+                          await fetch(
+                            `/api/personas/relations/${encodeURIComponent(rel.id)}`,
+                            { method: "DELETE" },
+                          );
+                          void loadPersona();
+                        }}
+                      >
+                        <Trash2Icon />
+                      </Button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </section>
+
             <section>
               <h3 className="mb-2 text-xs font-semibold">
                 Bucles abiertos ({persona.openLoops.length})
@@ -217,6 +328,46 @@ export function PersonaDetailWorkspace({ idOrSlug }: PersonaDetailWorkspaceProps
               <p>{persona.mentionCount} menciones indexadas</p>
               <p>confianza {Math.round(persona.confidence * 100)}%</p>
             </section>
+
+            <Button
+              type="button"
+              variant="destructive"
+              size="sm"
+              className="w-full"
+              disabled={isDeleting}
+              onClick={async () => {
+                if (!entity) return;
+                if (!window.confirm(`¿Eliminar a ${entity.nombrePrincipal}? Se borrarán sus aristas y menciones.`)) {
+                  return;
+                }
+                setIsDeleting(true);
+                try {
+                  const response = await fetch(
+                    `/api/personas/${encodeURIComponent(entity.id)}`,
+                    { method: "DELETE" },
+                  );
+                  if (!response.ok) {
+                    const data = await response.json();
+                    throw new Error(data.error ?? "No se pudo eliminar.");
+                  }
+                  toast.success("Persona eliminada del grafo.");
+                  router.push("/personas");
+                } catch (error) {
+                  toast.error(
+                    error instanceof Error ? error.message : "Error al eliminar.",
+                  );
+                } finally {
+                  setIsDeleting(false);
+                }
+              }}
+            >
+              {isDeleting ? (
+                <Loader2Icon className="animate-spin" />
+              ) : (
+                <Trash2Icon />
+              )}
+              Eliminar persona
+            </Button>
           </div>
         </aside>
 
@@ -232,6 +383,24 @@ export function PersonaDetailWorkspace({ idOrSlug }: PersonaDetailWorkspaceProps
           </div>
         </section>
       </div>
+
+      {entity && (
+        <>
+          <PersonaFormSheet
+            open={showEdit}
+            onOpenChange={setShowEdit}
+            mode="edit"
+            initialPersona={entity}
+            onSaved={() => void loadPersona()}
+          />
+          <PersonaRelationsSheet
+            open={showRelations}
+            source={{ id: entity.id, nombrePrincipal: entity.nombrePrincipal }}
+            onOpenChange={setShowRelations}
+            onCreated={() => void loadPersona()}
+          />
+        </>
+      )}
     </div>
   );
 }

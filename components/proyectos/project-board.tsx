@@ -145,6 +145,7 @@ export function ProjectBoard({
         open={sheetOpen}
         onOpenChange={setSheetOpen}
         onProgressAdded={onRefresh}
+        onCampoChanged={onRefresh}
       />
     </>
   );

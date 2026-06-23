@@ -1,7 +1,9 @@
 "use client";
 
+import { CampoSelect } from "@/components/proyectos/campo-select";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetBody, SheetFooter, SheetHeader } from "@/components/ui/sheet";
+import { type CampoInfo, type CampoSlug } from "@/lib/projects/campos";
 import { isHighPriorityProject } from "@/lib/projects/priority";
 import type { Project } from "@/lib/projects/types";
 import { cn } from "@/lib/utils";
@@ -9,11 +11,12 @@ import {
   CalendarIcon,
   ClockIcon,
   FlameIcon,
+  FolderKanbanIcon,
   Loader2Icon,
   NotebookPenIcon,
   TargetIcon,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 type ProjectDetailSheetProps = {
@@ -21,6 +24,7 @@ type ProjectDetailSheetProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onProgressAdded?: () => void;
+  onCampoChanged?: () => void;
 };
 
 export function ProjectDetailSheet({
@@ -28,13 +32,37 @@ export function ProjectDetailSheet({
   open,
   onOpenChange,
   onProgressAdded,
+  onCampoChanged,
 }: ProjectDetailSheetProps) {
   const [progressNote, setProgressNote] = useState("");
   const [isAddingProgress, setIsAddingProgress] = useState(false);
+  const [campos, setCampos] = useState<CampoInfo[]>([]);
+  const [campoSlug, setCampoSlug] = useState<CampoSlug>("babel");
+  const [isChangingCampo, setIsChangingCampo] = useState(false);
+
+  useEffect(() => {
+    if (!project) return;
+    setCampoSlug(project.campoSlug);
+  }, [project]);
+
+  useEffect(() => {
+    if (!open) return;
+    void (async () => {
+      try {
+        const response = await fetch("/api/proyectos", { cache: "no-store" });
+        if (!response.ok) return;
+        const data: { campos?: CampoInfo[] } = await response.json();
+        if (data.campos?.length) setCampos(data.campos);
+      } catch {
+        // ignore
+      }
+    })();
+  }, [open]);
 
   if (!project) return null;
 
   const isCritical = isHighPriorityProject(project.prioridad, project.impacto);
+  const campoChanged = campoSlug !== project.campoSlug;
 
   const handleAddProgress = async () => {
     if (!progressNote.trim()) {
@@ -64,6 +92,31 @@ export function ProjectDetailSheet({
       );
     } finally {
       setIsAddingProgress(false);
+    }
+  };
+
+  const handleChangeCampo = async () => {
+    if (!campoChanged) return;
+
+    setIsChangingCampo(true);
+    try {
+      const response = await fetch(`/api/proyectos/${project.id}/campo`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ campoSlug }),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error ?? "No se pudo reasignar el Campo.");
+      }
+      toast.success("Proyecto vinculado al nuevo Campo.");
+      onCampoChanged?.();
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "No se pudo reasignar el Campo.",
+      );
+    } finally {
+      setIsChangingCampo(false);
     }
   };
 
@@ -105,6 +158,37 @@ export function ProjectDetailSheet({
             {project.description}
           </p>
         )}
+
+        <div className="space-y-2 rounded-md border border-border bg-muted/20 p-3">
+          <p className="flex items-center gap-1.5 font-mono text-[10px] tracking-wide text-muted-foreground uppercase">
+            <FolderKanbanIcon className="size-3" />
+            Campo
+          </p>
+          <CampoSelect
+            value={campoSlug}
+            onChange={setCampoSlug}
+            campos={campos}
+            allowCreate={false}
+            label=""
+          />
+          {campoChanged && (
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              className="w-full font-mono text-[10px]"
+              disabled={isChangingCampo}
+              onClick={() => void handleChangeCampo()}
+            >
+              {isChangingCampo ? (
+                <Loader2Icon className="animate-spin" />
+              ) : (
+                <FolderKanbanIcon />
+              )}
+              Mover a este Campo
+            </Button>
+          )}
+        </div>
 
         <div className="grid grid-cols-2 gap-2 font-mono text-[10px] text-muted-foreground">
           {project.fechaInicio && (

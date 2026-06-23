@@ -1,3 +1,4 @@
+export type { Persona, RelacionPersonaPersona, RelacionPersonaProyecto } from "@/lib/personas/model";
 import type { PersonaKind } from "@/lib/kg/types";
 
 export type PersonaProjectLink = {

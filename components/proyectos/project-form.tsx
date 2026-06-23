@@ -7,24 +7,22 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { CampoSelect } from "@/components/proyectos/campo-select";
 import { cn } from "@/lib/utils";
 import {
-  FormField,
-  inputClassName,
-  textareaClassName,
-} from "@/components/proyectos/form-controls";
-import {
   DEFAULT_CAMPO_SLUG,
-  getDefaultCampo,
-  isCampoSlug,
-  slugifyCampoInput,
   type CampoInfo,
   type CampoSlug,
 } from "@/lib/projects/campos";
 import { InboxIcon, Loader2Icon } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import {
+  FormField,
+  inputClassName,
+  textareaClassName,
+} from "@/components/proyectos/form-controls";
 
 type ProjectFormProps = {
   className?: string;
@@ -34,10 +32,8 @@ export function ProjectForm({ className }: ProjectFormProps) {
   const router = useRouter();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [campos, setCampos] = useState<CampoInfo[]>([getDefaultCampo()]);
+  const [campos, setCampos] = useState<CampoInfo[]>([]);
   const [campoSlug, setCampoSlug] = useState<CampoSlug>(DEFAULT_CAMPO_SLUG);
-  const [isCreatingCampo, setIsCreatingCampo] = useState(false);
-  const [newCampoName, setNewCampoName] = useState("");
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
@@ -53,12 +49,6 @@ export function ProjectForm({ className }: ProjectFormProps) {
     })();
   }, []);
 
-  const resolvedCampoSlug = useMemo(() => {
-    if (!isCreatingCampo) return campoSlug;
-    const slug = slugifyCampoInput(newCampoName);
-    return isCampoSlug(slug) ? slug : "";
-  }, [isCreatingCampo, campoSlug, newCampoName]);
-
   const canSubmit = title.trim().length > 0 && !isSaving;
 
   const handleSubmit = async () => {
@@ -73,7 +63,7 @@ export function ProjectForm({ className }: ProjectFormProps) {
           mode: "quick",
           title,
           description,
-          campoSlug: resolvedCampoSlug || undefined,
+          campoSlug: campoSlug || undefined,
         }),
       });
 
@@ -131,52 +121,12 @@ export function ProjectForm({ className }: ProjectFormProps) {
           />
         </FormField>
 
-        <div className="space-y-2">
-          <FormField id="project-campo" label="Campo sugerido (opcional)">
-            <select
-              id="project-campo"
-              value={isCreatingCampo ? "__new__" : campoSlug}
-              onChange={(event) => {
-                const value = event.target.value;
-                if (value === "__new__") {
-                  setIsCreatingCampo(true);
-                  setNewCampoName("");
-                  return;
-                }
-                setIsCreatingCampo(false);
-                setCampoSlug(value);
-              }}
-              className={inputClassName}
-            >
-              {campos.map((campo) => (
-                <option key={campo.slug} value={campo.slug}>
-                  {campo.label}
-                </option>
-              ))}
-              <option value="__new__">+ Crear nuevo Campo...</option>
-            </select>
-          </FormField>
-          {isCreatingCampo && (
-            <div className="space-y-1.5">
-              <input
-                type="text"
-                value={newCampoName}
-                onChange={(event) => setNewCampoName(event.target.value)}
-                placeholder="Ej: Salud, Creatividad, Aprendizaje..."
-                className={inputClassName}
-              />
-              {resolvedCampoSlug ? (
-                <p className="text-xs text-muted-foreground">
-                  Slug: <span className="font-mono">{resolvedCampoSlug}</span>
-                </p>
-              ) : (
-                <p className="text-xs text-destructive">
-                  Ingresá un nombre válido para el nuevo Campo.
-                </p>
-              )}
-            </div>
-          )}
-        </div>
+        <CampoSelect
+          value={campoSlug}
+          onChange={setCampoSlug}
+          campos={campos.length > 0 ? campos : undefined}
+          label="Campo sugerido (opcional)"
+        />
 
         <div className="flex flex-wrap gap-2 border-t border-border pt-4">
           <Button
