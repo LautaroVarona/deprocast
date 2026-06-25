@@ -1,6 +1,6 @@
 "use client";
 
-import { postIngestaCapture } from "@/components/ingesta/capture-client";
+import { buildCaptureGravity, postIngestaCapture } from "@/components/ingesta/capture-client";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import {
@@ -74,11 +74,12 @@ async function ingestTextFile(file: File): Promise<void> {
     channel: "texto",
     rawText: text,
     filename: file.name,
-    gravity: {
+    gravity: buildCaptureGravity({
+      title: "",
       sourceType: "personal_writing",
       campoSlug: "babel",
       onda: "cortex-ingest",
-    },
+    }),
   });
 }
 
@@ -86,11 +87,12 @@ async function ingestTextDump(content: string): Promise<void> {
   await postIngestaCapture({
     channel: "texto",
     rawText: content,
-    gravity: {
+    gravity: buildCaptureGravity({
+      title: "",
       sourceType: "ai_chat",
       campoSlug: "babel",
       onda: "cortex-dump",
-    },
+    }),
   });
 }
 
