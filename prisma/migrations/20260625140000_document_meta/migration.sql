@@ -3,6 +3,7 @@ CREATE TABLE "DocumentMeta" (
     "documentId" TEXT NOT NULL PRIMARY KEY,
     "titulo" TEXT NOT NULL,
     "tituloLocked" BOOLEAN NOT NULL DEFAULT false,
+    "titleApplied" BOOLEAN NOT NULL DEFAULT false,
     "materia" TEXT NOT NULL,
     "particula" TEXT NOT NULL,
     "campo" TEXT NOT NULL,
@@ -10,6 +11,7 @@ CREATE TABLE "DocumentMeta" (
     "tiempoEspacio" TEXT NOT NULL,
     "posicion" TEXT NOT NULL,
     "areas" JSONB NOT NULL,
+    "processTrace" JSONB,
     "modelUsed" TEXT,
     "processedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" DATETIME NOT NULL
