@@ -1,15 +1,17 @@
+import { readCampoMeta, resolveCampoLabel, writeCampoMeta } from "@/lib/projects/campo-meta";
 import {
   DEFAULT_CAMPO_SLUG,
+  extractLinkedCampoSlugs,
   getCampoLabel,
   getDefaultCampo,
   isCampoSlug,
   slugifyCampoInput,
   type Campo,
   type CampoInfo,
+  type CampoSlug,
   type CreateCampoInput,
   type UpdateCampoInput,
 } from "@/lib/projects/campos";
-import { readCampoMeta, resolveCampoLabel, writeCampoMeta } from "@/lib/projects/campo-meta";
 import {
   appendProgressToMarkdown,
   buildInitialProgressEntry,
@@ -75,6 +77,21 @@ export async function listProjects(): Promise<Project[]> {
   });
 }
 
+export async function ensureCampoExists(slug: CampoSlug): Promise<void> {
+  if (!isCampoSlug(slug)) return;
+
+  await mkdir(getProjectDir(slug), { recursive: true });
+  const existing = await readCampoMeta(slug);
+  if (existing) return;
+
+  await writeCampoMeta({
+    slug,
+    label: getCampoLabel(slug),
+    description: "",
+    createdAt: new Date().toISOString().slice(0, 10),
+  });
+}
+
 export async function listCampos(): Promise<CampoInfo[]> {
   await mkdir(PROJECTS_ROOT_DIR, { recursive: true });
 
@@ -82,7 +99,9 @@ export async function listCampos(): Promise<CampoInfo[]> {
   const counts = new Map<string, number>();
 
   for (const project of projects) {
-    counts.set(project.campoSlug, (counts.get(project.campoSlug) ?? 0) + 1);
+    for (const slug of extractLinkedCampoSlugs(project)) {
+      counts.set(slug, (counts.get(slug) ?? 0) + 1);
+    }
   }
 
   const entries = await readdir(PROJECTS_ROOT_DIR, { withFileTypes: true }).catch(
@@ -128,7 +147,9 @@ export async function getCampo(slug: string): Promise<Campo | null> {
   const info = campos.find((campo) => campo.slug === slug);
   if (!info) return null;
 
-  const projects = (await listProjects()).filter((project) => project.campoSlug === slug);
+  const projects = (await listProjects()).filter((project) =>
+    extractLinkedCampoSlugs(project).includes(slug),
+  );
   const meta = await readCampoMeta(slug);
 
   return {
@@ -235,7 +256,7 @@ export async function assignProjectToCampo(
   const updatedContent = updateCampoInMarkdown(content, campoLabel);
   const newPath = getProjectFilePath(campoSlug, project.id);
 
-  await mkdir(getProjectDir(campoSlug), { recursive: true });
+  await ensureCampoExists(campoSlug);
   await writeFile(newPath, updatedContent, "utf8");
   await unlink(project.filePath).catch(() => {});
 
@@ -257,7 +278,7 @@ export async function createProject(input: CreateProjectInput): Promise<Project>
   const projectData = createProjectFromInput(input, id, campoLabel);
   const filePath = getProjectFilePath(input.campoSlug, id);
 
-  await mkdir(getProjectDir(input.campoSlug), { recursive: true });
+  await ensureCampoExists(input.campoSlug);
   await writeFile(filePath, buildProjectMarkdown(projectData), "utf8");
 
   return {

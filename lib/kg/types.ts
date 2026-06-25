@@ -39,6 +39,7 @@ export const MENTION_SOURCE_TYPES = [
   "parent_chunk",
   "journal",
   "project",
+  "bookmark",
   "raw_document",
   "code_file",
   "master_plan",

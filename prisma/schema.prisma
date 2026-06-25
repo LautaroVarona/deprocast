@@ -319,6 +319,43 @@ model HealthRecord {
   @@index([sourceEventId])
 }
 
+// Módulo Cuadernos — entidades físicas antes del procesamiento de texto.
+// Page status: PENDING | PROCESSING | COMPLETED | ERROR
+model Notebook {
+  id          String         @id @default(uuid())
+  title       String
+  description String?
+  coverHue    Int            @default(220)
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  pages       NotebookPage[]
+
+  @@index([createdAt])
+}
+
+model NotebookPage {
+  id               String    @id @default(uuid())
+  notebookId       String
+  pageNumber       Int
+  filename         String
+  imagePath        String
+  mimeType         String
+  status           String    @default("PENDING")
+  semanticVector   String?
+  structuralVector Json?
+  quanta           Json?
+  processedAt      DateTime?
+  corpusCaptureId  String?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  notebook Notebook @relation(fields: [notebookId], references: [id], onDelete: Cascade)
+
+  @@unique([notebookId, pageNumber])
+  @@index([notebookId])
+  @@index([status])
+}
+
 // Cola HITL del purificador (reemplaza JSON en data/raw_documents/review/).
 model PurifierReview {
   reviewId    String   @id
@@ -332,4 +369,31 @@ model PurifierReview {
 
   @@index([processedAt])
   @@index([assetId])
+}
+
+// Marcadores de X (Twitter) — calibración Vibe 1-12 + enriquecimiento IA.
+model XBookmark {
+  id             String    @id @default(uuid())
+  externalId     String?
+  author         String
+  handle         String
+  text           String
+  mediaUrls      Json      @default("[]")
+  tweetUrl       String?
+  bookmarkedAt   String?
+  weight         Int?
+  calibratedAt   DateTime?
+  titleEs        String?
+  metaTags       Json?
+  linkedProjects Json?
+  enrichedAt     DateTime?
+  importBatchId  String?
+  status         String    @default("pending")
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@index([status])
+  @@index([weight])
+  @@index([importBatchId])
+  @@index([externalId])
 }

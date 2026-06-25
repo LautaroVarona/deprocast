@@ -3,6 +3,7 @@ export const SOURCE_TYPES = [
   "ai_chat",
   "ai_report",
   "web_clip",
+  "social_bookmark",
   "book_excerpt",
 ] as const;
 

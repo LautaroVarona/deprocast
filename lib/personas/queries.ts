@@ -33,6 +33,7 @@ const SOURCE_LABELS: Record<string, string> = {
   parent_chunk: "Fragmento de audio",
   audio_asset: "Audio",
   project: "Proyecto",
+  bookmark: "Bookmark X",
   raw_document: "Documento",
   code_file: "Código",
   master_plan: "Master plan",

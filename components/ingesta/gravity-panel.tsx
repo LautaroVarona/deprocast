@@ -11,6 +11,7 @@ const SOURCE_LABELS: Record<SourceType, string> = {
   ai_chat: "Chat IA",
   ai_report: "Reporte IA",
   web_clip: "Recorte web",
+  social_bookmark: "Marcador X",
   book_excerpt: "Extracto libro",
 };
 

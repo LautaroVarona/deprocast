@@ -1,0 +1,22 @@
+# Memoria ejercicio anterior (n-1)
+
+7. Inmovilizado intangible
+
+| Concepto | Importe |
+| --- | --- |
+| Software | 900.000 |
+
+8. Arrendamientos
+
+| Tipo | Importe anual |
+| --- | --- |
+| Oficinas | 110.000 |
+
+23. Operaciones con partes vinculadas
+
+Tabla operaciones vinculadas
+
+| Parte vinculada | Importe | Naturaleza |
+| --- | --- | --- |
+| Sociedad matriz | 140.000 | Servicios |
+| Filial norte | 80.000 | Préstamo |

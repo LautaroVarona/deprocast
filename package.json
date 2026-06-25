@@ -12,6 +12,7 @@
     "kg:scan": "tsx scripts/kg/scan-code.ts",
     "kg:backfill": "tsx scripts/kg/backfill.ts",
     "kg:reconcile": "tsx scripts/kg/reconcile-entities.ts",
+    "memorias:verify": "tsx scripts/memorias/verify-segmentation.ts",
     "postinstall": "prisma generate && node scripts/rebuild-native.js"
   },
   "dependencies": {

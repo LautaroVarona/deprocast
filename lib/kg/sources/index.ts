@@ -11,3 +11,4 @@ export {
 } from "@/lib/kg/sources/documents";
 export { ingestMasterPlan } from "@/lib/kg/sources/master-plan";
 export { ingestHealthEvent } from "@/lib/kg/sources/health";
+export { ingestXBookmark } from "@/lib/kg/sources/bookmarks";

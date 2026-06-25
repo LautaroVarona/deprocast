@@ -11,6 +11,7 @@ import {
   useState,
   type KeyboardEvent,
 } from "react";
+import { toast } from "sonner";
 
 export type SelectedPerson = {
   id: string;
@@ -27,6 +28,7 @@ type PersonBadgeSelectProps = {
   selected: SelectedPerson[];
   onChange: (people: SelectedPerson[]) => void;
   disabled?: boolean;
+  compact?: boolean;
   className?: string;
 };
 
@@ -35,6 +37,7 @@ export function PersonBadgeSelect({
   selected,
   onChange,
   disabled = false,
+  compact = false,
   className,
 }: PersonBadgeSelectProps) {
   const [query, setQuery] = useState("");
@@ -125,8 +128,11 @@ export function PersonBadgeSelect({
         id: data.persona.id,
         label: data.persona.primaryName,
       });
-    } catch {
-      // silencioso — el usuario puede reintentar
+      toast.success(`Persona "${data.persona.primaryName}" creada y vinculada.`);
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "No se pudo crear la persona.",
+      );
     } finally {
       setIsCreating(false);
     }
@@ -199,8 +205,9 @@ export function PersonBadgeSelect({
     <div ref={containerRef} className={cn("relative", className)}>
       <div
         className={cn(
-          "flex min-h-9 flex-wrap items-center gap-1 rounded-lg border border-input bg-background px-2 py-1.5",
-          "focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/50",
+          "flex flex-wrap items-center gap-0.5 rounded-md border border-input bg-background",
+          compact ? "min-h-6 px-1 py-0.5" : "min-h-9 gap-1 rounded-lg px-2 py-1.5",
+          "focus-within:border-ring focus-within:ring-2 focus-within:ring-ring/40",
           disabled && "opacity-60",
         )}
         onClick={() => inputRef.current?.focus()}
@@ -210,6 +217,7 @@ export function PersonBadgeSelect({
             key={person.id}
             label={person.label}
             entityType="persona"
+            className={compact ? "h-5 text-[9px] px-1" : undefined}
             onRemove={disabled ? undefined : () => removePerson(person.id)}
           />
         ))}
@@ -225,8 +233,11 @@ export function PersonBadgeSelect({
           }}
           onFocus={() => setIsOpen(true)}
           onKeyDown={handleKeyDown}
-          placeholder={selected.length === 0 ? "Escribí un nombre…" : ""}
-          className="min-w-[120px] flex-1 bg-transparent font-mono text-[11px] outline-none placeholder:text-muted-foreground"
+          placeholder={selected.length === 0 ? (compact ? "Persona…" : "Escribí un nombre…") : ""}
+          className={cn(
+            "min-w-[4rem] flex-1 bg-transparent font-mono outline-none placeholder:text-muted-foreground",
+            compact ? "text-[9px] py-0" : "text-[11px]",
+          )}
         />
       </div>
 

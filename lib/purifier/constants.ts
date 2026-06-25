@@ -5,4 +5,4 @@ export const CAPTURE_SUCCESS_TOAST =
 
 export const MATERIA_ESTADO_PENDING_PURIFICATION = "pending_purification";
 
-export type IngestaChannel = "texto" | "audio" | "tablas" | "vision";
+export type IngestaChannel = "texto" | "audio" | "tablas" | "vision" | "x-bookmarks";

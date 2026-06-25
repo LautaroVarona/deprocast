@@ -19,7 +19,7 @@ import {
   type ReactNode,
 } from "react";
 
-export type IngestaChannel = "texto" | "audio" | "tablas" | "vision";
+export type IngestaChannel = "texto" | "audio" | "tablas" | "vision" | "x-bookmarks";
 
 export type IngestaGravity = {
   title: string;

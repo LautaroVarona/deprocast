@@ -158,3 +158,36 @@
   inset: 0;
   transform: rotateY(180deg);
 }
+
+/* X-Bookmark-Calibrator — slider noir */
+.x-bookmark-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  background: linear-gradient(
+    to right,
+    rgba(255, 255, 255, 0.15) 0%,
+    rgba(255, 255, 255, 0.85) 100%
+  );
+  border-radius: 9999px;
+}
+
+.x-bookmark-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 9999px;
+  background: #fff;
+  box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.15);
+  cursor: pointer;
+}
+
+.x-bookmark-slider::-moz-range-thumb {
+  width: 1.25rem;
+  height: 1.25rem;
+  border: none;
+  border-radius: 9999px;
+  background: #fff;
+  box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.15);
+  cursor: pointer;
+}

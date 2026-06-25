@@ -94,3 +94,41 @@ export function getDefaultCampo(): CampoInfo {
 export function resolveCampoSlug(slug?: string | null): CampoSlug {
   return slug && isCampoSlug(slug) ? slug : DEFAULT_CAMPO_SLUG;
 }
+
+/** Ordena slugs poniendo campos explícitos antes que Babel (sumidero por defecto). */
+export function normalizeCampoSlugs(slugs: CampoSlug[]): CampoSlug[] {
+  const unique = [...new Set(slugs.filter((slug) => isCampoSlug(slug)))];
+  if (unique.length === 0) return [DEFAULT_CAMPO_SLUG];
+
+  const nonBabel = unique.filter((slug) => slug !== DEFAULT_CAMPO_SLUG);
+  const babel = unique.filter((slug) => slug === DEFAULT_CAMPO_SLUG);
+  return [...nonBabel, ...babel];
+}
+
+/** Campo primario para persistir el proyecto: el primero no-Babel si existe. */
+export function resolvePrimaryCampoSlug(slugs: CampoSlug[]): CampoSlug {
+  const normalized = normalizeCampoSlugs(slugs);
+  return normalized[0];
+}
+
+/** Slugs vinculados a un proyecto (primario + tags secundarios). */
+export function extractLinkedCampoSlugs(project: {
+  campoSlug: CampoSlug;
+  metaTagsSecundarios: string[];
+}): CampoSlug[] {
+  const linked = new Set<CampoSlug>([resolveCampoSlug(project.campoSlug)]);
+
+  for (const tag of project.metaTagsSecundarios) {
+    if (tag.startsWith("campo_slug:")) {
+      const slug = tag.slice("campo_slug:".length);
+      if (isCampoSlug(slug)) linked.add(slug);
+      continue;
+    }
+    if (tag.startsWith("campo:")) {
+      const fromLabel = getCampoSlugFromLabel(tag.slice("campo:".length));
+      if (fromLabel) linked.add(fromLabel);
+    }
+  }
+
+  return [...linked];
+}

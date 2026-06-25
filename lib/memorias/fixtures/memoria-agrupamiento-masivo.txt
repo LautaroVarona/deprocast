@@ -1,0 +1,21 @@
+# Memoria con agrupamiento masivo (bug histórico)
+
+7. Inmovilizado intangible
+
+Contenido del apartado 7.
+
+8. Arrendamientos
+
+Este bloque fue absorbido erróneamente dentro del apartado 7 por segmentación basada en palabras clave.
+
+9. Inmovilizado material
+
+Material absorbido.
+
+10. Inversiones inmobiliarias
+
+Inmobiliarias absorbidas.
+
+11. Inmovilizado financiero
+
+Financiero absorbido.

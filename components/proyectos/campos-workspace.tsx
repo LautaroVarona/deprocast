@@ -17,9 +17,10 @@ import { toast } from "sonner";
 
 type CamposWorkspaceProps = {
   onRefresh?: () => void;
+  refreshKey?: number;
 };
 
-export function CamposWorkspace({ onRefresh }: CamposWorkspaceProps) {
+export function CamposWorkspace({ onRefresh, refreshKey = 0 }: CamposWorkspaceProps) {
   const [campos, setCampos] = useState<Campo[]>([]);
   const [projectsByCampo, setProjectsByCampo] = useState<Record<string, Project[]>>({});
   const [isLoading, setIsLoading] = useState(true);
@@ -51,7 +52,7 @@ export function CamposWorkspace({ onRefresh }: CamposWorkspaceProps) {
 
   useEffect(() => {
     void loadCampos();
-  }, [loadCampos]);
+  }, [loadCampos, refreshKey]);
 
   const selectedCampo = useMemo(
     () => campos.find((campo) => campo.slug === selectedSlug) ?? null,

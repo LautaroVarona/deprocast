@@ -1,0 +1,59 @@
+# Memoria de auditoría — fixture con apartados 7–11 independientes
+
+7. Inmovilizado intangible
+
+El inmovilizado intangible asciende a 1.250.000 €.
+
+7.1 Desarrollo de aplicaciones informáticas
+
+| Concepto | Importe |
+| --- | --- |
+| Desarrollo software | 850.000 |
+
+8. Arrendamientos
+
+La sociedad mantiene contratos de arrendamiento financiero.
+
+Tabla 8.1 Arrendamientos operativos
+
+| Tipo | Importe anual |
+| --- | --- |
+| Oficinas | 120.000 |
+
+9. Inmovilizado material
+
+| Grupo | Valor neto |
+| --- | --- |
+| Terrenos y construcciones | 3.400.000 |
+
+10. Inversiones inmobiliarias
+
+No existen inversiones inmobiliarias en el ejercicio.
+
+11. Inmovilizado financiero
+
+| Instrumento | Valor |
+| --- | --- |
+| Participaciones LP | 250.000 |
+
+12. Situación fiscal
+
+| Concepto | Importe |
+| --- | --- |
+| Base imponible | 2.500.000 |
+| Cuota íntegra | 625.000 |
+| Deducciones | 25.000 |
+| Cuota líquida | 600.000 |
+
+Tabla desglose impuestos
+
+| Tipo | Importe |
+| --- | --- |
+| Impuesto sociedades | 2.500.000 |
+
+23. Operaciones con partes vinculadas
+
+Tabla operaciones vinculadas
+
+| Parte vinculada | Importe | Naturaleza |
+| --- | --- | --- |

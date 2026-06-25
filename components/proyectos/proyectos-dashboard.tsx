@@ -179,7 +179,10 @@ export function ProyectosDashboard() {
 
       {view === "campos" && (
         <div className="flex min-h-0 flex-1 flex-col px-4 py-3 sm:px-6">
-          <CamposWorkspace onRefresh={() => setRefreshKey((key) => key + 1)} />
+          <CamposWorkspace
+            refreshKey={refreshKey}
+            onRefresh={() => setRefreshKey((key) => key + 1)}
+          />
         </div>
       )}
 
@@ -188,6 +191,7 @@ export function ProyectosDashboard() {
           <ProposalsWorkspace
             status="pending"
             onPendingCountChange={setPendingProposals}
+            onProposalActivated={() => setRefreshKey((key) => key + 1)}
           />
         </div>
       )}

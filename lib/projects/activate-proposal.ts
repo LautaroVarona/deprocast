@@ -1,7 +1,11 @@
 import "server-only";
 
 import { resolvePersonaNames } from "@/lib/kg/personas";
-import { isCampoSlug, resolveCampoSlug } from "@/lib/projects/campos";
+import {
+  isCampoSlug,
+  normalizeCampoSlugs,
+  resolvePrimaryCampoSlug,
+} from "@/lib/projects/campos";
 import { createProject } from "@/lib/projects/service";
 import {
   getProposal,
@@ -25,6 +29,7 @@ export type ActivateProposalInput = {
   priorityReason: string;
   tipo: ProjectTipo;
   campoSlug: string;
+  campoSlugs?: string[];
   personIds?: string[];
   gravity?: {
     prioridad?: number;
@@ -105,7 +110,18 @@ export async function activateProposal(input: ActivateProposalInput): Promise<Pr
     throw new Error("Seleccioná un Campo válido.");
   }
 
-  const campoSlug = resolveCampoSlug(input.campoSlug);
+  const resolvedSlugs = normalizeCampoSlugs(
+    (input.campoSlugs ?? [input.campoSlug]).filter((slug) => isCampoSlug(slug)),
+  );
+
+  if (resolvedSlugs.length === 0) {
+    throw new Error("Seleccioná al menos un Campo válido.");
+  }
+
+  const campoSlug = resolvePrimaryCampoSlug(resolvedSlugs);
+  const secondaryCampoTags = resolvedSlugs
+    .filter((slug) => slug !== campoSlug)
+    .map((slug) => `campo_slug:${slug}`);
   const baseGravity = extractGravity(proposal.sourcePayload);
   const gravity = {
     prioridad: clampScale(Number(input.gravity?.prioridad ?? baseGravity.prioridad)),
@@ -116,7 +132,10 @@ export async function activateProposal(input: ActivateProposalInput): Promise<Pr
   };
   const personIds = (input.personIds ?? []).filter(Boolean);
   const subpersonasCargo = await resolvePersonaNames(personIds);
-  const metaTags = extractMetaTags(proposal.sourcePayload);
+  const metaTags = [
+    ...extractMetaTags(proposal.sourcePayload),
+    ...secondaryCampoTags,
+  ];
   const markdownBody =
     typeof proposal.sourcePayload?.markdownBody === "string"
       ? proposal.sourcePayload.markdownBody

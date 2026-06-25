@@ -1,4 +1,4 @@
-import type { Campo } from "@/lib/projects/campos";
+import { extractLinkedCampoSlugs, type Campo } from "@/lib/projects/campos";
 import {
   createCampo,
   getCampo,
@@ -33,9 +33,13 @@ export async function GET() {
     );
 
     const projectsByCampo = projects.reduce<Record<string, Project[]>>((acc, project) => {
-      const list = acc[project.campoSlug] ?? [];
-      list.push(project);
-      acc[project.campoSlug] = list;
+      for (const slug of extractLinkedCampoSlugs(project)) {
+        const list = acc[slug] ?? [];
+        if (!list.some((item) => item.id === project.id)) {
+          list.push(project);
+        }
+        acc[slug] = list;
+      }
       return acc;
     }, {});
 
