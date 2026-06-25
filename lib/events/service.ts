@@ -18,6 +18,7 @@ import {
 import { addProgressEntry } from "@/lib/projects/service";
 import { ingestHealthEvent } from "@/lib/kg/sources/health";
 import { prisma } from "@/lib/prisma";
+import { Prisma } from "@prisma/client";
 import { createHash, randomUUID } from "node:crypto";
 
 function isHealthPillarValue(pillar: EventPillar): pillar is HealthPillar {
@@ -61,7 +62,7 @@ async function writeHealthFromEvent(
       pillar: event.pillar,
       occurredAt: event.occurredAt,
       summary,
-      metrics,
+      metrics: metrics as Prisma.InputJsonValue,
       sourceEventId: event.id,
     },
   });
@@ -146,7 +147,7 @@ export async function createProposedEvents(
           source: parsed.source,
           sourceRef: parsed.sourceRef,
           content: item.content,
-          structuredData,
+          structuredData: structuredData as Prisma.InputJsonValue,
           pillar: item.pillar,
           status: "proposed",
           correlationId,
@@ -186,7 +187,7 @@ export async function createConfirmedManualHealthEvent(input: {
         occurredAt: input.occurredAt,
         source: "manual",
         content: input.content,
-        structuredData: { summary: input.summary, metrics },
+        structuredData: { summary: input.summary, metrics } as Prisma.InputJsonValue,
         pillar: input.pillar,
         status: "confirmed",
         links: {
@@ -206,7 +207,7 @@ export async function createConfirmedManualHealthEvent(input: {
         pillar: input.pillar,
         occurredAt: input.occurredAt,
         summary: input.summary,
-        metrics,
+        metrics: metrics as Prisma.InputJsonValue,
         sourceEventId: event.id,
       },
     });

@@ -21,7 +21,7 @@ import type {
 import { getCampoLabel, isCampoSlug } from "@/lib/projects/campos";
 import { listCampos } from "@/lib/projects/service";
 import { prisma } from "@/lib/prisma";
-import { Prisma, type KgNode } from "@prisma/client";
+import { Prisma, type KgEdge, type KgNode } from "@prisma/client";
 
 async function assertPersonaNode(id: string) {
   const node = await prisma.kgNode.findFirst({
@@ -81,15 +81,7 @@ async function ensureCampoConceptoNode(campoSlug: string): Promise<KgNode> {
 }
 
 function edgeToRelationListItem(
-  edge: {
-    id: string;
-    relationType: string;
-    sourceNodeId: string;
-    targetNodeId: string;
-    context: string;
-    sourceNode: KgNode;
-    targetNode: KgNode;
-  },
+  edge: KgEdge & { sourceNode: KgNode; targetNode: KgNode },
   personaId: string,
 ): PersonaRelationListItem | null {
   const personaPersona = kgEdgeToRelacionPersonaPersona(

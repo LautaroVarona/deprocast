@@ -25,6 +25,7 @@ const CHANNEL_MATERIA: Record<IngestaChannel, MateriaValue> = {
   audio: "audio/transcript",
   tablas: "tablas/estructurado",
   vision: "vision/ocr",
+  "x-bookmarks": "texto",
 };
 
 const CHANNEL_ORIGEN: Record<IngestaChannel, OrigenValue> = {
@@ -32,6 +33,7 @@ const CHANNEL_ORIGEN: Record<IngestaChannel, OrigenValue> = {
   audio: "web",
   tablas: "web",
   vision: "web",
+  "x-bookmarks": "web",
 };
 
 const MATERIA_ALIASES: Record<string, MateriaValue> = {
