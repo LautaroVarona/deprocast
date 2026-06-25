@@ -2,6 +2,7 @@
 
 import { AgentCard } from "@/components/agentes/agent-card";
 import { IncubationLab } from "@/components/agentes/incubation-lab";
+import { MetaMeteadorPanel } from "@/components/agentes/meta-meteador-panel";
 import { SubprocessorsSection } from "@/components/agentes/subprocessors-section";
 import {
   ECOSYSTEM_STATS,
@@ -84,6 +85,8 @@ export function AgentesWorkspace() {
             ))}
           </div>
         </section>
+
+        <MetaMeteadorPanel />
 
         <SubprocessorsSection />
 

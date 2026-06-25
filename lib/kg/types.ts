@@ -11,6 +11,7 @@ export const NODE_TYPES = [
   "documento",
   "archivo",
   "modulo",
+  "area",
 ] as const;
 
 export const PERSONA_KINDS = ["fisica", "juridica"] as const;
@@ -31,6 +32,7 @@ export const RELATION_TYPES = [
   "depende_de",
   "define",
   "documenta",
+  "relevante_para",
 ] as const;
 
 export const MENTION_SOURCE_TYPES = [
@@ -45,6 +47,7 @@ export const MENTION_SOURCE_TYPES = [
   "master_plan",
   "chat",
   "health_event",
+  "document_meta",
 ] as const;
 
 // Tipos de nodo que pertenecen al subgrafo de codigo.

@@ -101,6 +101,7 @@ export const TYPE_COLORS: Record<string, string> = {
   tecnologia: "#06b6d4",
   ley: "#a855f7",
   proceso: "#14b8a6",
+  area: "#ec4899",
 };
 
 export function colorForType(type: string): string {

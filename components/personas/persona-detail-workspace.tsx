@@ -199,8 +199,6 @@ export function PersonaDetailWorkspace({ idOrSlug }: PersonaDetailWorkspaceProps
               </section>
             )}
 
-            )}
-
             <section>
               <div className="mb-2 flex items-center justify-between gap-2">
                 <h3 className="text-xs font-semibold">

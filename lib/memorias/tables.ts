@@ -56,7 +56,7 @@ function parseMarkdownTable(lines: string[], startIndex: number): {
 
   return {
     table: {
-      id: slugify(caption ?? headers.join("-") || `table-${startIndex}`),
+      id: slugify((caption ?? headers.join("-")) || `table-${startIndex}`),
       caption,
       headers,
       rows,

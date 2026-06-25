@@ -371,6 +371,27 @@ model PurifierReview {
   @@index([assetId])
 }
 
+// Metadatos desacoplados del agente Meta-Meteador (vinculados por documentId).
+model DocumentMeta {
+  documentId    String   @id
+  titulo        String
+  tituloLocked  Boolean  @default(false)
+  titleApplied  Boolean  @default(false)
+  materia       String
+  particula     String
+  campo         String
+  onda          String
+  tiempoEspacio String
+  posicion      String
+  areas         Json
+  processTrace  Json?
+  modelUsed     String?
+  processedAt   DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([processedAt])
+}
+
 // Marcadores de X (Twitter) — calibración Vibe 1-12 + enriquecimiento IA.
 model XBookmark {
   id             String    @id @default(uuid())

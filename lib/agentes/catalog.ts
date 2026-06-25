@@ -266,6 +266,38 @@ export const OPERATIONAL_AGENTS: OperationalAgent[] = [
     ],
     uiRoute: "/calibrador",
   },
+  {
+    id: "meta-meteador",
+    emoji: "🏷️",
+    name: "Meta-Meteador",
+    badge: "LLM · Vertex Gemini",
+    badgeTone: "violet",
+    locations: [
+      "lib/meta-meteador/engine.ts",
+      "lib/meta-meteador/prompt.ts",
+      "lib/meta-meteador/types.ts",
+      "lib/meta-meteador/parse.ts",
+      "app/api/agentes/meta-meteador/route.ts",
+      "components/agentes/meta-meteador-panel.tsx",
+      "components/agentes/meta-meteador-modal.tsx",
+    ],
+    functions: [
+      "Revisar documentos validados (.md en data/projects) en lote.",
+      "Asignar título de 3–7 palabras si el actual es auto-generado (sin-titulo, .md, timestamp).",
+      "Conservar títulos asignados manualmente por el usuario.",
+      "Extraer matriz cuántica (Materia, Partícula, Campo, Onda, Tiempo-Espacio, Posición).",
+      "Ponderar relevancia 1–12 para Salud, Legal, Finanzas, Tecnología, Arte y Comunidad.",
+      "Persistir metadatos desacoplados en DocumentMeta (SQLite) vinculados por documentId.",
+      "Proyectar nodos tipo area y aristas relevante_para al grafo (toggleable).",
+    ],
+    technologies: [
+      "Vertex AI Gemini",
+      "Prisma (DocumentMeta)",
+      "lib/kg/ingest",
+      "lib/projects/service",
+    ],
+    uiRoute: "/agentes",
+  },
 ];
 
 export const SUBPROCESSORS: Subprocessor[] = [

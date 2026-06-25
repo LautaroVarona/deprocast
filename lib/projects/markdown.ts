@@ -272,6 +272,19 @@ export function updateCampoInMarkdown(content: string, campoLabel: string): stri
   return `---\n${updatedBlock}\n---\n${body}`;
 }
 
+export function updateTitleInMarkdown(content: string, title: string): string {
+  const frontmatterMatch = content.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n([\s\S]*)$/);
+  if (!frontmatterMatch) return content;
+
+  const [, frontmatterBlock, body] = frontmatterMatch;
+  const updatedBlock = frontmatterBlock.replace(
+    /^title:\s*.+$/m,
+    `title: ${yamlString(title.trim())}`,
+  );
+
+  return `---\n${updatedBlock}\n---\n${body}`;
+}
+
 export function appendProgressToMarkdown(
   content: string,
   entry: ProgressEntry,
@@ -299,4 +312,9 @@ export function appendProgressToMarkdown(
     body.trim(),
     "",
   ].join("\n");
+}
+
+export function extractMarkdownBody(content: string): string {
+  const match = content.match(/^---\r?\n[\s\S]*?\r?\n---\r?\n([\s\S]*)$/);
+  return match?.[1]?.trim() ?? "";
 }

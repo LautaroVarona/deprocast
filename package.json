@@ -13,6 +13,7 @@
     "kg:backfill": "tsx scripts/kg/backfill.ts",
     "kg:reconcile": "tsx scripts/kg/reconcile-entities.ts",
     "memorias:verify": "tsx scripts/memorias/verify-segmentation.ts",
+    "db:meta": "prisma db push && prisma generate",
     "postinstall": "prisma generate && node scripts/rebuild-native.js"
   },
   "dependencies": {

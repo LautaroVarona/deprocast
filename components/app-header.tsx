@@ -7,7 +7,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const NAV_LINKS = [
-  { href: "/", label: "Dashboard" },
+  { href: "/", label: "Córtex" },
   { href: "/ingesta", label: "Ingesta" },
   { href: "/diario", label: "Diario" },
   { href: "/salud", label: "Salud" },
