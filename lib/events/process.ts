@@ -1,7 +1,7 @@
 import "server-only";
 
 import { createProposedEvents } from "@/lib/events/service";
-import type { ContextEventDto } from "@/lib/events/types";
+import type { ContextEventDto, EventLinkInput } from "@/lib/events/types";
 import { extractEventsFromText } from "@/lib/events/extract";
 import { listProjects } from "@/lib/projects/service";
 import { randomUUID } from "node:crypto";
@@ -34,28 +34,28 @@ export async function processJournalForEvents(input: {
   const correlationId = randomUUID();
 
   const events = extraction.events.map((item) => {
-    const links = item.projectLinks
-      .map((link) => {
+    const links: EventLinkInput[] = item.projectLinks
+      .map((link): EventLinkInput | null => {
         const resolved = resolveProjectId(
           link.projectId ?? link.projectLabel,
           projects,
         );
         if (!resolved) return null;
         return {
-          entityType: "proyecto" as const,
+          entityType: "proyecto",
           entityId: resolved.id,
           entityLabel: resolved.label,
-          linkRole: "related" as const,
+          linkRole: "related",
         };
       })
-      .filter((link): link is NonNullable<typeof link> => link !== null);
+      .filter((link): link is EventLinkInput => link !== null);
 
     if (item.pillar === "proyecto" && links.length === 0 && item.projectLinks[0]) {
       links.push({
         entityType: "proyecto",
         entityId: item.projectLinks[0].projectLabel,
         entityLabel: item.projectLinks[0].projectLabel,
-        linkRole: "primary",
+        linkRole: "primary" as const,
       });
     }
 
@@ -106,7 +106,7 @@ export async function processChatForEvents(input: {
   const projects = await listProjects();
   const correlationId = randomUUID();
 
-  const mentionLinks = input.mentions
+  const mentionLinks: EventLinkInput[] = input.mentions
     .filter((m) => m.entityType === "proyecto")
     .map((m) => ({
       entityType: "proyecto" as const,
@@ -116,7 +116,7 @@ export async function processChatForEvents(input: {
     }));
 
   const events = extraction.events.map((item) => {
-    const links = [...mentionLinks];
+    const links: EventLinkInput[] = [...mentionLinks];
 
     for (const pl of item.projectLinks) {
       const resolved = resolveProjectId(
