@@ -3,12 +3,17 @@ import "server-only";
 import { notebookDir, pageImageUrl } from "@/lib/cuadernos/paths";
 import type {
   NotebookDetail,
+  NotebookKind,
+  NotebookMetatag,
   NotebookPageDto,
   NotebookPageStatus,
   NotebookSummary,
+  PageEnrichment,
+  PageMetatag,
   Quanta,
   StructuralVector,
 } from "@/lib/cuadernos/types";
+import { linkNotebookAuthor } from "@/lib/cuadernos/kg-link";
 import { prisma } from "@/lib/prisma";
 import { getDataRoot } from "@/lib/runtime-paths";
 import { mkdir, writeFile } from "node:fs/promises";
@@ -42,6 +47,62 @@ function toRelativeDataPath(absolutePath: string): string {
   return path.join("data", relative).replace(/\\/g, "/");
 }
 
+function parsePageMetatags(value: unknown): PageMetatag[] {
+  if (!Array.isArray(value)) return [];
+  return value as PageMetatag[];
+}
+
+function parseEnrichments(value: unknown): PageEnrichment[] {
+  if (!Array.isArray(value)) return [];
+  return value as PageEnrichment[];
+}
+
+function parseNotebookMetatags(value: unknown): NotebookMetatag[] {
+  if (!Array.isArray(value)) return [];
+  return value as NotebookMetatag[];
+}
+
+function structuralVectorToNotes(structural: StructuralVector | null): string {
+  if (!structural) return "";
+  const parts: string[] = [];
+  if (structural.tags.length) parts.push(`Tags: ${structural.tags.join(", ")}`);
+  if (structural.projects.length) {
+    parts.push(`Proyectos: ${structural.projects.join(", ")}`);
+  }
+  if (structural.spatialMap?.description) {
+    parts.push(`Mapa espacial: ${structural.spatialMap.description}`);
+  }
+  if (structural.visualRelations.length) {
+    parts.push(
+      "Relaciones visuales: " +
+        structural.visualRelations
+          .map((r) => `${r.from} → ${r.relation} → ${r.to}`)
+          .join("; "),
+    );
+  }
+  if (structural.rawNotes) parts.push(structural.rawNotes);
+  return parts.join("\n");
+}
+
+function tagsToPageMetatags(tags: string[]): PageMetatag[] {
+  return tags.map((tag, index) => ({
+    id: `vision-${index}-${tag.slice(0, 12).replace(/\s+/g, "-")}`,
+    label: tag,
+    source: "vision" as const,
+  }));
+}
+
+async function resolveAuthorNames(
+  personaIds: string[],
+): Promise<Map<string, string>> {
+  if (personaIds.length === 0) return new Map();
+  const nodes = await prisma.kgNode.findMany({
+    where: { id: { in: personaIds }, type: "persona" },
+    select: { id: true, primaryName: true },
+  });
+  return new Map(nodes.map((node) => [node.id, node.primaryName]));
+}
+
 function mapPage(page: {
   id: string;
   notebookId: string;
@@ -53,6 +114,8 @@ function mapPage(page: {
   semanticVector: string | null;
   structuralVector: unknown;
   quanta: unknown;
+  pageMetatags: unknown;
+  enrichments: unknown;
   processedAt: Date | null;
   corpusCaptureId: string | null;
   createdAt: Date;
@@ -68,9 +131,45 @@ function mapPage(page: {
     semanticVector: page.semanticVector,
     structuralVector: (page.structuralVector as StructuralVector | null) ?? null,
     quanta: (page.quanta as Quanta[] | null) ?? null,
+    pageMetatags: parsePageMetatags(page.pageMetatags),
+    enrichments: parseEnrichments(page.enrichments),
     processedAt: page.processedAt?.toISOString() ?? null,
     corpusCaptureId: page.corpusCaptureId,
     createdAt: page.createdAt.toISOString(),
+  };
+}
+
+async function mapNotebookSummary(notebook: {
+  id: string;
+  title: string;
+  description: string | null;
+  kind: string;
+  authorPersonaId: string | null;
+  coverHue: number;
+  createdAt: Date;
+  updatedAt: Date;
+  pages: Array<{ id: string; status: string; pageNumber: number }>;
+}): Promise<NotebookSummary> {
+  const authorNames = await resolveAuthorNames(
+    notebook.authorPersonaId ? [notebook.authorPersonaId] : [],
+  );
+  const coverPage = notebook.pages[0] ?? null;
+
+  return {
+    id: notebook.id,
+    title: notebook.title,
+    description: notebook.description,
+    kind: (notebook.kind as NotebookKind) ?? "cuaderno",
+    authorPersonaId: notebook.authorPersonaId,
+    authorName: notebook.authorPersonaId
+      ? (authorNames.get(notebook.authorPersonaId) ?? null)
+      : null,
+    coverHue: notebook.coverHue,
+    pageCount: notebook.pages.length,
+    processedCount: notebook.pages.filter((p) => p.status === "COMPLETED").length,
+    coverPageId: coverPage?.id ?? null,
+    createdAt: notebook.createdAt.toISOString(),
+    updatedAt: notebook.updatedAt.toISOString(),
   };
 }
 
@@ -85,20 +184,7 @@ export async function listNotebooks(): Promise<NotebookSummary[]> {
     },
   });
 
-  return notebooks.map((notebook) => {
-    const coverPage = notebook.pages[0] ?? null;
-    return {
-      id: notebook.id,
-      title: notebook.title,
-      description: notebook.description,
-      coverHue: notebook.coverHue,
-      pageCount: notebook.pages.length,
-      processedCount: notebook.pages.filter((p) => p.status === "COMPLETED").length,
-      coverPageId: coverPage?.id ?? null,
-      createdAt: notebook.createdAt.toISOString(),
-      updatedAt: notebook.updatedAt.toISOString(),
-    };
-  });
+  return Promise.all(notebooks.map((notebook) => mapNotebookSummary(notebook)));
 }
 
 export async function getNotebookById(id: string): Promise<NotebookDetail | null> {
@@ -111,18 +197,11 @@ export async function getNotebookById(id: string): Promise<NotebookDetail | null
 
   if (!notebook) return null;
 
-  const coverPage = notebook.pages[0] ?? null;
+  const summary = await mapNotebookSummary(notebook);
 
   return {
-    id: notebook.id,
-    title: notebook.title,
-    description: notebook.description,
-    coverHue: notebook.coverHue,
-    pageCount: notebook.pages.length,
-    processedCount: notebook.pages.filter((p) => p.status === "COMPLETED").length,
-    coverPageId: coverPage?.id ?? null,
-    createdAt: notebook.createdAt.toISOString(),
-    updatedAt: notebook.updatedAt.toISOString(),
+    ...summary,
+    metatags: parseNotebookMetatags(notebook.metatags),
     pages: notebook.pages.map(mapPage),
   };
 }
@@ -153,6 +232,9 @@ export async function createNotebook(input: {
     title: notebook.title,
     description: notebook.description,
     coverHue: notebook.coverHue,
+    kind: notebook.kind as NotebookKind,
+    authorPersonaId: notebook.authorPersonaId,
+    authorName: null,
     pageCount: 0,
     processedCount: 0,
     coverPageId: null,

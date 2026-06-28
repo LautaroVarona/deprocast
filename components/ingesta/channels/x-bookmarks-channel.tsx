@@ -96,10 +96,43 @@ export function XBookmarksChannel() {
         throw new Error(data.error ?? "No se pudo importar el archivo.");
       }
 
-      toast.success(`${data.imported} marcador${data.imported === 1 ? "" : "es"} importado${data.imported === 1 ? "" : "s"}.`, {
-        description:
-          data.skipped > 0 ? `${data.skipped} duplicados omitidos.` : undefined,
-      });
+      const { imported = 0, updated = 0, skipped = 0 } = data as {
+        imported?: number;
+        updated?: number;
+        skipped?: number;
+      };
+      const ready = imported + updated;
+
+      if (ready > 0) {
+        const parts: string[] = [];
+        if (imported > 0) {
+          parts.push(
+            `${imported} nuevo${imported === 1 ? "" : "s"}`,
+          );
+        }
+        if (updated > 0) {
+          parts.push(
+            `${updated} actualizado${updated === 1 ? "" : "s"}`,
+          );
+        }
+        toast.success(`${parts.join(", ")} — listos para calibrar.`, {
+          description:
+            skipped > 0
+              ? `${skipped} omitido${skipped === 1 ? "" : "s"} (ya calibrados o enriquecidos).`
+              : "Usá «Iniciar calibración (foco)» para puntuar cada marcador.",
+        });
+      } else if (skipped > 0) {
+        toast.info(
+          `Los ${skipped} marcadores ya estaban importados y calibrados.`,
+          {
+            description:
+              "Si solo querés calibrar pendientes, revisá el contador de arriba.",
+          },
+        );
+      } else {
+        toast.warning("No se encontraron marcadores nuevos en el archivo.");
+      }
+
       setPending(data.bookmarks ?? []);
       void loadData();
     } catch (error) {

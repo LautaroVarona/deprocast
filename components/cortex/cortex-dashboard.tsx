@@ -4,11 +4,13 @@ import { AreaFilterChips } from "@/components/cortex/area-filter-chips";
 import { CortexMetricsBar } from "@/components/cortex/cortex-metrics-bar";
 import { IngestModal } from "@/components/cortex/ingest-modal";
 import { KnowledgeGrid } from "@/components/cortex/knowledge-grid";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { matchesAreaFilter } from "@/lib/meta-meteador/area-theme";
+import { cn } from "@/lib/utils";
 import type { CortexSnapshot } from "@/lib/cortex/types";
 import { META_AREAS, type MetaArea } from "@/lib/meta-meteador/types";
-import { PlusIcon, RefreshCwIcon } from "lucide-react";
+import { PlusIcon, RefreshCwIcon, Gamepad2Icon } from "lucide-react";
+import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 export function CortexDashboard() {
@@ -83,6 +85,16 @@ export function CortexDashboard() {
           >
             <RefreshCwIcon className={isLoading ? "animate-spin" : ""} />
           </Button>
+          <Link
+            href="/ludus"
+            className={cn(
+              buttonVariants({ variant: "outline", size: "lg" }),
+              "gap-2 rounded-full border-amber-500/30 bg-amber-500/5 text-amber-800 shadow-sm hover:bg-amber-500/10 dark:text-amber-200",
+            )}
+          >
+            <Gamepad2Icon className="size-4" />
+            Entrar al Ludus
+          </Link>
           <Button
             type="button"
             size="lg"

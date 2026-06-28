@@ -63,16 +63,33 @@ export async function importXBookmarks(
 ): Promise<XBookmarkImportResult> {
   const importBatchId = randomUUID();
   let imported = 0;
+  let updated = 0;
   let skipped = 0;
 
   for (const tweet of tweets) {
     if (tweet.externalId) {
       const existing = await prisma.xBookmark.findFirst({
         where: { externalId: tweet.externalId },
-        select: { id: true },
+        select: { id: true, status: true },
       });
       if (existing) {
-        skipped += 1;
+        if (existing.status === "pending") {
+          await prisma.xBookmark.update({
+            where: { id: existing.id },
+            data: {
+              author: tweet.author,
+              handle: tweet.handle,
+              text: tweet.text,
+              mediaUrls: tweet.mediaUrls,
+              tweetUrl: tweet.tweetUrl ?? null,
+              bookmarkedAt: tweet.bookmarkedAt ?? null,
+              importBatchId,
+            },
+          });
+          updated += 1;
+        } else {
+          skipped += 1;
+        }
         continue;
       }
     }
@@ -93,10 +110,10 @@ export async function importXBookmarks(
     imported += 1;
   }
 
-  return { importBatchId, imported, skipped };
+  return { importBatchId, imported, updated, skipped };
 }
 
-export async function listPendingXBookmarks(limit = 500): Promise<XBookmarkRecord[]> {
+export async function listPendingXBookmarks(limit = 10_000): Promise<XBookmarkRecord[]> {
   const rows = await prisma.xBookmark.findMany({
     where: { status: "pending" },
     orderBy: { createdAt: "asc" },

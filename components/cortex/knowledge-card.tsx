@@ -14,6 +14,7 @@ import {
   FileTextIcon,
   FileTypeIcon,
   FileIcon,
+  CastleIcon,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -87,6 +88,18 @@ export function KnowledgeCard({ node }: KnowledgeCardProps) {
         </CardContent>
 
         <CardFooter className="flex flex-wrap gap-1.5 border-t border-border/50 pt-3">
+          {node.castlePlacement ? (
+            <span className="inline-flex items-center gap-1 rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-[10px] font-medium text-amber-800 dark:text-amber-200">
+              <CastleIcon className="size-3" aria-hidden />
+              En el Castillo
+              {node.castlePlacement.tagCount > 0 ? (
+                <span className="tabular-nums">
+                  · {node.castlePlacement.tagCount} tag
+                  {node.castlePlacement.tagCount === 1 ? "" : "s"}
+                </span>
+              ) : null}
+            </span>
+          ) : null}
           {dominantAreas.length === 0 ? (
             <span className="text-[10px] text-muted-foreground">
               Sin áreas dominantes

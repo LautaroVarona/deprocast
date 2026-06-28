@@ -4,6 +4,8 @@ import {
   MAX_BASE_WEIGHT,
   MIN_BASE_WEIGHT,
 } from "@/lib/document-constants";
+import { CALIBRATION_HOTKEY_HINTS } from "@/lib/ingesta/x-bookmarks/types";
+import { vibeWeightTone } from "@/lib/ingesta/x-bookmarks/utils";
 import { cn } from "@/lib/utils";
 
 type XBookmarkWeightSliderProps = {
@@ -11,6 +13,7 @@ type XBookmarkWeightSliderProps = {
   onChange: (value: number) => void;
   onCommit: (value: number) => void;
   disabled?: boolean;
+  compact?: boolean;
   className?: string;
 };
 
@@ -19,23 +22,65 @@ export function XBookmarkWeightSlider({
   onChange,
   onCommit,
   disabled = false,
+  compact = false,
   className,
 }: XBookmarkWeightSliderProps) {
+  const tone = vibeWeightTone(value);
+  const fillPercent = ((value - MIN_BASE_WEIGHT) / (MAX_BASE_WEIGHT - MIN_BASE_WEIGHT)) * 100;
+
   return (
-    <div className={cn("space-y-3", className)}>
-      <div className="flex items-center justify-center">
-        <span className="font-mono text-5xl font-semibold tabular-nums tracking-tight text-white">
-          {value}
-        </span>
+    <div
+      className={cn(
+        "x-bookmark-noir-dock",
+        compact ? "shrink-0 space-y-2.5 px-1 py-3 sm:px-2" : "space-y-3 p-4",
+        className,
+      )}
+    >
+      <div className="flex items-end justify-between gap-3 px-1">
+        <div>
+          <p className="font-mono text-[9px] tracking-[0.22em] text-white/35 uppercase">
+            Puntaje de vibe
+          </p>
+          <p className="mt-0.5 font-mono text-[10px] text-white/45">
+            Elegí cuánto te resuena · Enter al soltar el slider
+          </p>
+        </div>
+        <div className="text-right">
+          <span
+            className={cn(
+              "font-mono font-semibold tabular-nums tracking-tight transition-colors duration-150",
+              compact ? "text-4xl" : "text-5xl",
+              tone.className,
+            )}
+          >
+            {value}
+          </span>
+          <p className="font-mono text-[10px] tracking-wide text-white/35 uppercase">{tone.label}</p>
+        </div>
       </div>
 
       <div className="relative px-1">
-        <div className="mb-2 flex justify-between font-mono text-[9px] text-white/40">
-          {Array.from({ length: MAX_BASE_WEIGHT }, (_, index) => (
-            <span key={index + 1} className="w-4 text-center tabular-nums">
-              {index + 1}
-            </span>
-          ))}
+        <div
+          className={cn(
+            "mb-1.5 flex justify-between font-mono",
+            compact ? "text-[8px]" : "text-[9px]",
+          )}
+        >
+          {Array.from({ length: MAX_BASE_WEIGHT }, (_, index) => {
+            const tick = index + 1;
+            const isActive = tick === value;
+            return (
+              <span
+                key={tick}
+                className={cn(
+                  "w-4 text-center tabular-nums transition-colors",
+                  isActive ? "font-semibold text-white" : "text-white/30",
+                )}
+              >
+                {tick}
+              </span>
+            );
+          })}
         </div>
         <input
           type="range"
@@ -46,24 +91,31 @@ export function XBookmarkWeightSlider({
           disabled={disabled}
           onChange={(event) => onChange(Number(event.target.value))}
           onPointerUp={() => onCommit(value)}
+          style={{
+            background: `linear-gradient(to right, rgba(255,255,255,0.75) 0%, rgba(255,255,255,0.75) ${fillPercent}%, rgba(255,255,255,0.12) ${fillPercent}%, rgba(255,255,255,0.12) 100%)`,
+          }}
           className="x-bookmark-slider h-2 w-full cursor-pointer disabled:opacity-50"
           aria-label="Puntaje de calibración 1 a 12"
         />
       </div>
 
-      <div className="flex justify-center gap-3 font-mono text-[10px] text-white/50">
-        <span>
-          <kbd className="rounded border border-white/20 px-1">1-9</kbd> directo
-        </span>
-        <span>
-          <kbd className="rounded border border-white/20 px-1">Q</kbd>=10
-        </span>
-        <span>
-          <kbd className="rounded border border-white/20 px-1">W</kbd>=11
-        </span>
-        <span>
-          <kbd className="rounded border border-white/20 px-1">E</kbd>=12
-        </span>
+      <div
+        className={cn(
+          "flex flex-wrap justify-center gap-1.5 font-mono text-white/45",
+          compact ? "text-[9px]" : "text-[10px]",
+        )}
+      >
+        {CALIBRATION_HOTKEY_HINTS.map((hint) => (
+          <span
+            key={hint.label}
+            className="rounded-full border border-white/10 bg-white/[0.03] px-2 py-0.5"
+          >
+            <kbd className="text-white/70">{hint.label}</kbd>
+            {hint.description === "puntaje directo"
+              ? ` ${hint.description}`
+              : ` → ${hint.description}`}
+          </span>
+        ))}
       </div>
     </div>
   );

@@ -1,18 +1,25 @@
 "use client";
 
+import { LudusHeader } from "@/components/ludus/ludus-header";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { FlaskConicalIcon } from "lucide-react";
+import { FlaskConicalIcon, Gamepad2Icon } from "lucide-react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 
 const NAV_LINKS = [
   { href: "/", label: "Córtex" },
   { href: "/ingesta", label: "Ingesta" },
+  { href: "/audio", label: "Audio" },
   { href: "/diario", label: "Diario" },
+  { href: "/jornada", label: "Jornada" },
   { href: "/salud", label: "Salud" },
   { href: "/chat", label: "Chat" },
   { href: "/validar", label: "Validar" },
+  { href: "/molecular", label: "Molecular" },
+  { href: "/enciclopedia", label: "Enciclopedia" },
+  { href: "/cam-recorder", label: "Watcher" },
   { href: "/calibrador", label: "Calibrador" },
   { href: "/proyectos", label: "Proyectos" },
   { href: "/personas", label: "Personas" },
@@ -23,6 +30,11 @@ const NAV_LINKS = [
 
 export function AppHeader() {
   const pathname = usePathname();
+  const router = useRouter();
+
+  if (pathname.startsWith("/ludus")) {
+    return <LudusHeader />;
+  }
 
   return (
     <header className="sticky top-0 z-50 shrink-0 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/90">
@@ -61,7 +73,16 @@ export function AppHeader() {
           })}
         </nav>
 
-        <div className="ml-auto flex items-center gap-1">
+        <div className="ml-auto flex items-center gap-2">
+          <Button
+            type="button"
+            size="sm"
+            className="gap-1.5 rounded-full bg-gradient-to-r from-amber-600 to-violet-600 text-white shadow-md shadow-amber-500/15 hover:from-amber-500 hover:to-violet-500"
+            onClick={() => router.push("/ludus")}
+          >
+            <Gamepad2Icon className="size-3.5" aria-hidden />
+            Entrar
+          </Button>
           <ThemeToggle />
         </div>
       </div>

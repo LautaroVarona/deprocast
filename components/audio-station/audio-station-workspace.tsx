@@ -1,0 +1,116 @@
+"use client";
+
+import { useState } from "react";
+import {
+  AudioStationProvider,
+  useAudioStation,
+} from "@/components/audio-station/audio-station-context";
+import { AudioLibraryPanel } from "@/components/audio-station/audio-library-panel";
+import { PostprocessRoadmap } from "@/components/audio-station/postprocess-roadmap";
+import { PreprocessPanel } from "@/components/audio-station/preprocess-panel";
+import { SttQueuePanel } from "@/components/audio-station/stt-queue-panel";
+import { cn } from "@/lib/utils";
+import { AudioLinesIcon } from "lucide-react";
+import Link from "next/link";
+
+const STATION_TABS = [
+  { id: "library", label: "Biblioteca" },
+  { id: "preprocess", label: "Pre-proceso" },
+  { id: "stt", label: "STT" },
+  { id: "downstream", label: "Downstream" },
+] as const;
+
+type StationTab = (typeof STATION_TABS)[number]["id"];
+
+function AudioStationShell() {
+  const { phase, error, scan } = useAudioStation();
+  const [activeTab, setActiveTab] = useState<StationTab>("library");
+
+  const dedupBadge =
+    scan && scan.groups.length > 0 ? scan.duplicateCount : null;
+
+  return (
+    <div className="audio-noir-root mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 py-8 sm:px-6">
+      <header className="space-y-3">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <AudioLinesIcon className="size-5 text-sky-400/70" />
+              <p className="font-mono text-[10px] uppercase tracking-[0.28em] text-white/40">
+                Agente STT · Estación de Audio
+              </p>
+            </div>
+            <h1 className="bg-gradient-to-r from-white via-white/85 to-white/50 bg-clip-text font-mono text-2xl font-semibold tracking-tight text-transparent sm:text-3xl">
+              Biblioteca → Pre-proceso → STT → Downstream
+            </h1>
+            <p className="max-w-2xl font-mono text-[11px] leading-relaxed text-white/45">
+              Centro operativo del Motor de Transcripción: audios importados,
+              desduplicación, cola Chirp_2 y mapa de post-procesamiento hacia
+              Purifier, Molecular y Grafo.
+            </p>
+          </div>
+
+          <Link
+            href="/ingesta"
+            className="font-mono text-[10px] text-sky-400/80 underline-offset-2 hover:underline"
+          >
+            Ingesta general →
+          </Link>
+        </div>
+
+        {error ? (
+          <p className="rounded border border-red-500/25 bg-red-500/10 px-3 py-2 font-mono text-[10px] text-red-200/90">
+            {error}
+          </p>
+        ) : null}
+
+        {phase === "dedup-ready" && dedupBadge ? (
+          <p className="rounded border border-amber-500/25 bg-amber-500/8 px-3 py-2 font-mono text-[10px] text-amber-200/90">
+            {dedupBadge} posible{dedupBadge === 1 ? "" : "s"} duplicado
+            {dedupBadge === 1 ? "" : "s"} detectado{dedupBadge === 1 ? "" : "s"}.
+            Revisá la pestaña Pre-proceso.
+          </p>
+        ) : null}
+      </header>
+
+      <nav
+        className="flex flex-wrap gap-2"
+        aria-label="Secciones de la estación de audio"
+      >
+        {STATION_TABS.map((tab) => (
+          <button
+            key={tab.id}
+            type="button"
+            onClick={() => setActiveTab(tab.id)}
+            className={cn(
+              "rounded-full border px-3 py-1.5 font-mono text-[10px] uppercase tracking-wider transition-all",
+              activeTab === tab.id
+                ? "border-sky-500/40 bg-sky-500/10 text-sky-200"
+                : "border-white/10 text-white/40 hover:border-white/20 hover:text-white/65",
+            )}
+          >
+            {tab.label}
+            {tab.id === "preprocess" && dedupBadge ? (
+              <span className="ml-1.5 text-amber-300">({dedupBadge})</span>
+            ) : null}
+          </button>
+        ))}
+      </nav>
+
+      <div className="grid gap-6 lg:grid-cols-1">
+        {activeTab === "library" ? <AudioLibraryPanel /> : null}
+        {activeTab === "preprocess" ? <PreprocessPanel /> : null}
+        {activeTab === "stt" ? <SttQueuePanel /> : null}
+        {activeTab === "downstream" ? <PostprocessRoadmap /> : null}
+      </div>
+    </div>
+  );
+}
+
+export function AudioStationWorkspace() {
+  return (
+    <AudioStationProvider>
+      <AudioStationShell />
+    </AudioStationProvider>
+  );
+}

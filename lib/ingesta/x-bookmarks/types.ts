@@ -50,6 +50,7 @@ export type XBookmarkRecord = XBookmarkTweet & {
 export type XBookmarkImportResult = {
   importBatchId: string;
   imported: number;
+  updated: number;
   skipped: number;
 };
 
@@ -75,10 +76,24 @@ export const KEY_WEIGHT_MAP: Record<string, number> = {
   "7": 7,
   "8": 8,
   "9": 9,
+  "0": 10,
   q: 10,
+  "'": 11,
+  "´": 11,
+  "`": 11,
   w: 11,
   e: 12,
+  "¿": 12,
+  "?": 12,
 };
+
+/** Grupos legibles para la UI de atajos (misma tecla física, variantes de layout). */
+export const CALIBRATION_HOTKEY_HINTS = [
+  { label: "1–9", description: "puntaje directo" },
+  { label: "0 · Q", description: "10" },
+  { label: "' · W", description: "11" },
+  { label: "¿ · E", description: "12" },
+] as const;
 
 export function isValidCalibrationWeight(value: number): boolean {
   return (
@@ -89,7 +104,6 @@ export function isValidCalibrationWeight(value: number): boolean {
 }
 
 export function weightFromKeyboardKey(key: string): number | null {
-  const normalized = key.toLowerCase();
-  const weight = KEY_WEIGHT_MAP[normalized];
+  const weight = KEY_WEIGHT_MAP[key] ?? KEY_WEIGHT_MAP[key.toLowerCase()];
   return weight ?? null;
 }

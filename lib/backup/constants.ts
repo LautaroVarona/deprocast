@@ -6,7 +6,7 @@ export const BACKUP_MIME = "application/zip";
 export const BACKUP_EXTENSION = ".deprocast-backup.zip";
 
 /** Última migración Prisma — actualizar al añadir migraciones nuevas. */
-export const CURRENT_SCHEMA_MIGRATION = "20260619143000_purifier_review";
+export const CURRENT_SCHEMA_MIGRATION = "20260625140000_document_meta";
 
 export const BACKUP_MANIFEST_FILENAME = "manifest.json";
 

@@ -4,8 +4,8 @@ import { XBookmarkTweetCard } from "@/components/ingesta/x-bookmarks/x-bookmark-
 import { XBookmarkWeightSlider } from "@/components/ingesta/x-bookmarks/x-bookmark-weight-slider";
 import type { XBookmarkRecord } from "@/lib/ingesta/x-bookmarks/types";
 import { weightFromKeyboardKey } from "@/lib/ingesta/x-bookmarks/types";
+import { shuffleBookmarks } from "@/lib/ingesta/x-bookmarks/utils";
 import { cn } from "@/lib/utils";
-import { XIcon } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
@@ -26,18 +26,34 @@ export function XBookmarkFocusCalibrator({
   onCalibrated,
   onComplete,
 }: XBookmarkFocusCalibratorProps) {
-  const [index, setIndex] = useState(0);
+  const [sessionQueue, setSessionQueue] = useState<XBookmarkRecord[]>([]);
   const [draftWeight, setDraftWeight] = useState(7);
   const [isExiting, setIsExiting] = useState(false);
   const pendingVotesRef = useRef<Map<string, number>>(new Map());
+  const sessionTotalRef = useRef(0);
+  const sessionInitializedRef = useRef(false);
 
-  const current = queue[index] ?? null;
-  const remaining = queue.length - index;
-  const progress = queue.length > 0 ? Math.round((index / queue.length) * 100) : 0;
+  const current = sessionQueue[0] ?? null;
+  const remaining = sessionQueue.length;
+  const completed = sessionTotalRef.current - remaining;
+  const progress =
+    sessionTotalRef.current > 0
+      ? Math.round((completed / sessionTotalRef.current) * 100)
+      : 0;
 
   useEffect(() => {
-    if (!open) return;
-    setIndex(0);
+    if (!open) {
+      sessionInitializedRef.current = false;
+      setSessionQueue([]);
+      return;
+    }
+
+    if (sessionInitializedRef.current) return;
+
+    const shuffled = shuffleBookmarks(queue);
+    sessionTotalRef.current = shuffled.length;
+    sessionInitializedRef.current = true;
+    setSessionQueue(shuffled);
     setDraftWeight(7);
     setIsExiting(false);
     pendingVotesRef.current = new Map();
@@ -75,9 +91,9 @@ export function XBookmarkFocusCalibrator({
 
       window.setTimeout(() => {
         setIsExiting(false);
-        setIndex((currentIndex) => {
-          const next = currentIndex + 1;
-          if (next >= queue.length) {
+        setSessionQueue((currentQueue) => {
+          const next = currentQueue.slice(1);
+          if (next.length === 0) {
             onComplete();
             onClose();
           }
@@ -86,7 +102,7 @@ export function XBookmarkFocusCalibrator({
         setDraftWeight(7);
       }, 80);
     },
-    [onCalibrated, onComplete, onClose, queue.length],
+    [onCalibrated, onComplete, onClose],
   );
 
   const commitWeight = useCallback(
@@ -124,51 +140,82 @@ export function XBookmarkFocusCalibrator({
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [open, current, commitWeight, onClose]);
 
+  useEffect(() => {
+    if (!open) return;
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previous;
+    };
+  }, [open]);
+
   if (!open || typeof document === "undefined") return null;
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[60] flex flex-col bg-black text-white"
+      className="x-bookmark-noir-root fixed inset-0 z-[60] flex h-dvh max-h-dvh flex-col overflow-hidden text-white"
       role="dialog"
       aria-modal="true"
       aria-label="Calibración X-Bookmark en modo foco"
     >
-      <header className="flex shrink-0 items-center justify-between border-b border-white/10 px-4 py-3 sm:px-6">
-        <div>
-          <p className="font-mono text-[10px] tracking-[0.3em] text-white/40 uppercase">
-            Noir · Vibe Calibrator
-          </p>
-          <p className="font-mono text-xs text-white/70">
-            {remaining} restante{remaining === 1 ? "" : "s"} · {progress}%
-          </p>
+      <header className="shrink-0 border-b border-white/10 px-4 py-3 sm:px-6">
+        <div className="flex items-start justify-between gap-4">
+          <div className="min-w-0 flex-1">
+            <p className="font-mono text-[10px] tracking-[0.28em] text-white/40 uppercase">
+              Noir · Vibe Calibrator
+            </p>
+            <div className="mt-1 flex flex-wrap items-baseline gap-x-3 gap-y-1">
+              <p className="font-mono text-sm text-white/80">
+                <span className="font-semibold text-white">{remaining}</span> restante
+                {remaining === 1 ? "" : "s"}
+              </p>
+              <p className="font-mono text-xs text-white/40">
+                {completed} de {sessionTotalRef.current} · {progress}%
+              </p>
+            </div>
+            <div
+              className="mt-2.5 h-1 overflow-hidden rounded-full bg-white/10"
+              role="progressbar"
+              aria-valuenow={progress}
+              aria-valuemin={0}
+              aria-valuemax={100}
+            >
+              <div
+                className="h-full rounded-full bg-gradient-to-r from-white/35 to-white/85 transition-[width] duration-300"
+                style={{ width: `${Math.max(progress, remaining > 0 ? 2 : 0)}%` }}
+              />
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-md border border-white/10 px-2.5 py-1.5 font-mono text-[10px] text-white/55 transition-colors hover:border-white/20 hover:bg-white/[0.04] hover:text-white"
+          >
+            Salir · Esc
+          </button>
         </div>
-        <button
-          type="button"
-          onClick={onClose}
-          className="rounded-md p-2 text-white/50 transition-colors hover:bg-white/10 hover:text-white"
-          aria-label="Salir del modo foco"
-        >
-          <XIcon className="size-4" />
-        </button>
       </header>
 
-      <main className="flex min-h-0 flex-1 flex-col items-center justify-center px-4 py-6 sm:px-8">
+      <main className="grid min-h-0 flex-1 grid-rows-[minmax(0,1fr)_auto] gap-3 overflow-hidden px-3 py-3 sm:px-5">
         {current ? (
-          <div
-            className={cn(
-              "flex w-full max-w-xl flex-col gap-8 transition-all duration-100",
-              isExiting && "translate-x-4 opacity-0",
-            )}
-          >
-            <XBookmarkTweetCard bookmark={current} noir />
+          <>
+            <div
+              className={cn(
+                "min-h-0 overflow-hidden transition-all duration-100",
+                isExiting && "translate-x-4 opacity-0",
+              )}
+            >
+              <XBookmarkTweetCard bookmark={current} noir fitViewport />
+            </div>
 
             <XBookmarkWeightSlider
               value={draftWeight}
               onChange={setDraftWeight}
               onCommit={commitWeight}
               disabled={isExiting}
+              compact
             />
-          </div>
+          </>
         ) : (
           <p className="font-mono text-sm text-white/60">Cola vacía</p>
         )}

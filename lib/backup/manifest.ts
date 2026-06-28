@@ -2,7 +2,6 @@ import { z } from "zod";
 
 import {
   BACKUP_FORMAT_VERSION,
-  CURRENT_SCHEMA_MIGRATION,
 } from "@/lib/backup/constants";
 
 export const backupManifestStatsSchema = z.object({
@@ -21,7 +20,9 @@ export const backupManifestChecksumsSchema = z.object({
 export const backupManifestSchema = z.object({
   formatVersion: z.literal(BACKUP_FORMAT_VERSION),
   appVersion: z.string().min(1),
-  schemaMigration: z.literal(CURRENT_SCHEMA_MIGRATION),
+  schemaMigration: z
+    .string()
+    .regex(/^\d{14}_[a-z0-9_]+$/, "schemaMigration debe ser un nombre de migración Prisma"),
   createdAt: z.string().datetime(),
   platform: z.literal("local"),
   stats: backupManifestStatsSchema,

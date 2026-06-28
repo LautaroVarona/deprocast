@@ -19,6 +19,9 @@ export type CortexNode = {
   processedAt: string;
   campoSlug: string | null;
   projectTitle: string | null;
+  castlePlacement?: {
+    tagCount: number;
+  };
 };
 
 export type CortexSnapshot = {

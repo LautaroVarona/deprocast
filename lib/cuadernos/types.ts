@@ -7,6 +7,51 @@ export const NOTEBOOK_PAGE_STATUSES = [
 
 export type NotebookPageStatus = (typeof NOTEBOOK_PAGE_STATUSES)[number];
 
+export const NOTEBOOK_KINDS = ["cuaderno", "libro"] as const;
+export type NotebookKind = (typeof NOTEBOOK_KINDS)[number];
+
+export const NOTEBOOK_METATAG_KINDS = [
+  "autor",
+  "tema",
+  "proyecto",
+  "custom",
+] as const;
+export type NotebookMetatagKind = (typeof NOTEBOOK_METATAG_KINDS)[number];
+
+export type NotebookMetatag = {
+  id: string;
+  label: string;
+  kind: NotebookMetatagKind;
+  personaId?: string;
+};
+
+export const PAGE_METATAG_SOURCES = ["vision", "manual", "ai"] as const;
+export type PageMetatagSource = (typeof PAGE_METATAG_SOURCES)[number];
+
+export type PageMetatag = {
+  id: string;
+  label: string;
+  source: PageMetatagSource;
+  personaId?: string;
+};
+
+export const PAGE_ENRICHMENT_ACTIONS = [
+  "diagrama",
+  "esquema",
+  "relacionar",
+  "dibujos",
+  "custom",
+] as const;
+export type PageEnrichmentAction = (typeof PAGE_ENRICHMENT_ACTIONS)[number];
+
+export type PageEnrichment = {
+  metatagId: string;
+  action: PageEnrichmentAction;
+  prompt?: string;
+  result: string;
+  createdAt: string;
+};
+
 export type QuantaBBox = {
   x: number;
   y: number;
@@ -49,6 +94,9 @@ export type NotebookSummary = {
   id: string;
   title: string;
   description: string | null;
+  kind: NotebookKind;
+  authorPersonaId: string | null;
+  authorName: string | null;
   coverHue: number;
   pageCount: number;
   processedCount: number;
@@ -68,12 +116,15 @@ export type NotebookPageDto = {
   semanticVector: string | null;
   structuralVector: StructuralVector | null;
   quanta: Quanta[] | null;
+  pageMetatags: PageMetatag[];
+  enrichments: PageEnrichment[];
   processedAt: string | null;
   corpusCaptureId: string | null;
   createdAt: string;
 };
 
 export type NotebookDetail = NotebookSummary & {
+  metatags: NotebookMetatag[];
   pages: NotebookPageDto[];
 };
 

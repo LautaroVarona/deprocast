@@ -63,12 +63,26 @@ function mapRawRecord(record: Record<string, unknown>): XBookmarkTweet | null {
       : null;
 
   const author =
-    pickString(record, ["author", "author_name", "name", "display_name"]) ||
+    pickString(record, [
+      "author",
+      "author_name",
+      "authorName",
+      "name",
+      "display_name",
+      "user name",
+    ]) ||
     pickString(nestedUser ?? {}, ["name", "display_name"]) ||
     "Autor desconocido";
 
   const handle = normalizeHandle(
-    pickString(record, ["handle", "username", "screen_name", "author_handle"]) ||
+    pickString(record, [
+      "handle",
+      "username",
+      "screen_name",
+      "author_handle",
+      "authorUsername",
+      "user screen name",
+    ]) ||
       pickString(nestedUser ?? {}, ["screen_name", "username"]) ||
       "@unknown",
   );
@@ -87,8 +101,14 @@ function mapRawRecord(record: Record<string, unknown>): XBookmarkTweet | null {
     mediaUrls: pickMediaUrls(record),
     tweetUrl,
     bookmarkedAt:
-      pickString(record, ["bookmarked_at", "bookmarkedAt", "created_at", "date"]) ||
-      undefined,
+      pickString(record, [
+        "bookmarked_at",
+        "bookmarkedAt",
+        "created_at",
+        "createdAt",
+        "date",
+        "scraped at",
+      ]) || undefined,
   };
 }
 

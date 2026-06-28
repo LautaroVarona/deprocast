@@ -322,15 +322,19 @@ model HealthRecord {
 // Módulo Cuadernos — entidades físicas antes del procesamiento de texto.
 // Page status: PENDING | PROCESSING | COMPLETED | ERROR
 model Notebook {
-  id          String         @id @default(uuid())
-  title       String
-  description String?
-  coverHue    Int            @default(220)
-  createdAt   DateTime       @default(now())
-  updatedAt   DateTime       @updatedAt
-  pages       NotebookPage[]
+  id              String         @id @default(uuid())
+  title           String
+  description     String?
+  coverHue        Int            @default(220)
+  kind            String         @default("cuaderno")
+  authorPersonaId String?
+  metatags        Json?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  pages           NotebookPage[]
 
   @@index([createdAt])
+  @@index([authorPersonaId])
 }
 
 model NotebookPage {
@@ -346,6 +350,8 @@ model NotebookPage {
   quanta           Json?
   processedAt      DateTime?
   corpusCaptureId  String?
+  pageMetatags     Json?
+  enrichments      Json?
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
 
@@ -417,4 +423,89 @@ model XBookmark {
   @@index([weight])
   @@index([importBatchId])
   @@index([externalId])
+}
+
+// Enciclopedia generativa (Enciclopediador).
+model EncyclopediaEntry {
+  id              String   @id @default(uuid())
+  slug            String   @unique
+  title           String
+  body            String
+  explorableTerms Json
+  parentEntryId   String?
+  triggerTerm     String?
+  model           String?
+  validatedCount  Int      @default(0)
+  reportCount     Int      @default(0)
+  kgNodeId        String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  parent    EncyclopediaEntry?   @relation("ExplorationTree", fields: [parentEntryId], references: [id])
+  children  EncyclopediaEntry[]  @relation("ExplorationTree")
+  edgesFrom EncyclopediaEdge[]   @relation("EdgeFrom")
+  edgesTo   EncyclopediaEdge[]   @relation("EdgeTo")
+  reports   EncyclopediaReport[]
+
+  @@index([parentEntryId])
+  @@index([slug])
+}
+
+model EncyclopediaEdge {
+  id          String   @id @default(uuid())
+  fromEntryId String
+  toEntryId   String
+  triggerTerm String
+  createdAt   DateTime @default(now())
+
+  fromEntry EncyclopediaEntry @relation("EdgeFrom", fields: [fromEntryId], references: [id], onDelete: Cascade)
+  toEntry   EncyclopediaEntry @relation("EdgeTo", fields: [toEntryId], references: [id], onDelete: Cascade)
+
+  @@unique([fromEntryId, toEntryId, triggerTerm])
+  @@index([fromEntryId])
+  @@index([toEntryId])
+}
+
+model EncyclopediaReport {
+  id           String   @id @default(uuid())
+  entryId      String
+  type         String
+  comment      String?
+  bodySnapshot String?
+  createdAt    DateTime @default(now())
+
+  entry EncyclopediaEntry @relation(fields: [entryId], references: [id], onDelete: Cascade)
+
+  @@index([entryId])
+  @@index([type])
+}
+
+// Ludus — Castillo: grids y tarjetas del canvas futurista.
+model CastleGrid {
+  id        String       @id @default(uuid())
+  name      String
+  isDefault Boolean      @default(false)
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+  cards     CastleCard[]
+}
+
+model CastleCard {
+  id         String   @id @default(uuid())
+  gridId     String
+  sourceType String
+  sourceId   String?
+  title      String
+  subtitle   String?
+  accent     String?
+  tags       Json     @default("[]")
+  layout     Json
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  grid CastleGrid @relation(fields: [gridId], references: [id], onDelete: Cascade)
+
+  @@unique([gridId, sourceType, sourceId])
+  @@index([gridId])
+  @@index([sourceType, sourceId])
 }

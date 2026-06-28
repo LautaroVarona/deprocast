@@ -207,9 +207,17 @@ export function AudioChannel() {
         <p className="font-mono text-[10px] text-muted-foreground">
           .wav · .m4a · .mp3 · transcripción → purificación
         </p>
-        <Badge variant="outline" className="font-mono text-[9px]">
-          {queueLabel}
-        </Badge>
+        <div className="flex items-center gap-2">
+          <Link
+            href="/audio"
+            className="font-mono text-[9px] text-primary underline-offset-2 hover:underline"
+          >
+            Estación Audio →
+          </Link>
+          <Badge variant="outline" className="font-mono text-[9px]">
+            {queueLabel}
+          </Badge>
+        </div>
       </div>
 
       <div className="grid min-h-0 flex-1 grid-rows-[auto_1fr] gap-2">

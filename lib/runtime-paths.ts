@@ -125,6 +125,7 @@ export async function ensureRuntimeDirs(): Promise<void> {
     getRawDocumentsPath("review"),
     getDataPath("journal"),
     getDataPath("projects"),
+    getDataPath("cam-recorder-watcher"),
     getDataPath("tacho"),
     getDataPath("tacho", "notas"),
     getDataPath("projects", "laboral", "pending"),

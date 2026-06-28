@@ -1,6 +1,7 @@
 import "server-only";
 
 import type { CortexNode, CortexSnapshot, DocumentFormat } from "@/lib/cortex/types";
+import { getCastlePlacementsForDocuments } from "@/lib/castillo/service";
 import { listDocumentMeta } from "@/lib/meta-meteador/store";
 import {
   META_AREAS,
@@ -116,7 +117,19 @@ export async function getCortexSnapshot(): Promise<CortexSnapshot> {
   ]);
 
   const semanticBias = aggregateSemanticBias(weekMeta);
-  const nodes = await Promise.all(allMeta.map((meta) => buildCortexNode(meta)));
+  const nodesRaw = await Promise.all(allMeta.map((meta) => buildCortexNode(meta)));
+  const placements = await getCastlePlacementsForDocuments(
+    nodesRaw.map((node) => node.id),
+  );
+
+  const nodes: CortexNode[] = nodesRaw.map((node) => {
+    const placement = placements.get(node.id);
+    if (!placement) return node;
+    return {
+      ...node,
+      castlePlacement: { tagCount: placement.tagCount },
+    };
+  });
 
   return {
     totalNodesIndexed,

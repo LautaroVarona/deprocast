@@ -1,8 +1,8 @@
 "use client";
 
 import {
+  CALIBRATION_HOTKEY_HINTS,
   DEFAULT_CALIBRATION_THRESHOLD,
-  KEY_WEIGHT_MAP,
 } from "@/lib/ingesta/x-bookmarks/types";
 import {
   MAX_BASE_WEIGHT,
@@ -93,6 +93,7 @@ export function XBookmarkConfigPanel({
           className="inline-flex items-center rounded-md bg-primary px-3 py-1.5 font-mono text-[10px] text-primary-foreground disabled:opacity-50"
         >
           Iniciar calibración (foco)
+          {pendingCount > 0 ? ` · ${pendingCount}` : ""}
         </button>
         <button
           type="button"
@@ -109,11 +110,12 @@ export function XBookmarkConfigPanel({
           Atajos en modo foco
         </p>
         <p className="mt-1 font-mono text-[10px] text-muted-foreground">
-          <span className="text-foreground">1–9</span> → puntaje directo ·{" "}
-          <span className="text-foreground">Q W E</span> → 10, 11, 12
-        </p>
-        <p className="mt-1 font-mono text-[9px] text-muted-foreground/80">
-          Teclas: {Object.entries(KEY_WEIGHT_MAP).map(([k, v]) => `${k.toUpperCase()}=${v}`).join(" ")}
+          {CALIBRATION_HOTKEY_HINTS.map((hint, index) => (
+            <span key={hint.label}>
+              {index > 0 ? " · " : null}
+              <span className="text-foreground">{hint.label}</span> → {hint.description}
+            </span>
+          ))}
         </p>
       </div>
     </div>
