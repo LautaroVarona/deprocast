@@ -1,7 +1,7 @@
 "use client";
 
 import { Button, buttonVariants } from "@/components/ui/button";
-import type { CampamentoSnapshot } from "@/lib/ludus/types";
+import type { CampamentoSnapshot, ForgeCampamentoResponse } from "@/lib/ludus/types";
 import { cn } from "@/lib/utils";
 import {
   ArrowLeftIcon,
@@ -53,11 +53,11 @@ export function CampamentoWorkspace() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ projectId, title, isGolden }),
       });
-      const data = (await response.json()) as CampamentoSnapshot & {
+      const data = (await response.json()) as ForgeCampamentoResponse & {
         error?: string;
       };
       if (!response.ok) throw new Error(data.error ?? "Error al forjar.");
-      setSnapshot(data.snapshot ?? data);
+      setSnapshot(data.snapshot);
       setTitle("");
       setIsGolden(false);
       toast.success(

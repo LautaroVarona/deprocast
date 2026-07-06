@@ -68,6 +68,12 @@ export type CampamentoSnapshot = {
   projects: Array<{ id: string; title: string; campo: string }>;
 };
 
+export type ForgeCampamentoResponse = {
+  microtask: LudusMicrotaskDto;
+  energy: CampamentoEnergy;
+  snapshot: CampamentoSnapshot;
+};
+
 export type AssaultBlockOption = {
   minutes: number;
   label: string;
