@@ -25,6 +25,7 @@ import { getDocumentMeta } from "@/lib/meta-meteador/store";
 import { listProjects } from "@/lib/projects/service";
 import type { PurifierReviewRecord } from "@/lib/purifier/types";
 import { prisma } from "@/lib/prisma";
+import { Prisma } from "@prisma/client";
 import { getDataRoot, getRawDocumentsPath, resolveDataRelativePath } from "@/lib/runtime-paths";
 import { namesMatchFuzzy, normalizeName } from "@/lib/kg/normalize";
 import { readdir, readFile } from "node:fs/promises";
@@ -246,7 +247,7 @@ async function collectCuadernoPages(): Promise<ArchivoItemSummary[]> {
     where: {
       OR: [
         { semanticVector: { not: null } },
-        { quanta: { not: null } },
+        { quanta: { not: Prisma.DbNull } },
       ],
     },
     orderBy: { updatedAt: "desc" },
