@@ -218,7 +218,7 @@ export function mapAssetsToSummaries(
     originalCreatedAt: Date;
     status: string;
     createdAt: Date;
-    transcript: { id: string; rawText?: string } | null;
+    transcript: { id: string; rawText?: string; _count?: { parentChunks: number } } | null;
   }>,
 ): AudioAssetSummary[] {
   return assets.map((asset) => ({
@@ -236,6 +236,7 @@ export function mapAssetsToSummaries(
             ? asset.transcript.rawText.slice(0, 120).trim() +
               (asset.transcript.rawText.length > 120 ? "…" : "")
             : undefined,
+          validated: (asset.transcript._count?.parentChunks ?? 0) > 0,
         }
       : null,
   }));

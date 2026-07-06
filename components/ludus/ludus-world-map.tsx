@@ -25,16 +25,16 @@ const ACCENT_STYLES = {
     badge: "bg-amber-500/15 text-amber-200 border-amber-500/30",
   },
   emerald: {
-    glow: "from-emerald-500/15 to-transparent",
-    border: "border-white/10",
-    icon: "text-emerald-400/50",
-    badge: "bg-white/5 text-white/40 border-white/10",
+    glow: "from-emerald-500/20 via-cyan-500/8 to-transparent",
+    border: "border-emerald-500/35 hover:border-emerald-400/55",
+    icon: "text-emerald-300",
+    badge: "bg-emerald-500/15 text-emerald-200 border-emerald-500/30",
   },
   rose: {
-    glow: "from-rose-500/15 to-transparent",
-    border: "border-white/10",
-    icon: "text-rose-400/50",
-    badge: "bg-white/5 text-white/40 border-white/10",
+    glow: "from-rose-500/20 via-orange-500/8 to-transparent",
+    border: "border-rose-500/35 hover:border-rose-400/55",
+    icon: "text-rose-300",
+    badge: "bg-rose-500/15 text-rose-200 border-rose-500/30",
   },
 } as const;
 
@@ -60,7 +60,10 @@ export function LudusWorldMap({ stats, isLoading }: LudusWorldMapProps) {
         {!isLoading && stats ? (
           <p className="font-mono text-[11px] text-white/35">
             {stats.catalogTotal} ítems en catálogo · {stats.placedOnCanvas}{" "}
-            colocados en el Castillo
+            colocados ·{" "}
+            <span className="text-amber-300/70">
+              {stats.signalPoints} Puntos de Señal
+            </span>
           </p>
         ) : null}
       </header>
@@ -114,6 +117,9 @@ export function LudusWorldMap({ stats, isLoading }: LudusWorldMapProps) {
 
                 <div className="space-y-2">
                   <h2 className="text-xl font-semibold text-white">{area.name}</h2>
+                  <p className="font-mono text-[10px] uppercase tracking-wider text-white/30">
+                    {area.frequency} · {area.horizon}
+                  </p>
                   <p className="text-sm leading-relaxed text-white/55">
                     {area.description}
                   </p>

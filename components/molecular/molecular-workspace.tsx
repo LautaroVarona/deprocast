@@ -7,6 +7,7 @@ import {
 } from "@/components/molecular/molecular-context";
 import { SemanticChunkerPanel } from "@/components/molecular/semantic-chunker-panel";
 import type { PipelinePhase } from "@/lib/molecular-processing/types";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { HexagonIcon } from "lucide-react";
 
@@ -64,6 +65,9 @@ function PipelineIndicator() {
 }
 
 function MolecularPanels() {
+  const { batchMode, batchQueue, batchIndex, startBatchCalibration, isBusy } =
+    useMolecular();
+
   return (
     <div className="molecular-noir-root mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 py-8 sm:px-6">
       <header className="space-y-3">
@@ -84,6 +88,21 @@ function MolecularPanels() {
             </p>
           </div>
           <PipelineIndicator />
+          {!batchMode ? (
+            <Button
+              type="button"
+              size="sm"
+              disabled={isBusy}
+              onClick={() => void startBatchCalibration()}
+              className="border-violet-500/30 bg-violet-500/10 font-mono text-[10px] uppercase tracking-wider text-violet-200 hover:bg-violet-500/15"
+            >
+              Calibrar todo
+            </Button>
+          ) : (
+            <span className="rounded-full border border-violet-500/30 bg-violet-500/10 px-3 py-1 font-mono text-[10px] text-violet-200/90">
+              {batchIndex + 1}/{batchQueue.length}
+            </span>
+          )}
         </div>
       </header>
 

@@ -22,11 +22,17 @@ type ProcessStatus = {
   queuedCount: number;
 };
 
+type ReviewRecord = {
+  reviewId: string;
+  assetId?: string;
+};
+
 type AudioStationContextValue = {
   phase: AudioStationPhase;
   assets: AudioAssetSummary[];
   scan: DeduplicateScanResult | null;
   queueStatus: ProcessStatus | null;
+  reviewByAssetId: Map<string, string>;
   isLoading: boolean;
   isBusy: boolean;
   error: string | null;
@@ -46,6 +52,9 @@ export function AudioStationProvider({ children }: { children: ReactNode }) {
   const [assets, setAssets] = useState<AudioAssetSummary[]>([]);
   const [scan, setScan] = useState<DeduplicateScanResult | null>(null);
   const [queueStatus, setQueueStatus] = useState<ProcessStatus | null>(null);
+  const [reviewByAssetId, setReviewByAssetId] = useState<Map<string, string>>(
+    new Map(),
+  );
   const [isLoading, setIsLoading] = useState(true);
   const [isBusy, setIsBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -54,17 +63,28 @@ export function AudioStationProvider({ children }: { children: ReactNode }) {
 
   const refresh = useCallback(async () => {
     try {
-      const [stationData, statusData] = await Promise.all([
+      const [stationData, statusData, reviewData] = await Promise.all([
         fetchJson<{
           assets: AudioAssetSummary[];
           scan: DeduplicateScanResult;
         }>("/api/audio-station/deduplicate"),
         fetchJson<ProcessStatus>("/api/process/status"),
+        fetch("/api/purifier/review", { cache: "no-store" }).then(async (res) =>
+          res.ok ? ((await res.json()) as { records?: ReviewRecord[] }) : { records: [] },
+        ),
       ]);
+
+      const reviewMap = new Map<string, string>();
+      for (const record of reviewData.records ?? []) {
+        if (record.assetId) {
+          reviewMap.set(record.assetId, record.reviewId);
+        }
+      }
 
       setAssets(stationData.assets);
       setScan(stationData.scan);
       setQueueStatus(statusData);
+      setReviewByAssetId(reviewMap);
       setError(null);
       setRefreshKey((key) => key + 1);
 
@@ -191,6 +211,7 @@ export function AudioStationProvider({ children }: { children: ReactNode }) {
       assets,
       scan,
       queueStatus,
+      reviewByAssetId,
       isLoading,
       isBusy,
       error,
@@ -205,6 +226,7 @@ export function AudioStationProvider({ children }: { children: ReactNode }) {
       assets,
       scan,
       queueStatus,
+      reviewByAssetId,
       isLoading,
       isBusy,
       error,

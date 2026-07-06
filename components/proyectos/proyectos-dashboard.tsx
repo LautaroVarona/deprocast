@@ -117,7 +117,7 @@ export function ProyectosDashboard() {
           className={cn(buttonVariants({ size: "sm" }), "shrink-0")}
         >
           <InboxIcon />
-          Captura rápida
+          Incubar proyecto
         </Link>
       </header>
 

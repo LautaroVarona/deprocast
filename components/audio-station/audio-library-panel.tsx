@@ -1,16 +1,22 @@
 "use client";
 
 import { useAudioStation } from "@/components/audio-station/audio-station-context";
+import { AudioPipelineBadge } from "@/components/audio-station/audio-pipeline-badge";
 import { UploadDropzone } from "@/components/upload-dropzone";
 import { StatusBadge } from "@/components/status-badge";
 import { ViewDetailsLink } from "@/components/view-details-link";
 import { DeleteAssetButton } from "@/components/delete-asset-button";
+import { resolveAudioPipelineStage } from "@/lib/audio-station/pipeline-status";
 import { formatDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { AudioLinesIcon, RefreshCwIcon } from "lucide-react";
 
 export function AudioLibraryPanel() {
-  const { assets, isLoading, refresh, refreshKey } = useAudioStation();
+  const { assets, isLoading, refresh, refreshKey, queueStatus, reviewByAssetId } =
+    useAudioStation();
+
+  const queuedIds = new Set(queueStatus?.queuedIds ?? []);
+  const activeId = queueStatus?.active?.id ?? null;
 
   const pendingCount = assets.filter(
     (asset) => asset.status === "PENDING" || asset.status === "ERROR",
@@ -60,7 +66,14 @@ export function AudioLibraryPanel() {
           </p>
         ) : (
           <ul className="divide-y divide-white/6">
-            {assets.map((asset) => (
+            {assets.map((asset) => {
+              const pipeline = resolveAudioPipelineStage(asset, {
+                queuedIds,
+                activeId,
+                reviewByAssetId,
+              });
+
+              return (
               <li
                 key={asset.id}
                 className="flex flex-col gap-2 px-3 py-2.5 sm:flex-row sm:items-center sm:justify-between"
@@ -81,6 +94,7 @@ export function AudioLibraryPanel() {
                 </div>
 
                 <div className="flex shrink-0 items-center gap-2">
+                  <AudioPipelineBadge pipeline={pipeline} />
                   <StatusBadge status={asset.status} />
                   {(asset.transcript || asset.status === "COMPLETED") && (
                     <ViewDetailsLink assetId={asset.id} label="Detalle" />
@@ -93,7 +107,8 @@ export function AudioLibraryPanel() {
                   />
                 </div>
               </li>
-            ))}
+              );
+            })}
           </ul>
         )}
       </div>

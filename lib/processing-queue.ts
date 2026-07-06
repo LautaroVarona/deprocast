@@ -120,6 +120,22 @@ class ProcessingQueue {
 
       const { processAssetGcpSpeech } = await import("@/lib/gcp-speech-processor");
       await processAssetGcpSpeech(assetId);
+
+      void (async () => {
+        try {
+          const { autoPurifyAudioAsset } = await import(
+            "@/lib/audio-station/auto-purify"
+          );
+          const result = await autoPurifyAudioAsset(assetId);
+          if (result.status === "purified") {
+            console.info(
+              `Auto-purify OK: asset ${assetId} → review ${result.reviewId}`,
+            );
+          }
+        } catch (error) {
+          console.error(`Auto-purify hook error for ${assetId}:`, error);
+        }
+      })();
     } catch (error) {
       console.error(`Error en cola procesando ${assetId}:`, error);
 

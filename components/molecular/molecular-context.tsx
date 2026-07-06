@@ -17,6 +17,22 @@ import {
   type ReactNode,
 } from "react";
 
+export type MolecularSourceOption = {
+  id: string;
+  title: string;
+  kind: string;
+  fuenteOrigen: string;
+  charCount: number;
+  createdAt: string;
+  strongestTag: { label: string; weight: number } | null;
+};
+
+export type BatchDocument = {
+  id: string;
+  title: string;
+  fuenteOrigen: string;
+};
+
 type MolecularContextValue = {
   phase: PipelinePhase;
   textoOriginal: string;
@@ -26,8 +42,19 @@ type MolecularContextValue = {
   validadas: ParticulaValidada[];
   error: string | null;
   isBusy: boolean;
+  inputMode: "manual" | "archivo";
+  selectedSourceId: string | null;
+  availableSources: MolecularSourceOption[];
+  isLoadingSources: boolean;
+  batchMode: boolean;
+  batchQueue: BatchDocument[];
+  batchIndex: number;
   setTextoOriginal: (text: string) => void;
   setFuenteOrigen: (source: string) => void;
+  setInputMode: (mode: "manual" | "archivo") => void;
+  setSelectedSourceId: (id: string | null) => void;
+  loadSources: () => Promise<void>;
+  loadSourceContent: (sourceId: string) => Promise<void>;
   runChunker: () => Promise<void>;
   runCalibrator: () => Promise<void>;
   validateParticula: (
@@ -39,6 +66,9 @@ type MolecularContextValue = {
     },
   ) => Promise<void>;
   resetPipeline: () => void;
+  startBatchCalibration: () => Promise<void>;
+  stopBatchCalibration: () => void;
+  skipBatchDocument: () => void;
 };
 
 const MolecularContext = createContext<MolecularContextValue | null>(null);
@@ -64,6 +94,26 @@ async function fetchCalibrations(
   return payload.particulas ?? [];
 }
 
+async function fetchArchivoContent(sourceId: string): Promise<{
+  content: string;
+  fuenteOrigen: string;
+  title: string;
+}> {
+  const response = await fetch(
+    `/api/archivo/${encodeURIComponent(sourceId)}`,
+  );
+  const payload = (await response.json()) as {
+    item?: { content: string; fuenteOrigen: string; title: string };
+    error?: string;
+  };
+
+  if (!response.ok || !payload.item) {
+    throw new Error(payload.error ?? "No se pudo cargar el documento.");
+  }
+
+  return payload.item;
+}
+
 export function MolecularProvider({ children }: { children: ReactNode }) {
   const [phase, setPhase] = useState<PipelinePhase>("idle");
   const [textoOriginal, setTextoOriginal] = useState("");
@@ -75,7 +125,26 @@ export function MolecularProvider({ children }: { children: ReactNode }) {
   const [validadas, setValidadas] = useState<ParticulaValidada[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [isBusy, setIsBusy] = useState(false);
+
+  const [inputMode, setInputMode] = useState<"manual" | "archivo">("manual");
+  const [selectedSourceId, setSelectedSourceId] = useState<string | null>(null);
+  const [availableSources, setAvailableSources] = useState<MolecularSourceOption[]>(
+    [],
+  );
+  const [isLoadingSources, setIsLoadingSources] = useState(false);
+
+  const [batchMode, setBatchMode] = useState(false);
+  const [batchQueue, setBatchQueue] = useState<BatchDocument[]>([]);
+  const [batchIndex, setBatchIndex] = useState(0);
+
   const pendingCalibrateRef = useRef<ParticulaMetadata[] | null>(null);
+  const batchAdvanceRef = useRef(false);
+  const batchModeRef = useRef(false);
+  const advanceBatchRef = useRef<(() => Promise<void>) | null>(null);
+
+  useEffect(() => {
+    batchModeRef.current = batchMode;
+  }, [batchMode]);
 
   const resetPipeline = useCallback(() => {
     setPhase("idle");
@@ -85,7 +154,118 @@ export function MolecularProvider({ children }: { children: ReactNode }) {
     setError(null);
     setIsBusy(false);
     pendingCalibrateRef.current = null;
+    batchAdvanceRef.current = false;
   }, []);
+
+  const stopBatchCalibration = useCallback(() => {
+    setBatchMode(false);
+    setBatchQueue([]);
+    setBatchIndex(0);
+    batchAdvanceRef.current = false;
+    resetPipeline();
+  }, [resetPipeline]);
+
+  const loadSources = useCallback(async () => {
+    setIsLoadingSources(true);
+    try {
+      const response = await fetch("/api/molecular/sources", {
+        cache: "no-store",
+      });
+      const payload = (await response.json()) as {
+        sources?: MolecularSourceOption[];
+        error?: string;
+      };
+      if (!response.ok) {
+        throw new Error(payload.error ?? "No se pudieron cargar fuentes.");
+      }
+      setAvailableSources(payload.sources ?? []);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Error al cargar fuentes.");
+    } finally {
+      setIsLoadingSources(false);
+    }
+  }, []);
+
+  const loadSourceContent = useCallback(async (sourceId: string) => {
+    setError(null);
+    setIsBusy(true);
+    try {
+      const item = await fetchArchivoContent(sourceId);
+      setSelectedSourceId(sourceId);
+      setTextoOriginal(item.content);
+      setFuenteOrigen(item.fuenteOrigen);
+      setInputMode("archivo");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Error inesperado.");
+    } finally {
+      setIsBusy(false);
+    }
+  }, []);
+
+  const runChunkerInternal = useCallback(
+    async (texto: string, fuente: string) => {
+      if (!texto.trim()) {
+        setError("El documento no tiene texto procesable.");
+        if (batchModeRef.current) {
+          window.setTimeout(() => {
+            void advanceBatchRef.current?.();
+          }, 800);
+        }
+        return;
+      }
+
+      setError(null);
+      setIsBusy(true);
+      setPhase("chunking");
+      setParticulas([]);
+      setCalibraciones([]);
+      setValidadas([]);
+      pendingCalibrateRef.current = null;
+
+      try {
+        const response = await fetch("/api/molecular/chunk", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ texto, fuenteOrigen: fuente }),
+        });
+
+        const payload = (await response.json()) as {
+          particulas?: ParticulaMetadata[];
+          error?: string;
+        };
+
+        if (!response.ok) {
+          throw new Error(payload.error ?? "Falló el chunkeador semántico.");
+        }
+
+        const chunks = payload.particulas ?? [];
+        setParticulas(chunks);
+        pendingCalibrateRef.current = chunks;
+        if (chunks.length === 0) {
+          setError("El chunkeador no emitió partículas para este documento.");
+          setPhase("idle");
+          if (batchModeRef.current) {
+            window.setTimeout(() => {
+              void advanceBatchRef.current?.();
+            }, 800);
+          }
+          return;
+        }
+        setPhase("disintegrating");
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Error inesperado.");
+        setPhase("idle");
+        if (batchModeRef.current) {
+          window.setTimeout(() => {
+            void advanceBatchRef.current?.();
+          }, 800);
+        }
+      } finally {
+        setIsBusy(false);
+      }
+    },
+    [],
+  );
 
   const runCalibrator = useCallback(async () => {
     const source = pendingCalibrateRef.current ?? particulas;
@@ -109,46 +289,111 @@ export function MolecularProvider({ children }: { children: ReactNode }) {
   }, [particulas]);
 
   const runChunker = useCallback(async () => {
-    if (!textoOriginal.trim()) {
-      setError("Pegá texto denso antes de iniciar el chunkeo.");
+    await runChunkerInternal(textoOriginal, fuenteOrigen);
+  }, [textoOriginal, fuenteOrigen, runChunkerInternal]);
+
+  const processBatchDocument = useCallback(
+    async (index: number, queue: BatchDocument[]) => {
+      const doc = queue[index];
+      if (!doc) {
+        setBatchMode(false);
+        setPhase("idle");
+        return;
+      }
+
+      setBatchIndex(index);
+      setError(null);
+
+      try {
+        const item = await fetchArchivoContent(doc.id);
+        setSelectedSourceId(doc.id);
+        setTextoOriginal(item.content);
+        setFuenteOrigen(item.fuenteOrigen);
+        setInputMode("archivo");
+        await runChunkerInternal(item.content, item.fuenteOrigen);
+      } catch (err) {
+        setError(
+          err instanceof Error
+            ? err.message
+            : `Error en documento ${doc.title}.`,
+        );
+        setPhase("idle");
+        if (batchModeRef.current) {
+          window.setTimeout(() => {
+            void advanceBatchRef.current?.();
+          }, 800);
+        }
+      }
+    },
+    [runChunkerInternal],
+  );
+
+  const advanceBatch = useCallback(async () => {
+    if (!batchMode || batchQueue.length === 0) return;
+
+    const nextIndex = batchIndex + 1;
+    if (nextIndex >= batchQueue.length) {
+      setBatchMode(false);
+      setPhase("complete");
       return;
     }
 
-    setError(null);
-    setIsBusy(true);
-    setPhase("chunking");
+    batchAdvanceRef.current = true;
     setParticulas([]);
     setCalibraciones([]);
     setValidadas([]);
     pendingCalibrateRef.current = null;
+    await processBatchDocument(nextIndex, batchQueue);
+    batchAdvanceRef.current = false;
+  }, [batchMode, batchIndex, batchQueue, processBatchDocument]);
+
+  useEffect(() => {
+    advanceBatchRef.current = advanceBatch;
+  }, [advanceBatch]);
+
+  const startBatchCalibration = useCallback(async () => {
+    setError(null);
+    setIsBusy(true);
 
     try {
-      const response = await fetch("/api/molecular/chunk", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ texto: textoOriginal, fuenteOrigen }),
+      const response = await fetch("/api/molecular/sources", {
+        cache: "no-store",
       });
-
       const payload = (await response.json()) as {
-        particulas?: ParticulaMetadata[];
+        sources?: MolecularSourceOption[];
         error?: string;
       };
 
       if (!response.ok) {
-        throw new Error(payload.error ?? "Falló el chunkeador semántico.");
+        throw new Error(payload.error ?? "No se pudieron cargar documentos.");
       }
 
-      const chunks = payload.particulas ?? [];
-      setParticulas(chunks);
-      pendingCalibrateRef.current = chunks;
-      setPhase("disintegrating");
+      const queue: BatchDocument[] = (payload.sources ?? []).map((source) => ({
+        id: source.id,
+        title: source.title,
+        fuenteOrigen: source.fuenteOrigen,
+      }));
+
+      if (queue.length === 0) {
+        setError("No hay documentos en el sistema para calibrar.");
+        return;
+      }
+
+      setBatchQueue(queue);
+      setBatchMode(true);
+      setBatchIndex(0);
+      await processBatchDocument(0, queue);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error inesperado.");
-      setPhase("idle");
     } finally {
       setIsBusy(false);
     }
-  }, [textoOriginal, fuenteOrigen]);
+  }, [processBatchDocument]);
+
+  const skipBatchDocument = useCallback(() => {
+    if (!batchMode) return;
+    void advanceBatch();
+  }, [batchMode, advanceBatch]);
 
   useEffect(() => {
     if (phase !== "disintegrating" || !pendingCalibrateRef.current?.length) return;
@@ -159,6 +404,27 @@ export function MolecularProvider({ children }: { children: ReactNode }) {
 
     return () => window.clearTimeout(timer);
   }, [phase, runCalibrator]);
+
+  useEffect(() => {
+    if (
+      phase === "validating" &&
+      calibraciones.length > 0 &&
+      validadas.length === calibraciones.length
+    ) {
+      setPhase("complete");
+    }
+  }, [phase, calibraciones.length, validadas.length]);
+
+  useEffect(() => {
+    if (phase !== "complete" || !batchMode) return;
+    if (batchAdvanceRef.current) return;
+
+    const timer = window.setTimeout(() => {
+      void advanceBatch();
+    }, 1200);
+
+    return () => window.clearTimeout(timer);
+  }, [phase, batchMode, advanceBatch]);
 
   const validateParticula = useCallback(
     async (
@@ -211,16 +477,6 @@ export function MolecularProvider({ children }: { children: ReactNode }) {
     [calibraciones],
   );
 
-  useEffect(() => {
-    if (
-      phase === "validating" &&
-      calibraciones.length > 0 &&
-      validadas.length === calibraciones.length
-    ) {
-      setPhase("complete");
-    }
-  }, [phase, calibraciones.length, validadas.length]);
-
   const value = useMemo(
     () => ({
       phase,
@@ -231,12 +487,26 @@ export function MolecularProvider({ children }: { children: ReactNode }) {
       validadas,
       error,
       isBusy,
+      inputMode,
+      selectedSourceId,
+      availableSources,
+      isLoadingSources,
+      batchMode,
+      batchQueue,
+      batchIndex,
       setTextoOriginal,
       setFuenteOrigen,
+      setInputMode,
+      setSelectedSourceId,
+      loadSources,
+      loadSourceContent,
       runChunker,
       runCalibrator,
       validateParticula,
       resetPipeline,
+      startBatchCalibration,
+      stopBatchCalibration,
+      skipBatchDocument,
     }),
     [
       phase,
@@ -247,10 +517,22 @@ export function MolecularProvider({ children }: { children: ReactNode }) {
       validadas,
       error,
       isBusy,
+      inputMode,
+      selectedSourceId,
+      availableSources,
+      isLoadingSources,
+      batchMode,
+      batchQueue,
+      batchIndex,
+      loadSources,
+      loadSourceContent,
       runChunker,
       runCalibrator,
       validateParticula,
       resetPipeline,
+      startBatchCalibration,
+      stopBatchCalibration,
+      skipBatchDocument,
     ],
   );
 

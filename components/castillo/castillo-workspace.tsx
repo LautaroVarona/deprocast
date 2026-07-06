@@ -7,13 +7,21 @@ import {
   useCastillo,
 } from "@/components/castillo/castillo-context";
 import { CastilloGridTabs } from "@/components/castillo/castillo-grid-tabs";
+import { CalibracionReino } from "@/components/ludus/calibracion-reino";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { ArrowLeftIcon, CastleIcon, RefreshCwIcon } from "lucide-react";
+import {
+  ArrowLeftIcon,
+  CastleIcon,
+  CrownIcon,
+  RefreshCwIcon,
+} from "lucide-react";
 import Link from "next/link";
+import { useState } from "react";
 
 function CastilloShell() {
   const { isLoading, isBusy, error, refresh } = useCastillo();
+  const [showCalibration, setShowCalibration] = useState(false);
 
   return (
     <div className="flex h-[calc(100dvh-3.5rem)] flex-col overflow-hidden">
@@ -34,16 +42,27 @@ function CastilloShell() {
           <div>
             <h1 className="text-sm font-semibold text-white">Castillo</h1>
             <p className="font-mono text-[10px] text-white/35">
-              Canvas futurista
+              Alpha · Vista de pájaro
             </p>
           </div>
         </div>
 
         <Button
           type="button"
+          variant="outline"
+          size="sm"
+          className="ml-auto border-amber-500/30 bg-amber-500/10 text-xs text-amber-200 hover:bg-amber-500/20"
+          onClick={() => setShowCalibration(true)}
+        >
+          <CrownIcon className="size-3.5" />
+          Calibración del Reino
+        </Button>
+
+        <Button
+          type="button"
           variant="ghost"
           size="icon-sm"
-          className="ml-auto text-white/50 hover:bg-white/5 hover:text-white"
+          className="text-white/50 hover:bg-white/5 hover:text-white"
           onClick={() => void refresh()}
           disabled={isBusy}
           aria-label="Actualizar"
@@ -69,6 +88,17 @@ function CastilloShell() {
           <CastilloCanvas />
         </main>
       </div>
+
+      {showCalibration ? (
+        <div className="fixed inset-0 z-[150] flex items-start justify-center overflow-y-auto bg-black/80 backdrop-blur-sm pt-8 pb-16">
+          <div className="castillo-card mx-4 w-full max-w-4xl border border-amber-500/20 p-2 shadow-2xl">
+            <CalibracionReino
+              embedded
+              onClose={() => setShowCalibration(false)}
+            />
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

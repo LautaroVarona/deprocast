@@ -1,6 +1,10 @@
 "use client";
 
 import { useAudioStation } from "@/components/audio-station/audio-station-context";
+import {
+  AudioPipelineBadge,
+  AudioPipelineNextAction,
+} from "@/components/audio-station/audio-pipeline-badge";
 import { LiveProcessingPanel } from "@/components/live-processing-panel";
 import { ProcessAllButton } from "@/components/process-all-button";
 import { ProcessButton } from "@/components/process-button";
@@ -8,14 +12,17 @@ import { StopProcessButton } from "@/components/stop-process-button";
 import { StatusBadge } from "@/components/status-badge";
 import { ViewDetailsLink } from "@/components/view-details-link";
 import { DownloadTranscriptButton } from "@/components/download-transcript-button";
+import { resolveAudioPipelineStage } from "@/lib/audio-station/pipeline-status";
 import { cn } from "@/lib/utils";
 import { MicIcon } from "lucide-react";
+import { useMemo } from "react";
 
 export function SttQueuePanel() {
-  const { assets, queueStatus, refresh, refreshKey } = useAudioStation();
+  const { assets, queueStatus, reviewByAssetId, refresh, refreshKey } =
+    useAudioStation();
 
   const queuedIds = new Set(queueStatus?.queuedIds ?? []);
-  const activeId = queueStatus?.active?.id;
+  const activeId = queueStatus?.active?.id ?? null;
 
   const pendingCount = assets.filter(
     (asset) =>
@@ -38,6 +45,19 @@ export function SttQueuePanel() {
 
     return asset.status;
   }
+
+  const pendingPurifyCount = useMemo(
+    () =>
+      assets.filter(
+        (asset) =>
+          resolveAudioPipelineStage(asset, {
+            queuedIds,
+            activeId,
+            reviewByAssetId,
+          }).stage === "pending_purify",
+      ).length,
+    [assets, queuedIds, activeId, reviewByAssetId],
+  );
 
   return (
     <section className="audio-noir-panel space-y-4 p-4">
@@ -64,7 +84,15 @@ export function SttQueuePanel() {
       <LiveProcessingPanel
         refreshKey={refreshKey}
         onStopped={() => void refresh()}
+        onQueueIdle={() => void refresh()}
       />
+
+      {pendingPurifyCount > 0 ? (
+        <p className="rounded border border-violet-500/25 bg-violet-500/8 px-3 py-2 font-mono text-[10px] text-violet-200/90">
+          {pendingPurifyCount} transcrito{pendingPurifyCount === 1 ? "" : "s"} sin
+          enviar a Validar — revisá la pestaña Downstream o usá «Enviar a Validar».
+        </p>
+      ) : null}
 
       <div className="max-h-[420px] overflow-y-auto rounded border border-white/8 bg-black/30">
         {assets.length === 0 ? (
@@ -76,6 +104,11 @@ export function SttQueuePanel() {
             {assets.map((asset) => {
               const displayStatus = getDisplayStatus(asset);
               const isQueued = displayStatus === "QUEUED";
+              const pipeline = resolveAudioPipelineStage(asset, {
+                queuedIds,
+                activeId,
+                reviewByAssetId,
+              });
 
               return (
                 <li
@@ -89,6 +122,8 @@ export function SttQueuePanel() {
                   </div>
 
                   <div className="flex shrink-0 flex-wrap items-center gap-2">
+                    <AudioPipelineBadge pipeline={pipeline} />
+
                     {isQueued ? (
                       <span className="font-mono text-[9px] text-white/40">
                         En cola
@@ -126,6 +161,12 @@ export function SttQueuePanel() {
                           assetId={asset.id}
                           label=".md"
                           size="sm"
+                        />
+                        <AudioPipelineNextAction
+                          pipeline={pipeline}
+                          assetId={asset.id}
+                          filename={asset.filename}
+                          onPurified={() => void refresh()}
                         />
                       </>
                     )}

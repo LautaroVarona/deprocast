@@ -1,4 +1,4 @@
-import { getLudusWorldStats } from "@/lib/castillo/service";
+import { getLudusWorldStats } from "@/lib/ludus/service";
 import { ensureRuntimeReady } from "@/lib/runtime-setup";
 import { NextResponse } from "next/server";
 
@@ -8,10 +8,7 @@ export async function GET() {
   try {
     await ensureRuntimeReady();
     const stats = await getLudusWorldStats();
-    return NextResponse.json({
-      ...stats,
-      signalPoints: 0,
-    });
+    return NextResponse.json(stats);
   } catch (error) {
     console.error("Ludus stats error:", error);
     const message =

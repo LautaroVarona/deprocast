@@ -19,6 +19,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { formatDate, formatDuration } from "@/lib/format";
+import { getReviewIdForAsset } from "@/lib/audio-station/review-lookup";
 import { getAssetDetail } from "@/lib/queries/get-asset-detail";
 import { ArrowLeftIcon } from "lucide-react";
 import Link from "next/link";
@@ -35,6 +36,10 @@ export default async function AudioDetailPage({ params }: PageProps) {
   if (!asset) {
     notFound();
   }
+
+  const reviewId = asset.transcript
+    ? await getReviewIdForAsset(asset.id)
+    : null;
 
   const parentChunks = asset.transcript?.parentChunks ?? [];
   const entities = asset.kgEntities;
@@ -71,6 +76,8 @@ export default async function AudioDetailPage({ params }: PageProps) {
             assetId={asset.id}
             filename={asset.filename}
             status={asset.status}
+            hasTranscript={Boolean(asset.transcript)}
+            reviewId={reviewId}
           />
         </div>
       </div>
@@ -100,6 +107,33 @@ export default async function AudioDetailPage({ params }: PageProps) {
         )
       ) : (
         <>
+          {!reviewId && (
+            <div className="rounded-lg border border-violet-500/30 bg-violet-500/5 px-4 py-3 text-sm text-violet-900 dark:text-violet-200">
+              Transcripción lista. El audio se envía automáticamente a Validar al
+              terminar el STT; si no aparece en{" "}
+              <Link href="/validar" className="font-medium underline underline-offset-2">
+                /validar
+              </Link>
+              , usá «Enviar a Validar» arriba o la pestaña Downstream en{" "}
+              <Link href="/audio" className="font-medium underline underline-offset-2">
+                Estación Audio
+              </Link>
+              .
+            </div>
+          )}
+
+          {reviewId && (
+            <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/5 px-4 py-3 text-sm text-emerald-900 dark:text-emerald-200">
+              Este audio ya está en la cola de Validar.{" "}
+              <Link
+                href={`/validar?id=${reviewId}`}
+                className="font-medium underline underline-offset-2"
+              >
+                Revisar ahora →
+              </Link>
+            </div>
+          )}
+
           <Card>
             <CardHeader>
               <CardTitle>Metadatos detectados</CardTitle>

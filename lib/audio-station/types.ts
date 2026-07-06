@@ -6,7 +6,7 @@ export type AudioAssetSummary = {
   originalCreatedAt: string;
   status: string;
   createdAt: string;
-  transcript: { id: string; preview?: string } | null;
+  transcript: { id: string; preview?: string; validated?: boolean } | null;
 };
 
 export type DuplicateReason =

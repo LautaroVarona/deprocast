@@ -13,6 +13,7 @@ import { Loader2Icon } from "lucide-react";
 import { fetchJson } from "@/lib/fetch-json";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 
 type ProcessStatus = {
   active: {
@@ -28,14 +29,17 @@ type ProcessStatus = {
 type LiveProcessingPanelProps = {
   refreshKey: number;
   onStopped?: () => void;
+  onQueueIdle?: () => void;
 };
 
 export function LiveProcessingPanel({
   refreshKey,
   onStopped,
+  onQueueIdle,
 }: LiveProcessingPanelProps) {
   const [status, setStatus] = useState<ProcessStatus | null>(null);
   const transcriptRef = useRef<HTMLPreElement>(null);
+  const wasActiveRef = useRef(false);
 
   const loadStatus = useCallback(async () => {
     try {
@@ -52,6 +56,28 @@ export function LiveProcessingPanel({
 
   const isActive =
     status?.active?.status === "PROCESSING" || (status?.queuedCount ?? 0) > 0;
+
+  useEffect(() => {
+    if (isActive) {
+      wasActiveRef.current = true;
+      return;
+    }
+
+    if (wasActiveRef.current) {
+      wasActiveRef.current = false;
+      onQueueIdle?.();
+      toast.success("Transcripción completada", {
+        description:
+          "El audio se está purificando automáticamente. En unos segundos aparecerá en Validar.",
+        action: {
+          label: "Validar →",
+          onClick: () => {
+            window.location.href = "/validar";
+          },
+        },
+      });
+    }
+  }, [isActive, onQueueIdle]);
 
   useEffect(() => {
     if (!isActive) {

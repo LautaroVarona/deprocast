@@ -18,6 +18,7 @@ const NAV_LINKS = [
   { href: "/chat", label: "Chat" },
   { href: "/validar", label: "Validar" },
   { href: "/molecular", label: "Molecular" },
+  { href: "/archivo", label: "Archivo" },
   { href: "/enciclopedia", label: "Enciclopedia" },
   { href: "/cam-recorder", label: "Watcher" },
   { href: "/calibrador", label: "Calibrador" },

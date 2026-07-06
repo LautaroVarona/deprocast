@@ -6,10 +6,11 @@ import {
   useAudioStation,
 } from "@/components/audio-station/audio-station-context";
 import { AudioLibraryPanel } from "@/components/audio-station/audio-library-panel";
-import { PostprocessRoadmap } from "@/components/audio-station/postprocess-roadmap";
+import { DownstreamPanel } from "@/components/audio-station/downstream-panel";
 import { PreprocessPanel } from "@/components/audio-station/preprocess-panel";
 import { SttQueuePanel } from "@/components/audio-station/stt-queue-panel";
 import { cn } from "@/lib/utils";
+import { resolveAudioPipelineStage } from "@/lib/audio-station/pipeline-status";
 import { AudioLinesIcon } from "lucide-react";
 import Link from "next/link";
 
@@ -23,8 +24,30 @@ const STATION_TABS = [
 type StationTab = (typeof STATION_TABS)[number]["id"];
 
 function AudioStationShell() {
-  const { phase, error, scan } = useAudioStation();
+  const { phase, error, scan, assets, queueStatus, reviewByAssetId } =
+    useAudioStation();
   const [activeTab, setActiveTab] = useState<StationTab>("library");
+
+  const queuedIds = new Set(queueStatus?.queuedIds ?? []);
+  const activeId = queueStatus?.active?.id ?? null;
+
+  const pendingPurifyCount = assets.filter(
+    (asset) =>
+      resolveAudioPipelineStage(asset, {
+        queuedIds,
+        activeId,
+        reviewByAssetId,
+      }).stage === "pending_purify",
+  ).length;
+
+  const inValidationCount = assets.filter(
+    (asset) =>
+      resolveAudioPipelineStage(asset, {
+        queuedIds,
+        activeId,
+        reviewByAssetId,
+      }).stage === "in_validation",
+  ).length;
 
   const dedupBadge =
     scan && scan.groups.length > 0 ? scan.duplicateCount : null;
@@ -71,6 +94,28 @@ function AudioStationShell() {
             Revisá la pestaña Pre-proceso.
           </p>
         ) : null}
+
+        {pendingPurifyCount > 0 ? (
+          <p className="rounded border border-violet-500/25 bg-violet-500/8 px-3 py-2 font-mono text-[10px] text-violet-200/90">
+            {pendingPurifyCount} audio{pendingPurifyCount === 1 ? "" : "s"}{" "}
+            transcrito{pendingPurifyCount === 1 ? "" : "s"} esperando purificación.{" "}
+            <button
+              type="button"
+              onClick={() => setActiveTab("downstream")}
+              className="text-violet-100 underline underline-offset-2"
+            >
+              Ir a Downstream →
+            </button>
+          </p>
+        ) : inValidationCount > 0 ? (
+          <p className="rounded border border-emerald-500/20 bg-emerald-500/8 px-3 py-2 font-mono text-[10px] text-emerald-200/90">
+            {inValidationCount} audio{inValidationCount === 1 ? "" : "s"} listo
+            {inValidationCount === 1 ? "" : "s"} en{" "}
+            <Link href="/validar" className="underline underline-offset-2">
+              Validar →
+            </Link>
+          </p>
+        ) : null}
       </header>
 
       <nav
@@ -101,7 +146,7 @@ function AudioStationShell() {
         {activeTab === "library" ? <AudioLibraryPanel /> : null}
         {activeTab === "preprocess" ? <PreprocessPanel /> : null}
         {activeTab === "stt" ? <SttQueuePanel /> : null}
-        {activeTab === "downstream" ? <PostprocessRoadmap /> : null}
+        {activeTab === "downstream" ? <DownstreamPanel /> : null}
       </div>
     </div>
   );

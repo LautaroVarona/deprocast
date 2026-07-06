@@ -224,6 +224,20 @@ model ProjectProposal {
   @@index([createdAt])
 }
 
+// Incubador conversacional de proyectos (/proyectos/nuevo).
+model ProjectIncubationSession {
+  id              String   @id @default(uuid())
+  status          String   @default("active")
+  messages        Json
+  extractionState Json
+  projectId       String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([status])
+  @@index([updatedAt])
+}
+
 // Módulo Chat Exocórtex — sesiones, mensajes y relaciones de contexto (@mentions).
 model ChatSession {
   id        String        @id @default(uuid())
@@ -508,4 +522,57 @@ model CastleCard {
   @@unique([gridId, sourceType, sourceId])
   @@index([gridId])
   @@index([sourceType, sourceId])
+}
+
+// Ludus — gamificación: estado global, calibración, microtareas y asaltos.
+model LudusState {
+  id                 String   @id @default("singleton")
+  signalPoints       Int      @default(0)
+  unlockedStatues    Json     @default("[]")
+  assaultStreakToday Int      @default(0)
+  lastAssaultDate    String?
+  updatedAt          DateTime @updatedAt
+}
+
+model LudusProjectRegistry {
+  id               String    @id @default(uuid())
+  projectId        String    @unique
+  status           String    @default("active")
+  lastCalibratedAt DateTime?
+  updatedAt        DateTime  @updatedAt
+
+  @@index([status])
+}
+
+model LudusMicrotask {
+  id           String   @id @default(uuid())
+  projectId    String
+  title        String
+  estimatedMin Int      @default(15)
+  baseWeight   Int      @default(3)
+  status       String   @default("pending")
+  forgedAt     DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  assaults LudusAssaultSession[]
+
+  @@index([projectId])
+  @@index([status])
+}
+
+model LudusAssaultSession {
+  id           String    @id @default(uuid())
+  microtaskId  String?
+  title        String
+  durationMin  Int       @default(25)
+  startedAt    DateTime
+  endedAt      DateTime?
+  completed    Boolean   @default(false)
+  tabSurvived  Boolean   @default(false)
+  signalPoints Int       @default(0)
+
+  microtask LudusMicrotask? @relation(fields: [microtaskId], references: [id], onDelete: SetNull)
+
+  @@index([startedAt])
+  @@index([microtaskId])
 }

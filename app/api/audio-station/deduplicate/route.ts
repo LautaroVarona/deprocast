@@ -22,7 +22,13 @@ export async function GET() {
         originalCreatedAt: true,
         status: true,
         createdAt: true,
-        transcript: { select: { id: true, rawText: true } },
+        transcript: {
+          select: {
+            id: true,
+            rawText: true,
+            _count: { select: { parentChunks: true } },
+          },
+        },
       },
     });
 

@@ -20,7 +20,13 @@ export async function GET() {
         partialText: true,
         createdAt: true,
         updatedAt: true,
-        transcript: { select: { id: true, rawText: true } },
+        transcript: {
+          select: {
+            id: true,
+            rawText: true,
+            _count: { select: { parentChunks: true } },
+          },
+        },
       },
     });
 
@@ -31,6 +37,7 @@ export async function GET() {
             id: asset.transcript.id,
             preview: asset.transcript.rawText.slice(0, 180).trim() +
               (asset.transcript.rawText.length > 180 ? "…" : ""),
+            validated: asset.transcript._count.parentChunks > 0,
           }
         : null,
     }));

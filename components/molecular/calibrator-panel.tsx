@@ -11,7 +11,11 @@ export function CalibratorPanel() {
     calibraciones,
     validadas,
     isBusy,
+    batchMode,
+    batchQueue,
+    batchIndex,
     validateParticula,
+    skipBatchDocument,
   } = useMolecular();
 
   const visible =
@@ -46,6 +50,24 @@ export function CalibratorPanel() {
           Recalibrá los tres ejes antes de persistir. Currency Potencial = Y ÷ Z.
         </p>
       </header>
+
+      {batchMode && batchQueue.length > 0 ? (
+        <div className="rounded-lg border border-violet-500/20 bg-violet-500/5 px-3 py-2">
+          <div className="flex flex-wrap items-center justify-between gap-2 font-mono text-[10px] text-violet-200/75">
+            <span>
+              Lote {batchIndex + 1}/{batchQueue.length}
+            </span>
+            <button
+              type="button"
+              onClick={skipBatchDocument}
+              disabled={isBusy}
+              className="text-violet-300/90 underline-offset-2 hover:underline disabled:opacity-40"
+            >
+              Saltar documento →
+            </button>
+          </div>
+        </div>
+      ) : null}
 
       {phase === "calibrating" ? (
         <div className="flex items-center gap-3 rounded-lg border border-violet-500/20 bg-violet-500/5 px-4 py-3">

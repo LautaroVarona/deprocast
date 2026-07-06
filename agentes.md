@@ -279,6 +279,27 @@ Módulo **HITL de calibración atencional**, no usa LLM. El Observador asigna pe
 
 ---
 
+### 🎧 Binauralizer
+
+**Funciones:**
+- Generar tonos binaurales en tiempo real con Web Audio API (local-first, sin MP3).
+- Configurar dos `OscillatorNode` tipo sine con `StereoPannerNode` (canal L −1, canal R +1).
+- Controlar volumen maestro vía `GainNode` (default 0.1).
+- Ofrecer presets cognitivos: Gamma Focus (40 Hz), Alpha Flow (10 Hz), Theta Creative (6 Hz), Delta Deep Repair (2 Hz).
+- Permitir ajuste manual de portadora (100–500 Hz) y frecuencia binaural (1–50 Hz).
+- Clasificar banda de ondas (Delta, Theta, Alpha, Beta, Gamma) según frecuencia de destino.
+
+**Descripción:**  
+Agente frontend de modulación cognitiva. El cerebro percibe la diferencia entre frecuencias izquierda y derecha (beat binaural) y puede inducir arrastre neural. Requiere auriculares estéreo. Todo el procesamiento ocurre en el navegador del usuario.
+
+**Ubicación:**
+- Motor: `lib/binauralizer/use-binaural-engine.ts`, `lib/binauralizer/presets.ts`, `lib/binauralizer/wave-bands.ts`
+- UI: `app/agentes/binauralizer/page.tsx`, `components/binauralizer/`
+
+**Tecnologías/Dependencias:** Web Audio API (`AudioContext`, `OscillatorNode`, `StereoPannerNode`, `GainNode`), React 19.
+
+---
+
 ## 4. Subprocesadores determinísticos del Purifier
 
 Estaciones sin LLM que forman parte del pipeline pero no son agentes semánticos:
@@ -371,6 +392,7 @@ Subsistema de archivado de memoria líquida para el corpus unificado. Hoy el gra
 | `/validar` | HITL Purifier |
 | `/grafo` | Visualización KG |
 | `/calibrador` | Calibrador de Vibe |
+| `/agentes/binauralizer` | Binauralizer |
 | `/diario` | Diario → Purifier + KG |
 | `/audio/[id]` | Motor STT + revisión de transcripción |
 
