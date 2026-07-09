@@ -1,10 +1,7 @@
 import "server-only";
 
 import type { PageEnrichmentAction } from "@/lib/cuadernos/types";
-import {
-  extractVertexText,
-  getVertexGenerativeModel,
-} from "@/lib/vertex-gemini/client";
+import { cohereGenerateText } from "@/lib/cohere/chat";
 
 const ACTION_PROMPTS: Record<PageEnrichmentAction, string> = {
   diagrama:
@@ -50,15 +47,13 @@ export async function runPageEnrichment(input: {
     .filter(Boolean)
     .join("\n");
 
-  const model = getVertexGenerativeModel(
-    "Sos un asistente cognitivo para cuadernos y libros manuscritos. Enriquecés el contenido más allá del OCR literal.",
-  );
-
-  const result = await model.generateContent({
-    contents: [{ role: "user", parts: [{ text: userPrompt }] }],
+  const text = await cohereGenerateText({
+    systemPrompt:
+      "Sos un asistente cognitivo para cuadernos y libros manuscritos. Enriquecés el contenido más allá del OCR literal.",
+    userContent: userPrompt,
+    modelKind: "default",
   });
 
-  const text = extractVertexText(result);
   if (!text.trim()) {
     throw new Error("La IA no devolvió un enriquecimiento.");
   }

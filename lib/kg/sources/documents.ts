@@ -1,4 +1,3 @@
-import type { GenerativeModel } from "@google-cloud/vertexai";
 import { readdir, readFile } from "node:fs/promises";
 import path from "node:path";
 
@@ -40,7 +39,7 @@ function stripFrontmatter(source: string): string {
 /** Ingesta un unico documento crudo por ruta absoluta (hooks y backfill). */
 export async function ingestRawDocumentFile(
   absPath: string,
-  options: { model?: GenerativeModel; force?: boolean } = {},
+  options: { model?: string; force?: boolean } = {},
 ): Promise<SourceIngestSummary> {
   const source = await readFile(absPath, "utf-8");
   const relativePath = path
@@ -80,7 +79,7 @@ export async function ingestRawDocumentFile(
 
 /** Ingesta los documentos crudos (pending + completed) al grafo. */
 export async function ingestRawDocuments(options: {
-  model?: GenerativeModel;
+  model?: string;
   force?: boolean;
 } = {}): Promise<SourceIngestSummary[]> {
   const summaries: SourceIngestSummary[] = [];

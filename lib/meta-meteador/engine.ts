@@ -31,10 +31,9 @@ import { extractMarkdownBody, updateTitleInMarkdown } from "@/lib/projects/markd
 import { findProjectById, listProjects } from "@/lib/projects/service";
 import type { Project } from "@/lib/projects/types";
 import {
-  extractVertexText,
-  getVertexGenerativeModel,
-  getVertexModelName,
-} from "@/lib/vertex-gemini/client";
+  cohereGenerateText,
+  getCohereModelName,
+} from "@/lib/cohere/chat";
 import { readFile, writeFile } from "node:fs/promises";
 
 const AUTO_TITLE_PATTERN = /sin[-_ ]?titulo/i;
@@ -153,15 +152,15 @@ async function callMetaMeteador(
   userPrompt: string;
   modelUsed: string;
 }> {
-  const modelUsed = getVertexModelName();
-  const model = getVertexGenerativeModel(META_METEADOR_SYSTEM_PROMPT);
+  const modelUsed = getCohereModelName("default");
   const userPrompt = buildMetaMeteadorUserPrompt(project, body, tituloEsManual);
 
-  const result = await model.generateContent({
-    contents: [{ role: "user", parts: [{ text: userPrompt }] }],
+  const rawResponse = await cohereGenerateText({
+    systemPrompt: META_METEADOR_SYSTEM_PROMPT,
+    userContent: userPrompt,
+    modelKind: "default",
+    jsonMode: true,
   });
-
-  const rawResponse = extractVertexText(result);
   const parsed = parseMetaMeteadorOutput(rawResponse, project.id);
   if (!parsed) {
     throw new Error("La IA no devolvió un JSON de metadatos válido.");

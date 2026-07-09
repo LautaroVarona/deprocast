@@ -254,7 +254,7 @@ export function VisionModule() {
             Portal de Visión y Documentos (Imágenes / PDF)
           </h3>
           <p className="text-xs text-muted-foreground">
-            OCR de alta fidelidad con Gemini. El original queda en{" "}
+            OCR de alta fidelidad con Cohere. El original queda en{" "}
             <span className="font-mono">data/tacho/</span> y el contexto
             purificado se ancla al proyecto elegido.
           </p>
@@ -356,13 +356,13 @@ export function VisionModule() {
             onClick={() => inputRef.current?.click()}
           >
             {status === "extracting"
-              ? "Extrayendo con Gemini..."
+              ? "Extrayendo con Cohere..."
               : "Seleccionar archivo"}
           </Button>
           <input
             ref={inputRef}
             type="file"
-            accept=".png,.jpg,.jpeg,.webp,.gif,.pdf,.heic,image/*,application/pdf"
+            accept=".png,.jpg,.jpeg,.webp,.gif,.heic,image/*"
             className="hidden"
             onChange={(event) => {
               handleFiles(event.target.files);

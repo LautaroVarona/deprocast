@@ -1,4 +1,3 @@
-import type { GenerativeModel } from "@google-cloud/vertexai";
 import path from "node:path";
 
 import { listProjects } from "@/lib/projects/service";
@@ -114,7 +113,7 @@ function buildBody(project: Project): string {
 /** Ingesta un unico proyecto al grafo (usado por hooks y por el backfill). */
 export async function ingestSingleProject(
   project: Project,
-  options: { model?: GenerativeModel; force?: boolean } = {},
+  options: { model?: string; force?: boolean } = {},
 ): Promise<SourceIngestSummary> {
   const relativePath = path
     .relative(process.cwd(), project.filePath)
@@ -153,7 +152,7 @@ export async function ingestSingleProject(
 
 /** Ingesta todos los proyectos del Atanor al grafo de conocimiento. */
 export async function ingestProjects(options: {
-  model?: GenerativeModel;
+  model?: string;
   force?: boolean;
 } = {}): Promise<SourceIngestSummary[]> {
   const projects = await listProjects();

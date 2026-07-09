@@ -3,7 +3,7 @@ import fs from "fs";
 import { createRequire } from "module";
 import path from "path";
 import { promisify } from "util";
-import { GcpSpeechError } from "@/lib/gcp-speech/errors";
+import { SttError } from "@/lib/stt/errors";
 
 const execFileAsync = promisify(execFile);
 const require = createRequire(import.meta.url);
@@ -157,10 +157,10 @@ export async function runFfmpeg(args: string[]): Promise<void> {
     const message = error instanceof Error ? error.message : String(error);
 
     if (isMissingBinaryError(message)) {
-      throw new GcpSpeechError(missingBinaryMessage("FFmpeg"));
+      throw new SttError(missingBinaryMessage("FFmpeg"));
     }
 
-    throw new GcpSpeechError(`FFmpeg falló: ${message}`);
+    throw new SttError(`FFmpeg falló: ${message}`);
   }
 }
 
@@ -177,9 +177,9 @@ export async function runFfprobe(args: string[]): Promise<string> {
     const message = error instanceof Error ? error.message : String(error);
 
     if (isMissingBinaryError(message)) {
-      throw new GcpSpeechError(missingBinaryMessage("ffprobe"));
+      throw new SttError(missingBinaryMessage("ffprobe"));
     }
 
-    throw new GcpSpeechError(`ffprobe falló: ${message}`);
+    throw new SttError(`ffprobe falló: ${message}`);
   }
 }

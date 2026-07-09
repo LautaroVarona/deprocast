@@ -3,7 +3,7 @@ import "server-only";
 import {
   buildAutoTitle,
   extractMentions,
-  formatHistoryForGemini,
+  formatHistoryForChat,
   mergeDraftIntoSegments,
   segmentsToPlainText,
 } from "@/lib/chat/format";
@@ -17,61 +17,19 @@ import {
 } from "@/lib/chat/service";
 import type { ChatSegment, SendChatInput, ChatTurnResult } from "@/lib/chat/types";
 import { processChatForEvents } from "@/lib/events/process";
-import {
-  extractVertexText,
-  getVertexGenerativeModel,
-  getVertexModelName,
-} from "@/lib/vertex-gemini/client";
-import {
-  isRetryableVertexError,
-  VertexGeminiError,
-} from "@/lib/vertex-gemini/errors";
+import { cohereGenerateText, getCohereModelName } from "@/lib/cohere/chat";
 
 const HISTORY_TURNS = 10;
-const MAX_RETRIES = 5;
-
-function stripMarkdownFences(text: string): string {
-  const fenced = text.match(/^```(?:\w+)?\s*([\s\S]*?)```\s*$/);
-  return fenced ? fenced[1].trim() : text.trim();
-}
-
-async function withVertexRetry<T>(
-  label: string,
-  operation: () => Promise<T>,
-): Promise<T> {
-  let lastError: unknown;
-
-  for (let attempt = 1; attempt <= MAX_RETRIES; attempt += 1) {
-    try {
-      return await operation();
-    } catch (error) {
-      lastError = error;
-      if (!isRetryableVertexError(error) || attempt === MAX_RETRIES) {
-        break;
-      }
-      const delayMs = Math.min(1000 * 2 ** (attempt - 1), 8000);
-      await new Promise((resolve) => setTimeout(resolve, delayMs));
-    }
-  }
-
-  const message =
-    lastError instanceof Error
-      ? lastError.message
-      : `${label} falló tras ${MAX_RETRIES} intentos.`;
-  throw new VertexGeminiError(message);
-}
 
 async function generateChatResponse(
   systemPrompt: string,
   userContent: string,
 ): Promise<string> {
-  const model = getVertexGenerativeModel(systemPrompt);
-  const result = await withVertexRetry("Chat generateContent", () =>
-    model.generateContent({
-      contents: [{ role: "user", parts: [{ text: userContent }] }],
-    }),
-  );
-  return stripMarkdownFences(extractVertexText(result));
+  return cohereGenerateText({
+    systemPrompt,
+    userContent,
+    modelKind: "default",
+  });
 }
 
 export async function runChatTurn(input: SendChatInput): Promise<ChatTurnResult> {
@@ -92,7 +50,7 @@ export async function runChatTurn(input: SendChatInput): Promise<ChatTurnResult>
     input.sessionId,
     HISTORY_TURNS * 2,
   );
-  const history = formatHistoryForGemini(
+  const history = formatHistoryForChat(
     recentMessages.map((message) => ({
       role: message.role,
       content: message.content,
@@ -116,7 +74,7 @@ export async function runChatTurn(input: SendChatInput): Promise<ChatTurnResult>
     mentions,
     assistantContent,
     injectedContext: contextBlock,
-    model: getVertexModelName(),
+    model: getCohereModelName("default"),
   });
 
   if (previousCount === 0) {

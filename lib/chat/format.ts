@@ -91,7 +91,7 @@ export function stripMentionQuery(text: string): string {
   return text.replace(/@([\w\sáéíóúñÁÉÍÓÚÑ.-]*)$/i, "");
 }
 
-export function formatHistoryForGemini(
+export function formatHistoryForChat(
   messages: { role: string; content: string }[],
 ): string {
   if (messages.length === 0) return "";
@@ -102,6 +102,9 @@ export function formatHistoryForGemini(
     })
     .join("\n\n");
 }
+
+/** @deprecated Usar formatHistoryForChat */
+export const formatHistoryForGemini = formatHistoryForChat;
 
 export function buildAutoTitle(plainText: string): string {
   const trimmed = plainText.replace(/\s+/g, " ").trim();

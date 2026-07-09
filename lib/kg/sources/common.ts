@@ -1,4 +1,3 @@
-import type { GenerativeModel } from "@google-cloud/vertexai";
 import { prisma } from "@/lib/prisma";
 import { extractKgFromText } from "@/lib/kg/extract";
 import { ingestKgExtraction } from "@/lib/kg/ingest";
@@ -30,7 +29,7 @@ export type IngestDocumentParams = {
   /** Extraccion estructurada deterministica (frontmatter, relaciones fijas). */
   structured?: LlmKgExtraction;
   sourceMetadata?: Record<string, unknown>;
-  model?: GenerativeModel;
+  model?: string;
   force?: boolean;
   /** Conectar el nodo documento con las entidades halladas (default true). */
   connectDocument?: boolean;

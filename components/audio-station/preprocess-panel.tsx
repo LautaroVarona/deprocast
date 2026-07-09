@@ -52,7 +52,7 @@ export function PreprocessPanel() {
         </div>
 
         <p className="mt-3 font-mono text-[9px] text-white/30">
-          El foco operativo sigue siendo STT (Chirp_2) y la extracción máxima
+          El foco operativo sigue siendo STT (Deepgram) y la extracción máxima
           de datos del audio. ENR y recorte de silencios se integrarán antes de
           encolar.
         </p>

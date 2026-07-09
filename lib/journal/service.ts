@@ -1,4 +1,5 @@
 import { buildJournalMarkdown, parseJournalFile } from "@/lib/journal/markdown";
+import { indexJournalMemory } from "@/lib/mnemosyne/hooks";
 import {
   formatFechaRegistro,
   getMonthDir,
@@ -122,7 +123,7 @@ export async function saveJournalEntry({
 
   const relativePath = path.posix.join("journal", monthDirName, filename);
 
-  return {
+  const result = {
     id,
     title,
     onda,
@@ -130,6 +131,18 @@ export async function saveJournalEntry({
     relativePath,
     filename,
   };
+
+  void indexJournalMemory({
+    id,
+    title,
+    body: trimmed,
+    relativePath,
+    onda,
+  }).catch((error) => {
+    console.error("Mnemosyne journal index error:", error);
+  });
+
+  return result;
 }
 
 export async function listJournalEntries(options: {

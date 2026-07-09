@@ -1,3 +1,4 @@
+import { indexPurifierDocMemory } from "@/lib/mnemosyne/hooks";
 import { prisma } from "@/lib/prisma";
 import {
   deleteReviewRecord,
@@ -139,6 +140,14 @@ export async function approveToProposal(
       particula: input.dimensions.particula || loaded.record.particula,
       assetId: loaded.record.assetId,
     },
+  });
+
+  void indexPurifierDocMemory({
+    reviewId: input.reviewId,
+    title: input.title.trim(),
+    body: input.markdownBody.trim(),
+  }).catch((error) => {
+    console.error("Mnemosyne purifier index error:", error);
   });
 
   if (loaded.record.assetId) {

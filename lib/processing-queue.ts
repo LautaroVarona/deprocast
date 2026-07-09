@@ -118,8 +118,8 @@ class ProcessingQueue {
         data: { status: "PROCESSING", partialText: null },
       });
 
-      const { processAssetGcpSpeech } = await import("@/lib/gcp-speech-processor");
-      await processAssetGcpSpeech(assetId);
+      const { processAssetDeepgram } = await import("@/lib/deepgram-speech-processor");
+      await processAssetDeepgram(assetId);
 
       void (async () => {
         try {

@@ -28,7 +28,7 @@ export const PREPROCESS_TOOLS: PreprocessTool[] = [
   {
     id: "level-normalize",
     label: "Normalizar niveles",
-    description: "Estandariza volumen antes de enviar a Chirp_2.",
+    description: "Estandariza volumen antes de enviar a Deepgram.",
     status: "planned",
     focus: "pre",
   },
@@ -37,7 +37,7 @@ export const PREPROCESS_TOOLS: PreprocessTool[] = [
 export const POSTPROCESS_PIPELINE: PostprocessStage[] = [
   {
     id: "stt",
-    label: "STT · Chirp_2",
+    label: "STT · Deepgram",
     description:
       "Transcripción cruda, timestamps y texto parcial ante fallos.",
     route: "/audio",

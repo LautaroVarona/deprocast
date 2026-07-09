@@ -18,12 +18,7 @@ import {
   getIncubationSession,
   type IncubationSessionDto,
 } from "@/lib/projects/incubation/session-store";
-import {
-  extractVertexText,
-  getVertexGenerativeModel,
-  getVertexModelName,
-} from "@/lib/vertex-gemini/client";
-import { withVertexRetry } from "@/lib/vertex-gemini/retry";
+import { cohereGenerateText, getCohereModelName } from "@/lib/cohere/chat";
 
 const MAX_HISTORY_MESSAGES = 12;
 
@@ -34,11 +29,6 @@ export type IncubationTurnResult = {
   readiness: ReturnType<typeof evaluateReadiness>;
   model: string;
 };
-
-function stripMarkdownFences(text: string): string {
-  const fenced = text.match(/^```(?:\w+)?\s*([\s\S]*?)```\s*$/);
-  return fenced ? fenced[1].trim() : text.trim();
-}
 
 function formatTranscript(messages: IncubationMessage[]): string {
   return messages
@@ -85,14 +75,11 @@ async function generateAssistantReply(
     ? `${history}\n\nUsuario: ${userMessage}`
     : userMessage;
 
-  const model = getVertexGenerativeModel(systemPrompt);
-  const result = await withVertexRetry("Incubation chat", () =>
-    model.generateContent({
-      contents: [{ role: "user", parts: [{ text: userContent }] }],
-    }),
-  );
-
-  return stripMarkdownFences(extractVertexText(result));
+  return cohereGenerateText({
+    systemPrompt,
+    userContent,
+    modelKind: "default",
+  });
 }
 
 export async function createIncubationSessionWithWelcome(): Promise<IncubationSessionDto> {
@@ -151,6 +138,6 @@ export async function runIncubationTurn(
     assistantMessage: assistantContent,
     extractionState,
     readiness: evaluateReadiness(extractionState),
-    model: getVertexModelName(),
+    model: getCohereModelName("default"),
   };
 }

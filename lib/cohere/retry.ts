@@ -1,10 +1,14 @@
 import "server-only";
 
-import { isRetryableVertexError, VertexGeminiError } from "@/lib/vertex-gemini/errors";
+import { CohereError, isRetryableCohereError } from "@/lib/cohere/errors";
 
 const MAX_RETRIES = 5;
 
-export async function withVertexRetry<T>(
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+export async function withCohereRetry<T>(
   label: string,
   operation: () => Promise<T>,
 ): Promise<T> {
@@ -15,11 +19,11 @@ export async function withVertexRetry<T>(
       return await operation();
     } catch (error) {
       lastError = error;
-      if (!isRetryableVertexError(error) || attempt === MAX_RETRIES) {
+      if (!isRetryableCohereError(error) || attempt === MAX_RETRIES) {
         break;
       }
       const delayMs = Math.min(1000 * 2 ** (attempt - 1), 8000);
-      await new Promise((resolve) => setTimeout(resolve, delayMs));
+      await sleep(delayMs);
     }
   }
 
@@ -27,5 +31,5 @@ export async function withVertexRetry<T>(
     lastError instanceof Error
       ? lastError.message
       : `${label} falló tras ${MAX_RETRIES} intentos.`;
-  throw new VertexGeminiError(message);
+  throw new CohereError(message);
 }

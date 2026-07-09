@@ -12,6 +12,7 @@ let setupPromise: Promise<void> | null = null;
 
 const SQLITE_MAGIC = "SQLite format 3";
 const SCHEMA_MARKER = "AudioAsset";
+const PARTIAL_META_MARKER = "_deprocast_export_meta";
 
 export function databaseHasAppSchema(dbPath: string): boolean {
   if (!fs.existsSync(dbPath)) {
@@ -27,7 +28,14 @@ export function databaseHasAppSchema(dbPath: string): boolean {
     const file = fs.readFileSync(dbPath);
     const header = file.subarray(0, SQLITE_MAGIC.length).toString("utf8");
 
-    return header === SQLITE_MAGIC && file.includes(SCHEMA_MARKER);
+    if (header !== SQLITE_MAGIC) {
+      return false;
+    }
+
+    return (
+      file.includes(SCHEMA_MARKER) ||
+      file.includes(PARTIAL_META_MARKER)
+    );
   } catch {
     return false;
   }

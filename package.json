@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev --webpack",
     "build": "node scripts/build.js",
     "vercel-build": "node scripts/build.js",
     "start": "next start",
@@ -12,14 +12,15 @@
     "kg:scan": "tsx scripts/kg/scan-code.ts",
     "kg:backfill": "tsx scripts/kg/backfill.ts",
     "kg:reconcile": "tsx scripts/kg/reconcile-entities.ts",
+    "mnemosyne:backfill": "tsx scripts/mnemosyne/backfill.ts",
     "memorias:verify": "tsx scripts/memorias/verify-segmentation.ts",
     "db:meta": "prisma db push && prisma generate",
     "postinstall": "prisma generate && node scripts/rebuild-native.js"
   },
   "dependencies": {
     "@base-ui/react": "^1.5.0",
-    "@google-cloud/speech": "^6.7.1",
-    "@google-cloud/vertexai": "^1.10.0",
+    "@deepgram/sdk": "^5.5.0",
+    "cohere-ai": "^8.0.0",
     "@prisma/adapter-better-sqlite3": "^7.8.0",
     "@prisma/client": "^7.8.0",
     "better-sqlite3": "^12.10.0",

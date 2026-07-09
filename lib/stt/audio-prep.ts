@@ -1,7 +1,7 @@
 import fs from "fs";
 import path from "path";
-import { GcpSpeechError } from "@/lib/gcp-speech/errors";
-import { getFfmpegPath, runFfmpeg, runFfprobe } from "@/lib/gcp-speech/ffmpeg-bin";
+import { SttError } from "@/lib/stt/errors";
+import { getFfmpegPath, runFfmpeg, runFfprobe } from "@/lib/stt/ffmpeg-bin";
 import { resolveUploadPath } from "@/lib/runtime-paths";
 
 export function resolveInputPath(fileUrl: string): string {
@@ -28,7 +28,7 @@ export async function convertToWav(
   ]);
 
   if (!fs.existsSync(wavPath)) {
-    throw new GcpSpeechError(
+    throw new SttError(
       `FFmpeg no generó el archivo WAV esperado: ${wavPath}`,
     );
   }
@@ -49,7 +49,7 @@ export async function getAudioDurationSeconds(
 
   const duration = Number.parseFloat(stdout.trim());
   if (!Number.isFinite(duration) || duration <= 0) {
-    throw new GcpSpeechError(
+    throw new SttError(
       `No se pudo determinar la duración del audio: ${wavPath}`,
     );
   }
@@ -88,7 +88,7 @@ export async function splitIntoChunks(
     .map((name) => path.join(tempDir, name));
 
   if (chunkFiles.length === 0) {
-    throw new GcpSpeechError(
+    throw new SttError(
       "FFmpeg no generó segmentos de audio para la transcripción.",
     );
   }

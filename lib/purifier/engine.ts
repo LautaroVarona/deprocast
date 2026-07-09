@@ -1,20 +1,15 @@
 import "server-only";
 import "dotenv/config";
 
-import type { GenerativeModel } from "@google-cloud/vertexai";
 import { randomUUID } from "node:crypto";
 
+import type { CohereModelKind } from "@/lib/cohere/config";
+import { cohereGenerateText, getCohereModelName } from "@/lib/cohere/chat";
 import { clampScale } from "@/lib/projects/priority";
 import {
   DEFAULT_CAMPO_SLUG,
   resolveCampoSlug,
 } from "@/lib/projects/campos";
-import {
-  extractVertexText,
-  getVertexGenerativeModel,
-  getVertexModelName,
-} from "@/lib/vertex-gemini/client";
-import { isRetryableVertexError } from "@/lib/vertex-gemini/errors";
 
 import { extractKgFromText } from "@/lib/kg/extract";
 import { ingestKgExtraction } from "@/lib/kg/ingest";
@@ -168,49 +163,18 @@ function resolveKgSource(
 
 // ---------------------------------------------------------------------------
 
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-async function withVertexRetry<T>(
-  label: string,
-  operation: () => Promise<T>,
-): Promise<T> {
-  const maxAttempts = 5;
-  let lastError: unknown;
-
-  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
-    try {
-      return await operation();
-    } catch (error) {
-      lastError = error;
-      if (!isRetryableVertexError(error) || attempt === maxAttempts) {
-        throw error;
-      }
-      await sleep(2000 * attempt);
-    }
-  }
-
-  throw lastError;
-}
-
-function stripMarkdownFences(text: string): string {
-  const fenced = text.match(/^```(?:\w+)?\s*([\s\S]*?)```\s*$/);
-  return fenced ? fenced[1].trim() : text.trim();
-}
-
-async function generateVertexText(
+async function generateLlmText(
   systemPrompt: string,
   userContent: string,
-  modelOverride?: GenerativeModel,
+  options: { model?: string; modelKind?: CohereModelKind } = {},
 ): Promise<string> {
-  const model = modelOverride ?? getVertexGenerativeModel(systemPrompt);
-  const result = await withVertexRetry("Vertex generateContent", () =>
-    model.generateContent({
-      contents: [{ role: "user", parts: [{ text: userContent }] }],
-    }),
-  );
-  return stripMarkdownFences(extractVertexText(result));
+  return cohereGenerateText({
+    systemPrompt,
+    userContent,
+    model: options.model,
+    modelKind: options.modelKind ?? "default",
+    throttle: true,
+  });
 }
 
 function collapseWhitespace(text: string): string {
@@ -330,14 +294,17 @@ export function station1RegexCleanup(text: string): {
 }
 
 // ---------------------------------------------------------------------------
-// ESTACIÓN 2 — Limpieza Semántica (Gemini)
+// ESTACIÓN 2 — Limpieza Semántica (Cohere)
 // ---------------------------------------------------------------------------
 
 export async function station2SemanticCleanup(
   text: string,
-  model?: GenerativeModel,
+  model?: string,
 ): Promise<string> {
-  return generateVertexText(CLEANUP_SYSTEM_PROMPT, text, model);
+  return generateLlmText(CLEANUP_SYSTEM_PROMPT, text, {
+    model,
+    modelKind: "fast",
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -412,14 +379,21 @@ export function station3Deduplicate(
 }
 
 // ---------------------------------------------------------------------------
-// ESTACIÓN 4 — Extracción de Esencias (Gemini)
+// ESTACIÓN 4 — Extracción de Esencias (Cohere)
 // ---------------------------------------------------------------------------
 
 export async function station4ExtractEssences(
   text: string,
-  model?: GenerativeModel,
+  model?: string,
 ): Promise<string[]> {
-  const raw = await generateVertexText(EXTRACT_ESSENCES_PROMPT, text, model);
+  const raw = await cohereGenerateText({
+    systemPrompt: EXTRACT_ESSENCES_PROMPT,
+    userContent: text,
+    model,
+    modelKind: "fast",
+    jsonMode: true,
+    throttle: true,
+  });
 
   try {
     const parsed = JSON.parse(raw) as unknown;
@@ -444,7 +418,7 @@ export async function station4ExtractEssences(
 }
 
 // ---------------------------------------------------------------------------
-// ESTACIÓN 5 — Normalización (Gemini)
+// ESTACIÓN 5 — Normalización (Cohere)
 // ---------------------------------------------------------------------------
 
 function parseYamlValue(line: string): { key: string; value: string } | null {
@@ -498,12 +472,12 @@ export async function station5Normalize(
   metaTags: string[],
   gravity: ReturnType<typeof resolveGravity>,
   filename: string,
-  model?: GenerativeModel,
+  model?: string,
 ): Promise<{ normalizedMarkdown: string; dimensions: SevenDimensions & { title: string; prioridad: number; impacto: number; dificultad: number } }> {
-  const normalizedMarkdown = await generateVertexText(
+  const normalizedMarkdown = await generateLlmText(
     NORMALIZE_SYSTEM_PROMPT,
     buildNormalizePrompt(dedupedText, metaTags, gravity, filename),
-    model,
+    { model, modelKind: "default" },
   );
 
   const fields = parseFrontmatterFromMarkdown(normalizedMarkdown);
@@ -592,7 +566,7 @@ export function extractDoubts(text: string): string[] {
 
 export async function runPurificationPipeline(
   input: PurifierInput,
-  options: { model?: GenerativeModel; saveReview?: boolean; extractKg?: boolean } = {},
+  options: { model?: string; saveReview?: boolean; extractKg?: boolean } = {},
 ): Promise<PurifierReviewRecord> {
   const gravity = resolveGravity(input.gravity);
   const filename = input.filename ?? `asset-${input.assetId ?? randomUUID().slice(0, 8)}`;
@@ -762,7 +736,7 @@ export async function runPurificationPipeline(
     },
     regex: { removedCount: regexResult.removedCount },
     processedAt: new Date().toISOString(),
-    model: getVertexModelName(),
+    model: getCohereModelName("default"),
     kgExtraction,
     kgIngest,
   };

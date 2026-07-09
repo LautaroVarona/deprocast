@@ -61,7 +61,7 @@ export function resolveAudioPipelineStage(
     return {
       stage: "stt_processing",
       label: "Transcribiendo",
-      hint: "Chirp_2 en curso.",
+      hint: "Deepgram en curso.",
     };
   }
 

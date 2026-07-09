@@ -1,15 +1,11 @@
-import {
-  extractVertexText,
-  getVertexGenerativeModel,
-} from "@/lib/vertex-gemini/client";
-import { isRetryableVertexError } from "@/lib/vertex-gemini/errors";
+import { cohereChatWithImages } from "@/lib/cohere/vision";
 import { TACHO_DIR } from "@/lib/ingesta/paths";
 import { findProjectById } from "@/lib/projects/service";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
 
-export const VISION_EXTRACTION_PROMPT = `Actúas como un Agente de Extracción y Purificación de Data de alta fidelidad (OCR multimodal). Tu única tarea es transmutar esta imagen o PDF en texto limpio en formato Markdown, eliminando el ruido estático pero manteniendo fidelidad absoluta respecto a la materia original.
+export const VISION_EXTRACTION_PROMPT = `Actúas como un Agente de Extracción y Purificación de Data de alta fidelidad (OCR multimodal). Tu única tarea es transmutar esta imagen en texto limpio en formato Markdown, eliminando el ruido estático pero manteniendo fidelidad absoluta respecto a la materia original.
 
 REGLA CRÍTICA SOBRE TACHONES: No ignores tachones ni correcciones. Si hay palabras, frases o líneas tachadas, transcríbelas reflejando su estado con \`~~texto tachado~~\` o la anotación '[Tachado: texto]'.
 
@@ -25,7 +21,6 @@ const SUPPORTED_MIME_TYPES: Record<string, string> = {
   ".jpeg": "image/jpeg",
   ".webp": "image/webp",
   ".gif": "image/gif",
-  ".pdf": "application/pdf",
   ".heic": "image/heic",
 };
 
@@ -41,38 +36,12 @@ export type VisionConfirmResult = {
   filename: string;
 };
 
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-async function withVertexRetry<T>(
-  label: string,
-  operation: () => Promise<T>,
-): Promise<T> {
-  const maxAttempts = 4;
-  let lastError: unknown;
-
-  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
-    try {
-      return await operation();
-    } catch (error) {
-      lastError = error;
-      if (!isRetryableVertexError(error) || attempt === maxAttempts) {
-        throw error;
-      }
-      await sleep(2000 * attempt);
-    }
-  }
-
-  throw lastError;
-}
-
 function resolveMimeType(filename: string): string {
   const ext = path.extname(filename).toLowerCase();
   const mimeType = SUPPORTED_MIME_TYPES[ext];
   if (!mimeType) {
     throw new Error(
-      "Formato no soportado. Usá imágenes (.png, .jpg, .webp) o PDF.",
+      "Formato no soportado. Usá imágenes (.png, .jpg, .webp, .gif, .heic).",
     );
   }
   return mimeType;
@@ -81,11 +50,6 @@ function resolveMimeType(filename: string): string {
 function sanitizeFilename(filename: string): string {
   const base = path.basename(filename).replace(/[^a-zA-Z0-9._-]+/g, "_");
   return base || "documento";
-}
-
-function stripMarkdownFences(text: string): string {
-  const fenced = text.match(/^```(?:markdown|md)?\s*([\s\S]*?)```\s*$/);
-  return fenced ? fenced[1].trim() : text.trim();
 }
 
 export async function storeInTacho(buffer: Buffer, originalFilename: string): Promise<string> {
@@ -100,34 +64,44 @@ export async function storeInTacho(buffer: Buffer, originalFilename: string): Pr
   return tachoPath;
 }
 
+async function extractMarkdownFromImages(
+  images: Array<{ base64: string; mimeType: string; pageNumber?: number }>,
+): Promise<string> {
+  if (images.length === 1) {
+    return cohereChatWithImages({
+      systemPrompt: VISION_EXTRACTION_PROMPT,
+      images: [{ base64: images[0].base64, mimeType: images[0].mimeType }],
+      userText: "Transcribí este documento a Markdown siguiendo las reglas del sistema.",
+    });
+  }
+
+  const pageMarkdowns: string[] = [];
+  for (const image of images) {
+    const pageText = await cohereChatWithImages({
+      systemPrompt: VISION_EXTRACTION_PROMPT,
+      images: [{ base64: image.base64, mimeType: image.mimeType }],
+      userText: `Transcribí la página ${image.pageNumber ?? pageMarkdowns.length + 1} a Markdown.`,
+    });
+    pageMarkdowns.push(
+      `## Página ${image.pageNumber ?? pageMarkdowns.length + 1}\n\n${pageText}`,
+    );
+  }
+
+  return pageMarkdowns.join("\n\n");
+}
+
 export async function extractVisionMarkdown(
   buffer: Buffer,
   originalFilename: string,
 ): Promise<{ markdown: string; mimeType: string }> {
   const mimeType = resolveMimeType(originalFilename);
-  const base64 = buffer.toString("base64");
-  const model = getVertexGenerativeModel();
 
-  const result = await withVertexRetry("Vision extract", () =>
-    model.generateContent({
-      contents: [
-        {
-          role: "user",
-          parts: [
-            {
-              inlineData: {
-                mimeType,
-                data: base64,
-              },
-            },
-            { text: VISION_EXTRACTION_PROMPT },
-          ],
-        },
-      ],
-    }),
-  );
-
-  const markdown = stripMarkdownFences(extractVertexText(result));
+  const markdown = await extractMarkdownFromImages([
+    {
+      base64: buffer.toString("base64"),
+      mimeType,
+    },
+  ]);
   return { markdown, mimeType };
 }
 

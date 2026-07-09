@@ -41,7 +41,7 @@ export function AgentesWorkspace() {
               </code>{" "}
               vía{" "}
               <code className="rounded bg-zinc-900 px-1.5 py-0.5 text-zinc-400">
-                lib/vertex-gemini/client.ts
+                lib/cohere/chat.ts
               </code>
               .
             </p>

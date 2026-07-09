@@ -5,15 +5,18 @@ import {
 import {
   getAudioDurationSeconds,
   splitIntoChunks,
-} from "@/lib/gcp-speech/audio-prep";
-import { getGcpSpeechConfig } from "@/lib/gcp-speech/config";
-import { logInfo, updatePartialText } from "@/lib/gcp-speech/logger";
-import { PartialTranscriptionError } from "@/lib/gcp-speech/errors";
-import { pauseBetweenChunks } from "@/lib/gcp-speech/retry";
+} from "@/lib/stt/audio-prep";
+import { getDeepgramConfig } from "@/lib/deepgram/config";
+import { logInfo, updatePartialText } from "@/lib/deepgram/logger";
+import {
+  isEmptyDeepgramTranscriptionError,
+  PartialTranscriptionError,
+} from "@/lib/deepgram/errors";
+import { pauseBetweenChunks } from "@/lib/deepgram/retry";
 import {
   transcribeSync,
   type TranscriptionResult,
-} from "@/lib/gcp-speech/transcribe-sync";
+} from "@/lib/deepgram/transcribe-sync";
 
 function averageConfidence(values: Array<number | null>): number | null {
   const valid = values.filter((value): value is number => value !== null);
@@ -28,7 +31,7 @@ export async function transcribeChunked(
   wavPath: string,
   tempDir: string,
 ): Promise<TranscriptionResult> {
-  const config = getGcpSpeechConfig();
+  const config = getDeepgramConfig();
   const duration = await getAudioDurationSeconds(wavPath);
   const estimatedChunks = Math.max(
     1,
@@ -51,6 +54,7 @@ export async function transcribeChunked(
 
   const segments: string[] = [];
   const confidences: Array<number | null> = [];
+  let skippedEmptyChunks = 0;
 
   for (let index = 0; index < chunkPaths.length; index += 1) {
     if (isCancelled(assetId)) {
@@ -62,7 +66,7 @@ export async function transcribeChunked(
 
     logInfo(
       assetId,
-      `Segmento ${chunkNumber}/${totalChunks} — enviando a Speech API...`,
+      `Segmento ${chunkNumber}/${totalChunks} — enviando a Deepgram...`,
     );
 
     try {
@@ -87,6 +91,18 @@ export async function transcribeChunked(
         await pauseBetweenChunks(assetId);
       }
     } catch (error) {
+      if (isEmptyDeepgramTranscriptionError(error)) {
+        skippedEmptyChunks += 1;
+        logInfo(
+          assetId,
+          `Segmento ${chunkNumber}/${totalChunks} — vacío; se omite y se continúa.`,
+        );
+        if (chunkNumber < totalChunks) {
+          await pauseBetweenChunks(assetId);
+        }
+        continue;
+      }
+
       const partialText = segments.join(" ").trim();
       if (partialText) {
         throw new PartialTranscriptionError(error, {
@@ -103,7 +119,16 @@ export async function transcribeChunked(
   const rawText = segments.join(" ").trim();
   if (!rawText) {
     throw new Error(
-      "La transcripción por segmentos quedó vacía tras procesar todos los chunks.",
+      skippedEmptyChunks > 0
+        ? `La transcripción quedó vacía: ${skippedEmptyChunks}/${totalChunks} segmentos devolvieron texto vacío.`
+        : "La transcripción por segmentos quedó vacía tras procesar todos los chunks.",
+    );
+  }
+
+  if (skippedEmptyChunks > 0) {
+    logInfo(
+      assetId,
+      `Transcripción completada con ${skippedEmptyChunks}/${totalChunks} segmentos vacíos omitidos.`,
     );
   }
 

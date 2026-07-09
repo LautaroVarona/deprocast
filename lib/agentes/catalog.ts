@@ -46,7 +46,7 @@ export const OPERATIONAL_AGENTS: OperationalAgent[] = [
     id: "exocortex",
     emoji: "🧠",
     name: "Exocórtex Interactivo",
-    badge: "LLM · Vertex Gemini",
+    badge: "LLM · Cohere Command R+",
     badgeTone: "cyan",
     locations: [
       "lib/chat/engine.ts",
@@ -61,17 +61,18 @@ export const OPERATIONAL_AGENTS: OperationalAgent[] = [
     functions: [
       "Recibir mensajes del usuario con segmentos de texto y menciones @ tipadas.",
       "Resolver menciones a proyectos, retos, áreas, personas, campos y retos laborales.",
-      "Ejecutar búsqueda híbrida (menciones KG, aristas, diario) sobre la consulta en lenguaje natural.",
+      "Ejecutar búsqueda híbrida (léxica + Mnemosyne vectorial + Cohere Rerank) sobre la consulta.",
       "Inyectar bloques de contexto truncados en el system prompt.",
       "Mantener historial de sesión (últimos 10 turnos) y persistir intercambios en SQLite.",
       "Generar título automático de sesión en el primer mensaje.",
     ],
     technologies: [
-      "Vertex AI Gemini",
+      "Cohere Command R+",
       "Prisma (ChatSession, ChatMessage)",
       "lib/kg/queries",
       "lib/projects/service",
       "lib/laboral/challenges",
+      "lib/mnemosyne/",
       "lib/journal/",
     ],
     uiRoute: "/chat",
@@ -80,12 +81,13 @@ export const OPERATIONAL_AGENTS: OperationalAgent[] = [
     id: "stt",
     emoji: "🎙️",
     name: "Motor de Transcripción STT",
-    badge: "Determinístico · Chirp_2",
+    badge: "Determinístico · Deepgram",
     badgeTone: "emerald",
     locations: [
-      "lib/gcp-speech-processor.ts",
+      "lib/deepgram-speech-processor.ts",
       "lib/processing-queue.ts",
-      "lib/gcp-speech/",
+      "lib/deepgram/",
+      "lib/stt/",
       "lib/audio-station/",
       "app/api/upload/route.ts",
       "app/api/process/",
@@ -105,10 +107,10 @@ export const OPERATIONAL_AGENTS: OperationalAgent[] = [
       "Mapa downstream hacia Purifier, Molecular y Grafo.",
     ],
     technologies: [
-      "@google-cloud/speech",
+      "@deepgram/sdk",
       "FFmpeg (ffmpeg-static, ffprobe-static)",
       "Prisma (AudioAsset, Transcript)",
-      "GCP_SPEECH_*",
+      "DEEPGRAM_*",
     ],
     uiRoute: "/audio",
   },
@@ -126,13 +128,13 @@ export const OPERATIONAL_AGENTS: OperationalAgent[] = [
     functions: [
       "Aceptar imágenes (PNG, JPG, WEBP, GIF, HEIC) y PDF.",
       "Almacenar binario original en data/tacho/.",
-      "Enviar contenido multimodal (inline base64) a Gemini con VISION_EXTRACTION_PROMPT.",
+      "Enviar imágenes/PDF rasterizado a Cohere Command A Vision con VISION_EXTRACTION_PROMPT.",
       "Devolver Markdown purificado (tachones, descripción analítica de diagramas).",
       "Opcionalmente confirmar contexto y anexarlo como .md al proyecto destino.",
       "Encadenar captura → Purifier vía captureAndPurify.",
     ],
     technologies: [
-      "Vertex AI Gemini (inlineData)",
+      "Cohere Command A Vision",
       "data/tacho/",
       "lib/purifier/capture.ts",
     ],
@@ -152,7 +154,7 @@ export const OPERATIONAL_AGENTS: OperationalAgent[] = [
       "Marcar segmentos incomprensibles como ==DUDA: fragmento==.",
       "Preservar bloques ==DUDA:...== preexistentes.",
     ],
-    technologies: ["Vertex AI Gemini", "runPurificationPipeline"],
+    technologies: ["Cohere Command R+", "runPurificationPipeline"],
   },
   {
     id: "extractor-esencias",
@@ -168,7 +170,7 @@ export const OPERATIONAL_AGENTS: OperationalAgent[] = [
       "Devolver array JSON de conceptos atómicos (nombres propios, leyes, bugs, tecnologías, procesos).",
       "Limitar salida a 30 tags máximo con fallback de parseo tolerante.",
     ],
-    technologies: ["Vertex AI Gemini", "EXTRACT_ESSENCES_PROMPT"],
+    technologies: ["Cohere Command R", "EXTRACT_ESSENCES_PROMPT"],
   },
   {
     id: "motor-kg",
@@ -192,7 +194,7 @@ export const OPERATIONAL_AGENTS: OperationalAgent[] = [
       "Ingerir resultado en SQLite cuando extractKg: true.",
     ],
     technologies: [
-      "Vertex AI Gemini",
+      "Cohere Command R+",
       "Prisma (KgNode, KgEdge, KgMention, KgSource)",
       "SQLite local",
     ],
@@ -215,7 +217,7 @@ export const OPERATIONAL_AGENTS: OperationalAgent[] = [
       "Parsear frontmatter resultante para construir PurifierReviewRecord.",
     ],
     technologies: [
-      "Vertex AI Gemini",
+      "Cohere Command R+",
       "lib/projects/priority",
       "lib/projects/campos",
     ],
@@ -242,7 +244,7 @@ export const OPERATIONAL_AGENTS: OperationalAgent[] = [
       "Exponer aprobación HITL (approveAndCoagulate, approveToProposal).",
     ],
     technologies: [
-      "Vertex AI Gemini",
+      "Cohere Command R+",
       "Filesystem (data/raw_documents/)",
       "Prisma al aprobar",
     ],
@@ -294,7 +296,7 @@ export const OPERATIONAL_AGENTS: OperationalAgent[] = [
       "Recibir validación y reportes HITL para mejorar futuras respuestas.",
     ],
     technologies: [
-      "Vertex AI Gemini",
+      "Cohere Command R+",
       "Prisma (EncyclopediaEntry, EncyclopediaEdge, EncyclopediaReport)",
       "lib/kg/sources/common (ingestDocumentSource)",
       "Canvas force-directed (grafo de sesión)",
@@ -330,7 +332,7 @@ export const OPERATIONAL_AGENTS: OperationalAgent[] = [
     id: "meta-meteador",
     emoji: "🏷️",
     name: "Meta-Meteador",
-    badge: "LLM · Vertex Gemini",
+    badge: "LLM · Cohere Command R+",
     badgeTone: "violet",
     locations: [
       "lib/meta-meteador/engine.ts",
@@ -351,7 +353,7 @@ export const OPERATIONAL_AGENTS: OperationalAgent[] = [
       "Proyectar nodos tipo area y aristas relevante_para al grafo (toggleable).",
     ],
     technologies: [
-      "Vertex AI Gemini",
+      "Cohere Command R+",
       "Prisma (DocumentMeta)",
       "lib/kg/ingest",
       "lib/projects/service",
@@ -498,12 +500,12 @@ export const DESIGN_AGENTS: DesignAgent[] = [
       "Servir como capa de memoria para el Exocórtex más allá del historial de 10 turnos.",
     ],
     description:
-      "Subsistema de archivado de memoria líquida. Sin embeddings vectoriales ni RAG operativo; cerraría el loop Información → Conocimiento → Sabiduría.",
-    plannedLocation:
-      "extensión lib/kg/ + almacén vectorial local (no implementado)",
+      "Subsistema de memoria semántica local: embeddings Cohere en SQLite, indexación de diario/KG/proyectos/cuadernos y rerank en el Exocórtex.",
+    plannedLocation: "lib/mnemosyne/ + Prisma MemoryEmbedding",
     plannedTechnologies: [
-      "Embeddings locales",
-      "ParentChunk/ChildChunk (Prisma legacy)",
+      "Cohere embed-v4.0",
+      "Cohere rerank-v3.5",
+      "lib/chat/hybrid-search.ts",
       "Integración Exocórtex + Purifier post-aprobación",
     ],
   },
@@ -514,6 +516,6 @@ export const ECOSYSTEM_STATS = {
   subprocessorsCount: SUBPROCESSORS.length,
   kgSourcesCount: KG_INGEST_SOURCES.length,
   designCount: DESIGN_AGENTS.length,
-  llmProvider: "gemini-2.5-flash",
+  llmProvider: "command-r-plus-08-2024",
   docSource: "agentes.md",
 } as const;

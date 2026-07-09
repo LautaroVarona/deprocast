@@ -2,11 +2,8 @@ import "server-only";
 
 import { ENCICLOPEDIA_SYSTEM_PROMPT } from "@/lib/enciclopedia/constants";
 import type { GeneratedEntryContent } from "@/lib/enciclopedia/types";
-import {
-  extractVertexText,
-  getVertexGenerativeModel,
-  getVertexModelName,
-} from "@/lib/vertex-gemini/client";
+import { cohereGenerateText, getCohereModelName } from "@/lib/cohere/chat";
+import { stripMarkdownFences } from "@/lib/cohere/extract";
 import { z } from "zod";
 
 const generatedSchema = z.object({
@@ -14,11 +11,6 @@ const generatedSchema = z.object({
   body: z.string().min(1),
   explorableTerms: z.array(z.string().min(1)).min(3).max(15),
 });
-
-function stripMarkdownFences(text: string): string {
-  const fenced = text.match(/^```(?:\w+)?\s*([\s\S]*?)```\s*$/);
-  return fenced ? fenced[1].trim() : text.trim();
-}
 
 export async function generateEncyclopediaEntry(input: {
   concept: string;
@@ -36,12 +28,15 @@ export async function generateEncyclopediaEntry(input: {
     .filter(Boolean)
     .join("\n");
 
-  const model = getVertexGenerativeModel(ENCICLOPEDIA_SYSTEM_PROMPT);
-  const result = await model.generateContent({
-    contents: [{ role: "user", parts: [{ text: contextLines }] }],
-  });
+  const raw = stripMarkdownFences(
+    await cohereGenerateText({
+      systemPrompt: ENCICLOPEDIA_SYSTEM_PROMPT,
+      userContent: contextLines,
+      modelKind: "default",
+      jsonMode: true,
+    }),
+  );
 
-  const raw = stripMarkdownFences(extractVertexText(result));
   let parsed: unknown;
   try {
     parsed = JSON.parse(raw);
@@ -60,6 +55,6 @@ export async function generateEncyclopediaEntry(input: {
   return {
     ...validated.data,
     explorableTerms: [...new Set(validated.data.explorableTerms.map((t) => t.trim()))],
-    model: getVertexModelName(),
+    model: getCohereModelName("default"),
   };
 }

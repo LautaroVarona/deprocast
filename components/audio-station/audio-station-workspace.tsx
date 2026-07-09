@@ -11,7 +11,7 @@ import { PreprocessPanel } from "@/components/audio-station/preprocess-panel";
 import { SttQueuePanel } from "@/components/audio-station/stt-queue-panel";
 import { cn } from "@/lib/utils";
 import { resolveAudioPipelineStage } from "@/lib/audio-station/pipeline-status";
-import { AudioLinesIcon } from "lucide-react";
+import { AudioLinesIcon, ArrowRightIcon, WavesIcon } from "lucide-react";
 import Link from "next/link";
 
 const STATION_TABS = [
@@ -22,6 +22,13 @@ const STATION_TABS = [
 ] as const;
 
 type StationTab = (typeof STATION_TABS)[number]["id"];
+
+type FlowChip = {
+  id: string;
+  label: string;
+  tone: string;
+  count: number;
+};
 
 function AudioStationShell() {
   const { phase, error, scan, assets, queueStatus, reviewByAssetId } =
@@ -52,6 +59,47 @@ function AudioStationShell() {
   const dedupBadge =
     scan && scan.groups.length > 0 ? scan.duplicateCount : null;
 
+  const flowChips: FlowChip[] = [
+    {
+      id: "pending_stt",
+      label: "Pendiente STT",
+      tone: "border-white/15 bg-white/5 text-white/70",
+      count: assets.filter(
+        (asset) =>
+          resolveAudioPipelineStage(asset, {
+            queuedIds,
+            activeId,
+            reviewByAssetId,
+          }).stage === "pending_stt",
+      ).length,
+    },
+    {
+      id: "stt_processing",
+      label: "STT activo",
+      tone: "border-sky-400/35 bg-sky-500/10 text-sky-200",
+      count: assets.filter((asset) => {
+        const stage = resolveAudioPipelineStage(asset, {
+          queuedIds,
+          activeId,
+          reviewByAssetId,
+        }).stage;
+        return stage === "stt_processing" || stage === "stt_queued";
+      }).length,
+    },
+    {
+      id: "pending_purify",
+      label: "Esperando purificar",
+      tone: "border-violet-400/35 bg-violet-500/10 text-violet-200",
+      count: pendingPurifyCount,
+    },
+    {
+      id: "in_validation",
+      label: "En validación",
+      tone: "border-emerald-400/35 bg-emerald-500/10 text-emerald-200",
+      count: inValidationCount,
+    },
+  ];
+
   return (
     <div className="audio-noir-root mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 py-8 sm:px-6">
       <header className="space-y-3">
@@ -68,7 +116,7 @@ function AudioStationShell() {
             </h1>
             <p className="max-w-2xl font-mono text-[11px] leading-relaxed text-white/45">
               Centro operativo del Motor de Transcripción: audios importados,
-              desduplicación, cola Chirp_2 y mapa de post-procesamiento hacia
+              desduplicación, cola Deepgram y mapa de post-procesamiento hacia
               Purifier, Molecular y Grafo.
             </p>
           </div>
@@ -116,6 +164,33 @@ function AudioStationShell() {
             </Link>
           </p>
         ) : null}
+
+        <div className="rounded border border-white/10 bg-black/25 px-3 py-3">
+          <div className="mb-2 flex items-center gap-2">
+            <WavesIcon className="size-3.5 text-sky-300/80" />
+            <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-white/50">
+              Flujo operacional de audio
+            </p>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            {flowChips.map((chip, index) => (
+              <div key={chip.id} className="flex items-center gap-2">
+                <span
+                  className={cn(
+                    "inline-flex items-center gap-1 rounded-full border px-2.5 py-1 font-mono text-[10px]",
+                    chip.tone,
+                  )}
+                >
+                  <span className="font-semibold">{chip.count}</span>
+                  <span>{chip.label}</span>
+                </span>
+                {index < flowChips.length - 1 ? (
+                  <ArrowRightIcon className="size-3 text-white/30" />
+                ) : null}
+              </div>
+            ))}
+          </div>
+        </div>
       </header>
 
       <nav

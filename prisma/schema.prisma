@@ -576,3 +576,23 @@ model LudusAssaultSession {
   @@index([startedAt])
   @@index([microtaskId])
 }
+
+model MemoryEmbedding {
+  id          String   @id @default(uuid())
+  sourceType  String
+  sourceId    String
+  chunkIndex  Int      @default(0)
+  title       String
+  body        String
+  contentHash String
+  embedModel  String
+  dimensions  Int
+  embedding   String
+  metadata    Json
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([sourceType, sourceId, chunkIndex])
+  @@index([sourceType, sourceId])
+  @@index([contentHash])
+}

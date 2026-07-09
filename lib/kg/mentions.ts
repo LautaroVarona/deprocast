@@ -1,4 +1,5 @@
 import { resolveNameToId, type NameToIdMap } from "@/lib/kg/identity";
+import { indexKgMentionMemory } from "@/lib/mnemosyne/hooks";
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
 import type { LlmEntity, MentionSource } from "@/lib/kg/types";
@@ -46,6 +47,16 @@ export async function createMentionsFromExtraction(
       });
 
       mentionIds.push(created.id);
+
+      void indexKgMentionMemory({
+        mentionId: created.id,
+        nodeName: entity.name,
+        fragment: mention.fragment,
+        sourceType: source.type,
+        sourceId: source.id,
+      }).catch((error) => {
+        console.error("Mnemosyne kg mention index error:", error);
+      });
     }
   }
 

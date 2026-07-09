@@ -1,10 +1,13 @@
 import "server-only";
 
+import { cohereRerank } from "@/lib/cohere/rerank";
 import { namesMatchFuzzy, normalizeName } from "@/lib/kg/normalize";
 import { prisma } from "@/lib/prisma";
 import { JOURNAL_ROOT } from "@/lib/journal/paths";
 import { parseJournalFile } from "@/lib/journal/markdown";
 import type { ContextBlock } from "@/lib/chat/types";
+import { isMnemosyneConfigured } from "@/lib/mnemosyne/hooks";
+import { vectorSearchMemory } from "@/lib/mnemosyne/search";
 import { readdir, readFile } from "node:fs/promises";
 import path from "node:path";
 
@@ -21,6 +24,8 @@ export type HybridSearchHit = {
   source: string;
   createdAt?: string;
 };
+
+const RECALL_LIMIT = 20;
 
 function tokenize(query: string): string[] {
   return normalizeName(query)
@@ -41,16 +46,30 @@ function scoreText(text: string, query: string, tokens: string[]): number {
   return score;
 }
 
-export async function hybridSearch(
-  input: HybridSearchInput,
-): Promise<HybridSearchHit[]> {
-  const query = input.query.trim();
-  if (!query) return [];
+function dedupeKey(hit: HybridSearchHit): string {
+  return `${hit.source}::${hit.title}`;
+}
 
-  const tokens = tokenize(query);
-  const limit = input.limit ?? 8;
+function mergeCandidateHits(hits: HybridSearchHit[]): HybridSearchHit[] {
+  const map = new Map<string, HybridSearchHit>();
+
+  for (const hit of hits) {
+    const key = dedupeKey(hit);
+    const existing = map.get(key);
+    if (!existing || hit.score > existing.score) {
+      map.set(key, hit);
+    }
+  }
+
+  return [...map.values()];
+}
+
+async function lexicalSearch(
+  query: string,
+  tokens: string[],
+  mentionedIds: Set<string>,
+): Promise<HybridSearchHit[]> {
   const hits: HybridSearchHit[] = [];
-  const mentionedIds = new Set(input.mentionedNodeIds ?? []);
 
   const mentions = await prisma.kgMention.findMany({
     where: mentionedIds.size
@@ -101,7 +120,7 @@ export async function hybridSearch(
     }
   }
 
-  const journalHits = await searchJournalEntries(query, tokens, 3);
+  const journalHits = await searchJournalEntries(query, tokens, 5);
   hits.push(...journalHits);
 
   return hits
@@ -109,7 +128,77 @@ export async function hybridSearch(
       if (b.score !== a.score) return b.score - a.score;
       return (b.createdAt ?? "").localeCompare(a.createdAt ?? "");
     })
-    .slice(0, limit);
+    .slice(0, RECALL_LIMIT);
+}
+
+async function rerankHits(
+  query: string,
+  hits: HybridSearchHit[],
+  limit: number,
+): Promise<HybridSearchHit[]> {
+  if (hits.length === 0) return [];
+
+  try {
+    const documents = hits.map((hit) => ({
+      text: `${hit.title}\n${hit.body}`,
+      hit,
+    }));
+
+    const reranked = await cohereRerank({
+      query,
+      documents,
+      topN: Math.min(limit, documents.length),
+    });
+
+    return reranked.map((result) => ({
+      ...result.document.hit,
+      score: result.relevanceScore,
+    }));
+  } catch (error) {
+    console.error("Mnemosyne rerank fallback:", error);
+    return hits.slice(0, limit);
+  }
+}
+
+export async function hybridSearch(
+  input: HybridSearchInput,
+): Promise<HybridSearchHit[]> {
+  const query = input.query.trim();
+  if (!query) return [];
+
+  const tokens = tokenize(query);
+  const limit = input.limit ?? 8;
+  const mentionedIds = new Set(input.mentionedNodeIds ?? []);
+
+  const lexicalHits = await lexicalSearch(query, tokens, mentionedIds);
+
+  let vectorHits: HybridSearchHit[] = [];
+  if (await isMnemosyneConfigured()) {
+    try {
+      const memoryHits = await vectorSearchMemory({ query, limit: RECALL_LIMIT });
+      vectorHits = memoryHits.map((hit) => ({
+        title: hit.title,
+        body: hit.body,
+        score: hit.score * 10,
+        source: hit.source,
+        createdAt: hit.createdAt,
+      }));
+    } catch (error) {
+      console.error("Mnemosyne vector search fallback:", error);
+    }
+  }
+
+  const merged = mergeCandidateHits([...lexicalHits, ...vectorHits])
+    .sort((a, b) => b.score - a.score)
+    .slice(0, RECALL_LIMIT);
+
+  if (merged.length === 0) return [];
+
+  if (await isMnemosyneConfigured()) {
+    return rerankHits(query, merged, limit);
+  }
+
+  return merged.slice(0, limit);
 }
 
 async function searchJournalEntries(

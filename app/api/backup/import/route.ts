@@ -1,20 +1,26 @@
+import { parseExportDomainIds } from "@/lib/backup/domains";
 import { BackupGuardError } from "@/lib/backup/guards";
 import { restoreBackupFromZip } from "@/lib/backup/import";
 import { NextRequest, NextResponse } from "next/server";
 
 export const runtime = "nodejs";
 
-const CONFIRM_TOKEN = "RESTORE";
+const CONFIRM_FULL = "RESTORE";
+const CONFIRM_PARTIAL = "RESTORE_PARTIAL";
 
 export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData();
     const file = formData.get("file");
     const confirm = formData.get("confirm");
+    const domainsRaw = formData.get("domains");
 
-    if (confirm !== CONFIRM_TOKEN) {
+    if (confirm !== CONFIRM_FULL && confirm !== CONFIRM_PARTIAL) {
       return NextResponse.json(
-        { error: "Falta confirmación destructiva (confirm=RESTORE)." },
+        {
+          error:
+            "Falta confirmación destructiva (confirm=RESTORE o confirm=RESTORE_PARTIAL).",
+        },
         { status: 400 },
       );
     }
@@ -35,7 +41,27 @@ export async function POST(request: NextRequest) {
     }
 
     const zipBuffer = Buffer.from(await file.arrayBuffer());
-    const result = await restoreBackupFromZip(zipBuffer);
+
+    let domains: ReturnType<typeof parseExportDomainIds> | undefined;
+    if (confirm === CONFIRM_PARTIAL) {
+      if (typeof domainsRaw !== "string" || domainsRaw.trim().length === 0) {
+        return NextResponse.json(
+          { error: "La restauración parcial requiere el campo domains." },
+          { status: 400 },
+        );
+      }
+
+      try {
+        domains = parseExportDomainIds(JSON.parse(domainsRaw) as unknown);
+      } catch {
+        return NextResponse.json(
+          { error: "El campo domains no es válido." },
+          { status: 400 },
+        );
+      }
+    }
+
+    const result = await restoreBackupFromZip(zipBuffer, { domains });
 
     return NextResponse.json(result);
   } catch (error) {

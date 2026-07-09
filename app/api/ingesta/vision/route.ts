@@ -6,7 +6,7 @@ import { NextRequest, NextResponse } from "next/server";
 export const runtime = "nodejs";
 export const maxDuration = 120;
 
-const ALLOWED_EXTENSIONS = [".png", ".jpg", ".jpeg", ".webp", ".gif", ".pdf", ".heic"];
+const ALLOWED_EXTENSIONS = [".png", ".jpg", ".jpeg", ".webp", ".gif", ".heic"];
 
 function isAllowedVisionFile(filename: string): boolean {
   const lower = filename.toLowerCase();
@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         {
           error:
-            "Formato no soportado. Usá imágenes (.png, .jpg, .webp) o PDF.",
+            "Formato no soportado. Usá imágenes (.png, .jpg, .webp, .gif, .heic).",
         },
         { status: 400 },
       );

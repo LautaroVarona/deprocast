@@ -5,7 +5,9 @@ import {
   savePageVisionResult,
 } from "@/lib/cuadernos/service";
 import { runAtomicVisionAgent } from "@/lib/cuadernos/vision-agent";
+import { indexNotebookPageMemory } from "@/lib/mnemosyne/hooks";
 import { captureAndPurify } from "@/lib/purifier/capture";
+import { prisma } from "@/lib/prisma";
 import { getDataRoot } from "@/lib/runtime-paths";
 import { ensureRuntimeReady } from "@/lib/runtime-setup";
 import { readFile } from "node:fs/promises";
@@ -70,6 +72,21 @@ export async function POST(
     const updated = await savePageVisionResult(pageId, {
       ...vision,
       corpusCaptureId,
+    });
+
+    const notebook = await prisma.notebook.findUnique({
+      where: { id: page.notebookId },
+      select: { title: true },
+    });
+
+    void indexNotebookPageMemory({
+      pageId,
+      notebookTitle: notebook?.title ?? "Cuaderno",
+      pageNumber: page.pageNumber,
+      semanticVector: vision.semanticVector,
+      structuralNotes: vision.structuralVector.rawNotes,
+    }).catch((error) => {
+      console.error("Mnemosyne notebook page index error:", error);
     });
 
     return NextResponse.json({ page: updated }, { status: 200 });

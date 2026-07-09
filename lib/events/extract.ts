@@ -2,10 +2,8 @@ import "server-only";
 
 import type { LlmExtractionResult } from "@/lib/events/types";
 import { llmExtractionResultSchema } from "@/lib/events/types";
-import {
-  extractVertexText,
-  getVertexGenerativeModel,
-} from "@/lib/vertex-gemini/client";
+import { cohereGenerateText } from "@/lib/cohere/chat";
+import { stripMarkdownFences } from "@/lib/cohere/extract";
 
 const EXTRACTION_PROMPT = `Sos un extractor de eventos para Deprocast. Analizá el texto y devolvé ÚNICAMENTE JSON válido (sin markdown) con esta forma:
 {
@@ -28,19 +26,18 @@ Reglas:
 - Si no hay eventos detectables, devolvé { "events": [] }
 - No inventes métricas numéricas que no estén en el texto`;
 
-function stripMarkdownFences(text: string): string {
-  const fenced = text.match(/^```(?:\w+)?\s*([\s\S]*?)```\s*$/);
-  return fenced ? fenced[1].trim() : text.trim();
-}
-
 export async function extractEventsFromText(
   text: string,
 ): Promise<LlmExtractionResult> {
-  const model = getVertexGenerativeModel(EXTRACTION_PROMPT);
-  const result = await model.generateContent({
-    contents: [{ role: "user", parts: [{ text }] }],
-  });
-  const raw = stripMarkdownFences(extractVertexText(result));
+  const raw = stripMarkdownFences(
+    await cohereGenerateText({
+      systemPrompt: EXTRACTION_PROMPT,
+      userContent: text,
+      modelKind: "fast",
+      jsonMode: true,
+      throttle: true,
+    }),
+  );
 
   let parsed: unknown;
   try {

@@ -14,7 +14,7 @@ import { ViewDetailsLink } from "@/components/view-details-link";
 import { DownloadTranscriptButton } from "@/components/download-transcript-button";
 import { resolveAudioPipelineStage } from "@/lib/audio-station/pipeline-status";
 import { cn } from "@/lib/utils";
-import { MicIcon } from "lucide-react";
+import { MicIcon, ActivityIcon, CircleDashedIcon } from "lucide-react";
 import { useMemo } from "react";
 
 export function SttQueuePanel() {
@@ -59,6 +59,11 @@ export function SttQueuePanel() {
     [assets, queuedIds, activeId, reviewByAssetId],
   );
 
+  const queueDepth = queueStatus?.queuedIds?.length ?? 0;
+  const activeLabel = queueStatus?.active
+    ? assets.find((asset) => asset.id === queueStatus.active?.id)?.filename ?? null
+    : null;
+
   return (
     <section className="audio-noir-panel space-y-4 p-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -66,7 +71,7 @@ export function SttQueuePanel() {
           <div className="flex items-center gap-2">
             <MicIcon className="size-4 text-emerald-400/80" />
             <h2 className="font-mono text-sm font-medium text-white/90">
-              Cola STT · Chirp_2
+              Cola STT · Deepgram
             </h2>
           </div>
           <p className="font-mono text-[10px] text-white/45">
@@ -81,6 +86,44 @@ export function SttQueuePanel() {
         />
       </div>
 
+      <div className="grid gap-2 sm:grid-cols-3">
+        <div className="rounded border border-white/10 bg-black/20 px-3 py-2">
+          <p className="font-mono text-[9px] uppercase tracking-wider text-white/45">
+            Pendientes STT
+          </p>
+          <p className="mt-1 font-mono text-lg text-white/90">{pendingCount}</p>
+        </div>
+        <div className="rounded border border-sky-500/20 bg-sky-500/5 px-3 py-2">
+          <p className="font-mono text-[9px] uppercase tracking-wider text-sky-200/75">
+            Cola activa
+          </p>
+          <p className="mt-1 font-mono text-lg text-sky-100">{queueDepth}</p>
+        </div>
+        <div className="rounded border border-violet-500/20 bg-violet-500/5 px-3 py-2">
+          <p className="font-mono text-[9px] uppercase tracking-wider text-violet-200/75">
+            Esperando purificar
+          </p>
+          <p className="mt-1 font-mono text-lg text-violet-100">{pendingPurifyCount}</p>
+        </div>
+      </div>
+
+      {activeLabel ? (
+        <div className="rounded border border-emerald-500/30 bg-emerald-500/10 px-3 py-2">
+          <p className="mb-1 flex items-center gap-1 font-mono text-[9px] uppercase tracking-wider text-emerald-200/80">
+            <ActivityIcon className="size-3" />
+            Procesando ahora
+          </p>
+          <p className="truncate font-mono text-[11px] text-emerald-100">{activeLabel}</p>
+        </div>
+      ) : (
+        <div className="rounded border border-white/10 bg-black/20 px-3 py-2">
+          <p className="flex items-center gap-1 font-mono text-[10px] text-white/45">
+            <CircleDashedIcon className="size-3" />
+            Sin proceso activo
+          </p>
+        </div>
+      )}
+
       <LiveProcessingPanel
         refreshKey={refreshKey}
         onStopped={() => void refresh()}
@@ -94,13 +137,13 @@ export function SttQueuePanel() {
         </p>
       ) : null}
 
-      <div className="max-h-[420px] overflow-y-auto rounded border border-white/8 bg-black/30">
+      <div className="max-h-[460px] overflow-y-auto rounded border border-white/8 bg-black/30">
         {assets.length === 0 ? (
           <p className="py-8 text-center font-mono text-[10px] text-white/40">
             Subí audios en la biblioteca para encolar STT.
           </p>
         ) : (
-          <ul className="divide-y divide-white/6">
+          <ul className="space-y-2 p-2">
             {assets.map((asset) => {
               const displayStatus = getDisplayStatus(asset);
               const isQueued = displayStatus === "QUEUED";
@@ -113,16 +156,16 @@ export function SttQueuePanel() {
               return (
                 <li
                   key={asset.id}
-                  className="flex flex-col gap-2 px-3 py-2.5 sm:flex-row sm:items-center sm:justify-between"
+                  className="rounded border border-white/8 bg-black/25 px-3 py-2.5 transition-colors hover:border-white/15"
                 >
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate font-mono text-[11px] text-white/85">
+                  <div className="mb-2 flex min-w-0 items-start justify-between gap-2">
+                    <p className="truncate font-mono text-[11px] text-white/90">
                       {asset.filename}
                     </p>
+                    <AudioPipelineBadge pipeline={pipeline} />
                   </div>
 
                   <div className="flex shrink-0 flex-wrap items-center gap-2">
-                    <AudioPipelineBadge pipeline={pipeline} />
 
                     {isQueued ? (
                       <span className="font-mono text-[9px] text-white/40">

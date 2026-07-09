@@ -1,4 +1,3 @@
-import type { GenerativeModel } from "@google-cloud/vertexai";
 import { readdir, readFile } from "node:fs/promises";
 import path from "node:path";
 
@@ -37,7 +36,7 @@ async function listJournalFiles(): Promise<string[]> {
 /** Ingesta un unico archivo de diario (usado por hooks y backfill). */
 export async function ingestJournalFile(
   absPath: string,
-  options: { model?: GenerativeModel; force?: boolean } = {},
+  options: { model?: string; force?: boolean } = {},
 ): Promise<SourceIngestSummary | null> {
   const source = await readFile(absPath, "utf-8");
   const relativePath = path
@@ -79,7 +78,7 @@ export async function ingestJournalFile(
 
 /** Ingesta todas las entradas del diario al grafo de conocimiento. */
 export async function ingestJournalEntries(options: {
-  model?: GenerativeModel;
+  model?: string;
   force?: boolean;
 } = {}): Promise<SourceIngestSummary[]> {
   const files = await listJournalFiles();

@@ -1,4 +1,3 @@
-import type { GenerativeModel } from "@google-cloud/vertexai";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 
@@ -93,7 +92,7 @@ function buildStructuredSectionExtraction(
 
 /** Ingesta el master plan (grimorio) seccionado por H2. */
 export async function ingestMasterPlan(options: {
-  model?: GenerativeModel;
+  model?: string;
   force?: boolean;
 } = {}): Promise<SourceIngestSummary[]> {
   const absPath = path.join(process.cwd(), MASTER_PLAN_FILE);

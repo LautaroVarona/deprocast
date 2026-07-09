@@ -5,16 +5,8 @@ import {
   type IncubationExtraction,
 } from "@/lib/projects/incubation/schema";
 import { buildExtractionPrompt } from "@/lib/projects/incubation/prompts";
-import {
-  extractVertexText,
-  getVertexGenerativeModel,
-} from "@/lib/vertex-gemini/client";
-import { withVertexRetry } from "@/lib/vertex-gemini/retry";
-
-function stripMarkdownFences(text: string): string {
-  const fenced = text.match(/^```(?:\w+)?\s*([\s\S]*?)```\s*$/);
-  return fenced ? fenced[1].trim() : text.trim();
-}
+import { cohereGenerateText } from "@/lib/cohere/chat";
+import { stripMarkdownFences } from "@/lib/cohere/extract";
 
 function mergeStringField(prev: string | undefined, next: string | undefined): string | undefined {
   const trimmed = next?.trim();
@@ -60,13 +52,15 @@ export function mergeExtraction(
         previous.ejecucion.estado_actual,
         incoming.ejecucion.estado_actual,
       ),
-      siguientes_pasos: mergeStringArray(
-        previous.ejecucion.siguientes_pasos,
-        incoming.ejecucion.siguientes_pasos,
+      proximo_paso: mergeStringField(
+        previous.ejecucion.proximo_paso,
+        incoming.ejecucion.proximo_paso,
+      ),
+      bloqueos: mergeStringArray(
+        previous.ejecucion.bloqueos,
+        incoming.ejecucion.bloqueos,
       ),
     },
-    campoSlug: incoming.campoSlug ?? previous.campoSlug,
-    tipo: incoming.tipo ?? previous.tipo,
     completitud: {
       identidad: incoming.completitud.identidad || previous.completitud.identidad,
       ecosistema: incoming.completitud.ecosistema || previous.completitud.ecosistema,
@@ -80,15 +74,15 @@ export async function extractIncubationState(
   previousState: IncubationExtraction,
 ): Promise<IncubationExtraction> {
   const prompt = buildExtractionPrompt(transcript, previousState);
-  const model = getVertexGenerativeModel(prompt);
 
-  const result = await withVertexRetry("Incubation extraction", () =>
-    model.generateContent({
-      contents: [{ role: "user", parts: [{ text: "Extraé el estado actual." }] }],
+  const raw = stripMarkdownFences(
+    await cohereGenerateText({
+      systemPrompt: prompt,
+      userContent: "Extraé el estado actual.",
+      modelKind: "default",
+      jsonMode: true,
     }),
   );
-
-  const raw = stripMarkdownFences(extractVertexText(result));
 
   let parsed: unknown;
   try {

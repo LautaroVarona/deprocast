@@ -12,15 +12,15 @@ import {
   removeFile,
   removeTempDir,
   resolveInputPath,
-} from "@/lib/gcp-speech/audio-prep";
-import { getGcpSpeechConfig } from "@/lib/gcp-speech/config";
+} from "@/lib/stt/audio-prep";
+import { getDeepgramConfig } from "@/lib/deepgram/config";
 import {
-  humanizeGcpSpeechError,
+  humanizeDeepgramError,
   PartialTranscriptionError,
-} from "@/lib/gcp-speech/errors";
-import { logError, logInfo } from "@/lib/gcp-speech/logger";
-import { transcribeChunked } from "@/lib/gcp-speech/transcribe-chunked";
-import { transcribeSync } from "@/lib/gcp-speech/transcribe-sync";
+} from "@/lib/deepgram/errors";
+import { logError, logInfo } from "@/lib/deepgram/logger";
+import { transcribeChunked } from "@/lib/deepgram/transcribe-chunked";
+import { transcribeSync } from "@/lib/deepgram/transcribe-sync";
 import fs from "fs";
 import os from "os";
 import path from "path";
@@ -76,7 +76,7 @@ async function savePartialTranscript(
   );
 }
 
-export async function processAssetGcpSpeech(assetId: string): Promise<void> {
+export async function processAssetDeepgram(assetId: string): Promise<void> {
   const tempDir = path.resolve(os.tmpdir(), "deprocast", assetId);
   const wavPath = path.resolve(tempDir, `${assetId}.wav`);
   let inputPath: string | null = null;
@@ -86,8 +86,8 @@ export async function processAssetGcpSpeech(assetId: string): Promise<void> {
   });
 
   try {
-    getGcpSpeechConfig();
-    logInfo(assetId, "Iniciando transcripción GCP...");
+    getDeepgramConfig();
+    logInfo(assetId, "Iniciando transcripción Deepgram...");
 
     const asset = await prisma.audioAsset.findUnique({ where: { id: assetId } });
     if (!asset) {
@@ -114,7 +114,7 @@ export async function processAssetGcpSpeech(assetId: string): Promise<void> {
 
     const wavStats = fs.statSync(wavPath);
     const duration = await getAudioDurationSeconds(wavPath);
-    const config = getGcpSpeechConfig();
+    const config = getDeepgramConfig();
 
     logInfo(
       assetId,
@@ -131,7 +131,7 @@ export async function processAssetGcpSpeech(assetId: string): Promise<void> {
       : await transcribeSync(assetId, wavPath);
 
     if (!transcription.rawText.trim()) {
-      throw new Error("La transcripción está vacía tras el procesamiento GCP.");
+      throw new Error("La transcripción está vacía tras el procesamiento Deepgram.");
     }
 
     logInfo(
@@ -175,13 +175,13 @@ export async function processAssetGcpSpeech(assetId: string): Promise<void> {
     }
 
     if (error instanceof PartialTranscriptionError) {
-      const message = humanizeGcpSpeechError(error);
+      const message = humanizeDeepgramError(error);
       logError(assetId, `Transcripción interrumpida: ${message}`, error);
       await savePartialTranscript(assetId, error.partial, message);
       return;
     }
 
-    const message = humanizeGcpSpeechError(error);
+    const message = humanizeDeepgramError(error);
     logError(assetId, `Error procesando audio: ${message}`, error);
     await markAssetError(assetId, message);
   } finally {

@@ -1,5 +1,5 @@
-import { isRetryableGcpError } from "@/lib/gcp-speech/errors";
-import { logInfo } from "@/lib/gcp-speech/logger";
+import { isRetryableDeepgramError } from "@/lib/deepgram/errors";
+import { logInfo } from "@/lib/deepgram/logger";
 
 const MAX_ATTEMPTS = 5;
 
@@ -7,7 +7,7 @@ function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-export async function withGcpRetry<T>(
+export async function withDeepgramRetry<T>(
   assetId: string,
   label: string,
   operation: () => Promise<T>,
@@ -20,7 +20,7 @@ export async function withGcpRetry<T>(
     } catch (error) {
       lastError = error;
 
-      if (!isRetryableGcpError(error) || attempt === MAX_ATTEMPTS) {
+      if (!isRetryableDeepgramError(error) || attempt === MAX_ATTEMPTS) {
         throw error;
       }
 
@@ -38,7 +38,7 @@ export async function withGcpRetry<T>(
 
 export async function pauseBetweenChunks(assetId: string): Promise<void> {
   const delayMs = Number.parseInt(
-    process.env.GCP_SPEECH_CHUNK_DELAY_MS ?? "400",
+    process.env.DEEPGRAM_CHUNK_DELAY_MS ?? "400",
     10,
   );
 

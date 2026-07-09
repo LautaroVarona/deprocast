@@ -1,17 +1,6 @@
 export async function register() {
-  if (process.env.NEXT_RUNTIME !== "nodejs") {
-    return;
-  }
-
-  // Evita trabajo de filesystem durante `next build`.
-  if (process.env.NEXT_PHASE === "phase-production-build") {
-    return;
-  }
-
-  try {
-    const { ensureRuntimeReady } = await import("@/lib/runtime-setup");
-    await ensureRuntimeReady();
-  } catch (error) {
-    console.error("[instrumentation] ensureRuntimeReady failed:", error);
-  }
+  // No cargar runtime setup acá: instrumentation también se analiza
+  // en contextos donde Node built-ins no están disponibles (webpack).
+  // El bootstrap de runtime se sigue haciendo dentro de los route handlers.
+  return;
 }

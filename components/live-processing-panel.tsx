@@ -40,13 +40,21 @@ export function LiveProcessingPanel({
   const [status, setStatus] = useState<ProcessStatus | null>(null);
   const transcriptRef = useRef<HTMLPreElement>(null);
   const wasActiveRef = useRef(false);
+  const pollFailureCountRef = useRef(0);
 
   const loadStatus = useCallback(async () => {
     try {
       const data = await fetchJson<ProcessStatus>("/api/process/status");
+      pollFailureCountRef.current = 0;
       setStatus(data);
     } catch (error) {
-      console.error(error);
+      pollFailureCountRef.current += 1;
+
+      // Durante transcripciones largas, el dev server puede devolver fallos
+      // transitorios (p. ej. recompilación/hot reload). Evitamos ruido en consola.
+      if (pollFailureCountRef.current >= 3) {
+        console.warn("No se pudo actualizar el estado de procesamiento:", error);
+      }
     }
   }, []);
 

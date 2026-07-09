@@ -1,8 +1,4 @@
-import {
-  extractVertexText,
-  getVertexGenerativeModel,
-} from "@/lib/vertex-gemini/client";
-import { isRetryableVertexError } from "@/lib/vertex-gemini/errors";
+import { cohereChatWithImages } from "@/lib/cohere/vision";
 import type { Quanta, StructuralVector, VisionAgentResult } from "@/lib/cuadernos/types";
 import { z } from "zod";
 
@@ -86,31 +82,6 @@ const visionResponseSchema = z.object({
     .default([]),
 });
 
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-async function withVertexRetry<T>(
-  operation: () => Promise<T>,
-): Promise<T> {
-  const maxAttempts = 4;
-  let lastError: unknown;
-
-  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
-    try {
-      return await operation();
-    } catch (error) {
-      lastError = error;
-      if (!isRetryableVertexError(error) || attempt === maxAttempts) {
-        throw error;
-      }
-      await sleep(2000 * attempt);
-    }
-  }
-
-  throw lastError;
-}
-
 function stripJsonFences(text: string): string {
   const trimmed = text.trim();
   const fenced = trimmed.match(/^```(?:json)?\s*([\s\S]*?)```\s*$/);
@@ -130,30 +101,17 @@ export async function runAtomicVisionAgent(input: {
   mimeType: string;
 }): Promise<VisionAgentResult> {
   const base64 = input.buffer.toString("base64");
-  const model = getVertexGenerativeModel(ATOMIC_VISION_PROMPT);
 
-  const result = await withVertexRetry(() =>
-    model.generateContent({
-      contents: [
-        {
-          role: "user",
-          parts: [
-            {
-              inlineData: {
-                mimeType: input.mimeType,
-                data: base64,
-              },
-            },
-            {
-              text: "Analiza esta página de cuaderno y devuelve el JSON con semanticVector, structuralVector y quanta.",
-            },
-          ],
-        },
-      ],
+  const raw = stripJsonFences(
+    await cohereChatWithImages({
+      systemPrompt: ATOMIC_VISION_PROMPT,
+      images: [{ base64, mimeType: input.mimeType }],
+      userText:
+        "Analiza esta página de cuaderno y devuelve el JSON con semanticVector, structuralVector y quanta.",
+      jsonMode: true,
     }),
   );
 
-  const raw = stripJsonFences(extractVertexText(result));
   let parsed: unknown;
 
   try {

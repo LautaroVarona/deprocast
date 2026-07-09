@@ -233,7 +233,7 @@ export function ChatWorkspace() {
         <div className="border-b border-border px-4 py-3">
           <h1 className="text-sm font-semibold">Chat Exocórtex</h1>
           <p className="font-mono text-[10px] text-muted-foreground">
-            Contexto relacional con @menciones · Gemini
+            Contexto relacional con @menciones · Cohere
           </p>
         </div>
 

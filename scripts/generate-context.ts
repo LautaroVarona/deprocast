@@ -18,17 +18,17 @@ const DATA_ROOTS = [
 const TACHO_EXPECTED = ["celulares", "notas", "capturas", "misc"] as const;
 
 const AUDIO_PIPELINE_FILES = [
-  "lib/gcp-speech-processor.ts",
+  "lib/deepgram-speech-processor.ts",
   "lib/processing-queue.ts",
-  "lib/gcp-speech/config.ts",
-  "lib/gcp-speech/client.ts",
-  "lib/gcp-speech/audio-prep.ts",
-  "lib/gcp-speech/ffmpeg-bin.ts",
-  "lib/gcp-speech/transcribe-sync.ts",
-  "lib/gcp-speech/transcribe-chunked.ts",
-  "lib/gcp-speech/errors.ts",
-  "lib/gcp-speech/retry.ts",
-  "lib/gcp-speech/logger.ts",
+  "lib/deepgram/config.ts",
+  "lib/deepgram/client.ts",
+  "lib/stt/audio-prep.ts",
+  "lib/stt/ffmpeg-bin.ts",
+  "lib/deepgram/transcribe-sync.ts",
+  "lib/deepgram/transcribe-chunked.ts",
+  "lib/deepgram/errors.ts",
+  "lib/deepgram/retry.ts",
+  "lib/deepgram/logger.ts",
 ] as const;
 
 const GAMIFICATION_MARKERS = [
@@ -224,8 +224,8 @@ async function getAudioPipelineStatus(): Promise<{
   let processor = "desconocido";
   if (await pathExists(queuePath)) {
     const source = await readFile(queuePath, "utf-8");
-    if (source.includes("processAssetGcpSpeech")) {
-      processor = "GCP Cloud Speech (`processAssetGcpSpeech`)";
+    if (source.includes("processAssetDeepgram")) {
+      processor = "Deepgram (`processAssetDeepgram`)";
     } else if (source.includes("whisper")) {
       processor = "Whisper local (legacy)";
     }
@@ -395,7 +395,7 @@ async function buildMarkdown(): Promise<string> {
 
   const audioModuleLines = [
     `- **Motor activo:** ${audio.processor}`,
-    `- **Preparación de audio:** FFmpeg vía \`ffmpeg-static\` + \`ffprobe-static\` (\`lib/gcp-speech/audio-prep.ts\`, \`ffmpeg-bin.ts\`)`,
+    `- **Preparación de audio:** FFmpeg vía \`ffmpeg-static\` + \`ffprobe-static\` (\`lib/stt/audio-prep.ts\`, \`ffmpeg-bin.ts\`)`,
     `- **Cola de procesamiento:** \`lib/processing-queue.ts\` (serial, con cancelación)`,
     `- **Scripts shell/bash locales:** ${audio.shellScripts.length === 0 ? "_ninguno detectado_" : audio.shellScripts.map((s) => `\`${s}\``).join(", ")}`,
     `- **Whisper local / VAD:** _no implementado en código activo_; referencias residuales en: ${audio.whisperRefs.length === 0 ? "_ninguna_" : audio.whisperRefs.map((r) => `\`${r}\``).join(", ")}`,

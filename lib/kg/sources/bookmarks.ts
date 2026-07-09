@@ -1,6 +1,5 @@
 import "server-only";
 
-import type { GenerativeModel } from "@google-cloud/vertexai";
 import { ingestDocumentSource, type SourceIngestSummary } from "@/lib/kg/sources/common";
 import type { LlmEntity, LlmKgExtraction, LlmRelation } from "@/lib/kg/types";
 import type { XBookmarkRecord } from "@/lib/ingesta/x-bookmarks/types";
@@ -102,7 +101,7 @@ function buildBookmarkBody(bookmark: XBookmarkRecord): string {
 
 export async function ingestXBookmark(
   bookmark: XBookmarkRecord,
-  options: { model?: GenerativeModel; force?: boolean } = {},
+  options: { model?: string; force?: boolean } = {},
 ): Promise<SourceIngestSummary> {
   const sourceId = bookmark.id;
   const documentPath = `x-bookmarks/${bookmark.id}`;

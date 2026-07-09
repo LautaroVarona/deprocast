@@ -1,7 +1,7 @@
 /**
  * Backfill del Knowledge Graph desde las fuentes existentes.
  * - Codigo (deterministico, sin LLM)
- * - Diario, proyectos, documentos crudos y master plan (Vertex Gemini)
+ * - Diario, proyectos, documentos crudos y master plan (Cohere Command R)
  *
  * Ejecutar: npm run kg:backfill [-- --force] [-- --only=code,projects,...]
  *

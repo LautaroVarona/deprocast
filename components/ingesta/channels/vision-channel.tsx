@@ -93,7 +93,7 @@ export function VisionChannel() {
   return (
     <div className="flex h-full min-h-0 flex-col gap-2">
       <p className="shrink-0 font-mono text-[10px] text-muted-foreground">
-        Imágenes / PDF → OCR → purificación automática
+        Imágenes → OCR → purificación automática
       </p>
 
       <div
@@ -120,7 +120,7 @@ export function VisionChannel() {
         )}
         <div className="space-y-0.5">
           <p className="text-sm font-medium">
-            {fileName ?? (isBusy ? "Extrayendo y purificando…" : "Imágenes / PDF")}
+            {fileName ?? (isBusy ? "Extrayendo y purificando…" : "Imágenes")}
           </p>
           <p className="font-mono text-[9px] text-muted-foreground">
             Original en data/tacho/ · análisis visual → prima materia
@@ -148,7 +148,7 @@ export function VisionChannel() {
         <input
           ref={inputRef}
           type="file"
-          accept=".png,.jpg,.jpeg,.webp,.gif,.pdf,.heic,image/*,application/pdf"
+          accept=".png,.jpg,.jpeg,.webp,.gif,.heic,image/*"
           className="hidden"
           onChange={(event) => {
             handleFiles(event.target.files);
