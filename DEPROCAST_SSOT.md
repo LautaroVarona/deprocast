@@ -23,11 +23,11 @@ La especificación de producto vive en `deprocast_master_plan.md` (Grimorio). El
 
 ## 2. Arquitectura de Módulos Actuales
 
-La navegación principal está definida en `components/app-header.tsx`. La raíz (`/`) redirige a **Córtex**. El hub **Universos de Babel** vive en **Ludus → Trinchera** (`/ludus/trinchera`).
+La navegación principal está definida en `components/app-header.tsx`. La raíz (`/`) redirige a **Córtex**. El hub **Universos de Babel** (día, universos, asaltos) vive en **Ludus → Campamento** (`/ludus/campamento`). La **Trinchera** (`/ludus/trinchera`) restaura el Laboratorio Sonoro con binaurales y figuras geométricas.
 
 | Módulo | Ruta(s) | Funcionalidad Detectada | Estado Aparente |
 |--------|---------|-------------------------|-----------------|
-| **Universos de Babel** | `/ludus/trinchera`, `/api/universos`, `/api/babel/records` | Viewport en Ludus: conmutación de Universos, asaltos de trinchera, calibrador 1–12; sesión de foco en `/ludus/trinchera/foco` | **Operativo** |
+| **Universos de Babel** | `/ludus/campamento`, `/api/universos`, `/api/babel/records` | Campamento: universos, Ayer/Hoy/Mañana, asaltos; forja meso en `/ludus/campamento/forja` | **Operativo** |
 | **Córtex** | `/cortex`, `/api/cortex` | Centro de control: snapshot de nodos `DocumentMeta`, sesgo semántico por áreas (Salud, Legal, Finanzas, Tecnología, Arte, Comunidad), filtros, ingesta rápida de estímulos | **Operativo** |
 | **Ingesta** | `/ingesta`, `/ingesta/cuadernos` | Aduana multimodal: texto, audio, tablas (xlsx/csv), visión (OCR/PDF), bookmarks X; panel de gravedad dimensional | **Operativo** |
 | **Audio / STT** | `/audio`, `/audio/[id]`, `/api/upload`, `/api/process/*`, `/api/audio-station/*` | Biblioteca de `AudioAsset`, deduplicación HITL, cola in-process, transcripción GCP Chirp_2 + FFmpeg | **Operativo** |
@@ -46,7 +46,7 @@ La navegación principal está definida en `components/app-header.tsx`. La raíz
 | **Personas** | `/personas`, `/personas/[id]`, `/api/personas/*` | CRM de contexto sobre nodos KG tipo persona; relaciones y grafo social | **Operativo** |
 | **Agentes** | `/agentes`, `/api/agentes/meta-meteador` | Mapa del ecosistema cognitivo; panel Meta-Meteador (matriz cuántica + `DocumentMeta`); laboratorio de incubación | **Operativo** |
 | **Meta-Meteador** | (integrado en Córtex + Agentes) | Títulos, Siete Dimensiones y relevancia por área; desacoplado del `.md` en SQLite | **Operativo** |
-| **Ludus** | `/ludus`, `/ludus/castillo`, `/ludus/campamento`, `/ludus/trinchera` | Modo videojuego: **Castillo** operativo; **Trinchera** con Universos de Babel y asaltos; **Campamento** operativo; foco de asalto en `/ludus/trinchera/foco` | **Parcial** |
+| **Ludus** | `/ludus`, `/ludus/castillo`, `/ludus/campamento`, `/ludus/trinchera` | **Campamento**: universos + jornada + asaltos; **Trinchera**: Laboratorio Sonoro (binaurales, geometría); **Castillo** operativo; forja en `/ludus/campamento/forja` | **Parcial** |
 | **Memorias** | `/api/memorias/analyze` | Análisis/segmentación de memorias (script `memorias:verify`) | **En Desarrollo** |
 | **Laboral (legacy)** | `/laboral` → redirect, `/api/laboral/*` | Import CSV Varona, challenges, focus stub; UI no montada | **Esqueleto** |
 | **Respaldo** | `/respaldo`, `/api/backup/*` | Export/import ZIP del estado local (SQLite + `data/`) | **Operativo** |

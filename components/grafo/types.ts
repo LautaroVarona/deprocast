@@ -13,6 +13,7 @@ export type SnapshotEdge = {
   source: string;
   target: string;
   relationType: string;
+  context: string;
   weight: number | null;
   confidence: number;
 };

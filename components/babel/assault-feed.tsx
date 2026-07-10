@@ -2,11 +2,16 @@
 
 import { AsaltoChip } from "@/components/grid/asalto-chip";
 import { useBabel } from "@/components/babel/babel-context";
+import type { BabelArea } from "@/components/babel/babel-viewport";
 import type { AsaltoItem } from "@/lib/pendientes/asaltos";
-import { ShieldIcon } from "lucide-react";
+import { ShieldIcon, TentIcon } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 
-export function AssaultFeed() {
+type AssaultFeedProps = {
+  area?: BabelArea;
+};
+
+export function AssaultFeed({ area = "default" }: AssaultFeedProps) {
   const { selectedDay, activeUniverse } = useBabel();
   const [asaltos, setAsaltos] = useState<AsaltoItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -40,14 +45,22 @@ export function AssaultFeed() {
   }, [load]);
 
   const slots = Array.from({ length: 4 }, (_, index) => asaltos[index] ?? null);
+  const isCampamento = area === "campamento";
+  const Icon = isCampamento ? TentIcon : ShieldIcon;
 
   return (
     <section className="flex min-h-0 flex-1 flex-col overflow-hidden px-3 py-2">
       <header className="mb-2 flex shrink-0 items-center gap-2">
-        <ShieldIcon className="size-4 text-rose-500 dark:text-rose-300/80" />
+        <Icon
+          className={
+            isCampamento
+              ? "size-4 text-emerald-600 dark:text-emerald-400/80"
+              : "size-4 text-rose-500 dark:text-rose-300/80"
+          }
+        />
         <div>
           <p className="font-mono text-[10px] uppercase tracking-[0.24em] text-muted-foreground">
-            Trinchera
+            {isCampamento ? "Campamento" : "Trinchera"}
             {activeUniverse ? ` · ${activeUniverse.label}` : ""}
           </p>
           <h2 className="text-sm font-medium">Asaltos de la jornada</h2>

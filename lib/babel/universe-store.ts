@@ -1,5 +1,6 @@
 import "server-only";
 
+import { ensureBabelSchema } from "@/lib/babel/ensure-schema";
 import {
   MAX_TRENCHES_WEIGHT,
   MIN_TRENCHES_WEIGHT,
@@ -63,6 +64,8 @@ async function writeUniverseMeta(universe: UniverseDto): Promise<void> {
 
 /** Garantiza que el universo raíz Babel exista (idempotente). */
 export async function ensureRootUniverse(): Promise<UniverseDto> {
+  await ensureBabelSchema();
+
   const existing = await prisma.universe.findUnique({
     where: { slug: ROOT_UNIVERSE_SLUG },
   });

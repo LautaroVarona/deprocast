@@ -253,6 +253,7 @@ export type GraphSnapshotEdge = {
   source: string;
   target: string;
   relationType: string;
+  context: string;
   weight: number | null;
   confidence: number;
 };
@@ -312,6 +313,7 @@ export async function getGraphSnapshot(input: {
       source: edge.sourceNodeId,
       target: edge.targetNodeId,
       relationType: edge.relationType,
+      context: edge.context,
       weight: edge.weight,
       confidence: edge.confidence,
     })),

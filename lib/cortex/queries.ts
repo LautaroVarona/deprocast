@@ -1,6 +1,7 @@
 import "server-only";
 
 import type { CortexNode, CortexSnapshot, DocumentFormat } from "@/lib/cortex/types";
+import { shouldFilterByUniverse } from "@/lib/babel/context-seal";
 import { getCastlePlacementsForDocuments } from "@/lib/castillo/service";
 import { listDocumentMeta } from "@/lib/meta-meteador/store";
 import {
@@ -8,7 +9,7 @@ import {
   type AreasRelevancia,
   type MetaArea,
 } from "@/lib/meta-meteador/types";
-import { findProjectById } from "@/lib/projects/service";
+import { findProjectById, listCampos } from "@/lib/projects/service";
 import { prisma } from "@/lib/prisma";
 
 const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
@@ -107,8 +108,12 @@ async function buildCortexNode(
   };
 }
 
-export async function getCortexSnapshot(): Promise<CortexSnapshot> {
+export async function getCortexSnapshot(options?: {
+  universeSlug?: string;
+}): Promise<CortexSnapshot> {
   const since = new Date(Date.now() - WEEK_MS);
+  const filterByUniverse =
+    options?.universeSlug && shouldFilterByUniverse(options.universeSlug);
 
   const [totalNodesIndexed, allMeta, weekMeta] = await Promise.all([
     prisma.kgNode.count(),
@@ -116,8 +121,49 @@ export async function getCortexSnapshot(): Promise<CortexSnapshot> {
     listDocumentMeta({ since }),
   ]);
 
-  const semanticBias = aggregateSemanticBias(weekMeta);
-  const nodesRaw = await Promise.all(allMeta.map((meta) => buildCortexNode(meta)));
+  let filteredMeta = allMeta;
+  let filteredWeekMeta = weekMeta;
+
+  if (filterByUniverse && options?.universeSlug) {
+    const universeSlug = options.universeSlug;
+    const [campos, babelRefs] = await Promise.all([
+      listCampos(universeSlug),
+      prisma.babelRecord.findMany({
+        where: { contextSeal: universeSlug },
+        select: { physicalRef: true },
+      }),
+    ]);
+    const campoSlugs = new Set(campos.map((campo) => campo.slug));
+    const babelDocIds = new Set(babelRefs.map((record) => record.physicalRef));
+
+    const matchesUniverse = async (documentId: string) => {
+      if (babelDocIds.has(documentId)) return true;
+      const project = await findProjectById(documentId);
+      return Boolean(project?.campoSlug && campoSlugs.has(project.campoSlug));
+    };
+
+    const filterRows = async (
+      rows: Awaited<ReturnType<typeof listDocumentMeta>>,
+    ) => {
+      const checks = await Promise.all(
+        rows.map(async (row) => ({
+          row,
+          keep: await matchesUniverse(row.documentId),
+        })),
+      );
+      return checks.filter((entry) => entry.keep).map((entry) => entry.row);
+    };
+
+    [filteredMeta, filteredWeekMeta] = await Promise.all([
+      filterRows(allMeta),
+      filterRows(weekMeta),
+    ]);
+  }
+
+  const semanticBias = aggregateSemanticBias(filteredWeekMeta);
+  const nodesRaw = await Promise.all(
+    filteredMeta.map((meta) => buildCortexNode(meta)),
+  );
   const placements = await getCastlePlacementsForDocuments(
     nodesRaw.map((node) => node.id),
   );
@@ -133,7 +179,7 @@ export async function getCortexSnapshot(): Promise<CortexSnapshot> {
 
   return {
     totalNodesIndexed,
-    validatedDocuments: allMeta.length,
+    validatedDocuments: filteredMeta.length,
     dominantAreaThisWeek: resolveDominantArea(semanticBias),
     semanticBias,
     nodes,

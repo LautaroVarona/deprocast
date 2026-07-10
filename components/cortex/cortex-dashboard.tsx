@@ -1,5 +1,7 @@
 "use client";
 
+import { useBabel } from "@/components/babel/babel-context";
+import { UniverseSwitcher } from "@/components/babel/universe-switcher";
 import { AreaFilterChips } from "@/components/cortex/area-filter-chips";
 import { CortexMetricsBar } from "@/components/cortex/cortex-metrics-bar";
 import { IngestModal } from "@/components/cortex/ingest-modal";
@@ -14,6 +16,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 export function CortexDashboard() {
+  const { activeUniverse } = useBabel();
   const [snapshot, setSnapshot] = useState<CortexSnapshot | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [activeArea, setActiveArea] = useState<MetaArea | null>(null);
@@ -23,7 +26,15 @@ export function CortexDashboard() {
     if (!silent) setIsLoading(true);
 
     try {
-      const response = await fetch("/api/cortex", { cache: "no-store" });
+      const params = new URLSearchParams();
+      if (activeUniverse?.slug) {
+        params.set("universe", activeUniverse.slug);
+      }
+
+      const query = params.toString();
+      const response = await fetch(`/api/cortex${query ? `?${query}` : ""}`, {
+        cache: "no-store",
+      });
       if (!response.ok) return;
       const data: CortexSnapshot = await response.json();
       setSnapshot(data);
@@ -33,7 +44,7 @@ export function CortexDashboard() {
     } finally {
       if (!silent) setIsLoading(false);
     }
-  }, []);
+  }, [activeUniverse?.slug]);
 
   useEffect(() => {
     void loadSnapshot();
@@ -106,6 +117,13 @@ export function CortexDashboard() {
           </Button>
         </div>
       </header>
+
+      <section
+        aria-label="Universo activo"
+        className="rounded-xl border border-border/70 bg-card/40 shadow-sm"
+      >
+        <UniverseSwitcher />
+      </section>
 
       <CortexMetricsBar snapshot={snapshot} isLoading={isLoading} />
 

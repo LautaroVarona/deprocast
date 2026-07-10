@@ -25,7 +25,7 @@ const PLUS_LINKS = [
   { href: "/audio", label: "Audio", icon: MicIcon },
   { href: "/chat", label: "Chat", icon: MessageSquareIcon },
   { href: "/validar", label: "Validar", icon: ShieldCheckIcon },
-  { href: "/ludus", label: "Ludus", icon: Gamepad2Icon },
+  { href: "/ludus/campamento/forja", label: "Forja meso", icon: Gamepad2Icon },
   { href: "/enciclopedia", label: "Enciclopedia", icon: BookOpenIcon },
 ] as const;
 
@@ -49,8 +49,8 @@ export function GridBottomNav({ onPlusOpen, ludusMode = false }: GridBottomNavPr
       </Link>
       <div />
 
-      <Link href={ludusMode ? "/ludus/campamento" : "/enciclopedia"} className={cellClass}>
-        <span>{ludusMode ? "Campamento" : "Asignaturas"}</span>
+      <Link href={ludusMode ? "/ludus/trinchera" : "/enciclopedia"} className={cellClass}>
+        <span>{ludusMode ? "Trinchera" : "Asignaturas"}</span>
       </Link>
       <button type="button" onClick={onPlusOpen} className={cellClass}>
         <PlusIcon className="size-5" />

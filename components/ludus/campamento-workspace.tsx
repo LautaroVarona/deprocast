@@ -77,14 +77,14 @@ export function CampamentoWorkspace() {
       <header className="space-y-2">
         <div className="flex items-center gap-3">
           <Link
-            href="/ludus"
+            href="/ludus/campamento"
             className={cn(
               buttonVariants({ variant: "ghost", size: "sm" }),
-              "text-white/60 hover:bg-white/5 hover:text-white",
+              "text-muted-foreground hover:text-foreground",
             )}
           >
             <ArrowLeftIcon className="size-3.5" />
-            Mapa
+            Campamento
           </Link>
           <TentIcon className="size-5 text-emerald-400/80" />
           <div>

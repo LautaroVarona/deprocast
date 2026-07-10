@@ -276,7 +276,7 @@ export const OPERATIONAL_AGENTS: OperationalAgent[] = [
       "lib/babel/context-seal.ts",
       "components/babel/babel-viewport.tsx",
     ],
-    uiRoute: "/ludus/trinchera",
+    uiRoute: "/ludus/campamento",
   },
   {
     id: "calibrador",

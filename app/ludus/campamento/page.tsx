@@ -1,12 +1,12 @@
-import { CampamentoWorkspace } from "@/components/ludus/campamento-workspace";
+import { CampamentoHub } from "@/components/ludus/campamento-hub";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Campamento · Ludus · DeProcast",
   description:
-    "Preparación meso — energía, rutina semanal y forjado de microtareas.",
+    "Preparación meso — universos de Babel, jornada temporal y asaltos del día.",
 };
 
 export default function CampamentoPage() {
-  return <CampamentoWorkspace />;
+  return <CampamentoHub />;
 }

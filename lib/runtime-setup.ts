@@ -1,10 +1,15 @@
+import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 
+import Database from "better-sqlite3";
+
 import {
   ensureRuntimeDirs,
+  getAppRoot,
   getDatabaseFilePath,
   getDatabaseSeedPath,
+  getDatabaseUrl,
   isVercelRuntime,
 } from "@/lib/runtime-paths";
 
@@ -13,6 +18,81 @@ let setupPromise: Promise<void> | null = null;
 const SQLITE_MAGIC = "SQLite format 3";
 const SCHEMA_MARKER = "AudioAsset";
 const PARTIAL_META_MARKER = "_deprocast_export_meta";
+const LOCAL_PUSH_TABLES = ["PendingTask", "LudusState"] as const;
+
+function sqliteTableExists(dbPath: string, tableName: string): boolean {
+  if (!fs.existsSync(dbPath)) {
+    return false;
+  }
+
+  const db = new Database(dbPath, { readonly: true });
+  try {
+    const row = db
+      .prepare(
+        "SELECT 1 AS ok FROM sqlite_master WHERE type = 'table' AND name = ? LIMIT 1",
+      )
+      .get(tableName) as { ok: number } | undefined;
+    return Boolean(row);
+  } finally {
+    db.close();
+  }
+}
+
+function missingLocalPushTables(dbPath: string): string[] {
+  return LOCAL_PUSH_TABLES.filter((tableName) => !sqliteTableExists(dbPath, tableName));
+}
+
+function runPrismaDbPush(): void {
+  const prismaCli = path.join(getAppRoot(), "node_modules", "prisma", "build", "index.js");
+
+  if (!fs.existsSync(prismaCli)) {
+    throw new Error(
+      "Faltan tablas locales (PendingTask, Ludus…). Ejecutá `npm run db:meta` en la raíz del proyecto.",
+    );
+  }
+
+  execFileSync(
+    process.execPath,
+    [prismaCli, "db", "push", "--url", getDatabaseUrl()],
+    {
+      cwd: getAppRoot(),
+      env: {
+        ...process.env,
+        DATABASE_URL: getDatabaseUrl(),
+      },
+      stdio: "pipe",
+    },
+  );
+}
+
+async function ensureLocalDatabaseSchema(): Promise<void> {
+  if (isVercelRuntime()) {
+    return;
+  }
+
+  const dbPath = getDatabaseFilePath();
+  const missingTables = missingLocalPushTables(dbPath);
+
+  if (missingTables.length === 0) {
+    return;
+  }
+
+  console.warn(
+    `[deprocast] SQLite sin tablas ${missingTables.join(", ")}. Aplicando prisma db push…`,
+  );
+
+  runPrismaDbPush();
+
+  const stillMissing = missingLocalPushTables(dbPath);
+  if (stillMissing.length > 0) {
+    throw new Error(
+      `La base local sigue sin tablas (${stillMissing.join(", ")}). Ejecutá manualmente: npm run db:meta`,
+    );
+  }
+
+  const { resetPrismaClient } = await import("@/lib/prisma");
+  resetPrismaClient();
+}
 
 export function databaseHasAppSchema(dbPath: string): boolean {
   if (!fs.existsSync(dbPath)) {
@@ -91,6 +171,7 @@ export async function ensureRuntimeReady(): Promise<void> {
     setupPromise = (async () => {
       await ensureRuntimeDirs();
       await ensureDatabase();
+      await ensureLocalDatabaseSchema();
       const { ensureRootUniverse } = await import("@/lib/babel/universe-store");
       await ensureRootUniverse();
     })().catch((error) => {

@@ -40,7 +40,7 @@ export function AsaltoChip({ asalto, onStarted }: AsaltoChipProps) {
       }
       toast.success("Asalto iniciado");
       onStarted?.();
-      router.push("/ludus/trinchera/foco");
+      router.push("/ludus/trinchera");
     } catch (error) {
       toast.error(
         error instanceof Error ? error.message : "Error al iniciar asalto.",
