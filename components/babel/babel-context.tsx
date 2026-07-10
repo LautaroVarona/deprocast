@@ -30,7 +30,7 @@ const BabelContext = createContext<BabelContextValue | null>(null);
 
 export function BabelProvider({ children }: { children: React.ReactNode }) {
   const [universes, setUniverses] = useState<UniverseDto[]>([]);
-  const [activeSlug, setActiveSlug] = useState(ROOT_UNIVERSE_SLUG);
+  const [activeSlug, setActiveSlug] = useState<string>(ROOT_UNIVERSE_SLUG);
   const [selectedDay, setSelectedDay] = useState<DayOffset>("today");
   const [isLoading, setIsLoading] = useState(true);
 
