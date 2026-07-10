@@ -17,6 +17,7 @@ export type SevenDimensions = {
 export type GravityInput = {
   title?: string;
   campoSlug?: CampoSlug;
+  universeSlug?: string;
   onda?: string;
   sourceType?: SourceType;
   prioridad?: number;

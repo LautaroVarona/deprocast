@@ -121,29 +121,32 @@ export async function listCampos(universeSlug?: string): Promise<CampoInfo[]> {
     return [getDefaultCampo()];
   }
 
-  const campos = await Promise.all(
-    [...slugs]
-      .sort((a, b) => {
-        if (a === DEFAULT_CAMPO_SLUG) return -1;
-        if (b === DEFAULT_CAMPO_SLUG) return 1;
-        return getCampoLabel(a).localeCompare(getCampoLabel(b), "es");
-      })
-      .map(async (slug) => {
-        const meta = await readCampoMeta(slug);
-        const campoUniverse = meta?.universeSlug ?? ROOT_UNIVERSE_SLUG;
-        if (universeSlug && campoUniverse !== universeSlug) {
-          return null;
-        }
-        return {
-          slug,
-          label: meta?.label ?? getCampoLabel(slug),
-          description: meta?.description,
-          count: counts.get(slug) ?? 0,
-        };
-      }),
-  );
+  const sortedSlugs = [...slugs].sort((a, b) => {
+    if (a === DEFAULT_CAMPO_SLUG) return -1;
+    if (b === DEFAULT_CAMPO_SLUG) return 1;
+    return getCampoLabel(a).localeCompare(getCampoLabel(b), "es");
+  });
 
-  return campos.filter((campo): campo is CampoInfo => campo !== null);
+  const campos: CampoInfo[] = [];
+  for (const slug of sortedSlugs) {
+    const meta = await readCampoMeta(slug);
+    const campoUniverse = meta?.universeSlug ?? ROOT_UNIVERSE_SLUG;
+    if (universeSlug && campoUniverse !== universeSlug) {
+      continue;
+    }
+
+    const campo: CampoInfo = {
+      slug,
+      label: meta?.label ?? getCampoLabel(slug),
+      count: counts.get(slug) ?? 0,
+    };
+    if (meta?.description) {
+      campo.description = meta.description;
+    }
+    campos.push(campo);
+  }
+
+  return campos;
 }
 
 export async function getCampo(slug: string): Promise<Campo | null> {
