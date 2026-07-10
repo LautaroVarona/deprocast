@@ -94,6 +94,7 @@ async function readEntriesFromMonthDir(
 export async function saveJournalEntry({
   content,
   onda,
+  universeSlug,
 }: SaveJournalInput): Promise<SaveJournalResult> {
   const trimmed = content.trim();
   if (!trimmed) {
@@ -145,7 +146,7 @@ export async function saveJournalEntry({
     console.error("Mnemosyne journal index error:", error);
   });
 
-  const contextSeal = resolveContextSeal({ universeSlug: input.universeSlug });
+  const contextSeal = resolveContextSeal({ universeSlug });
 
   void registerBabelRecord({
     kind: "journal",
