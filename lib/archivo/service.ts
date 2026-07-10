@@ -254,17 +254,17 @@ async function collectCuadernoPages(): Promise<ArchivoItemSummary[]> {
     include: { notebook: { select: { id: true, title: true } } },
   });
 
-  return pages
-    .map((page) => {
+  return pages.flatMap((page) => {
       const quanta = (page.quanta as Array<{ text: string }> | null) ?? [];
       const text =
         page.semanticVector?.trim() ||
         quanta.map((item) => item.text).join("\n").trim();
-      if (!text) return null;
+      if (!text) return [];
 
       const structural = (page.structuralVector as StructuralVector | null) ?? null;
 
-      return {
+      return [
+        {
         id: buildArchivoId("cuaderno_page", page.id),
         kind: "cuaderno_page" as const,
         sourceId: page.id,
@@ -285,16 +285,15 @@ async function collectCuadernoPages(): Promise<ArchivoItemSummary[]> {
           pageNumber: String(page.pageNumber),
           status: page.status,
         },
-      } satisfies ArchivoItemSummary;
-    })
-    .filter((item): item is ArchivoItemSummary => item !== null);
+      } satisfies ArchivoItemSummary,
+      ];
+    });
 }
 
 async function collectProjects(): Promise<ArchivoItemSummary[]> {
   const projects = await listProjects();
 
-  return projects
-    .map((project) => {
+  return projects.flatMap((project) => {
       const progressText = project.progressEntries
         .map((entry) => `[${entry.fecha}] ${entry.nota}`)
         .join("\n");
@@ -302,9 +301,10 @@ async function collectProjects(): Promise<ArchivoItemSummary[]> {
         .filter(Boolean)
         .join("\n\n")
         .trim();
-      if (!content) return null;
+      if (!content) return [];
 
-      return {
+      return [
+        {
         id: buildArchivoId("project", project.id),
         kind: "project" as const,
         sourceId: project.id,
@@ -323,9 +323,9 @@ async function collectProjects(): Promise<ArchivoItemSummary[]> {
           estado: project.estado,
           filename: project.filename,
         },
-      } satisfies ArchivoItemSummary;
-    })
-    .filter((item): item is ArchivoItemSummary => item !== null);
+      } satisfies ArchivoItemSummary,
+      ];
+    });
 }
 
 async function collectPurifierReviews(): Promise<ArchivoItemSummary[]> {
@@ -333,19 +333,19 @@ async function collectPurifierReviews(): Promise<ArchivoItemSummary[]> {
     orderBy: { processedAt: "desc" },
   });
 
-  return rows
-    .map((row) => {
+  return rows.flatMap((row) => {
       const record = row.payload as PurifierReviewRecord;
       const content =
         record.originalText?.trim() ||
         record.cleanedText?.trim() ||
         record.normalizedMarkdown?.trim() ||
         "";
-      if (!content) return null;
+      if (!content) return [];
 
       const gravity = record.gravity;
 
-      return {
+      return [
+        {
         id: buildArchivoId("purifier_review", record.reviewId),
         kind: "purifier_review" as const,
         sourceId: record.reviewId,
@@ -367,9 +367,9 @@ async function collectPurifierReviews(): Promise<ArchivoItemSummary[]> {
           assetId: record.assetId ?? null,
           particula: record.particula,
         },
-      } satisfies ArchivoItemSummary;
-    })
-    .filter((item): item is ArchivoItemSummary => item !== null);
+      } satisfies ArchivoItemSummary,
+      ];
+    });
 }
 
 let cachedItems: ArchivoItemSummary[] | null = null;
