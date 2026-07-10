@@ -43,16 +43,20 @@ function buildVisionContent(
   return content;
 }
 
+type VisionMessage =
+  | { role: "system"; content: string }
+  | {
+      role: "user";
+      content: ReturnType<typeof buildVisionContent>;
+    };
+
 export async function cohereChatWithImages(
   input: CohereChatWithImagesInput,
 ): Promise<string> {
   const model = input.model ?? getCohereModelName("vision");
   const client = getCohereClient();
 
-  const messages: Array<{
-    role: "system" | "user";
-    content: string | ReturnType<typeof buildVisionContent>;
-  }> = [];
+  const messages: VisionMessage[] = [];
 
   if (input.systemPrompt?.trim()) {
     messages.push({ role: "system", content: input.systemPrompt.trim() });
