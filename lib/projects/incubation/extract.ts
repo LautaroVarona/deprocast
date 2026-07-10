@@ -52,13 +52,9 @@ export function mergeExtraction(
         previous.ejecucion.estado_actual,
         incoming.ejecucion.estado_actual,
       ),
-      proximo_paso: mergeStringField(
-        previous.ejecucion.proximo_paso,
-        incoming.ejecucion.proximo_paso,
-      ),
-      bloqueos: mergeStringArray(
-        previous.ejecucion.bloqueos,
-        incoming.ejecucion.bloqueos,
+      siguientes_pasos: mergeStringArray(
+        previous.ejecucion.siguientes_pasos,
+        incoming.ejecucion.siguientes_pasos,
       ),
     },
     completitud: {
