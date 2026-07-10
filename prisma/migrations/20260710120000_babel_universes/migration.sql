@@ -1,4 +1,4 @@
--- Universos de Babel: Universe, BabelRecord, PendingTask.universeSlug
+-- Universos de Babel: Universe, BabelRecord
 
 CREATE TABLE "Universe" (
     "id" TEXT NOT NULL PRIMARY KEY,
@@ -29,9 +29,6 @@ CREATE TABLE "BabelRecord" (
 
 CREATE INDEX "BabelRecord_contextSeal_occurredAt_idx" ON "BabelRecord"("contextSeal", "occurredAt");
 CREATE INDEX "BabelRecord_kind_physicalRef_idx" ON "BabelRecord"("kind", "physicalRef");
-
-ALTER TABLE "PendingTask" ADD COLUMN "universeSlug" TEXT;
-CREATE INDEX "PendingTask_universeSlug_status_targetDay_idx" ON "PendingTask"("universeSlug", "status", "targetDay");
 
 -- Seed universo raíz Babel
 INSERT INTO "Universe" ("id", "slug", "label", "description", "trenchesWeight", "isRoot", "discoveredAt", "updatedAt")
