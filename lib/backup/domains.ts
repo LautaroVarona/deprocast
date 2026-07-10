@@ -107,6 +107,7 @@ export const EXPORT_DOMAINS: ExportDomain[] = [
     description:
       "Archivos de audio subidos, transcripciones STT y segmentación fractal legacy.",
     group: "Media",
+    dataPaths: [],
     uploadPaths: ["uploads"],
     tables: [
       { table: "ParentChunkTag", deleteOrder: 10 },
@@ -125,6 +126,7 @@ export const EXPORT_DOMAINS: ExportDomain[] = [
     description:
       "Nodos, aristas, menciones, fuentes ingeridas y personas (subgrafo del KG).",
     group: "Conocimiento",
+    dataPaths: [],
     tables: [
       { table: "KgMention", deleteOrder: 10 },
       { table: "KgEdge", deleteOrder: 20 },
@@ -137,6 +139,7 @@ export const EXPORT_DOMAINS: ExportDomain[] = [
     label: "Chat Exocórtex",
     description: "Sesiones, mensajes, relaciones de contexto y eventos de chat.",
     group: "Conversación",
+    dataPaths: [],
     tables: [
       { table: "ContextEventLink", whereSql: chatEventLinksFilter(), deleteOrder: 10 },
       { table: "ChatContextRelation", deleteOrder: 20 },
@@ -151,6 +154,7 @@ export const EXPORT_DOMAINS: ExportDomain[] = [
     description:
       "Registros de telemetría de los 4 pilares y eventos de contexto de salud.",
     group: "Bienestar",
+    dataPaths: [],
     tables: [
       { table: "ContextEventLink", whereSql: healthEventLinksFilter(), deleteOrder: 10 },
       { table: "HealthRecord", deleteOrder: 20 },
@@ -187,6 +191,7 @@ export const EXPORT_DOMAINS: ExportDomain[] = [
     label: "Enciclopedia",
     description: "Entradas generativas, árbol de exploración y reportes.",
     group: "Conocimiento",
+    dataPaths: [],
     tables: [
       { table: "EncyclopediaReport", deleteOrder: 10 },
       { table: "EncyclopediaEdge", deleteOrder: 20 },
@@ -199,6 +204,7 @@ export const EXPORT_DOMAINS: ExportDomain[] = [
     description:
       "Castillo (grids y tarjetas), puntos de señal, microtareas, asaltos y registro de proyectos Ludus.",
     group: "Ludus",
+    dataPaths: [],
     tables: [
       { table: "LudusAssaultSession", deleteOrder: 10 },
       { table: "LudusMicrotask", deleteOrder: 20 },
@@ -213,6 +219,7 @@ export const EXPORT_DOMAINS: ExportDomain[] = [
     label: "Vibe Calibrator",
     description: "Sesiones y votos de calibración de vibe 1–12.",
     group: "Herramientas",
+    dataPaths: [],
     tables: [
       { table: "VibeCalibrationVote", deleteOrder: 10 },
       { table: "VibeCalibrationSession", deleteOrder: 20 },
