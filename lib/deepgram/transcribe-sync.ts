@@ -26,7 +26,23 @@ type DeepgramTranscribeResponse = {
   } | null;
 };
 
-function extractResult(response: DeepgramTranscribeResponse): TranscriptionResult {
+function isTranscriptionResponse(
+  response: unknown,
+): response is DeepgramTranscribeResponse {
+  return (
+    typeof response === "object" &&
+    response !== null &&
+    "results" in response
+  );
+}
+
+function extractResult(response: unknown): TranscriptionResult {
+  if (!isTranscriptionResponse(response)) {
+    throw new DeepgramSpeechError(
+      "Deepgram devolvió una respuesta async o inválida en lugar de la transcripción.",
+    );
+  }
+
   const alternatives =
     response.results?.channels?.[0]?.alternatives ?? [];
   const segments: string[] = [];
