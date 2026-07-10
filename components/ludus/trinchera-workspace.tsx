@@ -43,10 +43,10 @@ export function TrincheraWorkspace() {
         <header className="flex shrink-0 items-center justify-between gap-4 border-b border-white/[0.06] px-4 py-2.5 sm:px-5">
           <div className="flex min-w-0 items-center gap-3">
             <Link
-              href="/ludus"
+              href="/ludus/trinchera"
               className={cn(
                 buttonVariants({ variant: "ghost", size: "sm" }),
-                "shrink-0 text-white/60 hover:bg-white/5 hover:text-white",
+                "shrink-0 text-muted-foreground hover:text-foreground",
               )}
             >
               <ArrowLeftIcon className="size-3.5" />

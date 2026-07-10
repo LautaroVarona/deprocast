@@ -51,7 +51,7 @@ export async function wipeDomainFilesystem(
   for (const domainId of domainIds) {
     const domain = getExportDomain(domainId);
 
-    for (const dataPath of domain.dataPaths) {
+    for (const dataPath of domain.dataPaths ?? []) {
       const relative = dataPath.replace(/^data\//, "");
       const absolute = path.join(dataRoot, relative);
 

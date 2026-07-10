@@ -322,7 +322,7 @@ export function fileBelongsToDomain(
 ): boolean {
   const normalized = relativePath.replace(/\\/g, "/");
 
-  const matchesData = domain.dataPaths.some((prefix) => {
+  const matchesData = (domain.dataPaths ?? []).some((prefix) => {
     const withSlash = prefix.endsWith("/") ? prefix : `${prefix}/`;
     return normalized === prefix || normalized.startsWith(withSlash);
   });

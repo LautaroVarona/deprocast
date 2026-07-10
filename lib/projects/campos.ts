@@ -32,6 +32,7 @@ export type Campo = CampoInfo & {
 export type CreateCampoInput = {
   label: string;
   description?: string;
+  universeSlug?: string;
 };
 
 export type UpdateCampoInput = {

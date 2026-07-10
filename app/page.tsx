@@ -1,5 +1,5 @@
-import { CortexDashboard } from "@/components/cortex/cortex-dashboard";
+import { redirect } from "next/navigation";
 
 export default function HomePage() {
-  return <CortexDashboard />;
+  redirect("/cortex");
 }

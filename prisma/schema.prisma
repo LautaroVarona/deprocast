@@ -280,6 +280,68 @@ model ChatContextRelation {
   @@index([entityType, entityId, createdAt])
 }
 
+// Tareas pendientes — Listador, validación y calibración 1–12.
+model PendingTask {
+  id                 String    @id @default(uuid())
+  title              String
+  description        String?
+  status             String    @default("suggested")
+  source             String
+  sourceRef          String?
+  targetDay          DateTime
+  weight             Int?
+  bloque             String?
+  projectId          String?
+  reviewId           String?
+  universeSlug       String?
+  listadorConfidence Float?
+  recognizedAt       DateTime?
+  calibratedAt       DateTime?
+  completedAt        DateTime?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  assaults LudusAssaultSession[]
+
+  @@index([status, targetDay])
+  @@index([source, sourceRef])
+  @@index([weight, targetDay])
+  @@index([universeSlug, status, targetDay])
+}
+
+// Planos de proyección — Universos de Babel (Babel = raíz).
+model Universe {
+  id             String   @id @default(uuid())
+  slug           String   @unique
+  label          String
+  description    String   @default("")
+  trenchesWeight Int?
+  isRoot         Boolean  @default(false)
+  discoveredAt   DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  records BabelRecord[]
+}
+
+// Registro canónico raíz — índice unificado de toda materia prima.
+model BabelRecord {
+  id             String   @id @default(uuid())
+  kind           String
+  physicalRef    String
+  contentPreview String   @default("")
+  occurredAt     DateTime
+  contextSeal    String
+  campoSlug      String?
+  channel        String?
+  metadata       Json     @default("{}")
+  createdAt      DateTime @default(now())
+
+  universe Universe @relation(fields: [contextSeal], references: [slug])
+
+  @@index([contextSeal, occurredAt])
+  @@index([kind, physicalRef])
+}
+
 // Event log unificado — cruza Chat, Diario, Salud y Proyectos.
 model ContextEvent {
   id             String   @id @default(uuid())
@@ -561,20 +623,23 @@ model LudusMicrotask {
 }
 
 model LudusAssaultSession {
-  id           String    @id @default(uuid())
-  microtaskId  String?
-  title        String
-  durationMin  Int       @default(25)
-  startedAt    DateTime
-  endedAt      DateTime?
-  completed    Boolean   @default(false)
-  tabSurvived  Boolean   @default(false)
-  signalPoints Int       @default(0)
+  id            String    @id @default(uuid())
+  microtaskId   String?
+  pendingTaskId String?
+  title         String
+  durationMin   Int       @default(25)
+  startedAt     DateTime
+  endedAt       DateTime?
+  completed     Boolean   @default(false)
+  tabSurvived   Boolean   @default(false)
+  signalPoints  Int       @default(0)
 
-  microtask LudusMicrotask? @relation(fields: [microtaskId], references: [id], onDelete: SetNull)
+  microtask   LudusMicrotask? @relation(fields: [microtaskId], references: [id], onDelete: SetNull)
+  pendingTask PendingTask?    @relation(fields: [pendingTaskId], references: [id], onDelete: SetNull)
 
   @@index([startedAt])
   @@index([microtaskId])
+  @@index([pendingTaskId])
 }
 
 model MemoryEmbedding {

@@ -51,7 +51,7 @@ export function LudusWorldPage() {
   };
 
   return (
-    <div className="flex flex-col gap-10">
+    <div className="flex min-h-0 flex-1 flex-col gap-10 overflow-y-auto">
       <LudusWorldMap stats={stats} isLoading={isLoading} />
 
       {stats ? (

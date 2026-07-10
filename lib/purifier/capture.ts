@@ -12,6 +12,8 @@ import {
   resolveCampoSlug,
   type CampoSlug,
 } from "@/lib/projects/campos";
+import { resolveContextSeal } from "@/lib/babel/context-seal";
+import { registerBabelRecord } from "@/lib/babel/record-store";
 import { getRawDocumentsPath } from "@/lib/runtime-paths";
 import { randomUUID } from "node:crypto";
 import { access, mkdir, writeFile } from "node:fs/promises";
@@ -30,6 +32,7 @@ export {
 export type CaptureGravity = {
   title?: string;
   campoSlug?: CampoSlug;
+  universeSlug?: string;
   onda?: string;
   sourceType?: SourceType;
 };
@@ -91,6 +94,9 @@ export async function savePendingPurification(
   }
 
   const resolvedField = resolveCampoSlug(input.gravity?.campoSlug);
+  const contextSeal = resolveContextSeal({
+    universeSlug: input.gravity?.universeSlug,
+  });
   const campoLabel = getCampoLabel(resolvedField);
   const sourceType = input.gravity?.sourceType ?? "ai_chat";
   const onda = input.gravity?.onda?.trim() || "sin-clasificar";
@@ -104,6 +110,8 @@ export async function savePendingPurification(
     `estado: "${MATERIA_ESTADO_PENDING_PURIFICATION}"`,
     `source_type: "${sourceType}"`,
     `field: "${resolvedField}"`,
+    `context_seal: "${contextSeal}"`,
+    `universe: "${contextSeal}"`,
     `onda: "${onda}"`,
     `created_at: "${createdAt.toISOString()}"`,
     ...(input.filename ? [`original_filename: ${JSON.stringify(input.filename)}`] : []),
@@ -126,6 +134,7 @@ function toGravityInput(gravity?: CaptureGravity): GravityInput | undefined {
   return {
     title: gravity.title,
     campoSlug: gravity.campoSlug,
+    universeSlug: gravity.universeSlug,
     onda: gravity.onda,
     sourceType: gravity.sourceType,
   };
@@ -145,6 +154,11 @@ export async function captureAndPurify(
     rawText: trimmed,
   });
 
+  const contextSeal = resolveContextSeal({
+    universeSlug: input.gravity?.universeSlug,
+  });
+  const resolvedField = resolveCampoSlug(input.gravity?.campoSlug);
+
   const record = await runPurificationPipeline(
     {
       rawText: trimmed,
@@ -160,6 +174,36 @@ export async function captureAndPurify(
       gravity: toGravityInput(input.gravity),
     },
     { extractKg: options?.extractKg !== false },
+  );
+
+  void registerBabelRecord({
+    kind: "capture",
+    physicalRef: record.reviewId,
+    contentPreview: trimmed,
+    occurredAt: new Date(),
+    contextSeal,
+    campoSlug: resolvedField,
+    channel: input.channel,
+    metadata: {
+      captureId,
+      pendingFilename: filename,
+      assetId: input.assetId ?? null,
+    },
+  }).catch((error) => {
+    console.error("Babel record hook error:", error);
+  });
+
+  void import("@/lib/listador/process").then(({ processListadorForText }) =>
+    processListadorForText({
+      rawText: trimmed,
+      source: input.channel,
+      sourceRef: record.reviewId,
+      reviewId: record.reviewId,
+      occurredAt: new Date(),
+      universeSlug: contextSeal,
+    }).catch((error) => {
+      console.error("Listador hook error:", error);
+    }),
   );
 
   return {

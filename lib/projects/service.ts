@@ -1,3 +1,4 @@
+import { ROOT_UNIVERSE_SLUG } from "@/lib/babel/constants";
 import { readCampoMeta, resolveCampoLabel, writeCampoMeta } from "@/lib/projects/campo-meta";
 import {
   DEFAULT_CAMPO_SLUG,
@@ -89,10 +90,11 @@ export async function ensureCampoExists(slug: CampoSlug): Promise<void> {
     label: getCampoLabel(slug),
     description: "",
     createdAt: new Date().toISOString().slice(0, 10),
+    universeSlug: slug === DEFAULT_CAMPO_SLUG ? ROOT_UNIVERSE_SLUG : undefined,
   });
 }
 
-export async function listCampos(): Promise<CampoInfo[]> {
+export async function listCampos(universeSlug?: string): Promise<CampoInfo[]> {
   await mkdir(PROJECTS_ROOT_DIR, { recursive: true });
 
   const projects = await listProjects();
@@ -128,6 +130,10 @@ export async function listCampos(): Promise<CampoInfo[]> {
       })
       .map(async (slug) => {
         const meta = await readCampoMeta(slug);
+        const campoUniverse = meta?.universeSlug ?? ROOT_UNIVERSE_SLUG;
+        if (universeSlug && campoUniverse !== universeSlug) {
+          return null;
+        }
         return {
           slug,
           label: meta?.label ?? getCampoLabel(slug),
@@ -137,7 +143,7 @@ export async function listCampos(): Promise<CampoInfo[]> {
       }),
   );
 
-  return campos;
+  return campos.filter((campo): campo is CampoInfo => campo !== null);
 }
 
 export async function getCampo(slug: string): Promise<Campo | null> {
@@ -185,6 +191,7 @@ export async function createCampo(input: CreateCampoInput): Promise<Campo> {
     label,
     description: input.description?.trim() ?? "",
     createdAt: new Date().toISOString().slice(0, 10),
+    universeSlug: input.universeSlug ?? ROOT_UNIVERSE_SLUG,
   };
   await writeCampoMeta(meta);
 

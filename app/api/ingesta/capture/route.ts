@@ -2,6 +2,7 @@ import { type IngestaChannel } from "@/lib/purifier/constants";
 import type { CaptureGravity } from "@/lib/purifier/capture";
 import { isSourceType } from "@/lib/document-constants";
 import { isCampoSlug } from "@/lib/projects/campos";
+import { isUniverseSlug } from "@/lib/babel/context-seal";
 import { ensureRuntimeReady } from "@/lib/runtime-setup";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -22,6 +23,9 @@ function parseGravity(body: Record<string, unknown>): CaptureGravity | undefined
   }
   if (typeof gravity.campoSlug === "string" && isCampoSlug(gravity.campoSlug)) {
     parsed.campoSlug = gravity.campoSlug;
+  }
+  if (typeof gravity.universeSlug === "string" && isUniverseSlug(gravity.universeSlug)) {
+    parsed.universeSlug = gravity.universeSlug;
   }
   if (typeof gravity.onda === "string") {
     parsed.onda = gravity.onda;
@@ -110,7 +114,14 @@ export async function POST(request: NextRequest) {
       filename,
       assetId,
       metadata,
-      gravity: parseGravity(body),
+      gravity: {
+        ...parseGravity(body),
+        universeSlug:
+          parseGravity(body)?.universeSlug ??
+          (typeof body.universeSlug === "string" && isUniverseSlug(body.universeSlug)
+            ? body.universeSlug
+            : request.headers.get("x-deprocast-universe") ?? undefined),
+      },
     });
 
     return NextResponse.json(result, { status: 201 });

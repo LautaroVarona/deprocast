@@ -91,6 +91,8 @@ export async function ensureRuntimeReady(): Promise<void> {
     setupPromise = (async () => {
       await ensureRuntimeDirs();
       await ensureDatabase();
+      const { ensureRootUniverse } = await import("@/lib/babel/universe-store");
+      await ensureRootUniverse();
     })().catch((error) => {
       setupPromise = null;
       throw error;

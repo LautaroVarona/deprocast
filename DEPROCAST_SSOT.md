@@ -23,11 +23,12 @@ La especificación de producto vive en `deprocast_master_plan.md` (Grimorio). El
 
 ## 2. Arquitectura de Módulos Actuales
 
-La navegación principal está definida en `components/app-header.tsx`. El dashboard raíz (`/`) es **El Córtex**, no un home genérico.
+La navegación principal está definida en `components/app-header.tsx`. La raíz (`/`) redirige a **Córtex**. El hub **Universos de Babel** vive en **Ludus → Trinchera** (`/ludus/trinchera`).
 
 | Módulo | Ruta(s) | Funcionalidad Detectada | Estado Aparente |
 |--------|---------|-------------------------|-----------------|
-| **Córtex** | `/`, `/api/cortex` | Centro de control: snapshot de nodos `DocumentMeta`, sesgo semántico por áreas (Salud, Legal, Finanzas, Tecnología, Arte, Comunidad), filtros, ingesta rápida de estímulos | **Operativo** |
+| **Universos de Babel** | `/ludus/trinchera`, `/api/universos`, `/api/babel/records` | Viewport en Ludus: conmutación de Universos, asaltos de trinchera, calibrador 1–12; sesión de foco en `/ludus/trinchera/foco` | **Operativo** |
+| **Córtex** | `/cortex`, `/api/cortex` | Centro de control: snapshot de nodos `DocumentMeta`, sesgo semántico por áreas (Salud, Legal, Finanzas, Tecnología, Arte, Comunidad), filtros, ingesta rápida de estímulos | **Operativo** |
 | **Ingesta** | `/ingesta`, `/ingesta/cuadernos` | Aduana multimodal: texto, audio, tablas (xlsx/csv), visión (OCR/PDF), bookmarks X; panel de gravedad dimensional | **Operativo** |
 | **Audio / STT** | `/audio`, `/audio/[id]`, `/api/upload`, `/api/process/*`, `/api/audio-station/*` | Biblioteca de `AudioAsset`, deduplicación HITL, cola in-process, transcripción GCP Chirp_2 + FFmpeg | **Operativo** |
 | **Cuadernos** | `/ingesta/cuadernos`, `/api/cuadernos/*` | Entidades físicas digitales: `Notebook` + `NotebookPage` con OCR, vectores semánticos/estructurales y quanta | **Operativo** |
@@ -45,7 +46,7 @@ La navegación principal está definida en `components/app-header.tsx`. El dashb
 | **Personas** | `/personas`, `/personas/[id]`, `/api/personas/*` | CRM de contexto sobre nodos KG tipo persona; relaciones y grafo social | **Operativo** |
 | **Agentes** | `/agentes`, `/api/agentes/meta-meteador` | Mapa del ecosistema cognitivo; panel Meta-Meteador (matriz cuántica + `DocumentMeta`); laboratorio de incubación | **Operativo** |
 | **Meta-Meteador** | (integrado en Córtex + Agentes) | Títulos, Siete Dimensiones y relevancia por área; desacoplado del `.md` en SQLite | **Operativo** |
-| **Ludus** | `/ludus`, `/ludus/castillo`, `/ludus/campamento`, `/ludus/trinchera` | Modo videojuego: **Castillo** operativo (canvas `react-grid-layout`, `CastleGrid`/`CastleCard`); Campamento y Trinchera bloqueados | **Parcial** |
+| **Ludus** | `/ludus`, `/ludus/castillo`, `/ludus/campamento`, `/ludus/trinchera` | Modo videojuego: **Castillo** operativo; **Trinchera** con Universos de Babel y asaltos; **Campamento** operativo; foco de asalto en `/ludus/trinchera/foco` | **Parcial** |
 | **Memorias** | `/api/memorias/analyze` | Análisis/segmentación de memorias (script `memorias:verify`) | **En Desarrollo** |
 | **Laboral (legacy)** | `/laboral` → redirect, `/api/laboral/*` | Import CSV Varona, challenges, focus stub; UI no montada | **Esqueleto** |
 | **Respaldo** | `/respaldo`, `/api/backup/*` | Export/import ZIP del estado local (SQLite + `data/`) | **Operativo** |
@@ -81,7 +82,7 @@ La navegación principal está definida en `components/app-header.tsx`. El dashb
 
 | Almacén | Uso |
 |---------|-----|
-| **SQLite** (Prisma 7.8 + `better-sqlite3`) | Audio, KG, Chat, Eventos, Salud, Enciclopedia, Ludus, Cuadernos, PurifierReview, DocumentMeta, XBookmarks, ProjectProposal |
+| **SQLite** (Prisma 7.8 + `better-sqlite3`) | Audio, KG, Chat, Eventos, Salud, Enciclopedia, Ludus, Cuadernos, PurifierReview, DocumentMeta, XBookmarks, ProjectProposal, **Universe**, **BabelRecord**, PendingTask |
 | **Filesystem `data/`** | Journal, proyectos Markdown, raw_documents, tacho, molecular, cam-recorder-watcher |
 | **`public/uploads/`** | Binarios de audio (local); `/api/uploads/` en Vercel |
 

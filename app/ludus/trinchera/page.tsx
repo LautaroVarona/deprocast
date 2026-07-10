@@ -1,12 +1,12 @@
-import { TrincheraWorkspace } from "@/components/ludus/trinchera-workspace";
+import { TrincheraHub } from "@/components/ludus/trinchera-hub";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Trinchera · Ludus · DeProcast",
   description:
-    "Ejecución micro — bloques de foco extremo con Binauralizer Gamma.",
+    "Universos de Babel, asaltos de la jornada y ejecución micro dentro de Ludus.",
 };
 
 export default function TrincheraPage() {
-  return <TrincheraWorkspace />;
+  return <TrincheraHub />;
 }

@@ -1,4 +1,4 @@
-import { AppHeader } from "@/components/app-header";
+import { AppShell } from "@/components/app-shell";
 import { Providers } from "@/components/providers";
 import { Toaster } from "@/components/ui/sonner";
 import type { Metadata } from "next";
@@ -32,10 +32,9 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
       suppressHydrationWarning
     >
-      <body className="min-h-full flex flex-col bg-background text-foreground">
+      <body className="flex h-dvh min-h-0 flex-col bg-background text-foreground">
         <Providers>
-          <AppHeader />
-          <main className="flex-1">{children}</main>
+          <AppShell>{children}</AppShell>
           <Toaster richColors closeButton position="top-right" />
         </Providers>
       </body>

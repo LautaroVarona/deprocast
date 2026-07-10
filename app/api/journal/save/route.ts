@@ -21,6 +21,7 @@ export async function POST(request: NextRequest) {
       purify?: boolean;
       extractKg?: boolean;
       extractEvents?: boolean;
+      universeSlug?: string;
     };
 
     const content = body.content?.trim() ?? "";
@@ -41,6 +42,10 @@ export async function POST(request: NextRequest) {
     const entry = await saveJournalEntry({
       content,
       onda: body.onda,
+      universeSlug:
+        body.universeSlug ??
+        request.headers.get("x-deprocast-universe") ??
+        undefined,
     });
 
     // Hook KG no bloqueante: ingiere la entrada del diario al grafo.
@@ -66,6 +71,21 @@ export async function POST(request: NextRequest) {
         console.error("Journal event extraction error:", error);
       }
     }
+
+    void import("@/lib/listador/process").then(({ processListadorForText }) =>
+      processListadorForText({
+        rawText: content,
+        source: "journal",
+        sourceRef: entry.id,
+        occurredAt: new Date(entry.fechaRegistro),
+        universeSlug:
+          body.universeSlug ??
+          request.headers.get("x-deprocast-universe") ??
+          undefined,
+      }).catch((error) => {
+        console.error("Listador journal hook error:", error);
+      }),
+    );
 
     if (body.purify) {
       const record = await runPurificationPipeline(

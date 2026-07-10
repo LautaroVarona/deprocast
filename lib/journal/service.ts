@@ -1,5 +1,8 @@
 import { buildJournalMarkdown, parseJournalFile } from "@/lib/journal/markdown";
 import { indexJournalMemory } from "@/lib/mnemosyne/hooks";
+import { resolveContextSeal } from "@/lib/babel/context-seal";
+import { registerBabelRecord } from "@/lib/babel/record-store";
+import { DEFAULT_CAMPO_SLUG } from "@/lib/projects/campos";
 import {
   formatFechaRegistro,
   getMonthDir,
@@ -140,6 +143,21 @@ export async function saveJournalEntry({
     onda,
   }).catch((error) => {
     console.error("Mnemosyne journal index error:", error);
+  });
+
+  const contextSeal = resolveContextSeal({ universeSlug: input.universeSlug });
+
+  void registerBabelRecord({
+    kind: "journal",
+    physicalRef: relativePath,
+    contentPreview: trimmed,
+    occurredAt: now,
+    contextSeal,
+    campoSlug: DEFAULT_CAMPO_SLUG,
+    channel: "diario",
+    metadata: { id, onda, title },
+  }).catch((error) => {
+    console.error("Babel journal record error:", error);
   });
 
   return result;

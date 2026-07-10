@@ -30,6 +30,7 @@ export async function POST(request: NextRequest) {
       title?: string;
       durationMin?: number;
       microtaskId?: string;
+      pendingTaskId?: string;
       assaultId?: string;
       tabSurvived?: boolean;
       completed?: boolean;
@@ -53,6 +54,7 @@ export async function POST(request: NextRequest) {
       title: body.title ?? "",
       durationMin: body.durationMin ?? 25,
       microtaskId: body.microtaskId,
+      pendingTaskId: body.pendingTaskId,
     });
 
     return NextResponse.json({ assault }, { status: 201 });

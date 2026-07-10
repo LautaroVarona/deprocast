@@ -1,4 +1,5 @@
 import { extractLinkedCampoSlugs, type Campo } from "@/lib/projects/campos";
+import { isUniverseSlug } from "@/lib/babel/context-seal";
 import {
   createCampo,
   getCampo,
@@ -7,15 +8,23 @@ import {
 } from "@/lib/projects/service";
 import type { Project } from "@/lib/projects/types";
 import { ensureRuntimeReady } from "@/lib/runtime-setup";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
 export const runtime = "nodejs";
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     await ensureRuntimeReady();
 
-    const [campos, projects] = await Promise.all([listCampos(), listProjects()]);
+    const universeParam = request.nextUrl.searchParams.get("universe") ?? undefined;
+    if (universeParam && !isUniverseSlug(universeParam)) {
+      return NextResponse.json({ error: "Universo inválido." }, { status: 400 });
+    }
+
+    const [campos, projects] = await Promise.all([
+      listCampos(universeParam),
+      listProjects(),
+    ]);
     const camposWithProjects = await Promise.all(
       campos.map(async (info) => {
         const detailed = await getCampo(info.slug);
@@ -59,7 +68,11 @@ export async function POST(request: Request) {
   try {
     await ensureRuntimeReady();
 
-    const body = (await request.json()) as { label?: string; description?: string };
+    const body = (await request.json()) as {
+      label?: string;
+      description?: string;
+      universeSlug?: string;
+    };
     if (!body.label?.trim()) {
       return NextResponse.json(
         { error: "El nombre del Campo es obligatorio." },
@@ -70,6 +83,7 @@ export async function POST(request: Request) {
     const campo = await createCampo({
       label: body.label,
       description: body.description,
+      universeSlug: body.universeSlug,
     });
 
     return NextResponse.json({ campo }, { status: 201 });

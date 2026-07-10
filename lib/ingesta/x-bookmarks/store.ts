@@ -8,6 +8,9 @@ import type {
   XBookmarkTweet,
 } from "@/lib/ingesta/x-bookmarks/types";
 import { prisma } from "@/lib/prisma";
+import { ROOT_UNIVERSE_SLUG } from "@/lib/babel/constants";
+import { registerBabelRecord } from "@/lib/babel/record-store";
+import { DEFAULT_CAMPO_SLUG } from "@/lib/projects/campos";
 import { randomUUID } from "node:crypto";
 import type { Prisma } from "@prisma/client";
 
@@ -94,7 +97,7 @@ export async function importXBookmarks(
       }
     }
 
-    await prisma.xBookmark.create({
+    const created = await prisma.xBookmark.create({
       data: {
         externalId: tweet.externalId ?? null,
         author: tweet.author,
@@ -107,6 +110,20 @@ export async function importXBookmarks(
         status: "pending",
       },
     });
+
+    void registerBabelRecord({
+      kind: "bookmark",
+      physicalRef: created.id,
+      contentPreview: created.text,
+      occurredAt: created.createdAt,
+      contextSeal: ROOT_UNIVERSE_SLUG,
+      campoSlug: DEFAULT_CAMPO_SLUG,
+      channel: "x-bookmarks",
+      metadata: { handle: created.handle, importBatchId },
+    }).catch((error) => {
+      console.error("Babel x-bookmark record error:", error);
+    });
+
     imported += 1;
   }
 

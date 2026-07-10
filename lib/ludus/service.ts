@@ -284,6 +284,7 @@ export async function startAssault(input: {
   title: string;
   durationMin: number;
   microtaskId?: string;
+  pendingTaskId?: string;
 }): Promise<TrincheraSnapshot["recentAssaults"][number]> {
   const title = input.title.trim();
   if (!title) throw new Error("Definí una tarea para el asalto.");
@@ -308,6 +309,7 @@ export async function startAssault(input: {
       durationMin,
       startedAt,
       microtaskId: input.microtaskId ?? null,
+      pendingTaskId: input.pendingTaskId ?? null,
     },
   });
 
@@ -380,6 +382,13 @@ export async function completeAssault(input: {
     await prisma.ludusMicrotask.update({
       where: { id: assault.microtaskId },
       data: { status: "done" },
+    });
+  }
+
+  if (input.completed && assault.pendingTaskId) {
+    const { completePendingTask } = await import("@/lib/pendientes/store");
+    await completePendingTask(assault.pendingTaskId).catch((error) => {
+      console.error("Complete pending task after assault:", error);
     });
   }
 

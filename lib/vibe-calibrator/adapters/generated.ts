@@ -1,17 +1,32 @@
+import "server-only";
+
+import { listTasksForCalibration } from "@/lib/pendientes/store";
 import type {
   CalibratorQueueConfig,
   CardSourceAdapter,
   VibeCalibrationCard,
 } from "../types";
 
-/**
- * Stub para cards generadas por pipeline propio del Observador.
- * Extender fetchGeneratedCards cuando el generador esté listo.
- */
 async function fetchGeneratedCards(
-  _config: CalibratorQueueConfig,
+  config: CalibratorQueueConfig,
 ): Promise<VibeCalibrationCard[]> {
-  return [];
+  const tasks = await listTasksForCalibration(config.limit);
+  return tasks.map(
+    (task): VibeCalibrationCard => ({
+      id: task.id,
+      title: task.title,
+      description: task.description ?? "",
+      source: "generated",
+      sourceRef: task.id,
+      metadata: {
+        pendingTaskId: task.id,
+        weight: task.weight,
+        bloque: task.bloque,
+        status: task.status,
+        source: task.source,
+      },
+    }),
+  );
 }
 
 export const generatedAdapter: CardSourceAdapter = {

@@ -10,6 +10,7 @@ export type CampoMeta = {
   label: string;
   description: string;
   createdAt: string;
+  universeSlug?: string;
 };
 
 function getCampoMetaPath(slug: CampoSlug): string {
@@ -29,6 +30,7 @@ export async function readCampoMeta(slug: CampoSlug): Promise<CampoMeta | null> 
       label: parsed.label,
       description: String(parsed.description ?? ""),
       createdAt: String(parsed.createdAt ?? ""),
+      universeSlug: parsed.universeSlug,
     };
   } catch {
     return null;

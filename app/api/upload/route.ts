@@ -1,4 +1,7 @@
 import { isAllowedAudioFile } from "@/lib/audio-validation";
+import { resolveContextSealFromRequest } from "@/lib/babel/context-seal";
+import { registerBabelRecord } from "@/lib/babel/record-store";
+import { DEFAULT_CAMPO_SLUG } from "@/lib/projects/campos";
 import { prisma } from "@/lib/prisma";
 import {
   getUploadDir,
@@ -52,6 +55,21 @@ export async function POST(request: NextRequest) {
         originalCreatedAt: fileStats.birthtime,
         status: "PENDING",
       },
+    });
+
+    const contextSeal = resolveContextSealFromRequest(request);
+
+    void registerBabelRecord({
+      kind: "audio",
+      physicalRef: asset.id,
+      contentPreview: file.name,
+      occurredAt: fileStats.birthtime,
+      contextSeal,
+      campoSlug: DEFAULT_CAMPO_SLUG,
+      channel: "audio",
+      metadata: { filename: file.name, storedFilename },
+    }).catch((error) => {
+      console.error("Babel audio record error:", error);
     });
 
     return NextResponse.json(

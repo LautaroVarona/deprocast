@@ -887,23 +887,55 @@
   cursor: pointer;
 }
 
+/* Universos de Babel — viewport único (tema claro / oscuro) */
+.babel-noir-root {
+  background:
+    radial-gradient(ellipse 80% 45% at 50% -5%, rgba(139, 92, 246, 0.08), transparent),
+    radial-gradient(ellipse 45% 35% at 0% 100%, rgba(244, 63, 94, 0.04), transparent),
+    var(--background);
+  color: var(--foreground);
+}
+
+.dark .babel-noir-root {
+  background:
+    radial-gradient(ellipse 80% 45% at 50% -5%, rgba(139, 92, 246, 0.09), transparent),
+    radial-gradient(ellipse 45% 35% at 0% 100%, rgba(244, 63, 94, 0.05), transparent),
+    #050506;
+}
+
 /* Ludus / Castillo — modo videojuego */
 .ludus-noir-root {
+  background:
+    radial-gradient(ellipse 70% 50% at 50% -10%, rgba(251, 191, 36, 0.06), transparent),
+    radial-gradient(ellipse 50% 40% at 100% 100%, rgba(139, 92, 246, 0.04), transparent),
+    var(--background);
+  color: var(--foreground);
+}
+
+.dark .ludus-noir-root {
   background:
     radial-gradient(ellipse 70% 50% at 50% -10%, rgba(251, 191, 36, 0.07), transparent),
     radial-gradient(ellipse 50% 40% at 100% 100%, rgba(139, 92, 246, 0.06), transparent),
     #0a0a0c;
-  color: oklch(0.95 0 0);
 }
 
 .castillo-dot-grid {
+  background-color: var(--background);
+  background-image: radial-gradient(
+    circle at center,
+    color-mix(in oklch, var(--foreground) 12%, transparent) 1px,
+    transparent 1px
+  );
+  background-size: 20px 20px;
+}
+
+.dark .castillo-dot-grid {
   background-color: #0a0a0c;
   background-image: radial-gradient(
     circle at center,
     rgba(255, 255, 255, 0.14) 1px,
     transparent 1px
   );
-  background-size: 20px 20px;
 }
 
 .castillo-card {

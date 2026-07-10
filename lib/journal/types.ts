@@ -17,6 +17,7 @@ export type JournalWaveTab = {
 export type SaveJournalInput = {
   content: string;
   onda: JournalOnda;
+  universeSlug?: string;
 };
 
 export type JournalEntrySummary = {

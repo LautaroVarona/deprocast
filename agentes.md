@@ -261,13 +261,13 @@ Pipeline central de esterilización. Punto de entrada único: `runPurificationPi
 ### ⚖️ Calibrador de Vibe
 
 **Funciones:**
-- Construir cola de tarjetas desde fuentes `validated` (proyectos + retos laborales) y `generated` (stub vacío).
+- Construir cola de tarjetas desde fuentes `validated` (proyectos + retos laborales) y `generated` (tareas pendientes reconocidas/calibradas).
 - Filtrar por `campoSlug` y límite configurable.
 - Registrar sesiones y votos de peso 1–12 en SQLite.
 - Completar sesión de calibración humana.
 
 **Descripción:**  
-Módulo **HITL de calibración atencional**, no usa LLM. El Observador asigna pesos de gravedad a ítems validados para alinear priorización del sistema. El adaptador `generated` está en stub (`fetchGeneratedCards` retorna `[]`) — pendiente de conectar a un generador propio.
+Módulo **HITL de calibración atencional**, no usa LLM. El Observador asigna pesos de gravedad a ítems validados para alinear priorización del sistema. El adaptador `generated` lee `PendingTask` desde El Listador / Calibrador de Tareas.
 
 **Ubicación:**
 - Lógica: `lib/vibe-calibrator/` (`build-queue.ts`, `persist.ts`, `adapters/`)
@@ -275,7 +275,45 @@ Módulo **HITL de calibración atencional**, no usa LLM. El Observador asigna pe
 - UI: `app/calibrador/page.tsx`, `components/vibe-calibrator/`
 - DB: migración `prisma/migrations/20260619120000_vibe_calibration/`
 
-**Tecnologías/Dependencias:** Prisma (`VibeCalibrationSession`, `VibeCalibrationVote`), `lib/projects/service`, `lib/laboral/challenges`.
+**Tecnologías/Dependencias:** Prisma (`VibeCalibrationSession`, `VibeCalibrationVote`), `lib/projects/service`, `lib/laboral/challenges`, `lib/pendientes/store`.
+
+---
+
+### 📋 El Listador
+
+**Funciones:**
+- Absorber texto crudo y transcripciones desde ingesta, audio matutino, bitácoras y notas de voz.
+- Extraer acciones, compromisos y eventos accionables vía LLM.
+- Persistir sugerencias como `PendingTask` (estado `suggested`).
+- Deduplicar por título normalizado y `sourceRef` en ventana de 24h.
+- Alimentar Tareas Sugeridas en `/pendientes` y asaltos del Grid.
+
+**Ubicación:**
+- Lógica: `lib/listador/` (`extract.ts`, `process.ts`)
+- Hooks: `lib/purifier/capture.ts`, `app/api/journal/save/route.ts`
+- API/UI: `app/api/pendientes/`, `app/pendientes/page.tsx`
+
+**Tecnologías/Dependencias:** Cohere Command R+ (fast), Prisma (`PendingTask`), Zod.
+
+---
+
+### 🎯 Calibrador de Tareas
+
+**Funciones:**
+- Calibrar tareas reconocidas con escala estricta 1–12.
+- Desvalidar automáticamente votos &lt; 4 (estado `rejected`).
+- Priorizar asaltos en la Trinchera del Grid (peso ≥ 10 = Boss del día).
+- Nutrir el adapter `generated` del Calibrador de Vibe.
+
+**Descripción:**  
+Agente HITL específico del área de tareas. Opera en conjunto con el Validador (reconocer/rechazar) pero es un agente distinto que comparte la misma fuente `PendingTask`.
+
+**Ubicación:**
+- Lógica: `lib/pendientes/store.ts` (`calibratePendingTask`)
+- API: `app/api/pendientes/[id]/calibrate/route.ts`
+- UI: `components/pendientes/task-calibrator-panel.tsx`, pestaña Calibrador en `/pendientes`
+
+**Tecnologías/Dependencias:** Prisma (`PendingTask`), `WeightSlider`, `MIN_CALIBRATION_WEIGHT = 4`.
 
 ---
 
@@ -387,6 +425,10 @@ Subsistema de archivado de memoria líquida para el corpus unificado. Hoy el gra
 
 | Ruta | Agente / módulo |
 |------|-----------------|
+| `/` | Grid Home (Trinchera / Asaltos) |
+| `/cortex` | Córtex Dashboard |
+| `/pendientes` | El Listador + Calibrador de Tareas |
+| `/calendario` | Eventos del día |
 | `/chat` | Exocórtex Interactivo |
 | `/ingesta` | Captura → Purifier / Visión |
 | `/validar` | HITL Purifier |
