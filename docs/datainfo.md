@@ -995,8 +995,9 @@ app/api/transcripts/*/route.ts
 | Documento | Ruta |
 |-----------|------|
 | Grimorio de Arquitectura | `deprocast_master_plan.md` |
-| Resumen integral verificable | `resumen integral deprocast.md` |
-| Documentación Knowledge Graph | `docs/knowledge-graph.md` |
+| Resumen integral verificable | `resumen-integral-deprocast.md` |
+| Documentación Knowledge Graph | `knowledge-graph.md` |
+| Pipeline de audio | `Audio.md` |
 | Esquema Prisma | `prisma/schema.prisma` |
 | AGENTS.md (reglas Next.js) | `AGENTS.md` |
 

@@ -47,7 +47,7 @@ Una app **Next.js 16** (App Router) en `localhost:3000` que combina:
 | Extracción semántica | Vertex AI / Gemini (`gemini-2.5-flash`) |
 | Audio | FFmpeg / FFprobe (binarios estáticos npm) |
 
-El `README.md` del repo es el template genérico de `create-next-app` y **no documenta el dominio**. La documentación real está en `deprocast_master_plan.md`, `docs/knowledge-graph.md` y este archivo.
+El `README.md` del repo es el template genérico de `create-next-app` y **no documenta el dominio**. La documentación real está en `deprocast_master_plan.md`, `knowledge-graph.md` y este archivo.
 
 ---
 
@@ -191,7 +191,7 @@ deprocast2/
 ├── types/                  # Declaraciones .d.ts
 ├── public/uploads/         # Audios subidos (gitignored parcialmente)
 ├── data/                   # Datos de usuario (gitignored)
-├── deprocast_master_plan.md
+├── docs/deprocast_master_plan.md
 └── [configs: next.config.ts, tsconfig.json, eslint, tailwind, etc.]
 ```
 
@@ -327,7 +327,7 @@ erDiagram
 
 ### 6.3 Tipos de nodo del KG (constantes en código)
 
-`persona`, `organizacion`, `proyecto`, `idea`, `concepto`, `lugar`, `tecnologia`, `ley`, `proceso`, `documento`, `archivo`, `modulo` — ver `docs/knowledge-graph.md`.
+`persona`, `organizacion`, `proyecto`, `idea`, `concepto`, `lugar`, `tecnologia`, `ley`, `proceso`, `documento`, `archivo`, `modulo` — ver `knowledge-graph.md`.
 
 ### 6.4 Metadatos de siete dimensiones
 
@@ -385,7 +385,7 @@ Configuración en `.env.example`:
 | **Grimorio desactualizado** | Media | Estado de features no siempre coincide con el código (ver §5) |
 | **Sin tests** | Alta | Regresiones no detectadas automáticamente |
 | **Migraciones Prisma** | Baja | Comentarios indican aplicación vía `db push` en dev; verificar flujo en otros entornos |
-| **Node para KG backfill** | Media | `docs/knowledge-graph.md` exige Node 24 por `better-sqlite3` — **duda:** versión mínima en otros scripts |
+| **Node para KG backfill** | Media | `knowledge-graph.md` exige Node 24 por `better-sqlite3` — **duda:** versión mínima en otros scripts |
 | **Metadata obsoleta** | Baja | `layout.tsx` menciona “transcripción simulada” y “búsqueda vectorial” no implementada |
 | **Credenciales en .env.example** | Informativo | Nombres de archivos JSON de ejemplo; archivos reales están en `.gitignore` |
 
@@ -432,7 +432,7 @@ npm run kg:backfill      # Ingesta completa al KG (requiere Vertex)
 | Archivo | Propósito |
 |---------|-----------|
 | `deprocast_master_plan.md` | Especificación de arquitectura y producto |
-| `docs/knowledge-graph.md` | Modelo y operación del KG |
+| `knowledge-graph.md` | Modelo y operación del KG |
 | `prisma/schema.prisma` | Esquema SQLite canónico |
 | `.env.example` | Variables de entorno |
 | `scripts/generate-context.ts` | Generador de estado vivo |

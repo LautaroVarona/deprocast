@@ -109,7 +109,7 @@ export function IncubationLab() {
           <p className="max-w-xl text-xs text-zinc-600">
             Agentes en fase de diseño para potenciar el corpus unificado. Sin
             implementación en el repositorio — ver{" "}
-            <code className="text-zinc-500">agentes.md §6</code>.
+            <code className="text-zinc-500">docs/agentes.md §6</code>.
           </p>
         </div>
         <Button

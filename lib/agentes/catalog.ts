@@ -1,5 +1,5 @@
 /**
- * Catálogo estático alineado con agentes.md (Única Fuente de Verdad).
+ * Catálogo estático alineado con docs/agentes.md (Única Fuente de Verdad).
  * Actualizar en paralelo cuando cambie la documentación.
  */
 
@@ -601,5 +601,5 @@ export const ECOSYSTEM_STATS = {
   kgSourcesCount: KG_INGEST_SOURCES.length,
   designCount: DESIGN_AGENTS.length,
   llmProvider: "command-r-plus-08-2024",
-  docSource: "agentes.md",
+  docSource: "docs/agentes.md",
 } as const;

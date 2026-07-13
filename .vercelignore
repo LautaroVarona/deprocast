@@ -1,6 +1,6 @@
-datainfo.md
-resumen integral deprocast.md
-deprocast_master_plan.md
+docs/datainfo.md
+docs/resumen-integral-deprocast.md
+docs/deprocast_master_plan.md
 data/
 .next/
 node_modules/.cache/

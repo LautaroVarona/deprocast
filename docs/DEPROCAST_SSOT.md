@@ -17,7 +17,7 @@
 - **Gamificación (Ludus)** y **Jornada** para traducir corpus validado en foco y micro-acción.
 - **Agentes especializados** (STT, Purifier, Enciclopediador, Meta-Meteador, Exocórtex Chat) orquestados desde Next.js en `localhost:3000`.
 
-La especificación de producto vive en `deprocast_master_plan.md` (Grimorio). El catálogo de agentes operativos está en `lib/agentes/catalog.ts` y `agentes.md`.
+La especificación de producto vive en `deprocast_master_plan.md` (Grimorio). El catálogo de agentes operativos está en `lib/agentes/catalog.ts` y `agentes.md`. El pipeline de audio está documentado en [`Audio.md`](Audio.md).
 
 ---
 
@@ -279,13 +279,14 @@ npm run db:meta       # prisma db push && generate
 
 | Archivo | Propósito |
 |---------|-----------|
+| `Audio.md` | Pipeline de audio: ingesta, STT, Purifier, validación y agentes |
 | `deprocast_master_plan.md` | Grimorio de arquitectura y producto |
 | `agentes.md` | Catálogo de agentes (SSOT documental) |
 | `lib/agentes/catalog.ts` | Catálogo en código (mantener sincronizado) |
 | `prisma/schema.prisma` | Esquema SQLite canónico |
-| `docs/knowledge-graph.md` | Modelo y operación del KG |
+| `knowledge-graph.md` | Modelo y operación del KG |
 | `.env.example` | Variables de entorno |
-| `resumen integral deprocast.md` | Análisis previo (parcialmente desactualizado) |
+| `resumen-integral-deprocast.md` | Análisis previo (parcialmente desactualizado) |
 
 ---
 

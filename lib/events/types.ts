@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const EVENT_SOURCES = ["chat", "journal", "manual", "import"] as const;
+export const EVENT_SOURCES = ["chat", "journal", "manual", "import", "audio"] as const;
 export type EventSource = (typeof EVENT_SOURCES)[number];
 
 export const EVENT_PILLARS = [
@@ -31,6 +31,7 @@ export const EVENT_LINK_ENTITY_TYPES = [
   "journal",
   "chat_message",
   "campo",
+  "transcript",
 ] as const;
 export type EventLinkEntityType = (typeof EVENT_LINK_ENTITY_TYPES)[number];
 

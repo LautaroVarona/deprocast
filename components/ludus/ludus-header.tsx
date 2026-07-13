@@ -10,9 +10,10 @@ import { usePathname } from "next/navigation";
 
 type LudusHeaderProps = {
   signalPoints?: number;
+  onOpenCommandMenu?: () => void;
 };
 
-export function LudusHeader({ signalPoints = 0 }: LudusHeaderProps) {
+export function LudusHeader({ signalPoints = 0, onOpenCommandMenu }: LudusHeaderProps) {
   const pathname = usePathname();
   const showAreaNav = !pathname.startsWith("/ludus/trinchera/foco");
 
@@ -31,6 +32,20 @@ export function LudusHeader({ signalPoints = 0 }: LudusHeaderProps) {
         </p>
 
         <div className="ml-auto flex items-center gap-2 sm:gap-3">
+          {onOpenCommandMenu ? (
+            <button
+              type="button"
+              onClick={onOpenCommandMenu}
+              className={cn(
+                "hidden items-center gap-1.5 rounded-full border border-border px-3 py-1",
+                "font-mono text-[10px] uppercase tracking-wider text-muted-foreground transition-colors",
+                "hover:bg-muted hover:text-foreground sm:inline-flex",
+              )}
+            >
+              <span className="rounded border border-border px-1 py-0.5">ESC</span>
+              Menú
+            </button>
+          ) : null}
           <span
             className={cn(
               "inline-flex items-center gap-1.5 rounded-full border border-amber-500/25",

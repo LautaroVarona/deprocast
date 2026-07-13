@@ -1,9 +1,9 @@
 # Agentes — Única Fuente de Verdad (Deprocast)
 
-> **Documento:** `agentes.md`  
+> **Documento:** `docs/agentes.md`  
 > **Ámbito:** ecosistema de agentes y motores cognitivos de `deprocast2`  
 > **Última verificación de código:** 22 de junio de 2026  
-> **Principio:** este archivo describe **solo** lo que existe o está explícitamente en desarrollo en el repositorio. No sustituye al grimorio arquitectónico (`deprocast_master_plan.md`) ni a la especificación del KG (`docs/knowledge-graph.md`).
+> **Principio:** este archivo describe **solo** lo que existe o está explícitamente en desarrollo en el repositorio. No sustituye al grimorio arquitectónico (`deprocast_master_plan.md`) ni a la especificación del KG (`knowledge-graph.md`). Para el pipeline de audio completo, ver [`Audio.md`](Audio.md).
 
 ---
 
@@ -363,7 +363,7 @@ Motores **determinísticos** que alimentan el grafo sin llamadas LLM (complement
 | Master plan | Ingesta `deprocast_master_plan.md` | `lib/kg/sources/master-plan.ts` |
 | Incremental | Skip por hash (`KgSource.contentHash`) | `lib/kg/incremental.ts` |
 
-**Scripts de mantenimiento:** `npm run kg:scan`, `npm run kg:backfill` (ver `docs/knowledge-graph.md`).
+**Scripts de mantenimiento:** `npm run kg:scan`, `npm run kg:backfill` (ver `knowledge-graph.md`).
 
 **Hooks automáticos post-guardado:** diario (`POST /api/journal/save`), proyectos, documentos — ingesta KG no bloqueante.
 

@@ -193,17 +193,19 @@ export async function captureAndPurify(
     console.error("Babel record hook error:", error);
   });
 
-  void import("@/lib/listador/process").then(({ processListadorForText }) =>
-    processListadorForText({
-      rawText: trimmed,
-      source: input.channel,
-      sourceRef: record.reviewId,
-      reviewId: record.reviewId,
-      occurredAt: new Date(),
-      universeSlug: contextSeal,
-    }).catch((error) => {
-      console.error("Listador hook error:", error);
-    }),
+  void import("@/lib/trailing-commands/process").then(
+    ({ processTrailingCommands }) =>
+      processTrailingCommands({
+        rawText: trimmed,
+        source: input.channel,
+        sourceRef: record.reviewId,
+        reviewId: record.reviewId,
+        assetId: input.assetId,
+        occurredAt: new Date(),
+        universeSlug: contextSeal,
+      }).catch((error) => {
+        console.error("Trailing commands hook error:", error);
+      }),
   );
 
   return {

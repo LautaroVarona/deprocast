@@ -1008,11 +1008,12 @@ Sin autenticación — asume entorno `localhost`.
 
 | Archivo | Rol |
 |---------|-----|
+| `Audio.md` | Pipeline de audio: ingesta, STT, Purifier, validación y agentes |
 | `deprocast_master_plan.md` | Grimorio de arquitectura y visión de producto |
 | `agentes.md` | Catálogo narrativo de agentes |
 | `datainfo.md` | Pipeline de datos (8 etapas) |
-| `docs/knowledge-graph.md` | Modelo y operación del KG |
-| `resumen integral deprocast.md` | Estado verificable en código |
+| `knowledge-graph.md` | Modelo y operación del KG |
+| `resumen-integral-deprocast.md` | Estado verificable en código |
 | `memorias/contexto_memorias.md` | Spec del módulo Word/Excel (proyecto hermano) |
 
 ### 5.4 Brechas conocidas (backlog desde esta spec)

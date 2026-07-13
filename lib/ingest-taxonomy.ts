@@ -1,6 +1,6 @@
 /**
  * Validación de anclaje del grimorio: Campo (contenedor soberano).
- * Ver deprocast_master_plan.md §4.1.
+ * Ver docs/deprocast_master_plan.md §4.1.
  */
 
 export {

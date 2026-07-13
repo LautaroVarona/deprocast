@@ -34,9 +34,9 @@ const nextConfig: NextConfig = {
   },
   outputFileTracingExcludes: {
     "*": [
-      "./datainfo.md",
-      "./resumen integral deprocast.md",
-      "./deprocast_master_plan.md",
+      "./docs/datainfo.md",
+      "./docs/resumen-integral-deprocast.md",
+      "./docs/deprocast_master_plan.md",
       "./data/**",
       "./prisma/dev.db",
       "./prisma/dev.db-journal",

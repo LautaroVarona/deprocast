@@ -4,7 +4,7 @@ import { colorForType } from "@/components/grafo/types";
 import type { GraphSearchMatch } from "@/lib/kg/graph-search";
 import { cn } from "@/lib/utils";
 import { SearchIcon, XIcon } from "lucide-react";
-import { useEffect, useRef } from "react";
+import { useRef } from "react";
 
 type GraphSemanticSearchProps = {
   query: string;
@@ -27,17 +27,6 @@ export function GraphSemanticSearch({
 }: GraphSemanticSearchProps) {
   const inputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
-        event.preventDefault();
-        inputRef.current?.focus();
-      }
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, []);
-
   const hasQuery = query.trim().length > 0;
 
   return (
@@ -58,7 +47,7 @@ export function GraphSemanticSearch({
           </span>
         ) : (
           <span className="hidden rounded border border-border px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground sm:inline">
-            Ctrl+K
+            ESC
           </span>
         )}
       </div>

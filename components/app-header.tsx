@@ -8,33 +8,18 @@ import { FlaskConicalIcon, Gamepad2Icon } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 
-const NAV_LINKS = [
-  { href: "/cortex", label: "Córtex" },
-  { href: "/ingesta", label: "Ingesta" },
-  { href: "/audio", label: "Audio" },
-  { href: "/diario", label: "Diario" },
-  { href: "/jornada", label: "Jornada" },
-  { href: "/salud", label: "Salud" },
-  { href: "/chat", label: "Chat" },
-  { href: "/validar", label: "Validar" },
-  { href: "/molecular", label: "Molecular" },
-  { href: "/archivo", label: "Archivo" },
-  { href: "/enciclopedia", label: "Enciclopedia" },
-  { href: "/cam-recorder", label: "Watcher" },
-  { href: "/calibrador", label: "Calibrador" },
-  { href: "/proyectos", label: "Proyectos" },
-  { href: "/personas", label: "Personas" },
-  { href: "/grafo", label: "Grafo" },
-  { href: "/agentes", label: "Agentes" },
-  { href: "/respaldo", label: "Respaldo" },
-] as const;
+import { NAV_LINKS } from "@/lib/navigation/routes";
 
-export function AppHeader() {
+type AppHeaderProps = {
+  onOpenCommandMenu?: () => void;
+};
+
+export function AppHeader({ onOpenCommandMenu }: AppHeaderProps) {
   const pathname = usePathname();
   const router = useRouter();
 
   if (pathname.startsWith("/ludus")) {
-    return <LudusHeader />;
+    return <LudusHeader onOpenCommandMenu={onOpenCommandMenu} />;
   }
 
   return (
@@ -75,6 +60,16 @@ export function AppHeader() {
         </nav>
 
         <div className="ml-auto flex items-center gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="hidden gap-1.5 font-mono text-[10px] uppercase tracking-wider sm:inline-flex"
+            onClick={onOpenCommandMenu}
+          >
+            <span className="rounded border border-border px-1 py-0.5">ESC</span>
+            Menú
+          </Button>
           <Button
             type="button"
             size="sm"

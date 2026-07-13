@@ -87,7 +87,7 @@ flowchart TB
 
 ## 1.3 Núcleo binario: Observador y Estudianta
 
-Definido en `deprocast_master_plan.md` §1.2:
+Definido en `docs/deprocast_master_plan.md` §1.2:
 
 | Actor | Rol | Estado en código |
 |-------|-----|------------------|
@@ -1515,17 +1515,18 @@ npm run lint
 
 | Archivo | Propósito | Relación con este documento |
 |---------|-----------|----------------------------|
-| `deprocast_master_plan.md` | Grimorio arquitectura y producto | Filosofía, Siete Dimensiones, Estudianta — visión |
-| `DEPROCAST_SSOT.md` | SSOT anterior (jun 2026) | Parcialmente desactualizado (Gemini, rutas) |
-| `agentes.md` | Catálogo agentes documental | Sincronizar con `lib/agentes/catalog.ts` |
+| `docs/deprocast_master_plan.md` | Grimorio arquitectura y producto | Filosofía, Siete Dimensiones, Estudianta — visión |
+| `docs/DEPROCAST_SSOT.md` | SSOT anterior (jun 2026) | Parcialmente desactualizado (Gemini, rutas) |
+| `docs/agentes.md` | Catálogo agentes documental | Sincronizar con `lib/agentes/catalog.ts` |
+| `docs/Audio.md` | Pipeline de audio | Ingesta, STT, Purifier, validación y agentes |
 | `lib/agentes/catalog.ts` | Catálogo agentes en código | Fuente verificable agentes operativos |
 | `prisma/schema.prisma` | Esquema SQLite canónico | Fuente verificable modelos |
 | `docs/knowledge-graph.md` | Modelo y operación KG | Detalle grafo |
 | `.env.example` | Variables entorno | Cohere + Deepgram activos |
 | `README.md` | Setup desarrollo | **Desactualizado** — aún menciona GCP |
-| `deprocast_spec.md` | Especificación maestra histórica | Referencia histórica |
-| `resumen integral deprocast.md` | Análisis previo | Parcialmente desactualizado |
-| `datainfo.md` | Inventario datos | Complementario |
+| `docs/deprocast_spec.md` | Especificación maestra histórica | Referencia histórica |
+| `docs/resumen-integral-deprocast.md` | Análisis previo | Parcialmente desactualizado |
+| `docs/datainfo.md` | Inventario datos | Complementario |
 
 ---
 
@@ -1534,7 +1535,7 @@ npm run lint
 | Campo | Valor |
 |-------|-------|
 | **Título** | Deprocast OS — Contexto Absoluto del Sistema |
-| **Archivo** | `contextos/DEPROCAST_OS_CONTEXT_2026-07-10.md` |
+| **Archivo** | `docs/contextos/DEPROCAST_OS_CONTEXT_2026-07-10.md` |
 | **Fecha de auditoría** | 10 de julio de 2026 |
 | **Versión npm** | 0.1.0 (`deprocast2`) |
 | **Commit** | `82866a5636862ba98c4f6628f1aff33bfa0bc68c` |

@@ -7,7 +7,7 @@ import {
 } from "@/lib/kg/sources/common";
 import type { LlmKgExtraction } from "@/lib/kg/types";
 
-const MASTER_PLAN_FILE = "deprocast_master_plan.md";
+const MASTER_PLAN_FILE = "docs/deprocast_master_plan.md";
 
 function stripFrontmatter(source: string): string {
   return source.replace(/^---[\s\S]*?---\r?\n?/, "");
