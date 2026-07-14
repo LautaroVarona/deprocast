@@ -21,6 +21,7 @@ export type CalibratorQueueConfig = {
   sources: CalibratorCardSource[];
   campoSlug?: string;
   limit: number;
+  universeSlug?: string;
 };
 
 export type CalibratorSessionStatus = "idle" | "active" | "completed";

@@ -1,5 +1,6 @@
 "use client";
 
+import { useBabel } from "@/components/babel/babel-context";
 import { CampoForm } from "@/components/proyectos/campo-form";
 import { CampoSelect } from "@/components/proyectos/campo-select";
 import { Button } from "@/components/ui/button";
@@ -21,6 +22,7 @@ type CamposWorkspaceProps = {
 };
 
 export function CamposWorkspace({ onRefresh, refreshKey = 0 }: CamposWorkspaceProps) {
+  const { universeSlug, universeFetch, isLoading: isUniverseLoading } = useBabel();
   const [campos, setCampos] = useState<Campo[]>([]);
   const [projectsByCampo, setProjectsByCampo] = useState<Record<string, Project[]>>({});
   const [isLoading, setIsLoading] = useState(true);
@@ -34,7 +36,7 @@ export function CamposWorkspace({ onRefresh, refreshKey = 0 }: CamposWorkspacePr
   const loadCampos = useCallback(async () => {
     setIsLoading(true);
     try {
-      const response = await fetch("/api/campos", { cache: "no-store" });
+      const response = await universeFetch("/api/campos", { cache: "no-store" });
       if (!response.ok) return;
       const data: {
         campos: Campo[];
@@ -48,11 +50,17 @@ export function CamposWorkspace({ onRefresh, refreshKey = 0 }: CamposWorkspacePr
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [universeFetch]);
 
   useEffect(() => {
+    setCampos([]);
+    setProjectsByCampo({});
+  }, [universeSlug]);
+
+  useEffect(() => {
+    if (isUniverseLoading) return;
     void loadCampos();
-  }, [loadCampos, refreshKey]);
+  }, [loadCampos, refreshKey, universeSlug, isUniverseLoading]);
 
   const selectedCampo = useMemo(
     () => campos.find((campo) => campo.slug === selectedSlug) ?? null,
@@ -80,7 +88,7 @@ export function CamposWorkspace({ onRefresh, refreshKey = 0 }: CamposWorkspacePr
   const handleAssignProject = async (projectId: string) => {
     setIsAssigning(true);
     try {
-      const response = await fetch(`/api/proyectos/${projectId}/campo`, {
+      const response = await universeFetch(`/api/proyectos/${projectId}/campo`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ campoSlug: targetCampoSlug }),

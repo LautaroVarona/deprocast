@@ -1,28 +1,51 @@
-import type { HealthPillar } from "@/lib/events/types";
+import type { SaludTab } from "@/components/salud/types";
 
-export const HEALTH_PILLAR_TABS: Array<{
-  id: HealthPillar;
+export const SALUD_TABS: Array<{
+  id: SaludTab;
   label: string;
+  emoji: string;
   description: string;
 }> = [
   {
-    id: "rendimiento",
-    label: "Rendimiento",
-    description: "Bloques de entrenamiento y carga",
+    id: "telemetria",
+    label: "Telemetría",
+    emoji: "📊",
+    description: "Sensores biológicos, sueño, HRV y pasos.",
   },
   {
-    id: "combustible",
-    label: "Combustible",
-    description: "Nutrición, ayuno y suplementación",
+    id: "alimentacion",
+    label: "Alimentación",
+    emoji: "🥑",
+    description: "Ingestas, ayuno intermitente y combustible.",
   },
   {
-    id: "recuperacion",
-    label: "Recuperación",
-    description: "Sueño, HRV y estrés",
+    id: "deporte",
+    label: "Deporte",
+    emoji: "🏃",
+    description: "Actividad física, duración e intensidad.",
   },
   {
-    id: "estado_base",
-    label: "Estado Base",
-    description: "Energía, foco y claridad",
+    id: "mas",
+    label: "Más",
+    emoji: "➕",
+    description: "Métricas de entorno y bienestar extendido.",
   },
 ];
+
+export const TELEMETRIA_PLACEHOLDER = {
+  title: "En construcción",
+  subtitle:
+    "Próximamente: Integración de APIs y sensores biológicos (sueño, HRV, pasos).",
+} as const;
+
+export const MAS_PLACEHOLDER = {
+  title: "En construcción",
+  subtitle:
+    "Espacio reservado para futuras métricas de entorno (exposición solar, calidad del aire, meditación).",
+} as const;
+
+export const ACTIVITY_METRIC_OPTIONS = [
+  { value: "duration_min" as const, label: "Duración (minutos)" },
+  { value: "distance_km" as const, label: "Distancia (km)" },
+  { value: "intensity" as const, label: "Intensidad (1–10)" },
+] as const;

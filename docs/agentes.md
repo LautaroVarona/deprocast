@@ -338,6 +338,68 @@ Agente frontend de modulación cognitiva. El cerebro percibe la diferencia entre
 
 ---
 
+### 🫀 Centinela Somático
+
+**Funciones:**
+- Captar ingestas reales desde `/salud` (texto, foto y nota de voz).
+- Enrutar a visión Cohere, Deepgram STT y Nutrimetron según modalidad.
+- Coordinar el flujo entre Nutrimetron, Kinetómetro y agentes en incubación.
+
+**Ubicación:**
+- UI: `components/salud/panels/alimentacion-panel.tsx`
+- API: `app/api/salud/ingest/route.ts`, `lib/health/ingest-service.ts`
+
+**Tecnologías/Dependencias:** Prisma (`HealthRecord`, `ContextEvent`), Zod.
+
+---
+
+### 🥑 Nutrimetron
+
+**Funciones:**
+- Desglosar ingestas en ítems, macros estimados y metadata de combustible.
+- Analizar fotos de comida (visión) y transcripciones de voz (STT).
+- Persistir comidas estructuradas en HealthRecord con ayuno intermitente.
+
+**Ubicación:**
+- UI: `components/salud/panels/alimentacion-panel.tsx`
+- Motor: `lib/health/nutrition-extract.ts`, `lib/health/vision-food.ts`, `lib/health/ingest-service.ts`
+
+**Tecnologías/Dependencias:** Cohere Vision, Deepgram STT, Prisma (`HealthRecord`), `combustibleMetricsSchema`.
+
+---
+
+### 🏃 Kinetómetro
+
+**Funciones:**
+- Registrar actividad física con duración, distancia o intensidad.
+- Mapear métricas unificadas al schema de rendimiento.
+- Alimentar historial de carga física para correlación con energía y foco.
+
+**Ubicación:**
+- UI: `components/salud/panels/deporte-panel.tsx`
+- Servicio: `lib/health/service.ts`
+
+**Tecnologías/Dependencias:** Prisma (`HealthRecord`), `rendimientoMetricsSchema`.
+
+---
+
+### 📜 Cronista
+
+**Funciones:**
+- Materializar ingestas de salud como eventos individuales del calendario.
+- Emitir entradas en Historial con categoría `salud`.
+- Backfill de eventos faltantes para registros legacy.
+- Coordinar con Extractor de Eventos (propuestos HITL), Nutrimetron y Centinela Somático.
+
+**Ubicación:**
+- Motor: `lib/cronista/publish.ts`
+- Integración: `lib/health/service.ts`, `lib/events/service.ts`
+- UI: `/calendario`, `/historial`
+
+**Tecnologías/Dependencias:** Prisma (`ContextEvent`, `ActivityLog`, `HealthRecord`).
+
+---
+
 ## 4. Subprocesadores determinísticos del Purifier
 
 Estaciones sin LLM que forman parte del pipeline pero no son agentes semánticos:
@@ -376,16 +438,32 @@ Los siguientes módulos **no tienen implementación en el repositorio** (búsque
 ### 🩺 Somatometrón
 
 **Funciones previstas:**
-- Capturar telemetría de salud del Observador (biométrica, hábitos, señales fisiológicas).
+- Integrar APIs y sensores biológicos (sueño, HRV, pasos, wearables).
 - Normalizar lecturas en fragmentos con las Siete Dimensiones (`onda: personal-health`).
 - Correlacionar estado somático con priorización atencional y ventanas de Focus Work.
 
 **Descripción:**  
-Módulo de telemetría de salud para cerrar el circuito entre cuerpo y atención. En el grimorio (`deprocast_master_plan.md`) el binario local menciona telemetría biométrica futura en el daemon de ingesta; no hay API, schema Prisma ni rutas implementadas.
+Especialista en telemetría biológica para la pestaña Telemetría de `/salud`. El módulo manual de salud ya opera vía `HealthRecord`; la integración con wearables y APIs externas está pendiente.
 
-**Ubicación prevista:** daemon local + hooks en `data/tacho/` / futuro módulo `lib/somatometron/` (inexistente).
+**Ubicación prevista:** `components/salud/panels/telemetria-panel.tsx` · futuro `lib/somatometron/`.
 
-**Tecnologías previstas:** periféricos locales, posible integración NFC/hábitos (`field: nfc-habit-loop`), ingestión vía Purifier.
+**Tecnologías previstas:** periféricos locales, APIs de sueño/HRV, posible integración NFC/hábitos.
+
+---
+
+### 🌤️ Ambientógrafo
+
+**Funciones previstas:**
+- Capturar exposición solar, calidad del aire y contexto ambiental.
+- Registrar sesiones de meditación y métricas de bienestar no biométricas.
+- Correlacionar entorno con estado base y recuperación.
+
+**Descripción:**  
+Especialista reservado para la pestaña Más de `/salud`. Espacio para métricas de entorno que complementen la telemetría somática.
+
+**Ubicación prevista:** `components/salud/panels/mas-panel.tsx` · futuro `lib/ambientografo/`.
+
+**Tecnologías previstas:** APIs meteorológicas, sensores de calidad del aire, entrada manual HITL.
 
 ---
 

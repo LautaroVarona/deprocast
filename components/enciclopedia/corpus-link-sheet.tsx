@@ -1,5 +1,6 @@
 "use client";
 
+import { useBabel } from "@/components/babel/babel-context";
 import { useEnciclopedia } from "@/components/enciclopedia/enciclopedia-context";
 import { Button } from "@/components/ui/button";
 import {
@@ -41,6 +42,7 @@ type CorpusLinkSheetProps = {
 
 export function CorpusLinkSheet({ open, onOpenChange }: CorpusLinkSheetProps) {
   const { currentEntry, linkToCorpus, isBusy } = useEnciclopedia();
+  const { universeFetch } = useBabel();
   const [nodeType, setNodeType] =
     useState<(typeof NODE_TYPES)[number]["value"]>("proyecto");
   const [query, setQuery] = useState("");
@@ -73,7 +75,7 @@ export function CorpusLinkSheet({ open, onOpenChange }: CorpusLinkSheetProps) {
       const params = new URLSearchParams({ type: nodeType, limit: "20" });
       if (query.trim()) params.set("q", query.trim());
 
-      const response = await fetch(`/api/kg/nodes?${params}`);
+      const response = await universeFetch(`/api/kg/nodes?${params}`);
       const payload = (await response.json()) as {
         nodes?: KgNodeResult[];
         error?: string;
@@ -91,7 +93,7 @@ export function CorpusLinkSheet({ open, onOpenChange }: CorpusLinkSheetProps) {
     } finally {
       setIsLoadingTargets(false);
     }
-  }, [nodeType, query]);
+  }, [nodeType, query, universeFetch]);
 
   useEffect(() => {
     if (!open) return;

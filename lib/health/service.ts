@@ -2,6 +2,8 @@ import type { HealthPillar, HealthRecordDto } from "@/lib/events/types";
 import { PILLAR_LABELS } from "@/lib/events/types";
 import { createConfirmedManualHealthEvent } from "@/lib/events/service";
 import { mapHealthRecord } from "@/lib/events/mappers";
+import { publishHealthToTimeline } from "@/lib/cronista/publish";
+import { logHealthSpecialistActivity } from "@/lib/health/activity-log";
 import { prisma } from "@/lib/prisma";
 
 export type CreateHealthRecordInput = {
@@ -13,7 +15,7 @@ export type CreateHealthRecordInput = {
 
 export async function createHealthRecord(
   input: CreateHealthRecordInput,
-): Promise<{ record: HealthRecordDto }> {
+): Promise<{ record: HealthRecordDto; event: Awaited<ReturnType<typeof createConfirmedManualHealthEvent>>["event"] }> {
   const occurredAt = input.occurredAt ?? new Date();
   const content = `${PILLAR_LABELS[input.pillar]}: ${input.summary}`;
 
@@ -25,7 +27,25 @@ export async function createHealthRecord(
     metrics: input.metrics,
   });
 
-  return { record: result.record };
+  void logHealthSpecialistActivity({
+    recordId: result.record.id,
+    pillar: input.pillar,
+    pillarLabel: PILLAR_LABELS[input.pillar],
+    summary: input.summary,
+    occurredAt,
+    metrics: input.metrics,
+  }).catch((error) => {
+    console.error("[historial] health_recorded log error:", error);
+  });
+
+  void publishHealthToTimeline({
+    record: result.record,
+    event: result.event,
+  }).catch((error) => {
+    console.error("[cronista] publish error:", error);
+  });
+
+  return { record: result.record, event: result.event };
 }
 
 export async function listHealthRecords(options?: {

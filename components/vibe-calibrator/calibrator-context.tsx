@@ -1,5 +1,6 @@
 "use client";
 
+import { useBabel } from "@/components/babel/babel-context";
 import {
   DEFAULT_CALIBRATION_WEIGHT,
   DEFAULT_QUEUE_CONFIG,
@@ -14,6 +15,7 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useReducer,
   type Dispatch,
@@ -130,7 +132,12 @@ type CalibratorContextValue = {
 const CalibratorContext = createContext<CalibratorContextValue | null>(null);
 
 export function CalibratorProvider({ children }: { children: ReactNode }) {
+  const { universeSlug, universeFetch } = useBabel();
   const [state, dispatch] = useReducer(calibratorReducer, initialState);
+
+  useEffect(() => {
+    dispatch({ type: "END_SESSION" });
+  }, [universeSlug]);
 
   const currentCard =
     state.status === "active" && state.currentIndex < state.cards.length
@@ -138,7 +145,7 @@ export function CalibratorProvider({ children }: { children: ReactNode }) {
       : null;
 
   const startSession = useCallback(async () => {
-    const response = await fetch("/api/vibe-calibrator/session", {
+    const response = await universeFetch("/api/vibe-calibrator/session", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ config: state.config }),
@@ -161,7 +168,7 @@ export function CalibratorProvider({ children }: { children: ReactNode }) {
         cards: data.cards as VibeCalibrationCard[],
       },
     });
-  }, [state.config]);
+  }, [state.config, universeFetch]);
 
   const commitVote = useCallback(
     async (weight: number) => {
@@ -178,7 +185,7 @@ export function CalibratorProvider({ children }: { children: ReactNode }) {
       dispatch({ type: "SET_TRANSITIONING", payload: true });
       dispatch({ type: "COMMIT_VOTE", payload: vote });
 
-      void fetch("/api/vibe-calibrator/vote", {
+      void universeFetch("/api/vibe-calibrator/vote", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -206,12 +213,12 @@ export function CalibratorProvider({ children }: { children: ReactNode }) {
         dispatch({ type: "ADVANCE" });
       }, 300);
     },
-    [currentCard, state.sessionId, state.isTransitioning],
+    [currentCard, state.sessionId, state.isTransitioning, universeFetch],
   );
 
   const endSession = useCallback(async () => {
     if (state.sessionId) {
-      await fetch("/api/vibe-calibrator/session", {
+      await universeFetch("/api/vibe-calibrator/session", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -221,7 +228,7 @@ export function CalibratorProvider({ children }: { children: ReactNode }) {
       }).catch(() => undefined);
     }
     dispatch({ type: "END_SESSION" });
-  }, [state.sessionId]);
+  }, [state.sessionId, universeFetch]);
 
   const value = useMemo(
     () => ({

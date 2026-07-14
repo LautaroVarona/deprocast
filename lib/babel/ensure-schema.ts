@@ -67,6 +67,31 @@ export async function ensureBabelSchema(): Promise<void> {
     );
   }
 
+  if (!(await tableExists("UniverseProjection"))) {
+    await prisma.$executeRawUnsafe(`
+      CREATE TABLE "UniverseProjection" (
+        "id" TEXT NOT NULL PRIMARY KEY,
+        "targetSlug" TEXT NOT NULL,
+        "kind" TEXT NOT NULL,
+        "physicalRef" TEXT NOT NULL,
+        "sourceSlug" TEXT NOT NULL,
+        "scope" TEXT,
+        "scopeRef" TEXT,
+        "importedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        CONSTRAINT "UniverseProjection_targetSlug_fkey" FOREIGN KEY ("targetSlug") REFERENCES "Universe" ("slug") ON DELETE RESTRICT ON UPDATE CASCADE
+      );
+    `);
+    await prisma.$executeRawUnsafe(
+      `CREATE UNIQUE INDEX IF NOT EXISTS "UniverseProjection_targetSlug_kind_physicalRef_key" ON "UniverseProjection"("targetSlug", "kind", "physicalRef");`,
+    );
+    await prisma.$executeRawUnsafe(
+      `CREATE INDEX IF NOT EXISTS "UniverseProjection_targetSlug_idx" ON "UniverseProjection"("targetSlug");`,
+    );
+    await prisma.$executeRawUnsafe(
+      `CREATE INDEX IF NOT EXISTS "UniverseProjection_sourceSlug_idx" ON "UniverseProjection"("sourceSlug");`,
+    );
+  }
+
   if (await tableExists("PendingTask")) {
     if (!(await columnExists("PendingTask", "universeSlug"))) {
       await prisma.$executeRawUnsafe(
@@ -74,6 +99,17 @@ export async function ensureBabelSchema(): Promise<void> {
       );
       await prisma.$executeRawUnsafe(
         `CREATE INDEX IF NOT EXISTS "PendingTask_universeSlug_status_targetDay_idx" ON "PendingTask"("universeSlug", "status", "targetDay");`,
+      );
+    }
+  }
+
+  if (await tableExists("ChatSession")) {
+    if (!(await columnExists("ChatSession", "universeSlug"))) {
+      await prisma.$executeRawUnsafe(
+        `ALTER TABLE "ChatSession" ADD COLUMN "universeSlug" TEXT;`,
+      );
+      await prisma.$executeRawUnsafe(
+        `CREATE INDEX IF NOT EXISTS "ChatSession_universeSlug_updatedAt_idx" ON "ChatSession"("universeSlug", "updatedAt");`,
       );
     }
   }

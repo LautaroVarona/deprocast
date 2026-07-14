@@ -1,5 +1,6 @@
 "use client";
 
+import { useBabel } from "@/components/babel/babel-context";
 import { TaskCalibratorPanel } from "@/components/pendientes/task-calibrator-panel";
 import { Button } from "@/components/ui/button";
 import { BLOQUE_PRIORIDADES } from "@/lib/jornada/types";
@@ -18,20 +19,6 @@ import {
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 
-const UNIVERSE_STORAGE_KEY = "deprocast-active-universe";
-
-function getActiveUniverseSlug(): string | null {
-  if (typeof window === "undefined") return null;
-  return localStorage.getItem(UNIVERSE_STORAGE_KEY);
-}
-
-function withUniverseQuery(path: string): string {
-  const slug = getActiveUniverseSlug();
-  if (!slug) return path;
-  const separator = path.includes("?") ? "&" : "?";
-  return `${path}${separator}universe=${encodeURIComponent(slug)}`;
-}
-
 type TabId = "suggested" | "manual" | "calibrator";
 
 const TABS: { id: TabId; label: string; icon: typeof SparklesIcon }[] = [
@@ -41,6 +28,7 @@ const TABS: { id: TabId; label: string; icon: typeof SparklesIcon }[] = [
 ];
 
 export function PendientesWorkspace() {
+  const { universeSlug, universeFetch, isLoading: isUniverseLoading } = useBabel();
   const [tab, setTab] = useState<TabId>("suggested");
   const [suggested, setSuggested] = useState<PendingTaskDto[]>([]);
   const [calibrationQueue, setCalibrationQueue] = useState<PendingTaskDto[]>([]);
@@ -53,17 +41,17 @@ export function PendientesWorkspace() {
   const [isSaving, setIsSaving] = useState(false);
 
   const loadSuggested = useCallback(async () => {
-    const response = await fetch(withUniverseQuery("/api/pendientes?status=suggested"), {
+    const response = await universeFetch("/api/pendientes?status=suggested", {
       cache: "no-store",
     });
     if (!response.ok) throw new Error("Error al cargar sugerencias.");
     const data = await response.json();
     setSuggested(data.tasks ?? []);
-  }, []);
+  }, [universeFetch]);
 
   const loadCalibration = useCallback(async () => {
-    const response = await fetch(
-      withUniverseQuery("/api/pendientes?status=recognized,calibrated"),
+    const response = await universeFetch(
+      "/api/pendientes?status=recognized,calibrated",
       {
       cache: "no-store",
     });
@@ -75,7 +63,7 @@ export function PendientesWorkspace() {
     );
     setCalibrationQueue(queue);
     setActiveCalibration((current) => current ?? queue[0] ?? null);
-  }, []);
+  }, [universeFetch]);
 
   const load = useCallback(async () => {
     setIsLoading(true);
@@ -91,8 +79,15 @@ export function PendientesWorkspace() {
   }, [loadSuggested, loadCalibration]);
 
   useEffect(() => {
+    setSuggested([]);
+    setCalibrationQueue([]);
+    setActiveCalibration(null);
+  }, [universeSlug]);
+
+  useEffect(() => {
+    if (isUniverseLoading) return;
     void load();
-  }, [load]);
+  }, [load, universeSlug, isUniverseLoading]);
 
   const handleAction = async (
     id: string,
@@ -100,7 +95,7 @@ export function PendientesWorkspace() {
     andCalibrate = false,
   ) => {
     try {
-      const response = await fetch(`/api/pendientes/${id}`, {
+      const response = await universeFetch(`/api/pendientes/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action }),
@@ -130,7 +125,7 @@ export function PendientesWorkspace() {
     }
     setIsSaving(true);
     try {
-      const response = await fetch("/api/pendientes", {
+      const response = await universeFetch("/api/pendientes", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

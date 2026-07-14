@@ -1,5 +1,7 @@
 import { dayRangeForOffset } from "@/lib/pendientes/day";
 import { isDayOffset } from "@/lib/pendientes/types";
+import { filterContextEventsForUniverse } from "@/lib/babel/universe-refs";
+import { getUniverseFilterSlugFromRequest } from "@/lib/babel/universe-scope";
 import { mapContextEvent } from "@/lib/events/mappers";
 import { prisma } from "@/lib/prisma";
 import { ensureRuntimeReady } from "@/lib/runtime-setup";
@@ -16,6 +18,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Día inválido." }, { status: 400 });
     }
 
+    const universeSlug = getUniverseFilterSlugFromRequest(request);
     const { start, end } = dayRangeForOffset(dayParam);
 
     const events = await prisma.contextEvent.findMany({
@@ -24,12 +27,15 @@ export async function GET(request: NextRequest) {
         status: { not: "rejected" },
       },
       orderBy: { occurredAt: "asc" },
-      take: 20,
+      take: 50,
     });
+
+    const filtered = await filterContextEventsForUniverse(events, universeSlug);
 
     return NextResponse.json({
       day: dayParam,
-      events: events.map(mapContextEvent),
+      events: filtered.map(mapContextEvent),
+      universe: universeSlug ?? "babel",
     });
   } catch (error) {
     console.error("Calendario GET error:", error);

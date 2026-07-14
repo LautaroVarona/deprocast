@@ -1,5 +1,6 @@
 "use client";
 
+import { useBabel } from "@/components/babel/babel-context";
 import { PersonaFormSheet } from "@/components/personas/persona-form-sheet";
 import { PersonaCard } from "@/components/personas/persona-card";
 import { PersonaRelationsSheet } from "@/components/personas/persona-relations-sheet";
@@ -27,6 +28,7 @@ type ListView = "cards" | "table";
 export function PersonasDashboard() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { universeSlug, universeFetch, isLoading: isUniverseLoading } = useBabel();
   const initialTab = searchParams.get("tab") === "grafo" ? "grafo" : "lista";
   const [tab, setTab] = useState<DashboardTab>(initialTab);
   const [listView, setListView] = useState<ListView>("table");
@@ -44,7 +46,7 @@ export function PersonasDashboard() {
   const loadPersonas = useCallback(async () => {
     setIsLoading(true);
     try {
-      const response = await fetch("/api/personas", { cache: "no-store" });
+      const response = await universeFetch("/api/personas", { cache: "no-store" });
       if (!response.ok) return;
       const data: { personas: PersonaCardDto[] } = await response.json();
       setPersonas(data.personas);
@@ -53,15 +55,20 @@ export function PersonasDashboard() {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [universeFetch]);
+
+  useEffect(() => {
+    setPersonas([]);
+  }, [universeSlug]);
 
   useEffect(() => {
     setTab(searchParams.get("tab") === "grafo" ? "grafo" : "lista");
   }, [searchParams]);
 
   useEffect(() => {
+    if (isUniverseLoading) return;
     void loadPersonas();
-  }, [loadPersonas]);
+  }, [loadPersonas, universeSlug, isUniverseLoading]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();

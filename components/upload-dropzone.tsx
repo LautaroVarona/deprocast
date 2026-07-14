@@ -2,14 +2,16 @@
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { withUniverseFetchInit } from "@/lib/babel/universe-fetch";
 import { cn } from "@/lib/utils";
 import { CheckCircle2Icon, Loader2Icon, UploadCloudIcon, XCircleIcon } from "lucide-react";
 import { useCallback, useRef, useState } from "react";
 import { toast } from "sonner";
 
 type UploadDropzoneProps = {
-  onUploaded: () => void;
+  onUploaded: (result?: { jobId?: string }) => void;
   variant?: "default" | "embedded";
+  universeSlug?: string | null;
 };
 
 type FileUploadState = {
@@ -21,6 +23,7 @@ type FileUploadState = {
 export function UploadDropzone({
   onUploaded,
   variant = "default",
+  universeSlug,
 }: UploadDropzoneProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -40,6 +43,7 @@ export function UploadDropzone({
 
       let successCount = 0;
       let errorCount = 0;
+      let lastJobId: string | undefined;
 
       for (let index = 0; index < files.length; index += 1) {
         const file = files[index];
@@ -54,10 +58,14 @@ export function UploadDropzone({
           const formData = new FormData();
           formData.append("file", file);
 
-          const response = await fetch("/api/upload", {
-            method: "POST",
-            body: formData,
-          });
+          const response = await fetch(
+            "/api/upload",
+            withUniverseFetchInit({
+              method: "POST",
+              universeSlug,
+              body: formData,
+            }),
+          );
 
           const data = await response.json();
 
@@ -66,6 +74,7 @@ export function UploadDropzone({
           }
 
           successCount += 1;
+          lastJobId = data.jobId ?? data.id;
           setUploads((current) =>
             current.map((item, itemIndex) =>
               itemIndex === index ? { ...item, status: "done" } : item,
@@ -89,11 +98,11 @@ export function UploadDropzone({
       }
 
       if (successCount > 0) {
-        onUploaded();
+        onUploaded({ jobId: lastJobId });
         toast.success(
           successCount === 1
-            ? "1 audio subido correctamente"
-            : `${successCount} audios subidos correctamente`,
+            ? "Audio subido. Metabolización iniciada."
+            : `${successCount} audios subidos. Metabolización iniciada.`,
         );
       }
 
@@ -107,7 +116,7 @@ export function UploadDropzone({
 
       setTimeout(() => setUploads([]), 4000);
     },
-    [onUploaded],
+    [onUploaded, universeSlug],
   );
 
   const handleFiles = useCallback(

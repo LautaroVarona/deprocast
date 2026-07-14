@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { parseAliasesJson, parseMetadataJson } from "@/lib/kg/normalize";
 import { CODE_NODE_TYPES, type KgNodeSummary } from "@/lib/kg/types";
+import type { UniverseIdFilter } from "@/lib/babel/universe-refs";
 
 type RawNode = {
   id: string;
@@ -128,11 +129,19 @@ export async function getRelatedProjects(
 export async function getRepeatedIdeas(input: {
   limit?: number;
   types?: string[];
+  nodeIds?: UniverseIdFilter;
 } = {}): Promise<{ node: KgNodeSummary; mentionCount: number }[]> {
   const types = input.types ?? ["idea", "concepto"];
 
+  if (input.nodeIds && input.nodeIds.size === 0) {
+    return [];
+  }
+
   const grouped = await prisma.kgMention.groupBy({
     by: ["nodeId"],
+    where: input.nodeIds
+      ? { nodeId: { in: [...input.nodeIds] } }
+      : undefined,
     _count: { nodeId: true },
     orderBy: { _count: { nodeId: "desc" } },
     take: 500,
@@ -196,8 +205,19 @@ export async function getCentralityRanking(input: {
   limit?: number;
   type?: string;
   excludeCode?: boolean;
+  nodeIds?: UniverseIdFilter;
 } = {}): Promise<CentralityEntry[]> {
+  if (input.nodeIds && input.nodeIds.size === 0) {
+    return [];
+  }
+
   const edges = await prisma.kgEdge.findMany({
+    where: input.nodeIds
+      ? {
+          sourceNodeId: { in: [...input.nodeIds] },
+          targetNodeId: { in: [...input.nodeIds] },
+        }
+      : undefined,
     select: { sourceNodeId: true, targetNodeId: true, weight: true },
   });
 
@@ -267,22 +287,36 @@ export async function getGraphSnapshot(input: {
   types?: string[];
   excludeCode?: boolean;
   limit?: number;
+  nodeIds?: UniverseIdFilter;
 } = {}): Promise<GraphSnapshot> {
+  if (input.nodeIds && input.nodeIds.size === 0) {
+    return { nodes: [], edges: [] };
+  }
+
   const codeTypes = CODE_NODE_TYPES as readonly string[];
-  const where = input.types?.length
+  const typeFilter = input.types?.length
     ? { type: { in: input.types } }
     : input.excludeCode
       ? { type: { notIn: [...codeTypes] } }
-      : undefined;
+      : {};
 
   const nodes = await prisma.kgNode.findMany({
-    where,
+    where: {
+      ...typeFilter,
+      ...(input.nodeIds ? { id: { in: [...input.nodeIds] } } : {}),
+    },
     take: input.limit ?? 1500,
     orderBy: { updatedAt: "desc" },
   });
   const nodeIds = new Set(nodes.map((n) => n.id));
 
   const edges = await prisma.kgEdge.findMany({
+    where: input.nodeIds
+      ? {
+          sourceNodeId: { in: [...input.nodeIds] },
+          targetNodeId: { in: [...input.nodeIds] },
+        }
+      : undefined,
     take: 6000,
   });
   const filteredEdges = edges.filter(
@@ -333,7 +367,22 @@ export type KgStats = {
   edgesByType: { relationType: string; count: number }[];
 };
 
-export async function getKgStats(): Promise<KgStats> {
+export async function getKgStats(input: {
+  nodeIds?: UniverseIdFilter;
+} = {}): Promise<KgStats> {
+  if (input.nodeIds && input.nodeIds.size === 0) {
+    return {
+      totalNodes: 0,
+      totalEdges: 0,
+      totalMentions: 0,
+      totalSources: 0,
+      nodesByType: [],
+      edgesByType: [],
+    };
+  }
+
+  const nodeIdList = input.nodeIds ? [...input.nodeIds] : undefined;
+
   const [
     totalNodes,
     totalEdges,
@@ -342,12 +391,38 @@ export async function getKgStats(): Promise<KgStats> {
     nodesByTypeRaw,
     edgesByTypeRaw,
   ] = await Promise.all([
-    prisma.kgNode.count(),
-    prisma.kgEdge.count(),
-    prisma.kgMention.count(),
+    nodeIdList
+      ? Promise.resolve(nodeIdList.length)
+      : prisma.kgNode.count(),
+    nodeIdList
+      ? prisma.kgEdge.count({
+          where: {
+            sourceNodeId: { in: nodeIdList },
+            targetNodeId: { in: nodeIdList },
+          },
+        })
+      : prisma.kgEdge.count(),
+    nodeIdList
+      ? prisma.kgMention.count({ where: { nodeId: { in: nodeIdList } } })
+      : prisma.kgMention.count(),
     prisma.kgSource.count(),
-    prisma.kgNode.groupBy({ by: ["type"], _count: { type: true } }),
-    prisma.kgEdge.groupBy({ by: ["relationType"], _count: { relationType: true } }),
+    nodeIdList
+      ? prisma.kgNode.groupBy({
+          by: ["type"],
+          where: { id: { in: nodeIdList } },
+          _count: { type: true },
+        })
+      : prisma.kgNode.groupBy({ by: ["type"], _count: { type: true } }),
+    nodeIdList
+      ? prisma.kgEdge.groupBy({
+          by: ["relationType"],
+          where: {
+            sourceNodeId: { in: nodeIdList },
+            targetNodeId: { in: nodeIdList },
+          },
+          _count: { relationType: true },
+        })
+      : prisma.kgEdge.groupBy({ by: ["relationType"], _count: { relationType: true } }),
   ]);
 
   return {

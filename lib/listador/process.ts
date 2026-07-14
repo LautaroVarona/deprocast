@@ -55,5 +55,27 @@ export async function processListadorForText(
     created.push(task);
   }
 
+  if (created.length > 0) {
+    void import("@/lib/historial/log").then(({ logActivity }) =>
+      logActivity({
+        occurredAt: baseDate,
+        category: "events",
+        action: "extracted_tasks",
+        title: `Listador: ${created.length} tarea(s)`,
+        agentId: "listador",
+        agentName: "El Listador",
+        sourceType: "listador",
+        sourceRef: input.sourceRef ?? created[0]!.id,
+        correlationId: input.reviewId,
+        metadata: {
+          taskCount: created.length,
+          source: input.source,
+        },
+      }).catch((error) => {
+        console.error("Historial listador log error:", error);
+      }),
+    );
+  }
+
   return created;
 }

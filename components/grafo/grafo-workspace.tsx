@@ -1,10 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
+import { useBabel } from "@/components/babel/babel-context";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { fetchWithUniverse } from "@/lib/babel/universe-fetch";
 import { cn } from "@/lib/utils";
 import { ForceGraph } from "@/components/grafo/force-graph";
 import { GraphSemanticSearch } from "@/components/grafo/graph-semantic-search";
@@ -32,6 +34,9 @@ type RelatedProjectItem = {
 };
 
 export function GrafoWorkspace() {
+  const { activeUniverse, isLoading: isUniverseLoading } = useBabel();
+  const activeSlug = activeUniverse?.slug;
+  const requestIdRef = useRef(0);
   const [tab, setTab] = useState<Tab>("grafo");
   const [snapshot, setSnapshot] = useState<GraphSnapshot>({ nodes: [], edges: [] });
   const [excludeCode, setExcludeCode] = useState(true);
@@ -52,43 +57,75 @@ export function GrafoWorkspace() {
   const [searchQuery, setSearchQuery] = useState("");
 
   const loadGraph = useCallback(async () => {
+    if (isUniverseLoading) return;
+
+    const requestId = ++requestIdRef.current;
     setLoadingGraph(true);
     try {
-      const res = await fetch(`/api/kg/graph?excludeCode=${excludeCode}&limit=2000`);
+      const res = await fetchWithUniverse(
+        `/api/kg/graph?excludeCode=${excludeCode}&limit=2000`,
+        { universeSlug: activeSlug, cache: "no-store" },
+      );
       if (!res.ok) throw new Error("No se pudo cargar el grafo");
       const data = (await res.json()) as GraphSnapshot;
+      if (requestId !== requestIdRef.current) return;
       setSnapshot(data);
       setEnabledTypes((prev) => {
         if (prev.size > 0) return prev;
         return new Set(data.nodes.map((n) => n.type));
       });
     } catch (error) {
+      if (requestId !== requestIdRef.current) return;
+      setSnapshot({ nodes: [], edges: [] });
       toast.error(error instanceof Error ? error.message : "Error al cargar el grafo");
     } finally {
-      setLoadingGraph(false);
+      if (requestId === requestIdRef.current) {
+        setLoadingGraph(false);
+      }
     }
-  }, [excludeCode]);
+  }, [activeSlug, excludeCode, isUniverseLoading]);
 
   const loadStats = useCallback(async () => {
+    if (isUniverseLoading) return;
+
     try {
-      const res = await fetch("/api/kg/stats");
+      const res = await fetchWithUniverse("/api/kg/stats", {
+        universeSlug: activeSlug,
+        cache: "no-store",
+      });
       if (!res.ok) throw new Error("No se pudieron cargar las estadisticas");
       setStats((await res.json()) as StatsResponse);
     } catch (error) {
+      setStats(null);
       toast.error(error instanceof Error ? error.message : "Error en estadisticas");
     }
-  }, []);
+  }, [activeSlug, isUniverseLoading]);
 
   const loadDuplicates = useCallback(async () => {
+    if (isUniverseLoading) return;
+
     try {
-      const res = await fetch("/api/kg/duplicates?limit=200");
+      const res = await fetchWithUniverse("/api/kg/duplicates?limit=200", {
+        universeSlug: activeSlug,
+        cache: "no-store",
+      });
       if (!res.ok) throw new Error("No se pudieron detectar duplicados");
       const data = (await res.json()) as { candidates: DuplicateCandidate[] };
       setDuplicates(data.candidates);
     } catch (error) {
+      setDuplicates([]);
       toast.error(error instanceof Error ? error.message : "Error en duplicados");
     }
-  }, []);
+  }, [activeSlug, isUniverseLoading]);
+
+  useEffect(() => {
+    setSnapshot({ nodes: [], edges: [] });
+    setStats(null);
+    setDuplicates([]);
+    setSelectedId(null);
+    setDetail(null);
+    setEnabledTypes(new Set());
+  }, [activeSlug]);
 
   useEffect(() => {
     void loadGraph();

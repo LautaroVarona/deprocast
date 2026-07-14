@@ -1,5 +1,6 @@
 "use client";
 
+import { useBabel } from "@/components/babel/babel-context";
 import type {
   ParticulaConPropuesta,
   ParticulaMetadata,
@@ -75,8 +76,9 @@ const MolecularContext = createContext<MolecularContextValue | null>(null);
 
 async function fetchCalibrations(
   source: ParticulaMetadata[],
+  universeFetch: ReturnType<typeof useBabel>["universeFetch"],
 ): Promise<ParticulaConPropuesta[]> {
-  const response = await fetch("/api/molecular/calibrate", {
+  const response = await universeFetch("/api/molecular/calibrate", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ particulas: source }),
@@ -94,12 +96,15 @@ async function fetchCalibrations(
   return payload.particulas ?? [];
 }
 
-async function fetchArchivoContent(sourceId: string): Promise<{
+async function fetchArchivoContent(
+  sourceId: string,
+  universeFetch: ReturnType<typeof useBabel>["universeFetch"],
+): Promise<{
   content: string;
   fuenteOrigen: string;
   title: string;
 }> {
-  const response = await fetch(
+  const response = await universeFetch(
     `/api/archivo/${encodeURIComponent(sourceId)}`,
   );
   const payload = (await response.json()) as {
@@ -115,6 +120,7 @@ async function fetchArchivoContent(sourceId: string): Promise<{
 }
 
 export function MolecularProvider({ children }: { children: ReactNode }) {
+  const { universeSlug, universeFetch, isLoading: isUniverseLoading } = useBabel();
   const [phase, setPhase] = useState<PipelinePhase>("idle");
   const [textoOriginal, setTextoOriginal] = useState("");
   const [fuenteOrigen, setFuenteOrigen] = useState("ingesta-manual");
@@ -165,10 +171,20 @@ export function MolecularProvider({ children }: { children: ReactNode }) {
     resetPipeline();
   }, [resetPipeline]);
 
+  useEffect(() => {
+    resetPipeline();
+    setTextoOriginal("");
+    setAvailableSources([]);
+    setSelectedSourceId(null);
+    setBatchMode(false);
+    setBatchQueue([]);
+    setBatchIndex(0);
+  }, [universeSlug, resetPipeline]);
+
   const loadSources = useCallback(async () => {
     setIsLoadingSources(true);
     try {
-      const response = await fetch("/api/molecular/sources", {
+      const response = await universeFetch("/api/molecular/sources", {
         cache: "no-store",
       });
       const payload = (await response.json()) as {
@@ -184,13 +200,18 @@ export function MolecularProvider({ children }: { children: ReactNode }) {
     } finally {
       setIsLoadingSources(false);
     }
-  }, []);
+  }, [universeFetch]);
+
+  useEffect(() => {
+    if (isUniverseLoading) return;
+    void loadSources();
+  }, [loadSources, universeSlug, isUniverseLoading]);
 
   const loadSourceContent = useCallback(async (sourceId: string) => {
     setError(null);
     setIsBusy(true);
     try {
-      const item = await fetchArchivoContent(sourceId);
+      const item = await fetchArchivoContent(sourceId, universeFetch);
       setSelectedSourceId(sourceId);
       setTextoOriginal(item.content);
       setFuenteOrigen(item.fuenteOrigen);
@@ -200,7 +221,7 @@ export function MolecularProvider({ children }: { children: ReactNode }) {
     } finally {
       setIsBusy(false);
     }
-  }, []);
+  }, [universeFetch]);
 
   const runChunkerInternal = useCallback(
     async (texto: string, fuente: string) => {
@@ -223,7 +244,7 @@ export function MolecularProvider({ children }: { children: ReactNode }) {
       pendingCalibrateRef.current = null;
 
       try {
-        const response = await fetch("/api/molecular/chunk", {
+        const response = await universeFetch("/api/molecular/chunk", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ texto, fuenteOrigen: fuente }),
@@ -264,7 +285,7 @@ export function MolecularProvider({ children }: { children: ReactNode }) {
         setIsBusy(false);
       }
     },
-    [],
+    [universeFetch],
   );
 
   const runCalibrator = useCallback(async () => {
@@ -276,7 +297,7 @@ export function MolecularProvider({ children }: { children: ReactNode }) {
     setPhase("calibrating");
 
     try {
-      const result = await fetchCalibrations(source);
+      const result = await fetchCalibrations(source, universeFetch);
       setCalibraciones(result);
       setPhase("validating");
       pendingCalibrateRef.current = null;
@@ -286,7 +307,7 @@ export function MolecularProvider({ children }: { children: ReactNode }) {
     } finally {
       setIsBusy(false);
     }
-  }, [particulas]);
+  }, [particulas, universeFetch]);
 
   const runChunker = useCallback(async () => {
     await runChunkerInternal(textoOriginal, fuenteOrigen);
@@ -305,7 +326,7 @@ export function MolecularProvider({ children }: { children: ReactNode }) {
       setError(null);
 
       try {
-        const item = await fetchArchivoContent(doc.id);
+        const item = await fetchArchivoContent(doc.id, universeFetch);
         setSelectedSourceId(doc.id);
         setTextoOriginal(item.content);
         setFuenteOrigen(item.fuenteOrigen);
@@ -325,7 +346,7 @@ export function MolecularProvider({ children }: { children: ReactNode }) {
         }
       }
     },
-    [runChunkerInternal],
+    [runChunkerInternal, universeFetch],
   );
 
   const advanceBatch = useCallback(async () => {
@@ -356,7 +377,7 @@ export function MolecularProvider({ children }: { children: ReactNode }) {
     setIsBusy(true);
 
     try {
-      const response = await fetch("/api/molecular/sources", {
+      const response = await universeFetch("/api/molecular/sources", {
         cache: "no-store",
       });
       const payload = (await response.json()) as {
@@ -388,7 +409,7 @@ export function MolecularProvider({ children }: { children: ReactNode }) {
     } finally {
       setIsBusy(false);
     }
-  }, [processBatchDocument]);
+  }, [processBatchDocument, universeFetch]);
 
   const skipBatchDocument = useCallback(() => {
     if (!batchMode) return;
@@ -442,7 +463,7 @@ export function MolecularProvider({ children }: { children: ReactNode }) {
       setError(null);
 
       try {
-        const response = await fetch("/api/molecular/validate", {
+        const response = await universeFetch("/api/molecular/validate", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -474,7 +495,7 @@ export function MolecularProvider({ children }: { children: ReactNode }) {
         setIsBusy(false);
       }
     },
-    [calibraciones],
+    [calibraciones, universeFetch],
   );
 
   const value = useMemo(

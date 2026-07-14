@@ -1,5 +1,6 @@
 "use client";
 
+import { useBabel } from "@/components/babel/babel-context";
 import type { DayOffset } from "@/lib/pendientes/types";
 import { cn } from "@/lib/utils";
 import { CalendarIcon } from "lucide-react";
@@ -17,11 +18,12 @@ type ActividadesResumenProps = {
 };
 
 export function ActividadesResumen({ selectedDay }: ActividadesResumenProps) {
+  const { universeSlug, universeFetch, isLoading: isUniverseLoading } = useBabel();
   const [events, setEvents] = useState<CalendarEvent[]>([]);
 
   const load = useCallback(async () => {
     try {
-      const response = await fetch(`/api/calendario?day=${selectedDay}`, {
+      const response = await universeFetch(`/api/calendario?day=${selectedDay}`, {
         cache: "no-store",
       });
       if (!response.ok) return;
@@ -30,11 +32,16 @@ export function ActividadesResumen({ selectedDay }: ActividadesResumenProps) {
     } catch {
       setEvents([]);
     }
-  }, [selectedDay]);
+  }, [selectedDay, universeFetch]);
 
   useEffect(() => {
+    setEvents([]);
+  }, [universeSlug]);
+
+  useEffect(() => {
+    if (isUniverseLoading) return;
     void load();
-  }, [load]);
+  }, [load, universeSlug, isUniverseLoading]);
 
   if (events.length === 0) return null;
 

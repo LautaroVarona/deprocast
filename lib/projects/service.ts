@@ -78,6 +78,30 @@ export async function listProjects(): Promise<Project[]> {
   });
 }
 
+const PROJECT_CACHE_TTL_MS = 30_000;
+
+let projectCache: { projects: Project[]; expiresAt: number } | null = null;
+
+export function invalidateProjectCache(): void {
+  projectCache = null;
+}
+
+async function getCachedProjects(): Promise<Project[]> {
+  const now = Date.now();
+  if (projectCache && projectCache.expiresAt > now) {
+    return projectCache.projects;
+  }
+
+  const projects = await listProjects();
+  projectCache = { projects, expiresAt: now + PROJECT_CACHE_TTL_MS };
+  return projects;
+}
+
+export async function buildProjectIndex(): Promise<Map<string, Project>> {
+  const projects = await getCachedProjects();
+  return new Map(projects.map((project) => [project.id, project]));
+}
+
 export async function ensureCampoExists(slug: CampoSlug): Promise<void> {
   if (!isCampoSlug(slug)) return;
 
@@ -290,6 +314,7 @@ export async function createProject(input: CreateProjectInput): Promise<Project>
 
   await ensureCampoExists(input.campoSlug);
   await writeFile(filePath, buildProjectMarkdown(projectData), "utf8");
+  invalidateProjectCache();
 
   return {
     ...projectData,
@@ -299,7 +324,7 @@ export async function createProject(input: CreateProjectInput): Promise<Project>
 }
 
 export async function findProjectById(projectId: string): Promise<Project | null> {
-  const projects = await listProjects();
+  const projects = await getCachedProjects();
   return projects.find((project) => project.id === projectId) ?? null;
 }
 
@@ -321,6 +346,7 @@ export async function addProgressEntry(input: AddProgressInput): Promise<Project
   const content = await readFile(project.filePath, "utf8");
   const updatedContent = appendProgressToMarkdown(content, entry);
   await writeFile(project.filePath, updatedContent, "utf8");
+  invalidateProjectCache();
 
   const updated = parseProjectFile(project.filePath, updatedContent);
   if (!updated) {

@@ -16,6 +16,7 @@ import {
   validateHealthMetrics,
 } from "@/lib/events/types";
 import { addProgressEntry } from "@/lib/projects/service";
+import { formatHealthCalendarContent } from "@/lib/cronista/publish";
 import { ingestHealthEvent } from "@/lib/kg/sources/health";
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
@@ -180,13 +181,18 @@ export async function createConfirmedManualHealthEvent(input: {
   metrics: Record<string, unknown>;
 }): Promise<{ event: ContextEventDto; record: HealthRecordDto }> {
   const metrics = validateHealthMetrics(input.pillar, input.metrics);
+  const calendarContent = formatHealthCalendarContent({
+    pillar: input.pillar,
+    summary: input.summary,
+    metrics,
+  });
 
   const result = await prisma.$transaction(async (tx) => {
     const event = await tx.contextEvent.create({
       data: {
         occurredAt: input.occurredAt,
         source: "manual",
-        content: input.content,
+        content: calendarContent,
         structuredData: { summary: input.summary, metrics } as Prisma.InputJsonValue,
         pillar: input.pillar,
         status: "confirmed",
@@ -212,8 +218,14 @@ export async function createConfirmedManualHealthEvent(input: {
       },
     });
 
+    const updatedEvent = await tx.contextEvent.update({
+      where: { id: event.id },
+      data: { sourceRef: record.id },
+      include: { links: true },
+    });
+
     return {
-      event: mapContextEvent(event),
+      event: mapContextEvent(updatedEvent),
       record: mapHealthRecord(record),
     };
   });

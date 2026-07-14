@@ -8,6 +8,7 @@ import {
   filterRoutes,
   findRouteByHotkey,
 } from "@/lib/navigation/routes";
+import { UniverseSelect } from "@/components/babel/universe-select";
 import { cn } from "@/lib/utils";
 import {
   Loader2Icon,
@@ -181,6 +182,9 @@ export function CommandMenu({ open, onOpenChange }: CommandMenuProps) {
 
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
+        if (document.querySelector('[data-universe-select-open="true"]')) {
+          return;
+        }
         event.preventDefault();
         event.stopPropagation();
         close();
@@ -282,9 +286,12 @@ export function CommandMenu({ open, onOpenChange }: CommandMenuProps) {
             <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
               Portal de navegación
             </p>
-            <span className="ml-auto rounded border border-border px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">
-              ESC
-            </span>
+            <div className="ml-auto flex items-center gap-2">
+              <UniverseSelect size="md" />
+              <span className="rounded border border-border px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">
+                ESC
+              </span>
+            </div>
           </div>
 
           <div className="relative mt-3">

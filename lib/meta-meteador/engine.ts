@@ -210,6 +210,23 @@ async function processDocumentForSession(
     modelUsed,
   });
 
+  void import("@/lib/historial/log").then(({ logActivity }) =>
+    logActivity({
+      category: "meta",
+      action: "meta_processed",
+      title: `Meta-Meteador: ${output.titulo}`,
+      summary: meta.particula,
+      agentId: "meta-meteador",
+      agentName: "Meta-Meteador",
+      modelUsed,
+      sourceType: "document_meta",
+      sourceRef: project.id,
+      metadata: { materia: meta.materia, campo: meta.campo },
+    }).catch((error) => {
+      console.error("Historial meta-meteador log error:", error);
+    }),
+  );
+
   const extraction = buildKgProjection(output, project);
   await ingestKgExtraction({
     extraction,

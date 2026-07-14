@@ -5,6 +5,7 @@ import {
   parseAliasesJson,
   parseMetadataJson,
 } from "@/lib/kg/normalize";
+import type { UniverseIdFilter } from "@/lib/babel/universe-refs";
 import type { KgNodeSummary } from "@/lib/kg/types";
 import { prisma } from "@/lib/prisma";
 
@@ -35,12 +36,20 @@ export type SearchNodesInput = {
   q?: string;
   campoSlug?: string;
   limit?: number;
+  nodeIds?: UniverseIdFilter;
 };
 
 export async function searchNodes(input: SearchNodesInput = {}): Promise<KgNodeSummary[]> {
+  if (input.nodeIds && input.nodeIds.size === 0) {
+    return [];
+  }
+
   const limit = input.limit ?? 50;
   const nodes = await prisma.kgNode.findMany({
-    where: input.type ? { type: input.type } : undefined,
+    where: {
+      ...(input.type ? { type: input.type } : {}),
+      ...(input.nodeIds ? { id: { in: [...input.nodeIds] } } : {}),
+    },
     orderBy: { updatedAt: "desc" },
     take: 500,
   });
@@ -161,9 +170,17 @@ export type DuplicateCandidate = {
 export async function getDuplicateCandidates(input: {
   type?: string;
   limit?: number;
+  nodeIds?: UniverseIdFilter;
 } = {}): Promise<DuplicateCandidate[]> {
+  if (input.nodeIds && input.nodeIds.size === 0) {
+    return [];
+  }
+
   const nodes = await prisma.kgNode.findMany({
-    where: input.type ? { type: input.type } : undefined,
+    where: {
+      ...(input.type ? { type: input.type } : {}),
+      ...(input.nodeIds ? { id: { in: [...input.nodeIds] } } : {}),
+    },
     take: 2000,
   });
 

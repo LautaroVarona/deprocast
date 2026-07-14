@@ -1,4 +1,5 @@
 import { processJournalForEvents } from "@/lib/events/process";
+import { logActivity } from "@/lib/historial/log";
 import { saveJournalEntry } from "@/lib/journal/service";
 import { isJournalOnda } from "@/lib/journal/types";
 import { ingestJournalFile } from "@/lib/kg/sources";
@@ -46,6 +47,19 @@ export async function POST(request: NextRequest) {
         body.universeSlug ??
         request.headers.get("x-deprocast-universe") ??
         undefined,
+    });
+
+    void logActivity({
+      occurredAt: new Date(entry.fechaRegistro),
+      category: "journal",
+      action: "journal_saved",
+      title: `Diario: ${entry.title}`,
+      summary: content.slice(0, 200),
+      sourceType: "journal",
+      sourceRef: entry.id,
+      metadata: { onda: entry.onda, path: entry.relativePath },
+    }).catch((error) => {
+      console.error("Historial journal log error:", error);
     });
 
     // Hook KG no bloqueante: ingiere la entrada del diario al grafo.

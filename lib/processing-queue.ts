@@ -10,19 +10,30 @@ type QueueStatus = {
   } | null;
   queuedIds: string[];
   queuedCount: number;
+  purifyingIds: string[];
 };
 
 class ProcessingQueue {
   private queue: string[] = [];
   private running = false;
   private activeId: string | null = null;
+  private purifyingIds = new Set<string>();
 
   isQueued(assetId: string): boolean {
     return this.queue.includes(assetId) || this.activeId === assetId;
   }
 
   hasActiveJobs(): boolean {
-    return this.running || this.queue.length > 0 || this.activeId !== null;
+    return (
+      this.running ||
+      this.queue.length > 0 ||
+      this.activeId !== null ||
+      this.purifyingIds.size > 0
+    );
+  }
+
+  isPurifying(assetId: string): boolean {
+    return this.purifyingIds.has(assetId);
   }
 
   clearQueue(): void {
@@ -36,6 +47,7 @@ class ProcessingQueue {
       active: null,
       queuedIds: [...this.queue],
       queuedCount: this.queue.length,
+      purifyingIds: [...this.purifyingIds],
     };
   }
 
@@ -121,6 +133,7 @@ class ProcessingQueue {
       const { processAssetDeepgram } = await import("@/lib/deepgram-speech-processor");
       await processAssetDeepgram(assetId);
 
+      this.purifyingIds.add(assetId);
       void (async () => {
         try {
           const { autoPurifyAudioAsset } = await import(
@@ -134,6 +147,8 @@ class ProcessingQueue {
           }
         } catch (error) {
           console.error(`Auto-purify hook error for ${assetId}:`, error);
+        } finally {
+          this.purifyingIds.delete(assetId);
         }
       })();
     } catch (error) {

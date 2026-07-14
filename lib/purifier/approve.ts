@@ -168,6 +168,15 @@ export async function approveToProposal(
 
   await deleteReviewRecord(input.reviewId);
 
+  void import("@/lib/historial/pipeline-log").then(({ logApprovedActivity }) =>
+    logApprovedActivity({
+      reviewId: input.reviewId,
+      title: input.title.trim(),
+    }).catch((error) => {
+      console.error("Historial approve log error:", error);
+    }),
+  );
+
   return {
     proposalId: proposal.id,
     title: proposal.title,

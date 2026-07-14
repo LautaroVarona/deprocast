@@ -77,6 +77,25 @@ export async function runChatTurn(input: SendChatInput): Promise<ChatTurnResult>
     model: getCohereModelName("default"),
   });
 
+  void import("@/lib/historial/log").then(({ logActivity }) =>
+    logActivity({
+      occurredAt: new Date(assistantMessage.createdAt),
+      category: "chat",
+      action: "chat_turn",
+      title: `Chat: ${plainText.slice(0, 80)}`,
+      summary: assistantContent.slice(0, 200),
+      agentId: "exocortex",
+      agentName: "Exocórtex Interactivo",
+      modelUsed: getCohereModelName("default"),
+      sourceType: "chat_message",
+      sourceRef: assistantMessage.id,
+      correlationId: input.sessionId,
+      metadata: { userMessageId: savedUser.id },
+    }).catch((error) => {
+      console.error("Historial chat log error:", error);
+    }),
+  );
+
   if (previousCount === 0) {
     await updateChatSessionTitle(
       input.sessionId,

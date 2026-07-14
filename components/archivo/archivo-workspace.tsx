@@ -1,5 +1,6 @@
 "use client";
 
+import { useBabel } from "@/components/babel/babel-context";
 import {
   ARCHIVO_KIND_LABELS,
   type ArchivoItemDetail,
@@ -36,6 +37,7 @@ function formatDate(iso: string): string {
 }
 
 export function ArchivoWorkspace() {
+  const { universeSlug, universeFetch, isLoading: isUniverseLoading } = useBabel();
   const [items, setItems] = useState<ArchivoItemSummary[]>([]);
   const [byKind, setByKind] = useState<Record<ArchivoKind, number> | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -57,7 +59,7 @@ export function ArchivoWorkspace() {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await fetch("/api/archivo", { cache: "no-store" });
+      const response = await universeFetch("/api/archivo", { cache: "no-store" });
       const data = await response.json();
       if (!response.ok) {
         throw new Error(data.error ?? "No se pudo cargar el archivo.");
@@ -69,11 +71,19 @@ export function ArchivoWorkspace() {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [universeFetch]);
 
   useEffect(() => {
+    setItems([]);
+    setSearchHits(null);
+    setSelectedId(null);
+    setSelectedDetail(null);
+  }, [universeSlug]);
+
+  useEffect(() => {
+    if (isUniverseLoading) return;
     void fetchItems();
-  }, [fetchItems]);
+  }, [fetchItems, universeSlug, isUniverseLoading]);
 
   useEffect(() => {
     const query = searchQuery.trim();
@@ -87,7 +97,7 @@ export function ArchivoWorkspace() {
       try {
         const params = new URLSearchParams({ q: query });
         if (kindFilter !== ALL_KINDS) params.set("kind", kindFilter);
-        const response = await fetch(`/api/archivo/search?${params.toString()}`);
+        const response = await universeFetch(`/api/archivo/search?${params.toString()}`);
         const data = await response.json();
         if (!response.ok) {
           throw new Error(data.error ?? "Búsqueda fallida.");
@@ -102,7 +112,7 @@ export function ArchivoWorkspace() {
     }, 300);
 
     return () => window.clearTimeout(timer);
-  }, [searchQuery, kindFilter]);
+  }, [searchQuery, kindFilter, universeFetch]);
 
   const visibleItems = useMemo(() => {
     const base = searchHits ?? items;
@@ -115,7 +125,7 @@ export function ArchivoWorkspace() {
     setIsDetailLoading(true);
     setSelectedDetail(null);
     try {
-      const response = await fetch(`/api/archivo/${encodeURIComponent(id)}`);
+      const response = await universeFetch(`/api/archivo/${encodeURIComponent(id)}`);
       const data = await response.json();
       if (!response.ok) {
         throw new Error(data.error ?? "No se pudo cargar el documento.");
@@ -127,7 +137,7 @@ export function ArchivoWorkspace() {
     } finally {
       setIsDetailLoading(false);
     }
-  }, []);
+  }, [universeFetch]);
 
   const totalCount = items.length;
 

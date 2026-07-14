@@ -1,8 +1,10 @@
 "use client";
 
+import { useBabel } from "@/components/babel/babel-context";
 import { EventProposalsPanel } from "@/components/events/event-proposals-panel";
 import { JournalCanvas } from "@/components/diario/journal-canvas";
 import { JournalSidebar } from "@/components/diario/journal-sidebar";
+import { withUniverseFetchInit } from "@/lib/babel/universe-fetch";
 import type { ContextEventDto } from "@/lib/events/types";
 import type {
   JournalEntryDetail,
@@ -18,6 +20,7 @@ function getCurrentYearMonth() {
 }
 
 export function DiarioWorkspace() {
+  const { universeSlug, universeFetch, isLoading: isUniverseLoading } = useBabel();
   const initial = getCurrentYearMonth();
   const [year, setYear] = useState(initial.year);
   const [month, setMonth] = useState(initial.month);
@@ -48,7 +51,7 @@ export function DiarioWorkspace() {
       });
       if (searchQuery.trim()) params.set("q", searchQuery.trim());
 
-      const response = await fetch(`/api/journal/list?${params.toString()}`);
+      const response = await universeFetch(`/api/journal/list?${params.toString()}`);
       const data = await response.json();
       if (!response.ok) {
         throw new Error(data.error ?? "No se pudo cargar el historial");
@@ -65,14 +68,22 @@ export function DiarioWorkspace() {
     } finally {
       setIsLoadingList(false);
     }
-  }, [year, month, searchQuery]);
+  }, [year, month, searchQuery, universeFetch]);
 
   useEffect(() => {
+    setEntries([]);
+    setDaysWithEntries([]);
+    setPreviewEntry(null);
+    setSelectedEntryId(null);
+  }, [universeSlug]);
+
+  useEffect(() => {
+    if (isUniverseLoading) return;
     const timer = setTimeout(() => {
       void fetchEntries();
     }, searchQuery ? 250 : 0);
     return () => clearTimeout(timer);
-  }, [fetchEntries, searchQuery]);
+  }, [fetchEntries, searchQuery, universeSlug, isUniverseLoading]);
 
   const loadPreview = useCallback(async (entry: JournalEntrySummary) => {
     setSelectedEntryId(entry.id);
@@ -106,15 +117,20 @@ export function DiarioWorkspace() {
 
     setIsSaving(true);
     try {
-      const response = await fetch("/api/journal/save", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          content: trimmed,
-          onda: activeOnda,
-          purify: purifyOnSave,
+      const response = await fetch(
+        "/api/journal/save",
+        withUniverseFetchInit({
+          method: "POST",
+          universeSlug: universeSlug,
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            content: trimmed,
+            onda: activeOnda,
+            purify: purifyOnSave,
+            universeSlug: universeSlug,
+          }),
         }),
-      });
+      );
 
       const data = await response.json();
       if (!response.ok) {

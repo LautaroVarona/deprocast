@@ -18,6 +18,7 @@ export const EXPORT_DOMAIN_IDS = [
   "cam-recorder",
   "molecular",
   "preferences",
+  "historial",
 ] as const;
 
 export const exportDomainIdSchema = z.enum(EXPORT_DOMAIN_IDS);
@@ -250,6 +251,14 @@ export const EXPORT_DOMAINS: ExportDomain[] = [
     dataPaths: [],
     clientOnly: true,
     tables: [],
+  },
+  {
+    id: "historial",
+    label: "Historial de actividad",
+    description: "Log unificado de pipelines, agentes y validaciones HITL.",
+    group: "Herramientas",
+    dataPaths: [],
+    tables: [{ table: "ActivityLog", deleteOrder: 15 }],
   },
 ];
 

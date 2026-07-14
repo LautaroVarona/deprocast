@@ -43,6 +43,8 @@ export const rendimientoMetricsSchema = z.object({
   zone: z.string().optional(),
   durationMin: z.number().optional(),
   intensity: z.enum(["baja", "media", "alta"]).optional(),
+  metricType: z.enum(["duration_min", "distance_km", "intensity"]).optional(),
+  metricValue: z.number().optional(),
 });
 
 export const combustibleMetricsSchema = z.object({
@@ -50,6 +52,34 @@ export const combustibleMetricsSchema = z.object({
   value: z.union([z.number(), z.string()]).optional(),
   unit: z.string().optional(),
   note: z.string().optional(),
+  modality: z.enum(["texto", "audio", "imagen"]).optional(),
+  items: z
+    .array(
+      z.object({
+        name: z.string(),
+        quantity: z.string().optional(),
+        unit: z.string().optional(),
+        calories: z.number().optional(),
+        protein: z.number().optional(),
+        carbs: z.number().optional(),
+        fat: z.number().optional(),
+      }),
+    )
+    .optional(),
+  totals: z
+    .object({
+      calories: z.number().optional(),
+      protein: z.number().optional(),
+      carbs: z.number().optional(),
+      fat: z.number().optional(),
+    })
+    .optional(),
+  confidence: z.number().min(0).max(1).optional(),
+  analysisNotes: z.string().optional(),
+  rawTranscript: z.string().optional(),
+  tachoPath: z.string().optional(),
+  attachmentMimeType: z.string().optional(),
+  analyzedBy: z.string().optional(),
 });
 
 export const recuperacionMetricsSchema = z.object({

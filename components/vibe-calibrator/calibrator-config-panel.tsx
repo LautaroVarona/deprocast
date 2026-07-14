@@ -1,5 +1,6 @@
 "use client";
 
+import { useBabel } from "@/components/babel/babel-context";
 import { useCalibrator } from "./calibrator-context";
 import type { CalibratorCardSource } from "./types";
 import { Button } from "@/components/ui/button";
@@ -24,15 +25,17 @@ const SOURCE_LABELS: Record<CalibratorCardSource, string> = {
 
 export function CalibratorConfigPanel() {
   const { state, dispatch, startSession } = useCalibrator();
+  const { universeSlug, universeFetch, isLoading: isUniverseLoading } = useBabel();
   const [campos, setCampos] = useState<CampoInfo[]>([getDefaultCampo()]);
   const [previewTotal, setPreviewTotal] = useState<number | null>(null);
   const [isLoadingPreview, setIsLoadingPreview] = useState(false);
   const [isStarting, setIsStarting] = useState(false);
 
   useEffect(() => {
+    if (isUniverseLoading) return;
     void (async () => {
       try {
-        const response = await fetch("/api/proyectos", { cache: "no-store" });
+        const response = await universeFetch("/api/proyectos", { cache: "no-store" });
         if (!response.ok) return;
         const data: { campos?: CampoInfo[] } = await response.json();
         if (data.campos?.length) setCampos(data.campos);
@@ -40,7 +43,7 @@ export function CalibratorConfigPanel() {
         // default local
       }
     })();
-  }, []);
+  }, [universeFetch, universeSlug, isUniverseLoading]);
 
   const loadPreview = useCallback(async () => {
     setIsLoadingPreview(true);
@@ -53,7 +56,7 @@ export function CalibratorConfigPanel() {
         params.set("campoSlug", state.config.campoSlug);
       }
 
-      const response = await fetch(
+      const response = await universeFetch(
         `/api/vibe-calibrator/queue?${params.toString()}`,
         { cache: "no-store" },
       );
@@ -70,7 +73,7 @@ export function CalibratorConfigPanel() {
     } finally {
       setIsLoadingPreview(false);
     }
-  }, [state.config]);
+  }, [state.config, universeFetch]);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {

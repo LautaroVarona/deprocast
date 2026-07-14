@@ -1,4 +1,5 @@
 import { listLaboralChallenges } from "@/lib/laboral/challenges";
+import { filterProjectsForUniverse } from "@/lib/babel/universe-refs";
 import { listProjects } from "@/lib/projects/service";
 import type {
   CalibratorQueueConfig,
@@ -19,10 +20,14 @@ async function fetchValidatedCards(
 ): Promise<VibeCalibrationCard[]> {
   const cards: VibeCalibrationCard[] = [];
 
-  const [challenges, projects] = await Promise.all([
+  const [challenges, allProjects] = await Promise.all([
     listLaboralChallenges(),
     listProjects(),
   ]);
+  const projects = await filterProjectsForUniverse(
+    allProjects,
+    config.universeSlug,
+  );
 
   for (const challenge of challenges) {
     if (!matchesCampo(config.campoSlug, "laboral_varona")) continue;

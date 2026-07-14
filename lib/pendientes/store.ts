@@ -199,10 +199,12 @@ export async function calibratePendingTask(
 
 export async function listTasksForCalibration(
   limit = 20,
+  universeSlug?: string,
 ): Promise<PendingTaskDto[]> {
   const rows = await prisma.pendingTask.findMany({
     where: {
       status: { in: ["recognized", "calibrated"] },
+      ...(universeSlug ? { universeSlug } : {}),
     },
     orderBy: [{ recognizedAt: "asc" }, { createdAt: "asc" }],
     take: limit,

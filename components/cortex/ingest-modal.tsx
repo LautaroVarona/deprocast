@@ -1,7 +1,9 @@
 "use client";
 
 import { buildCaptureGravity, postIngestaCapture } from "@/components/ingesta/capture-client";
+import { useBabel } from "@/components/babel/babel-context";
 import { Button } from "@/components/ui/button";
+import { withUniverseFetchInit } from "@/lib/babel/universe-fetch";
 import { cn } from "@/lib/utils";
 import {
   CheckCircle2Icon,
@@ -42,14 +44,18 @@ function isTextDocument(name: string): boolean {
   return TEXT_EXTENSIONS.some((ext) => lower.endsWith(ext));
 }
 
-async function uploadAudio(file: File): Promise<void> {
+async function uploadAudio(file: File, universeSlug?: string | null): Promise<void> {
   const formData = new FormData();
   formData.append("file", file);
 
-  const response = await fetch("/api/upload", {
-    method: "POST",
-    body: formData,
-  });
+  const response = await fetch(
+    "/api/upload",
+    withUniverseFetchInit({
+      method: "POST",
+      universeSlug,
+      body: formData,
+    }),
+  );
 
   const data = await response.json();
   if (!response.ok) {
@@ -57,7 +63,10 @@ async function uploadAudio(file: File): Promise<void> {
   }
 }
 
-async function ingestTextFile(file: File): Promise<void> {
+async function ingestTextFile(
+  file: File,
+  universeSlug?: string | null,
+): Promise<void> {
   const lower = file.name.toLowerCase();
   if (lower.endsWith(".doc") || lower.endsWith(".docx")) {
     throw new Error(
@@ -70,33 +79,49 @@ async function ingestTextFile(file: File): Promise<void> {
     throw new Error("El archivo está vacío");
   }
 
-  await postIngestaCapture({
-    channel: "texto",
-    rawText: text,
-    filename: file.name,
-    gravity: buildCaptureGravity({
-      title: "",
-      sourceType: "personal_writing",
-      campoSlug: "babel",
-      onda: "cortex-ingest",
-    }),
-  });
+  await postIngestaCapture(
+    {
+      channel: "texto",
+      rawText: text,
+      filename: file.name,
+      gravity: buildCaptureGravity(
+        {
+          title: "",
+          sourceType: "personal_writing",
+          campoSlug: "babel",
+          onda: "cortex-ingest",
+        },
+        universeSlug,
+      ),
+    },
+    { universeSlug },
+  );
 }
 
-async function ingestTextDump(content: string): Promise<void> {
-  await postIngestaCapture({
-    channel: "texto",
-    rawText: content,
-    gravity: buildCaptureGravity({
-      title: "",
-      sourceType: "ai_chat",
-      campoSlug: "babel",
-      onda: "cortex-dump",
-    }),
-  });
+async function ingestTextDump(
+  content: string,
+  universeSlug?: string | null,
+): Promise<void> {
+  await postIngestaCapture(
+    {
+      channel: "texto",
+      rawText: content,
+      gravity: buildCaptureGravity(
+        {
+          title: "",
+          sourceType: "ai_chat",
+          campoSlug: "babel",
+          onda: "cortex-dump",
+        },
+        universeSlug,
+      ),
+    },
+    { universeSlug },
+  );
 }
 
 export function IngestModal({ open, onClose, onIngested }: IngestModalProps) {
+  const { activeUniverse } = useBabel();
   const [mounted, setMounted] = useState(false);
   const [tab, setTab] = useState<IngestTab>("archivos");
   const [isDragging, setIsDragging] = useState(false);
@@ -147,9 +172,9 @@ export function IngestModal({ open, onClose, onIngested }: IngestModalProps) {
 
         try {
           if (isAudioFile(file.name)) {
-            await uploadAudio(file);
+            await uploadAudio(file, activeUniverse?.slug);
           } else if (isTextDocument(file.name)) {
-            await ingestTextFile(file);
+            await ingestTextFile(file, activeUniverse?.slug);
           } else {
             throw new Error(
               "Formato no soportado. Usá audio (.mp3, .m4a, .wav, .ogg) o documento (.txt, .md, .doc, .docx).",
@@ -191,7 +216,7 @@ export function IngestModal({ open, onClose, onIngested }: IngestModalProps) {
         }, 1200);
       }
     },
-    [onClose, onIngested],
+    [activeUniverse?.slug, onClose, onIngested],
   );
 
   const handleTextSubmit = async () => {
@@ -199,7 +224,7 @@ export function IngestModal({ open, onClose, onIngested }: IngestModalProps) {
 
     setIsSubmittingText(true);
     try {
-      await ingestTextDump(textContent.trim());
+      await ingestTextDump(textContent.trim(), activeUniverse?.slug);
       onIngested();
       toast.success("Dump de texto capturado", {
         description: "Purificación en curso en el Atanor.",

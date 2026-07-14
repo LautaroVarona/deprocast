@@ -5,6 +5,8 @@ import type {
   AudioStationPhase,
   DeduplicateScanResult,
 } from "@/lib/audio-station/types";
+import { useBabel } from "@/components/babel/babel-context";
+import { fetchWithUniverse } from "@/lib/babel/universe-fetch";
 import { fetchJson } from "@/lib/fetch-json";
 import {
   createContext,
@@ -20,6 +22,7 @@ type ProcessStatus = {
   active: { id: string } | null;
   queuedIds: string[];
   queuedCount: number;
+  purifyingIds: string[];
 };
 
 type ReviewRecord = {
@@ -48,6 +51,8 @@ const AudioStationContext = createContext<AudioStationContextValue | null>(
 );
 
 export function AudioStationProvider({ children }: { children: ReactNode }) {
+  const { activeUniverse, isLoading: isUniverseLoading } = useBabel();
+  const activeSlug = activeUniverse?.slug;
   const [phase, setPhase] = useState<AudioStationPhase>("idle");
   const [assets, setAssets] = useState<AudioAssetSummary[]>([]);
   const [scan, setScan] = useState<DeduplicateScanResult | null>(null);
@@ -62,14 +67,24 @@ export function AudioStationProvider({ children }: { children: ReactNode }) {
   const [skipDuplicates, setSkipDuplicates] = useState(false);
 
   const refresh = useCallback(async () => {
+    if (isUniverseLoading) return;
+
     try {
       const [stationData, statusData, reviewData] = await Promise.all([
-        fetchJson<{
-          assets: AudioAssetSummary[];
-          scan: DeduplicateScanResult;
-        }>("/api/audio-station/deduplicate"),
+        fetchWithUniverse("/api/audio-station/deduplicate", {
+          universeSlug: activeSlug,
+        }).then(async (res) => {
+          if (!res.ok) throw new Error("No se pudo cargar la estación de audio.");
+          return res.json() as Promise<{
+            assets: AudioAssetSummary[];
+            scan: DeduplicateScanResult;
+          }>;
+        }),
         fetchJson<ProcessStatus>("/api/process/status"),
-        fetch("/api/purifier/review", { cache: "no-store" }).then(async (res) =>
+        fetchWithUniverse("/api/purifier/review", {
+          universeSlug: activeSlug,
+          cache: "no-store",
+        }).then(async (res) =>
           res.ok ? ((await res.json()) as { records?: ReviewRecord[] }) : { records: [] },
         ),
       ]);
@@ -81,9 +96,26 @@ export function AudioStationProvider({ children }: { children: ReactNode }) {
         }
       }
 
+      const allowedAssetIds = new Set(stationData.assets.map((asset) => asset.id));
+      const filteredStatus: ProcessStatus | null = statusData
+        ? {
+            active:
+              statusData.active && allowedAssetIds.has(statusData.active.id)
+                ? statusData.active
+                : null,
+            queuedIds: statusData.queuedIds.filter((id) => allowedAssetIds.has(id)),
+            queuedCount: statusData.queuedIds.filter((id) =>
+              allowedAssetIds.has(id),
+            ).length,
+            purifyingIds: (statusData.purifyingIds ?? []).filter((id) =>
+              allowedAssetIds.has(id),
+            ),
+          }
+        : null;
+
       setAssets(stationData.assets);
       setScan(stationData.scan);
-      setQueueStatus(statusData);
+      setQueueStatus(filteredStatus);
       setReviewByAssetId(reviewMap);
       setError(null);
       setRefreshKey((key) => key + 1);
@@ -111,7 +143,14 @@ export function AudioStationProvider({ children }: { children: ReactNode }) {
     } finally {
       setIsLoading(false);
     }
-  }, [skipDuplicates]);
+  }, [activeSlug, isUniverseLoading, skipDuplicates]);
+
+  useEffect(() => {
+    setAssets([]);
+    setScan(null);
+    setReviewByAssetId(new Map());
+    setIsLoading(true);
+  }, [activeSlug]);
 
   const runDedupScan = useCallback(async () => {
     setIsBusy(true);
@@ -119,10 +158,14 @@ export function AudioStationProvider({ children }: { children: ReactNode }) {
     setError(null);
 
     try {
-      const data = await fetchJson<{
+      const response = await fetchWithUniverse("/api/audio-station/deduplicate", {
+        universeSlug: activeSlug,
+      });
+      if (!response.ok) throw new Error("No se pudo escanear duplicados.");
+      const data = (await response.json()) as {
         assets: AudioAssetSummary[];
         scan: DeduplicateScanResult;
-      }>("/api/audio-station/deduplicate");
+      };
 
       setAssets(data.assets);
       setScan(data.scan);
@@ -137,7 +180,7 @@ export function AudioStationProvider({ children }: { children: ReactNode }) {
     } finally {
       setIsBusy(false);
     }
-  }, []);
+  }, [activeSlug]);
 
   const deleteDuplicates = useCallback(
     async (assetIds: string[]) => {
@@ -191,6 +234,7 @@ export function AudioStationProvider({ children }: { children: ReactNode }) {
     () =>
       assets.some((asset) => asset.status === "PROCESSING") ||
       (queueStatus?.queuedCount ?? 0) > 0 ||
+      (queueStatus?.purifyingIds?.length ?? 0) > 0 ||
       Boolean(queueStatus?.active),
     [assets, queueStatus],
   );

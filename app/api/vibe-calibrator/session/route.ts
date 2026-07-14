@@ -7,6 +7,7 @@ import {
   createCalibrationSession,
   getCalibrationSession,
 } from "@/lib/vibe-calibrator/persist";
+import { getUniverseFilterSlugFromRequest } from "@/lib/babel/universe-scope";
 import type {
   CalibratorCardSource,
   CalibratorQueueConfig,
@@ -65,7 +66,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const config = normalizeQueueConfig(body.config);
+    const universeSlug = getUniverseFilterSlugFromRequest(request);
+    const config = normalizeQueueConfig({
+      ...body.config,
+      universeSlug,
+    });
     const cards = await buildCalibrationQueue(config);
 
     if (cards.length === 0) {

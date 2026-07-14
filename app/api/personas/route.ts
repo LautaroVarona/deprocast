@@ -1,14 +1,31 @@
 import { listPersonas } from "@/lib/personas/queries";
 import { createPersona, createPersonaEntity } from "@/lib/personas/service";
 import { isPersonaKind } from "@/lib/kg/types";
+import { getUniverseFilterSlugFromRequest } from "@/lib/babel/universe-scope";
+import { resolveUniverseKgNodeIds } from "@/lib/babel/universe-refs";
 import { NextRequest, NextResponse } from "next/server";
 
 export const runtime = "nodejs";
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    const personas = await listPersonas();
-    return NextResponse.json({ personas });
+    const universeSlug = getUniverseFilterSlugFromRequest(request);
+    const allPersonas = await listPersonas();
+
+    if (!universeSlug) {
+      return NextResponse.json({ personas: allPersonas, universe: "babel" });
+    }
+
+    const nodeIds = await resolveUniverseKgNodeIds(universeSlug);
+    if (nodeIds && nodeIds.size === 0) {
+      return NextResponse.json({ personas: [], universe: universeSlug });
+    }
+
+    const personas = allPersonas.filter((persona) =>
+      nodeIds?.has(persona.id) ?? false,
+    );
+
+    return NextResponse.json({ personas, universe: universeSlug });
   } catch (error) {
     console.error("Personas list error:", error);
     const message =

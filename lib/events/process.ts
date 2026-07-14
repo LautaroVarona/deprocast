@@ -87,6 +87,26 @@ export async function processJournalForEvents(input: {
     occurredAt: input.occurredAt,
     correlationId,
     events,
+  }).then((created) => {
+    if (created.length > 0) {
+      void import("@/lib/historial/log").then(({ logActivity }) =>
+        logActivity({
+          occurredAt: input.occurredAt,
+          category: "events",
+          action: "extracted_events",
+          title: `Diario: ${created.length} evento(s) propuesto(s)`,
+          agentId: "extractor-eventos",
+          agentName: "Extractor de Eventos Contextuales",
+          sourceType: "journal",
+          sourceRef: input.journalId,
+          correlationId,
+          metadata: { eventCount: created.length },
+        }).catch((error) => {
+          console.error("Historial events log error:", error);
+        }),
+      );
+    }
+    return created;
   });
 }
 
@@ -158,5 +178,25 @@ export async function processChatForEvents(input: {
     occurredAt: input.occurredAt,
     correlationId,
     events,
+  }).then((created) => {
+    if (created.length > 0) {
+      void import("@/lib/historial/log").then(({ logActivity }) =>
+        logActivity({
+          occurredAt: input.occurredAt,
+          category: "events",
+          action: "extracted_events",
+          title: `Chat: ${created.length} evento(s) propuesto(s)`,
+          agentId: "extractor-eventos",
+          agentName: "Extractor de Eventos Contextuales",
+          sourceType: "chat_message",
+          sourceRef: input.messageId,
+          correlationId,
+          metadata: { eventCount: created.length },
+        }).catch((error) => {
+          console.error("Historial chat events log error:", error);
+        }),
+      );
+    }
+    return created;
   });
 }

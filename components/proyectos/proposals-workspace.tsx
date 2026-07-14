@@ -1,5 +1,6 @@
 "use client";
 
+import { useBabel } from "@/components/babel/babel-context";
 import {
   ProposalCard,
   extractCampoSlugsFromProposal,
@@ -140,6 +141,7 @@ export function ProposalsWorkspace({
   onPendingCountChange,
   onProposalActivated,
 }: ProposalsWorkspaceProps) {
+  const { universeSlug, universeFetch, isLoading: isUniverseLoading } = useBabel();
   const [proposals, setProposals] = useState<ProjectProposal[]>([]);
   const [campos, setCampos] = useState<CampoInfo[]>([getDefaultCampo()]);
   const [editors, setEditors] = useState<Record<string, ProposalEditorState>>({});
@@ -161,8 +163,8 @@ export function ProposalsWorkspace({
       if (!options?.silent) setIsLoading(true);
       try {
         const [proposalsRes, camposRes] = await Promise.all([
-          fetch(`/api/proyectos/proposals?status=${status}`, { cache: "no-store" }),
-          fetch("/api/campos", { cache: "no-store" }),
+          universeFetch(`/api/proyectos/proposals?status=${status}`, { cache: "no-store" }),
+          universeFetch("/api/campos", { cache: "no-store" }),
         ]);
 
         if (proposalsRes.ok) {
@@ -198,8 +200,18 @@ export function ProposalsWorkspace({
         if (!options?.silent) setIsLoading(false);
       }
     },
-    [status],
+    [status, universeFetch],
   );
+
+  useEffect(() => {
+    setProposals([]);
+    setEditors({});
+  }, [universeSlug]);
+
+  useEffect(() => {
+    if (isUniverseLoading) return;
+    void loadProposals();
+  }, [loadProposals, universeSlug, isUniverseLoading]);
 
   const removeProposalLocally = useCallback((proposalId: string) => {
     setProposals((current) => current.filter((p) => p.id !== proposalId));
@@ -215,10 +227,6 @@ export function ProposalsWorkspace({
       onPendingCountChange(proposals.length);
     }
   }, [status, proposals.length, onPendingCountChange]);
-
-  useEffect(() => {
-    void loadProposals();
-  }, [loadProposals]);
 
   const updateEditor = (id: string, patch: Partial<ProposalEditorState>) => {
     setEditors((current) => ({
@@ -256,7 +264,7 @@ export function ProposalsWorkspace({
 
     setActingId(proposal.id);
     try {
-      const response = await fetch(`/api/proyectos/proposals/${proposal.id}/approve`, {
+      const response = await universeFetch(`/api/proyectos/proposals/${proposal.id}/approve`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -294,7 +302,7 @@ export function ProposalsWorkspace({
   const handleArchive = async (proposal: ProjectProposal) => {
     setActingId(proposal.id);
     try {
-      const response = await fetch(`/api/proyectos/proposals/${proposal.id}/archive`, {
+      const response = await universeFetch(`/api/proyectos/proposals/${proposal.id}/archive`, {
         method: "POST",
       });
 

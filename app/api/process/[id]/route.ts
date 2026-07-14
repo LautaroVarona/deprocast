@@ -64,6 +64,7 @@ export async function POST(_request: NextRequest, context: RouteContext) {
     return NextResponse.json(
       {
         id,
+        jobId: id,
         status: "QUEUED",
         message: "Audio agregado a la cola de procesamiento.",
         position,

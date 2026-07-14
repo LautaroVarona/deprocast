@@ -18,9 +18,10 @@ const BADGE_TONE: Record<OperationalAgent["badgeTone"], string> = {
 
 type AgentCardProps = {
   agent: OperationalAgent;
+  isActiveToday?: boolean;
 };
 
-export function AgentCard({ agent }: AgentCardProps) {
+export function AgentCard({ agent, isActiveToday }: AgentCardProps) {
   return (
     <article
       className={cn(
@@ -45,6 +46,11 @@ export function AgentCard({ agent }: AgentCardProps) {
                 <span className="size-1.5 rounded-full bg-emerald-400 shadow-[0_0_6px_theme(colors.emerald.400)]" />
                 Operativo
               </span>
+              {isActiveToday ? (
+                <span className="inline-flex items-center gap-1 rounded-full border border-cyan-500/30 bg-cyan-500/10 px-2 py-0.5 text-[0.65rem] font-medium uppercase tracking-wider text-cyan-300">
+                  Activo hoy
+                </span>
+              ) : null}
               {agent.uiRoute && !agent.uiRoute.includes("[") ? (
                 <Link
                   href={agent.uiRoute}

@@ -3,19 +3,29 @@ import {
   getKgStats,
   getRepeatedIdeas,
 } from "@/lib/kg/analytics";
-import { NextResponse } from "next/server";
+import {
+  resolveContextSealFromRequest,
+  shouldFilterByUniverse,
+} from "@/lib/babel/context-seal";
+import { resolveUniverseKgNodeIds } from "@/lib/babel/universe-refs";
+import { NextRequest, NextResponse } from "next/server";
 
 export const runtime = "nodejs";
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    const universeSlug = resolveContextSealFromRequest(request);
+    const nodeIds = shouldFilterByUniverse(universeSlug)
+      ? await resolveUniverseKgNodeIds(universeSlug)
+      : null;
+
     const [stats, centrality, repeatedIdeas] = await Promise.all([
-      getKgStats(),
-      getCentralityRanking({ limit: 20, excludeCode: true }),
-      getRepeatedIdeas({ limit: 20 }),
+      getKgStats({ nodeIds }),
+      getCentralityRanking({ limit: 20, excludeCode: true, nodeIds }),
+      getRepeatedIdeas({ limit: 20, nodeIds }),
     ]);
 
-    return NextResponse.json({ stats, centrality, repeatedIdeas });
+    return NextResponse.json({ stats, centrality, repeatedIdeas, universe: universeSlug });
   } catch (error) {
     console.error("KG stats error:", error);
     const message =

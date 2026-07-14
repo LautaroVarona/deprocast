@@ -4,6 +4,7 @@ import {
   buildCaptureGravity,
   postIngestaCapture,
 } from "@/components/ingesta/capture-client";
+import { useBabel } from "@/components/babel/babel-context";
 import { useIngesta } from "@/components/ingesta/ingesta-context";
 import { Button } from "@/components/ui/button";
 import { CAPTURE_SUCCESS_TOAST } from "@/lib/purifier/constants";
@@ -13,6 +14,7 @@ import { toast } from "sonner";
 
 export function TextChannel() {
   const { gravity, resetGravity } = useIngesta();
+  const { activeUniverse } = useBabel();
   const [content, setContent] = useState("");
   const [isSaving, setIsSaving] = useState(false);
 
@@ -23,11 +25,14 @@ export function TextChannel() {
 
     setIsSaving(true);
     try {
-      const data = await postIngestaCapture({
-        channel: "texto",
-        rawText: content,
-        gravity: buildCaptureGravity(gravity),
-      });
+      const data = await postIngestaCapture(
+        {
+          channel: "texto",
+          rawText: content,
+          gravity: buildCaptureGravity(gravity, activeUniverse?.slug),
+        },
+        { universeSlug: activeUniverse?.slug },
+      );
 
       toast.success(CAPTURE_SUCCESS_TOAST, {
         description: "El sistema está estructurando el contenido.",

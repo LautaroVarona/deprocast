@@ -25,6 +25,9 @@ import type {
 } from "@/lib/purifier/types";
 import { DUDA_MARKER_REGEX } from "@/lib/purifier/types";
 import {
+  resolveReviewMetaTags,
+} from "@/lib/purifier/meta-tags";
+import {
   saveReviewRecord,
 } from "@/lib/purifier/review-store";
 export {
@@ -696,6 +699,32 @@ export async function runPurificationPipeline(
     },
   });
 
+  const mergedMetaTags = resolveReviewMetaTags({
+    schemaVersion: "2",
+    reviewId,
+    particula: dimensions.particula,
+    assetId: input.assetId,
+    gravity,
+    source: { filename, metadata: input.metadata ?? {} },
+    originalText: input.rawText,
+    stages,
+    afterRegex: regexResult.text,
+    cleanedText: dedupResult.text,
+    metaTagsSecundarios: metaTags,
+    doubts: extractDoubts(dedupResult.text),
+    suggestedDimensions: dimensions,
+    normalizedMarkdown,
+    fractalSegments: [],
+    dedup: {
+      mergedCount: dedupResult.mergedCount,
+      threshold: PURIFIER_DEDUP_THRESHOLD,
+    },
+    regex: { removedCount: regexResult.removedCount },
+    processedAt: new Date().toISOString(),
+    model: getCohereModelName("default"),
+    kgExtraction,
+  });
+
   // Station 6
   const bodyMatch = normalizedMarkdown.match(
     /##\s+Transcripción purificada\s*\n+([\s\S]*?)$/i,
@@ -741,9 +770,17 @@ export async function runPurificationPipeline(
     kgIngest,
   };
 
+  record.metaTagsSecundarios = mergedMetaTags;
+
   if (options.saveReview !== false) {
     await saveReviewRecord(record);
   }
+
+  void import("@/lib/historial/pipeline-log").then(({ logPurifiedActivity }) =>
+    logPurifiedActivity(record).catch((error) => {
+      console.error("Historial purifier log error:", error);
+    }),
+  );
 
   return record;
 }

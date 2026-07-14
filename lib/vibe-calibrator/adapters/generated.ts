@@ -10,7 +10,10 @@ import type {
 async function fetchGeneratedCards(
   config: CalibratorQueueConfig,
 ): Promise<VibeCalibrationCard[]> {
-  const tasks = await listTasksForCalibration(config.limit);
+  const tasks = await listTasksForCalibration(
+    config.limit,
+    config.universeSlug,
+  );
   return tasks.map(
     (task): VibeCalibrationCard => ({
       id: task.id,

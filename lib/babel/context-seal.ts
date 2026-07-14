@@ -30,8 +30,9 @@ export function resolveContextSealFromRequest(
   body?: { universeSlug?: string | null },
 ): string {
   const headerValue = request.headers.get(UNIVERSE_HEADER);
+  const queryValue = request.nextUrl.searchParams.get("universe");
   return resolveContextSeal({
-    universeSlug: body?.universeSlug,
+    universeSlug: body?.universeSlug ?? queryValue,
     headerValue,
   });
 }

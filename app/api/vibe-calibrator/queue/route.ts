@@ -2,6 +2,7 @@ import {
   buildCalibrationQueue,
   normalizeQueueConfig,
 } from "@/lib/vibe-calibrator/build-queue";
+import { getUniverseFilterSlugFromRequest } from "@/lib/babel/universe-scope";
 import type { CalibratorCardSource } from "@/lib/vibe-calibrator/types";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -22,10 +23,12 @@ function parseSources(value: string | null): CalibratorCardSource[] {
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = request.nextUrl;
+    const universeSlug = getUniverseFilterSlugFromRequest(request);
     const config = normalizeQueueConfig({
       sources: parseSources(searchParams.get("sources")),
       campoSlug: searchParams.get("campoSlug") ?? undefined,
       limit: Number(searchParams.get("limit") ?? 20),
+      universeSlug,
     });
 
     const cards = await buildCalibrationQueue(config);

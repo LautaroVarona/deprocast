@@ -1,5 +1,6 @@
 "use client";
 
+import { useBabel } from "@/components/babel/babel-context";
 import { MAX_SESSION_NODES } from "@/lib/enciclopedia/constants";
 import type {
   EncyclopediaEntryDto,
@@ -10,6 +11,7 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useState,
   type ReactNode,
@@ -68,6 +70,7 @@ function upsertEdge(edges: SessionEdge[], edge: SessionEdge | null): SessionEdge
 }
 
 export function EnciclopediaProvider({ children }: { children: ReactNode }) {
+  const { universeSlug, universeFetch, isLoading: isUniverseLoading } = useBabel();
   const [sessionEntries, setSessionEntries] = useState<EncyclopediaEntryDto[]>(
     [],
   );
@@ -80,6 +83,15 @@ export function EnciclopediaProvider({ children }: { children: ReactNode }) {
   >([]);
   const [isBusy, setIsBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setSessionEntries([]);
+    setSessionEdges([]);
+    setCurrentEntry(null);
+    setExplorationStack([]);
+    setError(null);
+    setIsBusy(false);
+  }, [universeSlug]);
 
   const exploreConcept = useCallback(
     async (
@@ -116,7 +128,7 @@ export function EnciclopediaProvider({ children }: { children: ReactNode }) {
           ? undefined
           : (options?.parentEntryId ?? currentEntry?.id ?? undefined);
 
-        const response = await fetch("/api/enciclopedia/explore", {
+        const response = await universeFetch("/api/enciclopedia/explore", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -154,7 +166,7 @@ export function EnciclopediaProvider({ children }: { children: ReactNode }) {
         setIsBusy(false);
       }
     },
-    [currentEntry?.id, sessionEntries],
+    [currentEntry?.id, sessionEntries, universeFetch],
   );
 
   const selectEntry = useCallback(
@@ -193,7 +205,7 @@ export function EnciclopediaProvider({ children }: { children: ReactNode }) {
       setError(null);
 
       try {
-        const response = await fetch("/api/enciclopedia/report", {
+        const response = await universeFetch("/api/enciclopedia/report", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -225,7 +237,7 @@ export function EnciclopediaProvider({ children }: { children: ReactNode }) {
         setIsBusy(false);
       }
     },
-    [currentEntry],
+    [currentEntry, universeFetch],
   );
 
   const linkToCorpus = useCallback(
@@ -242,7 +254,7 @@ export function EnciclopediaProvider({ children }: { children: ReactNode }) {
       setError(null);
 
       try {
-        const response = await fetch("/api/enciclopedia/link-corpus", {
+        const response = await universeFetch("/api/enciclopedia/link-corpus", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -273,7 +285,7 @@ export function EnciclopediaProvider({ children }: { children: ReactNode }) {
         setIsBusy(false);
       }
     },
-    [currentEntry],
+    [currentEntry, universeFetch],
   );
 
   const value = useMemo(

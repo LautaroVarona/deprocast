@@ -3,12 +3,15 @@
  * Actualizar en paralelo cuando cambie la documentación.
  */
 
+export type AgentStatus = "operational" | "design" | "subprocessor";
+
 export type OperationalAgent = {
   id: string;
   emoji: string;
   name: string;
   badge: string;
   badgeTone: "cyan" | "emerald" | "violet" | "amber" | "zinc" | "rose";
+  status?: AgentStatus;
   locations: string[];
   functions: string[];
   technologies: string[];
@@ -35,6 +38,7 @@ export type DesignAgent = {
   emoji: string;
   name: string;
   subtitle: string;
+  status?: AgentStatus;
   plannedFunctions: string[];
   description: string;
   plannedLocation: string;
@@ -312,17 +316,15 @@ export const OPERATIONAL_AGENTS: OperationalAgent[] = [
     locations: [
       "lib/listador/extract.ts",
       "lib/listador/process.ts",
-      "lib/purifier/capture.ts",
-      "lib/audio-station/auto-purify.ts",
       "app/api/journal/save/route.ts",
       "app/api/pendientes/route.ts",
     ],
     functions: [
-      "Absorber texto crudo y transcripciones desde ingesta, audio y diario.",
-      "Identificar acciones, compromisos y eventos en lenguaje natural.",
+      "Extraer tareas desde entradas del diario (hook en journal/save).",
+      "Identificar acciones, compromisos y bloques de trabajo en lenguaje natural.",
       "Persistir sugerencias como PendingTask con estado suggested y universeSlug.",
       "Deduplicar tareas por título y sourceRef en ventana de 24h.",
-      "Alimentar la sección Tareas Sugeridas y el Grid de asaltos.",
+      "Complementa al Extractor Trailing (audio/ingesta) — no se engancha desde captureAndPurify.",
     ],
     technologies: [
       "Cohere Command R+ (fast)",
@@ -500,6 +502,242 @@ export const OPERATIONAL_AGENTS: OperationalAgent[] = [
     ],
     uiRoute: "/ludus",
   },
+  {
+    id: "extractor-trailing",
+    emoji: "🎬",
+    name: "Extractor de Comandos Trailing",
+    badge: "LLM · Audio e ingesta",
+    badgeTone: "cyan",
+    locations: [
+      "lib/trailing-commands/extract.ts",
+      "lib/trailing-commands/process.ts",
+      "lib/purifier/capture.ts",
+    ],
+    functions: [
+      "Extraer compromisos y comandos al final de transcripciones y capturas.",
+      "Crear PendingTask y eventos de calendario desde audio/ingesta vía captureAndPurify.",
+      "Resolver fechas relativas (hoy, mañana, días de semana) y horarios.",
+      "Complementa a El Listador (enganchado solo desde diario).",
+    ],
+    technologies: [
+      "Cohere Command R+ (fast)",
+      "lib/pendientes/store.ts",
+      "lib/events/service.ts",
+    ],
+    uiRoute: "/pendientes",
+  },
+  {
+    id: "extractor-eventos",
+    emoji: "📅",
+    name: "Extractor de Eventos Contextuales",
+    badge: "LLM · Salud y proyectos",
+    badgeTone: "violet",
+    locations: [
+      "lib/events/extract.ts",
+      "lib/events/process.ts",
+      "app/api/journal/save/route.ts",
+      "lib/chat/engine.ts",
+    ],
+    functions: [
+      "Proponer eventos de salud, proyecto y general desde diario y chat.",
+      "Persistir ContextEvent con workflow HITL (proposed → confirmed).",
+      "Vincular entidades (proyectos, journal, chat_message) vía ContextEventLink.",
+    ],
+    technologies: [
+      "Cohere Command R+ (fast)",
+      "Prisma (ContextEvent)",
+      "lib/events/service.ts",
+    ],
+    uiRoute: "/calendario",
+  },
+  {
+    id: "vision-atomica",
+    emoji: "🔬",
+    name: "Agente de Visión Atómica",
+    badge: "Multimodal · Cuadernos",
+    badgeTone: "violet",
+    locations: [
+      "lib/cuadernos/vision-agent.ts",
+      "app/api/cuadernos/pages/[pageId]/process/route.ts",
+    ],
+    functions: [
+      "OCR de páginas manuscritas en cuadernos (distinto del OCR de ingesta).",
+      "Extraer texto atómico por página con Cohere Vision.",
+      "Opcionalmente encadenar captureAndPurify para purificación del contenido.",
+    ],
+    technologies: ["Cohere Vision", "Prisma (NotebookPage)"],
+    uiRoute: "/cuadernos",
+  },
+  {
+    id: "chunkeador-semantico",
+    emoji: "🧩",
+    name: "Chunkeador Semántico",
+    badge: "Determinístico · Molecular",
+    badgeTone: "zinc",
+    locations: [
+      "lib/molecular-processing/semantic-chunker.ts",
+      "components/molecular/semantic-chunker-panel.tsx",
+    ],
+    functions: [
+      "Segmentar corpus en partículas semánticas para calibración molecular.",
+      "Preparar bloques para el Calibrador Central (ejes X/Y/Z).",
+    ],
+    technologies: ["lib/molecular-processing/"],
+    uiRoute: "/molecular",
+  },
+  {
+    id: "calibrador-central",
+    emoji: "⚖️",
+    name: "Calibrador Central",
+    badge: "HITL · Ejes moleculares",
+    badgeTone: "rose",
+    locations: [
+      "lib/molecular-processing/calibrator.ts",
+      "app/api/molecular/validate/route.ts",
+      "components/molecular/calibrator-panel.tsx",
+    ],
+    functions: [
+      "Proponer ejes X/Y/Z para cada partícula semántica.",
+      "Validación HITL de la posición molecular en el espacio de conocimiento.",
+    ],
+    technologies: ["lib/molecular-processing/store.ts", "data/molecular/"],
+    uiRoute: "/molecular",
+  },
+  {
+    id: "incubador-atanor",
+    emoji: "🔥",
+    name: "Incubador del Atanor",
+    badge: "LLM · Nuevos proyectos",
+    badgeTone: "amber",
+    locations: [
+      "lib/projects/incubation/",
+      "app/proyectos/nuevo/",
+    ],
+    functions: [
+      "Entrevista conversacional para incubar nuevos proyectos.",
+      "Extraer campos, prioridades y contexto desde diálogo con el usuario.",
+    ],
+    technologies: [
+      "Cohere Command R+",
+      "Prisma (ProjectIncubationSession)",
+    ],
+    uiRoute: "/proyectos/nuevo",
+  },
+  {
+    id: "mnemosyne",
+    emoji: "🧬",
+    name: "Mnemosyne",
+    badge: "Embeddings · Memoria líquida",
+    badgeTone: "emerald",
+    locations: [
+      "lib/mnemosyne/",
+      "lib/chat/hybrid-search.ts",
+      "lib/mnemosyne/hooks.ts",
+    ],
+    functions: [
+      "Indexar embeddings locales de diario, KG, Purifier, cuadernos y chat.",
+      "Servir búsqueda vectorial + rerank para el Exocórtex.",
+      "Re-hidratar contexto más allá del historial de 10 turnos.",
+    ],
+    technologies: [
+      "Cohere embed-v4.0",
+      "Cohere rerank-v3.5",
+      "Prisma (MemoryEmbedding)",
+    ],
+  },
+  {
+    id: "centinela-somatico",
+    emoji: "🫀",
+    name: "Centinela Somático",
+    badge: "Captura · Salud multimodal",
+    badgeTone: "emerald",
+    locations: [
+      "components/salud/panels/alimentacion-panel.tsx",
+      "lib/health/ingest-service.ts",
+      "lib/health/vision-food.ts",
+      "lib/health/transcribe-note.ts",
+      "app/api/salud/ingest/route.ts",
+    ],
+    functions: [
+      "Captar ingestas reales desde /salud (texto, foto y nota de voz).",
+      "Enrutar a visión Cohere, Deepgram STT y Nutrimetron según modalidad.",
+      "Coordinar el flujo entre Nutrimetron, Kinetómetro y agentes en incubación.",
+    ],
+    technologies: [
+      "Prisma (HealthRecord, ContextEvent)",
+      "lib/health/service.ts",
+      "lib/events/service.ts",
+    ],
+    uiRoute: "/salud",
+  },
+  {
+    id: "nutrimetron",
+    emoji: "🥑",
+    name: "Nutrimetron",
+    badge: "HITL · Combustible",
+    badgeTone: "rose",
+    locations: [
+      "components/salud/panels/alimentacion-panel.tsx",
+      "components/salud/fasting-strip.tsx",
+      "lib/health/nutrition-extract.ts",
+      "lib/health/ingest-service.ts",
+    ],
+    functions: [
+      "Desglosar ingestas en ítems, macros estimados y metadata de combustible.",
+      "Analizar fotos de comida (visión) y transcripciones de voz (STT).",
+      "Persistir comidas estructuradas en HealthRecord con ayuno intermitente.",
+    ],
+    technologies: [
+      "Prisma (HealthRecord)",
+      "lib/events/types.ts (combustibleMetricsSchema)",
+    ],
+    uiRoute: "/salud",
+  },
+  {
+    id: "kinetometro",
+    emoji: "🏃",
+    name: "Kinetómetro",
+    badge: "HITL · Rendimiento",
+    badgeTone: "rose",
+    locations: [
+      "components/salud/panels/deporte-panel.tsx",
+      "lib/health/service.ts",
+    ],
+    functions: [
+      "Registrar actividad física con duración, distancia o intensidad.",
+      "Mapear métricas unificadas al schema de rendimiento (durationMin, intensity).",
+      "Alimentar historial de carga física para correlación con energía y foco.",
+    ],
+    technologies: [
+      "Prisma (HealthRecord)",
+      "lib/events/types.ts (rendimientoMetricsSchema)",
+    ],
+    uiRoute: "/salud",
+  },
+  {
+    id: "cronista",
+    emoji: "📜",
+    name: "Cronista",
+    badge: "Timeline · Calendario",
+    badgeTone: "cyan",
+    locations: [
+      "lib/cronista/publish.ts",
+      "lib/health/service.ts",
+      "lib/events/service.ts",
+      "app/api/calendario/route.ts",
+    ],
+    functions: [
+      "Materializar ingestas de salud como eventos individuales del calendario.",
+      "Emitir entradas en Historial con categoría salud.",
+      "Backfill de eventos faltantes para registros legacy.",
+      "Coordinar con Extractor de Eventos, Nutrimetron y Centinela Somático.",
+    ],
+    technologies: [
+      "Prisma (ContextEvent, ActivityLog, HealthRecord)",
+      "lib/cronista/publish.ts",
+    ],
+    uiRoute: "/calendario",
+  },
 ];
 
 export const SUBPROCESSORS: Subprocessor[] = [
@@ -558,39 +796,41 @@ export const DESIGN_AGENTS: DesignAgent[] = [
     emoji: "🩺",
     name: "Somatometrón",
     subtitle: "Telemetría Biológica / Salud",
+    status: "design",
     plannedFunctions: [
-      "Capturar telemetría de salud del Observador (biométrica, hábitos, señales fisiológicas).",
+      "Integrar APIs y sensores biológicos (sueño, HRV, pasos, wearables).",
       "Normalizar lecturas en fragmentos con las Siete Dimensiones (onda: personal-health).",
       "Correlacionar estado somático con priorización atencional y ventanas de Focus Work.",
     ],
     description:
-      "Módulo de telemetría de salud para cerrar el circuito entre cuerpo y atención. Sin API, schema Prisma ni rutas implementadas.",
+      "Especialista en telemetría biológica para la pestaña Telemetría de /salud. El módulo manual de salud ya opera vía HealthRecord; la integración con wearables y APIs externas está pendiente.",
     plannedLocation:
-      "daemon local + data/tacho/ · futuro lib/somatometron/ (inexistente)",
+      "components/salud/panels/telemetria-panel.tsx · futuro lib/somatometron/",
     plannedTechnologies: [
       "Periféricos locales",
+      "APIs de sueño/HRV",
       "NFC/hábitos (field: nfc-habit-loop)",
-      "Ingestión vía Purifier",
     ],
   },
   {
-    id: "mnemosyne",
-    emoji: "🧬",
-    name: "Mnemosyne",
-    subtitle: "Memoria Líquida / Embeddings locales",
+    id: "ambientografo",
+    emoji: "🌤️",
+    name: "Ambientógrafo",
+    subtitle: "Entorno y Bienestar Extendido",
+    status: "design",
     plannedFunctions: [
-      "Archivar y re-hidratar memoria líquida: contexto de largo plazo re-indexable.",
-      "Gestionar compostaje continuo de fragmentos (re-pesado, re-encadenamiento).",
-      "Servir como capa de memoria para el Exocórtex más allá del historial de 10 turnos.",
+      "Capturar exposición solar, calidad del aire y contexto ambiental.",
+      "Registrar sesiones de meditación y métricas de bienestar no biométricas.",
+      "Correlacionar entorno con estado base y recuperación.",
     ],
     description:
-      "Subsistema de memoria semántica local: embeddings Cohere en SQLite, indexación de diario/KG/proyectos/cuadernos y rerank en el Exocórtex.",
-    plannedLocation: "lib/mnemosyne/ + Prisma MemoryEmbedding",
+      "Especialista reservado para la pestaña Más de /salud. Espacio para métricas de entorno que complementen la telemetría somática.",
+    plannedLocation:
+      "components/salud/panels/mas-panel.tsx · futuro lib/ambientografo/",
     plannedTechnologies: [
-      "Cohere embed-v4.0",
-      "Cohere rerank-v3.5",
-      "lib/chat/hybrid-search.ts",
-      "Integración Exocórtex + Purifier post-aprobación",
+      "APIs meteorológicas",
+      "Sensores de calidad del aire",
+      "Entrada manual HITL",
     ],
   },
 ];

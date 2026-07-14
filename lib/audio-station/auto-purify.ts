@@ -1,5 +1,6 @@
 import "server-only";
 
+import { resolveAudioAssetGravity } from "@/lib/audio-station/gravity";
 import { captureAndPurify } from "@/lib/purifier/capture";
 import { getReviewQueueAssetIds } from "@/lib/purifier/review-store";
 import { prisma } from "@/lib/prisma";
@@ -32,6 +33,7 @@ export async function autoPurifyAudioAsset(
   }
 
   const title = asset.filename.replace(/\.[^.]+$/, "");
+  const gravity = await resolveAudioAssetGravity(asset.id, asset.filename);
 
   try {
     const result = await captureAndPurify(
@@ -46,8 +48,8 @@ export async function autoPurifyAudioAsset(
           autoPurify: "true",
         },
         gravity: {
-          title,
-          sourceType: "personal_writing",
+          ...gravity,
+          title: gravity.title ?? title,
         },
       },
       { extractKg: true },

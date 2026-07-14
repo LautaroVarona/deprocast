@@ -114,5 +114,24 @@ export async function processTrailingCommands(
     eventsCreated = created.length;
   }
 
+  if (tasksCreated > 0 || eventsCreated > 0) {
+    void import("@/lib/historial/log").then(({ logActivity }) =>
+      logActivity({
+        occurredAt: baseDate,
+        category: "events",
+        action: "extracted_tasks",
+        title: `Trailing: ${tasksCreated} tareas, ${eventsCreated} eventos`,
+        agentId: "extractor-trailing",
+        agentName: "Extractor de Comandos Trailing",
+        sourceType: "trailing_commands",
+        sourceRef: input.reviewId ?? input.sourceRef ?? correlationId,
+        correlationId,
+        metadata: { tasksCreated, eventsCreated, source: input.source },
+      }).catch((error) => {
+        console.error("Historial trailing log error:", error);
+      }),
+    );
+  }
+
   return { tasksCreated, eventsCreated };
 }

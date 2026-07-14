@@ -1,10 +1,16 @@
 import { isCampoSlug } from "@/lib/projects/campos";
 import { PROJECT_STATUSES } from "@/lib/projects/types";
 import { clampScale } from "@/lib/projects/priority";
-import { createProject, listCampos, listProjects } from "@/lib/projects/service";
+import {
+  createProject,
+  listCampos,
+  listProjects,
+} from "@/lib/projects/service";
+import { getUniverseFilterSlugFromRequest } from "@/lib/babel/universe-scope";
+import { filterProjectsForUniverse } from "@/lib/babel/universe-refs";
 import type { CreateProjectInput, ProjectStatus } from "@/lib/projects/types";
 import { ensureRuntimeReady } from "@/lib/runtime-setup";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
 export const runtime = "nodejs";
 
@@ -20,12 +26,18 @@ function parseStatus(value: unknown): ProjectStatus {
     : "Idea";
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     await ensureRuntimeReady();
 
-    const [projects, campos] = await Promise.all([listProjects(), listCampos()]);
-    return NextResponse.json({ projects, campos });
+    const universeSlug = getUniverseFilterSlugFromRequest(request);
+    const [allProjects, campos] = await Promise.all([
+      listProjects(),
+      listCampos(universeSlug),
+    ]);
+    const projects = await filterProjectsForUniverse(allProjects, universeSlug);
+
+    return NextResponse.json({ projects, campos, universe: universeSlug ?? "babel" });
   } catch (error) {
     console.error("List projects error:", error);
     const message =
@@ -36,7 +48,7 @@ export async function GET() {
   }
 }
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
     await ensureRuntimeReady();
 
@@ -97,7 +109,6 @@ export async function POST(request: Request) {
 
     const project = await createProject(input);
 
-    // Hook KG no bloqueante: ingiere el nuevo proyecto al grafo.
     void (async () => {
       try {
         const { ingestSingleProject } = await import("@/lib/kg/sources");

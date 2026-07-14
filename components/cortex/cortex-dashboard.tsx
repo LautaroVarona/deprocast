@@ -7,44 +7,62 @@ import { CortexMetricsBar } from "@/components/cortex/cortex-metrics-bar";
 import { IngestModal } from "@/components/cortex/ingest-modal";
 import { KnowledgeGrid } from "@/components/cortex/knowledge-grid";
 import { Button, buttonVariants } from "@/components/ui/button";
+import { fetchWithUniverse } from "@/lib/babel/universe-fetch";
 import { matchesAreaFilter } from "@/lib/meta-meteador/area-theme";
 import { cn } from "@/lib/utils";
 import type { CortexSnapshot } from "@/lib/cortex/types";
 import { META_AREAS, type MetaArea } from "@/lib/meta-meteador/types";
 import { PlusIcon, RefreshCwIcon, Gamepad2Icon } from "lucide-react";
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 export function CortexDashboard() {
-  const { activeUniverse } = useBabel();
+  const { activeUniverse, isLoading: isUniverseLoading } = useBabel();
   const [snapshot, setSnapshot] = useState<CortexSnapshot | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [activeArea, setActiveArea] = useState<MetaArea | null>(null);
   const [ingestOpen, setIngestOpen] = useState(false);
+  const requestIdRef = useRef(0);
+  const activeSlug = activeUniverse?.slug;
+
+  useEffect(() => {
+    setSnapshot(null);
+    setActiveArea(null);
+    setIsLoading(true);
+  }, [activeSlug]);
 
   const loadSnapshot = useCallback(async (silent = false) => {
+    if (isUniverseLoading) return;
+
+    const requestId = ++requestIdRef.current;
     if (!silent) setIsLoading(true);
 
     try {
-      const params = new URLSearchParams();
-      if (activeUniverse?.slug) {
-        params.set("universe", activeUniverse.slug);
-      }
-
-      const query = params.toString();
-      const response = await fetch(`/api/cortex${query ? `?${query}` : ""}`, {
+      const response = await fetchWithUniverse("/api/cortex", {
+        universeSlug: activeSlug,
         cache: "no-store",
       });
-      if (!response.ok) return;
+
+      if (requestId !== requestIdRef.current) return;
+
+      if (!response.ok) {
+        setSnapshot(null);
+        return;
+      }
+
       const data: CortexSnapshot = await response.json();
+      if (requestId !== requestIdRef.current) return;
       setSnapshot(data);
     } catch (error) {
       console.error(error);
-      if (!silent) setSnapshot(null);
+      if (requestId !== requestIdRef.current) return;
+      setSnapshot(null);
     } finally {
-      if (!silent) setIsLoading(false);
+      if (requestId === requestIdRef.current && !silent) {
+        setIsLoading(false);
+      }
     }
-  }, [activeUniverse?.slug]);
+  }, [activeSlug, isUniverseLoading]);
 
   useEffect(() => {
     void loadSnapshot();
@@ -122,7 +140,7 @@ export function CortexDashboard() {
         aria-label="Universo activo"
         className="rounded-xl border border-border/70 bg-card/40 shadow-sm"
       >
-        <UniverseSwitcher />
+        <UniverseSwitcher onImported={() => void loadSnapshot(true)} />
       </section>
 
       <CortexMetricsBar snapshot={snapshot} isLoading={isLoading} />

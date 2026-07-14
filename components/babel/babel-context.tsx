@@ -3,6 +3,7 @@
 import { ROOT_UNIVERSE_SLUG } from "@/lib/babel/constants";
 import type { UniverseDto } from "@/lib/babel/types";
 import type { DayOffset } from "@/lib/pendientes/types";
+import { fetchWithUniverse } from "@/lib/babel/universe-fetch";
 import {
   createContext,
   useCallback,
@@ -16,6 +17,7 @@ const STORAGE_KEY = "deprocast-active-universe";
 
 type BabelContextValue = {
   activeUniverse: UniverseDto | null;
+  universeSlug: string;
   universes: UniverseDto[];
   selectedDay: DayOffset;
   isLoading: boolean;
@@ -24,6 +26,10 @@ type BabelContextValue = {
   discoverUniverse: (label: string) => Promise<UniverseDto | null>;
   calibrateUniverse: (slug: string, weight: number) => Promise<void>;
   refreshUniverses: () => Promise<void>;
+  universeFetch: (
+    path: string,
+    init?: import("@/lib/babel/universe-fetch").UniverseFetchInit,
+  ) => Promise<Response>;
 };
 
 const BabelContext = createContext<BabelContextValue | null>(null);
@@ -55,6 +61,14 @@ export function BabelProvider({ children }: { children: React.ReactNode }) {
   const activeUniverse = useMemo(
     () => universes.find((u) => u.slug === activeSlug) ?? universes[0] ?? null,
     [universes, activeSlug],
+  );
+
+  const universeSlug = activeUniverse?.slug ?? activeSlug ?? ROOT_UNIVERSE_SLUG;
+
+  const universeFetch = useCallback(
+    (path: string, init?: Parameters<typeof fetchWithUniverse>[1]) =>
+      fetchWithUniverse(path, { ...init, universeSlug }),
+    [universeSlug],
   );
 
   const switchUniverse = useCallback((slug: string) => {
@@ -104,6 +118,7 @@ export function BabelProvider({ children }: { children: React.ReactNode }) {
   const value = useMemo(
     () => ({
       activeUniverse,
+      universeSlug,
       universes,
       selectedDay,
       isLoading,
@@ -112,9 +127,11 @@ export function BabelProvider({ children }: { children: React.ReactNode }) {
       discoverUniverse,
       calibrateUniverse,
       refreshUniverses,
+      universeFetch,
     }),
     [
       activeUniverse,
+      universeSlug,
       universes,
       selectedDay,
       isLoading,
@@ -122,6 +139,7 @@ export function BabelProvider({ children }: { children: React.ReactNode }) {
       discoverUniverse,
       calibrateUniverse,
       refreshUniverses,
+      universeFetch,
     ],
   );
 

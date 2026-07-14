@@ -1,4 +1,5 @@
-import { deleteReviewRecord } from "@/lib/purifier/engine";
+import { deleteReviewRecord, loadReviewRecord } from "@/lib/purifier/engine";
+import { logRejectedActivity } from "@/lib/historial/pipeline-log";
 import { ensureRuntimeReady } from "@/lib/runtime-setup";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -17,6 +18,7 @@ export async function POST(request: NextRequest) {
     }
 
     const reviewId = body.reviewId.trim();
+    const loaded = await loadReviewRecord(reviewId);
     const deleted = await deleteReviewRecord(reviewId);
 
     if (!deleted) {
@@ -25,6 +27,13 @@ export async function POST(request: NextRequest) {
         { status: 404 },
       );
     }
+
+    void logRejectedActivity({
+      reviewId,
+      title: loaded?.record.suggestedDimensions?.title ?? loaded?.record.source.filename,
+    }).catch((error) => {
+      console.error("Historial reject log error:", error);
+    });
 
     return NextResponse.json({
       reviewId,

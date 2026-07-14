@@ -1,7 +1,6 @@
 "use client";
 
 import { AssaultFeed } from "@/components/babel/assault-feed";
-import { BabelProvider } from "@/components/babel/babel-context";
 import { ControlBar } from "@/components/babel/control-bar";
 import { GridBottomNavWithPlus } from "@/components/grid/grid-bottom-nav";
 import { cn } from "@/lib/utils";
@@ -19,17 +18,15 @@ export function BabelViewport({
   area = "default",
 }: BabelViewportProps) {
   return (
-    <BabelProvider>
-      <div
-        className={cn(
-          "babel-noir-root flex flex-col overflow-hidden bg-background text-foreground",
-          embedded ? "min-h-0 flex-1" : "h-dvh",
-        )}
-      >
-        <ControlBar area={area} />
-        <AssaultFeed area={area} />
-        <GridBottomNavWithPlus ludusMode={embedded} />
-      </div>
-    </BabelProvider>
+    <div
+      className={cn(
+        "babel-noir-root flex flex-col overflow-hidden bg-background text-foreground",
+        embedded ? "min-h-0 flex-1" : "h-dvh",
+      )}
+    >
+      <ControlBar area={area} />
+      <AssaultFeed area={area} />
+      <GridBottomNavWithPlus ludusMode={embedded} />
+    </div>
   );
 }

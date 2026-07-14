@@ -1,11 +1,15 @@
 import { isCampoSlug } from "@/lib/projects/campos";
-import { createProposal, listProposals } from "@/lib/projects/proposal-store";import {
+import { createProposal, listProposals } from "@/lib/projects/proposal-store";
+import { listCampos } from "@/lib/projects/service";
+import {
   PROJECT_TIPOS,
   PROPOSAL_STATUSES,
   type ProjectTipo,
   type ProposalOriginType,
   type ProposalStatus,
 } from "@/lib/projects/types";
+import { getUniverseFilterSlugFromRequest } from "@/lib/babel/universe-scope";
+import { resolveUniverseKgSourceIds } from "@/lib/babel/universe-refs";
 import { ensureRuntimeReady } from "@/lib/runtime-setup";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -35,8 +39,33 @@ export async function GET(request: NextRequest) {
   try {
     await ensureRuntimeReady();
     const status = parseStatus(request.nextUrl.searchParams.get("status"));
-    const proposals = await listProposals({ status });
-    return NextResponse.json({ proposals });
+    const universeSlug = getUniverseFilterSlugFromRequest(request);
+    const allProposals = await listProposals({ status });
+
+    if (!universeSlug) {
+      return NextResponse.json({ proposals: allProposals, universe: "babel" });
+    }
+
+    const [campos, sourceIds] = await Promise.all([
+      listCampos(universeSlug),
+      resolveUniverseKgSourceIds(universeSlug),
+    ]);
+    const campoSlugs = new Set(campos.map((campo) => campo.slug));
+
+    const proposals = allProposals.filter((proposal) => {
+      if (
+        proposal.suggestedCampoSlug &&
+        campoSlugs.has(proposal.suggestedCampoSlug)
+      ) {
+        return true;
+      }
+      if (proposal.originRef && sourceIds.has(proposal.originRef)) {
+        return true;
+      }
+      return false;
+    });
+
+    return NextResponse.json({ proposals, universe: universeSlug });
   } catch (error) {
     console.error("List proposals error:", error);
     const message =

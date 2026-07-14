@@ -4,7 +4,7 @@ import {
   AudioStationProvider,
   useAudioStation,
 } from "@/components/audio-station/audio-station-context";
-import { MetabolismFeed } from "@/components/audio-station/metabolism-feed";
+import { MetabolismView } from "@/components/audio-station/MetabolismView";
 import { resolveAudioPipelineStage } from "@/lib/audio-station/pipeline-status";
 import { cn } from "@/lib/utils";
 import { AudioLinesIcon, ArrowRightIcon, WavesIcon } from "lucide-react";
@@ -22,24 +22,19 @@ function AudioStationShell() {
     useAudioStation();
 
   const queuedIds = new Set(queueStatus?.queuedIds ?? []);
+  const purifyingIds = new Set(queueStatus?.purifyingIds ?? []);
   const activeId = queueStatus?.active?.id ?? null;
 
-  const pendingPurifyCount = assets.filter(
-    (asset) =>
-      resolveAudioPipelineStage(asset, {
-        queuedIds,
-        activeId,
-        reviewByAssetId,
-      }).stage === "pending_purify",
-  ).length;
+  const resolveStage = (asset: (typeof assets)[number]) =>
+    resolveAudioPipelineStage(asset, {
+      queuedIds,
+      activeId,
+      purifyingIds,
+      reviewByAssetId,
+    });
 
   const inValidationCount = assets.filter(
-    (asset) =>
-      resolveAudioPipelineStage(asset, {
-        queuedIds,
-        activeId,
-        reviewByAssetId,
-      }).stage === "in_validation",
+    (asset) => resolveStage(asset).stage === "in_validation",
   ).length;
 
   const dedupBadge =
@@ -47,40 +42,31 @@ function AudioStationShell() {
 
   const flowChips: FlowChip[] = [
     {
-      id: "pending_stt",
-      label: "Pendiente STT",
-      tone: "border-white/15 bg-white/5 text-white/70",
-      count: assets.filter(
-        (asset) =>
-          resolveAudioPipelineStage(asset, {
-            queuedIds,
-            activeId,
-            reviewByAssetId,
-          }).stage === "pending_stt",
-      ).length,
-    },
-    {
-      id: "stt_processing",
-      label: "STT activo",
+      id: "transcription",
+      label: "Transcripción",
       tone: "border-sky-400/35 bg-sky-500/10 text-sky-200",
       count: assets.filter((asset) => {
-        const stage = resolveAudioPipelineStage(asset, {
-          queuedIds,
-          activeId,
-          reviewByAssetId,
-        }).stage;
-        return stage === "stt_processing" || stage === "stt_queued";
+        const stage = resolveStage(asset).stage;
+        return (
+          stage === "pending_stt" ||
+          stage === "stt_queued" ||
+          stage === "stt_processing" ||
+          stage === "stt_error"
+        );
       }).length,
     },
     {
-      id: "pending_purify",
-      label: "Esperando purificar",
+      id: "purification",
+      label: "Purificación",
       tone: "border-violet-400/35 bg-violet-500/10 text-violet-200",
-      count: pendingPurifyCount,
+      count: assets.filter((asset) => {
+        const stage = resolveStage(asset).stage;
+        return stage === "purifying" || stage === "pending_purify";
+      }).length,
     },
     {
-      id: "in_validation",
-      label: "En validación",
+      id: "validation",
+      label: "Validación (HITL)",
       tone: "border-emerald-400/35 bg-emerald-500/10 text-emerald-200",
       count: inValidationCount,
     },
@@ -94,16 +80,15 @@ function AudioStationShell() {
             <div className="flex items-center gap-2">
               <AudioLinesIcon className="size-5 text-sky-400/70" />
               <p className="font-mono text-[10px] uppercase tracking-[0.28em] text-white/40">
-                Agente STT · Feed de metabolización
+                Motor de metabolización activa
               </p>
             </div>
             <h1 className="bg-gradient-to-r from-white via-white/85 to-white/50 bg-clip-text font-mono text-2xl font-semibold tracking-tight text-transparent sm:text-3xl">
               Audio → Conocimiento → Acción
             </h1>
             <p className="max-w-2xl font-mono text-[11px] leading-relaxed text-white/45">
-              Un tablero central donde cada audio se metaboliza en tiempo real:
-              transcripción Deepgram, purificación, chunks, grafo y comandos
-              ejecutables inyectados al calendario.
+              Un tablero donde cada audio se metaboliza solo: transcripción,
+              purificación, chunks, grafo y action items al calendario.
             </p>
           </div>
 
@@ -157,7 +142,7 @@ function AudioStationShell() {
         </div>
       </header>
 
-      <MetabolismFeed />
+      <MetabolismView />
     </div>
   );
 }

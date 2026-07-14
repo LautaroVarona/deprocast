@@ -1,26 +1,28 @@
 "use client";
 
-import { HEALTH_PILLAR_TABS } from "@/components/salud/constants";
-import { HealthRecordForm } from "@/components/salud/health-record-form";
-import { HealthTimeline } from "@/components/salud/health-timeline";
-import type { HealthPillar, HealthRecordDto } from "@/lib/events/types";
-import { cn } from "@/lib/utils";
-import { useCallback, useEffect, useState } from "react";
+import { SALUD_TABS } from "@/components/salud/constants";
+import { SaludHub } from "@/components/salud/salud-hub";
+import { AlimentacionPanel } from "@/components/salud/panels/alimentacion-panel";
+import { DeportePanel } from "@/components/salud/panels/deporte-panel";
+import { MasPanel } from "@/components/salud/panels/mas-panel";
+import { TelemetriaPanel } from "@/components/salud/panels/telemetria-panel";
+import type { SaludTab } from "@/components/salud/types";
+import type { HealthRecordDto } from "@/lib/events/types";
+import { ChevronLeftIcon } from "lucide-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
 export function SaludWorkspace() {
-  const [activePillar, setActivePillar] = useState<HealthPillar>("rendimiento");
+  const [activeTab, setActiveTab] = useState<SaludTab | null>(null);
   const [records, setRecords] = useState<HealthRecordDto[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [filterPillar, setFilterPillar] = useState<HealthPillar | "all">("all");
+  const [highlightRecordId, setHighlightRecordId] = useState<string | null>(null);
 
   const fetchRecords = useCallback(async () => {
-    setIsLoading(true);
     try {
-      const params = new URLSearchParams();
-      if (filterPillar !== "all") params.set("pillar", filterPillar);
-
-      const response = await fetch(`/api/salud/records?${params.toString()}`);
+      const response = await fetch("/api/salud/records?limit=100", {
+        cache: "no-store",
+      });
       const data = await response.json();
       if (!response.ok) {
         throw new Error(data.error ?? "No se pudieron cargar los registros");
@@ -35,82 +37,80 @@ export function SaludWorkspace() {
     } finally {
       setIsLoading(false);
     }
-  }, [filterPillar]);
+  }, []);
 
   useEffect(() => {
     void fetchRecords();
   }, [fetchRecords]);
 
-  const handleSaved = () => {
-    toast.success("Registro fijado en telemetría de salud");
+  const combustibleRecords = useMemo(
+    () => records.filter((record) => record.pillar === "combustible"),
+    [records],
+  );
+
+  const rendimientoRecords = useMemo(
+    () => records.filter((record) => record.pillar === "rendimiento"),
+    [records],
+  );
+
+  const handleSaved = (record?: HealthRecordDto) => {
+    if (record) {
+      setRecords((prev) => {
+        if (prev.some((item) => item.id === record.id)) return prev;
+        return [record, ...prev];
+      });
+      setHighlightRecordId(record.id);
+    }
     void fetchRecords();
   };
 
+  const activeLabel =
+    SALUD_TABS.find((tab) => tab.id === activeTab)?.label ?? "Salud";
+
   return (
     <div className="flex h-[calc(100dvh-3.5rem)] flex-col overflow-hidden">
-      <header className="shrink-0 border-b border-border px-4 py-3">
-        <h1 className="text-sm font-semibold">Área de Salud</h1>
-        <p className="font-mono text-[10px] text-muted-foreground">
-          Biometría y control · Flujo de silicio
-        </p>
+      <header className="flex shrink-0 items-center gap-2 border-b border-zinc-800/80 px-4 py-3">
+        {activeTab ? (
+          <button
+            type="button"
+            onClick={() => setActiveTab(null)}
+            className="flex size-8 items-center justify-center rounded-lg text-zinc-500 transition-colors hover:bg-zinc-800/60 hover:text-zinc-200"
+            aria-label="Volver"
+          >
+            <ChevronLeftIcon className="size-5" />
+          </button>
+        ) : null}
+        <h1 className="text-sm font-semibold">
+          {activeTab ? activeLabel : "Salud"}
+        </h1>
       </header>
 
-      <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
-        <section className="flex min-h-0 flex-1 flex-col border-b border-border lg:border-r lg:border-b-0">
-          <div
-            className="flex flex-wrap gap-1 border-b border-border p-2"
-            role="tablist"
-            aria-label="Pilares de telemetría"
-          >
-            {HEALTH_PILLAR_TABS.map((tab) => (
-              <button
-                key={tab.id}
-                type="button"
-                role="tab"
-                aria-selected={activePillar === tab.id}
-                onClick={() => setActivePillar(tab.id)}
-                className={cn(
-                  "rounded-lg px-3 py-1.5 text-xs font-medium transition-colors",
-                  activePillar === tab.id
-                    ? "bg-muted text-foreground"
-                    : "text-muted-foreground hover:bg-muted/60",
-                )}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
-
-          <p className="px-4 pt-3 text-xs text-muted-foreground">
-            {HEALTH_PILLAR_TABS.find((t) => t.id === activePillar)?.description}
-          </p>
-
-          <HealthRecordForm pillar={activePillar} onSaved={handleSaved} />
-        </section>
-
-        <aside className="flex min-h-0 w-full flex-col lg:w-[380px]">
-          <div className="flex items-center gap-2 border-b border-border p-3">
-            <span className="text-xs font-medium">Timeline</span>
-            <select
-              className="ml-auto rounded-md border border-border bg-background px-2 py-1 text-xs"
-              value={filterPillar}
-              onChange={(e) =>
-                setFilterPillar(e.target.value as HealthPillar | "all")
-              }
-            >
-              <option value="all">Todos los pilares</option>
-              {HEALTH_PILLAR_TABS.map((tab) => (
-                <option key={tab.id} value={tab.id}>
-                  {tab.label}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="min-h-0 flex-1 overflow-y-auto">
-            <HealthTimeline records={records} isLoading={isLoading} />
-          </div>
-        </aside>
-      </div>
+      {activeTab === null ? (
+        <SaludHub records={records} onSelect={setActiveTab} />
+      ) : (
+        <div
+          key={activeTab}
+          className="min-h-0 flex-1 overflow-hidden animate-in fade-in duration-200"
+        >
+          {activeTab === "telemetria" ? <TelemetriaPanel /> : null}
+          {activeTab === "alimentacion" ? (
+            <AlimentacionPanel
+              records={combustibleRecords}
+              isLoading={isLoading}
+              highlightId={highlightRecordId}
+              onSaved={handleSaved}
+            />
+          ) : null}
+          {activeTab === "deporte" ? (
+            <DeportePanel
+              records={rendimientoRecords}
+              isLoading={isLoading}
+              onSaved={handleSaved}
+            />
+          ) : null}
+          {activeTab === "mas" ? <MasPanel /> : null}
+        </div>
+      )}
     </div>
   );
 }

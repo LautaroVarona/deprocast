@@ -2,13 +2,18 @@
 
 import { useBabel } from "@/components/babel/babel-context";
 import { UniverseCalibrateSheet } from "@/components/babel/universe-calibrate-sheet";
+import { UniverseImportSheet } from "@/components/babel/universe-import-sheet";
 import { ROOT_UNIVERSE_SLUG } from "@/lib/babel/constants";
 import { cn } from "@/lib/utils";
-import { Loader2Icon, PlusIcon, ScaleIcon } from "lucide-react";
+import { DownloadIcon, Loader2Icon, PlusIcon, ScaleIcon } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
-export function UniverseSwitcher() {
+type UniverseSwitcherProps = {
+  onImported?: () => void;
+};
+
+export function UniverseSwitcher({ onImported }: UniverseSwitcherProps) {
   const {
     universes,
     activeUniverse,
@@ -18,6 +23,7 @@ export function UniverseSwitcher() {
   } = useBabel();
   const [isCreating, setIsCreating] = useState(false);
   const [calibrateOpen, setCalibrateOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
 
   const handleDiscover = async () => {
     const label = window.prompt("Nombre del nuevo Universo:");
@@ -81,23 +87,40 @@ export function UniverseSwitcher() {
         </button>
 
         {activeUniverse && !activeUniverse.isRoot ? (
-          <button
-            type="button"
-            onClick={() => setCalibrateOpen(true)}
-            className="flex size-8 shrink-0 items-center justify-center rounded-full border border-border text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-            aria-label="Calibrar universo"
-          >
-            <ScaleIcon className="size-3.5" />
-          </button>
+          <>
+            <button
+              type="button"
+              onClick={() => setImportOpen(true)}
+              className="flex size-8 shrink-0 items-center justify-center rounded-full border border-border text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              aria-label="Importar contenido"
+            >
+              <DownloadIcon className="size-3.5" />
+            </button>
+            <button
+              type="button"
+              onClick={() => setCalibrateOpen(true)}
+              className="flex size-8 shrink-0 items-center justify-center rounded-full border border-border text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              aria-label="Calibrar universo"
+            >
+              <ScaleIcon className="size-3.5" />
+            </button>
+          </>
         ) : null}
       </div>
 
       {activeUniverse && activeUniverse.slug !== ROOT_UNIVERSE_SLUG ? (
-        <UniverseCalibrateSheet
-          universe={activeUniverse}
-          open={calibrateOpen}
-          onOpenChange={setCalibrateOpen}
-        />
+        <>
+          <UniverseCalibrateSheet
+            universe={activeUniverse}
+            open={calibrateOpen}
+            onOpenChange={setCalibrateOpen}
+          />
+          <UniverseImportSheet
+            open={importOpen}
+            onOpenChange={setImportOpen}
+            onImported={() => onImported?.()}
+          />
+        </>
       ) : null}
     </>
   );

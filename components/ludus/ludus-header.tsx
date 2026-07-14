@@ -57,6 +57,12 @@ export function LudusHeader({ signalPoints = 0, onOpenCommandMenu }: LudusHeader
           </span>
           <ThemeToggle />
           <Link
+            href="/historial"
+            className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "hidden sm:inline-flex")}
+          >
+            Historial
+          </Link>
+          <Link
             href="/cortex"
             className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
           >

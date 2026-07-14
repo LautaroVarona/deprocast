@@ -2,6 +2,8 @@
 
 
 
+import { useBabel } from "@/components/babel/babel-context";
+
 import { PurificationAuditStepper } from "@/components/validar/purification-audit-stepper";
 
 import { ProjectLinkCombobox } from "@/components/validar/project-link-combobox";
@@ -39,6 +41,7 @@ import {
 } from "@/lib/purifier/hitl-metadata";
 
 import type { PurifierReviewRecord } from "@/lib/purifier/types";
+import { resolveReviewMetaTags } from "@/lib/purifier/meta-tags";
 
 import { cn } from "@/lib/utils";
 
@@ -238,6 +241,8 @@ export function ValidarWorkspace() {
 
   const searchParams = useSearchParams();
 
+  const { universeSlug, universeFetch, isLoading: isUniverseLoading } = useBabel();
+
   const selectedId = searchParams.get("id");
 
 
@@ -294,7 +299,7 @@ export function ValidarWorkspace() {
 
     try {
 
-      const response = await fetch("/api/purifier/review", { cache: "no-store" });
+      const response = await universeFetch("/api/purifier/review", { cache: "no-store" });
 
       if (!response.ok) return;
 
@@ -308,7 +313,7 @@ export function ValidarWorkspace() {
 
     }
 
-  }, []);
+  }, [universeFetch]);
 
 
 
@@ -318,10 +323,8 @@ export function ValidarWorkspace() {
 
     try {
 
-      const response = await fetch(`/api/purifier/review/${reviewId}`, {
-
+      const response = await universeFetch(`/api/purifier/review/${reviewId}`, {
         cache: "no-store",
-
       });
 
       if (!response.ok) {
@@ -356,7 +359,7 @@ export function ValidarWorkspace() {
 
       setBody(extractBodyFromMarkdown(r.normalizedMarkdown));
 
-      setMetaTags([...r.metaTagsSecundarios]);
+      setMetaTags(resolveReviewMetaTags(r));
 
       setLinkedProjectIds([]);
 
@@ -386,31 +389,31 @@ export function ValidarWorkspace() {
 
     }
 
-  }, []);
+  }, [universeFetch]);
 
 
 
   useEffect(() => {
+    setRecords([]);
+    setRecord(null);
+  }, [universeSlug]);
+
+  useEffect(() => {
+    if (isUniverseLoading) return;
 
     void loadQueue();
 
     void (async () => {
-
-      const response = await fetch("/api/proyectos", { cache: "no-store" });
+      const response = await universeFetch("/api/proyectos", { cache: "no-store" });
 
       if (response.ok) {
-
         const data = await response.json();
 
         setCampos(data.campos ?? []);
-
         setProjects(data.projects ?? []);
-
       }
-
     })();
-
-  }, [loadQueue]);
+  }, [loadQueue, universeFetch, universeSlug, isUniverseLoading]);
 
 
 
@@ -448,7 +451,7 @@ export function ValidarWorkspace() {
 
     try {
 
-      const response = await fetch("/api/purifier/approve", {
+      const response = await universeFetch("/api/purifier/approve", {
 
         method: "POST",
 
@@ -580,7 +583,7 @@ export function ValidarWorkspace() {
 
     try {
 
-      const response = await fetch("/api/purifier/reject", {
+      const response = await universeFetch("/api/purifier/reject", {
 
         method: "POST",
 

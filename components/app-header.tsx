@@ -1,6 +1,7 @@
 "use client";
 
 import { LudusHeader } from "@/components/ludus/ludus-header";
+import { UniverseHeader } from "@/components/babel/universe-header";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -60,6 +61,7 @@ export function AppHeader({ onOpenCommandMenu }: AppHeaderProps) {
         </nav>
 
         <div className="ml-auto flex items-center gap-2">
+          <UniverseHeader />
           <Button
             type="button"
             variant="outline"

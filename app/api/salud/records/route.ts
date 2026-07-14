@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
       limit: limit ? Number(limit) : undefined,
     });
 
-    return NextResponse.json({ records });
+    return NextResponse.json({ records, scope: "global" });
   } catch (error) {
     console.error("Health records list error:", error);
     const message =

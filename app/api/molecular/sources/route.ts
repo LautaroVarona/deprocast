@@ -1,15 +1,19 @@
 import { listArchivoItems } from "@/lib/archivo";
+import { getUniverseFilterSlugFromRequest } from "@/lib/babel/universe-scope";
+import { filterArchivoItemsForUniverse } from "@/lib/babel/universe-refs";
 import { ensureRuntimeReady } from "@/lib/runtime-setup";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
 export const runtime = "nodejs";
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     await ensureRuntimeReady();
 
+    const universeSlug = getUniverseFilterSlugFromRequest(request);
     const { items, total } = await listArchivoItems();
-    const sources = items.map((item) => ({
+    const filtered = await filterArchivoItemsForUniverse(items, universeSlug);
+    const sources = filtered.map((item) => ({
       id: item.id,
       title: item.title,
       kind: item.kind,
@@ -19,7 +23,11 @@ export async function GET() {
       strongestTag: item.strongestTag,
     }));
 
-    return NextResponse.json({ sources, total });
+    return NextResponse.json({
+      sources,
+      total: filtered.length,
+      universe: universeSlug ?? "babel",
+    });
   } catch (error) {
     console.error("Molecular sources error:", error);
     const message =

@@ -1,7 +1,8 @@
 "use client";
 
-import { AsaltoChip } from "@/components/grid/asalto-chip";
 import { useBabel } from "@/components/babel/babel-context";
+import { AsaltoChip } from "@/components/grid/asalto-chip";
+import { fetchWithUniverse } from "@/lib/babel/universe-fetch";
 import type { BabelArea } from "@/components/babel/babel-viewport";
 import type { AsaltoItem } from "@/lib/pendientes/asaltos";
 import { ShieldIcon, TentIcon } from "lucide-react";
@@ -27,7 +28,8 @@ export function AssaultFeed({ area = "default" }: AssaultFeedProps) {
         params.set("universe", activeUniverse.slug);
       }
 
-      const response = await fetch(`/api/pendientes?${params}`, {
+      const response = await fetchWithUniverse(`/api/pendientes?${params}`, {
+        universeSlug: activeUniverse?.slug,
         cache: "no-store",
       });
       if (!response.ok) throw new Error("Error al cargar asaltos.");

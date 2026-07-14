@@ -45,8 +45,11 @@ function toMessageDto(message: {
   };
 }
 
-export async function listChatSessions(): Promise<ChatSessionSummary[]> {
+export async function listChatSessions(
+  universeSlug?: string,
+): Promise<ChatSessionSummary[]> {
   const sessions = await prisma.chatSession.findMany({
+    where: universeSlug ? { universeSlug } : undefined,
     orderBy: { updatedAt: "desc" },
     include: {
       _count: { select: { messages: true } },
@@ -62,9 +65,15 @@ export async function listChatSessions(): Promise<ChatSessionSummary[]> {
   }));
 }
 
-export async function createChatSession(title?: string): Promise<ChatSessionSummary> {
+export async function createChatSession(
+  title?: string,
+  universeSlug?: string,
+): Promise<ChatSessionSummary> {
   const session = await prisma.chatSession.create({
-    data: { title: title?.trim() || "Nueva conversación" },
+    data: {
+      title: title?.trim() || "Nueva conversación",
+      ...(universeSlug ? { universeSlug } : {}),
+    },
     include: { _count: { select: { messages: true } } },
   });
 

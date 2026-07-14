@@ -208,6 +208,22 @@ export async function captureAndPurify(
       }),
   );
 
+  void import("@/lib/historial/pipeline-log").then(({ logCaptureActivity }) => {
+      void logCaptureActivity({
+        channel: input.channel,
+        reviewId: record.reviewId,
+        title:
+          record.suggestedDimensions?.title ??
+          input.gravity?.title ??
+          filename,
+        captureId,
+        assetId: input.assetId,
+      }).catch((error) => {
+        console.error("Historial capture log error:", error);
+      });
+    },
+  );
+
   return {
     captureId,
     pendingFilename: filename,

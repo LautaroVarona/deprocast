@@ -156,6 +156,27 @@ export async function processAssetDeepgram(assetId: string): Promise<void> {
       });
     });
 
+    void import("@/lib/historial/log").then(({ logActivity }) =>
+      logActivity({
+        category: "audio",
+        action: "transcribed",
+        title: `Transcripción: ${asset.filename ?? assetId}`,
+        summary: `${transcription.rawText.slice(0, 120)}…`,
+        agentId: "stt",
+        agentName: "Motor de Transcripción STT",
+        modelUsed: config.model,
+        sourceType: "audio_asset",
+        sourceRef: assetId,
+        correlationId: assetId,
+        metadata: {
+          confidence: transcription.confidence,
+          language: config.language,
+        },
+      }).catch((error) => {
+        console.error("Historial STT log error:", error);
+      }),
+    );
+
     logInfo(assetId, "Transcripción guardada. Iniciando limpieza de archivos...");
 
     removeFile(wavPath, "WAV temporal");

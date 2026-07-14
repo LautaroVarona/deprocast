@@ -9,6 +9,7 @@ import {
   Gamepad2Icon,
   GitBranchIcon,
   HeartPulseIcon,
+  HistoryIcon,
   InboxIcon,
   ListTodoIcon,
   MessageSquareIcon,
@@ -189,6 +190,15 @@ export const COMMAND_ROUTES: CommandRoute[] = [
     hotkey: "T",
     category: "nav",
     icon: SparklesIcon,
+  },
+  {
+    id: "historial",
+    href: "/historial",
+    label: "Historial",
+    description: "Log de actividad y agentes",
+    hotkey: "O",
+    category: "nav",
+    icon: HistoryIcon,
   },
   {
     id: "respaldo",

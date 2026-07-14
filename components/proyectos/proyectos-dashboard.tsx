@@ -1,5 +1,6 @@
 "use client";
 
+import { useBabel } from "@/components/babel/babel-context";
 import { CamposWorkspace } from "@/components/proyectos/campos-workspace";
 import { ProjectBoard } from "@/components/proyectos/project-board";
 import { ProposalsWorkspace } from "@/components/proyectos/proposals-workspace";
@@ -22,6 +23,7 @@ function parseView(value: string | null): DashboardView {
 
 export function ProyectosDashboard() {
   const searchParams = useSearchParams();
+  const { universeSlug, universeFetch, isLoading: isUniverseLoading } = useBabel();
   const view = parseView(searchParams.get("view"));
 
   const [projects, setProjects] = useState<Project[]>([]);
@@ -33,7 +35,7 @@ export function ProyectosDashboard() {
   const loadProjects = useCallback(async () => {
     setIsLoading(true);
     try {
-      const response = await fetch("/api/proyectos", { cache: "no-store" });
+      const response = await universeFetch("/api/proyectos", { cache: "no-store" });
       if (!response.ok) return;
       const data: { projects: Project[]; campos?: CampoInfo[] } =
         await response.json();
@@ -44,11 +46,11 @@ export function ProyectosDashboard() {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [universeFetch]);
 
   const loadPendingCount = useCallback(async () => {
     try {
-      const response = await fetch("/api/proyectos/proposals?status=pending", {
+      const response = await universeFetch("/api/proyectos/proposals?status=pending", {
         cache: "no-store",
       });
       if (!response.ok) return;
@@ -57,12 +59,18 @@ export function ProyectosDashboard() {
     } catch {
       setPendingProposals(0);
     }
-  }, []);
+  }, [universeFetch]);
 
   useEffect(() => {
+    setProjects([]);
+    setCampos([getDefaultCampo()]);
+  }, [universeSlug]);
+
+  useEffect(() => {
+    if (isUniverseLoading) return;
     void loadProjects();
     void loadPendingCount();
-  }, [loadProjects, loadPendingCount, refreshKey]);
+  }, [loadProjects, loadPendingCount, refreshKey, universeSlug, isUniverseLoading]);
 
   const stats = useMemo(() => {
     const critical = projects.filter((p) =>

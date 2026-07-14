@@ -2,6 +2,7 @@ import "server-only";
 
 import type { CortexNode, CortexSnapshot, DocumentFormat } from "@/lib/cortex/types";
 import { shouldFilterByUniverse } from "@/lib/babel/context-seal";
+import { resolveUniverseDocumentIds } from "@/lib/babel/universe-documents";
 import { getCastlePlacementsForDocuments } from "@/lib/castillo/service";
 import { listDocumentMeta } from "@/lib/meta-meteador/store";
 import {
@@ -9,7 +10,8 @@ import {
   type AreasRelevancia,
   type MetaArea,
 } from "@/lib/meta-meteador/types";
-import { findProjectById, listCampos } from "@/lib/projects/service";
+import { buildProjectIndex } from "@/lib/projects/service";
+import type { Project } from "@/lib/projects/types";
 import { prisma } from "@/lib/prisma";
 
 const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
@@ -21,9 +23,7 @@ function inferDocumentFormat(
 ): DocumentFormat {
   const haystack = `${materia} ${filename ?? ""} ${onda}`.toLowerCase();
 
-  if (
-    /audio|transcript|mp3|m4a|wav|ogg|voz|grabaci/.test(haystack)
-  ) {
+  if (/audio|transcript|mp3|m4a|wav|ogg|voz|grabaci/.test(haystack)) {
     return "audio";
   }
 
@@ -31,9 +31,7 @@ function inferDocumentFormat(
     return "word";
   }
 
-  if (
-    /chat|texto|dump|gemini|gpt|conversaci|escrito|markdown|md/.test(haystack)
-  ) {
+  if (/chat|texto|dump|gemini|gpt|conversaci|escrito|markdown|md/.test(haystack)) {
     return "texto";
   }
 
@@ -85,11 +83,10 @@ function resolveDominantArea(
   return sorted[0].area;
 }
 
-async function buildCortexNode(
+function buildCortexNode(
   meta: Awaited<ReturnType<typeof listDocumentMeta>>[number],
-): Promise<CortexNode> {
-  const project = await findProjectById(meta.documentId);
-
+  project: Project | null,
+): CortexNode {
   return {
     id: meta.documentId,
     titulo: meta.titulo,
@@ -108,6 +105,17 @@ async function buildCortexNode(
   };
 }
 
+async function countKgNodesForDocuments(documentIds: string[]): Promise<number> {
+  if (documentIds.length === 0) return 0;
+
+  const groups = await prisma.kgMention.groupBy({
+    by: ["nodeId"],
+    where: { sourceId: { in: documentIds } },
+  });
+
+  return groups.length;
+}
+
 export async function getCortexSnapshot(options?: {
   universeSlug?: string;
 }): Promise<CortexSnapshot> {
@@ -115,54 +123,40 @@ export async function getCortexSnapshot(options?: {
   const filterByUniverse =
     options?.universeSlug && shouldFilterByUniverse(options.universeSlug);
 
-  const [totalNodesIndexed, allMeta, weekMeta] = await Promise.all([
-    prisma.kgNode.count(),
+  const [allMeta, weekMeta, projectIndex] = await Promise.all([
     listDocumentMeta(),
     listDocumentMeta({ since }),
+    buildProjectIndex(),
   ]);
 
-  let filteredMeta = allMeta;
-  let filteredWeekMeta = weekMeta;
+  const allDocumentIds = allMeta.map((row) => row.documentId);
+  let universeDocIds: Set<string> | null = null;
 
   if (filterByUniverse && options?.universeSlug) {
-    const universeSlug = options.universeSlug;
-    const [campos, babelRefs] = await Promise.all([
-      listCampos(universeSlug),
-      prisma.babelRecord.findMany({
-        where: { contextSeal: universeSlug },
-        select: { physicalRef: true },
-      }),
-    ]);
-    const campoSlugs = new Set(campos.map((campo) => campo.slug));
-    const babelDocIds = new Set(babelRefs.map((record) => record.physicalRef));
-
-    const matchesUniverse = async (documentId: string) => {
-      if (babelDocIds.has(documentId)) return true;
-      const project = await findProjectById(documentId);
-      return Boolean(project?.campoSlug && campoSlugs.has(project.campoSlug));
-    };
-
-    const filterRows = async (
-      rows: Awaited<ReturnType<typeof listDocumentMeta>>,
-    ) => {
-      const checks = await Promise.all(
-        rows.map(async (row) => ({
-          row,
-          keep: await matchesUniverse(row.documentId),
-        })),
-      );
-      return checks.filter((entry) => entry.keep).map((entry) => entry.row);
-    };
-
-    [filteredMeta, filteredWeekMeta] = await Promise.all([
-      filterRows(allMeta),
-      filterRows(weekMeta),
-    ]);
+    universeDocIds = await resolveUniverseDocumentIds({
+      universeSlug: options.universeSlug,
+      documentIds: allDocumentIds,
+      projectIndex,
+    });
   }
 
+  const filterRows = (
+    rows: Awaited<ReturnType<typeof listDocumentMeta>>,
+  ) => {
+    if (!universeDocIds) return rows;
+    return rows.filter((row) => universeDocIds!.has(row.documentId));
+  };
+
+  const filteredMeta = filterRows(allMeta);
+  const filteredWeekMeta = filterRows(weekMeta);
+
+  const totalNodesIndexed = filterByUniverse
+    ? await countKgNodesForDocuments(filteredMeta.map((row) => row.documentId))
+    : await prisma.kgNode.count();
+
   const semanticBias = aggregateSemanticBias(filteredWeekMeta);
-  const nodesRaw = await Promise.all(
-    filteredMeta.map((meta) => buildCortexNode(meta)),
+  const nodesRaw = filteredMeta.map((meta) =>
+    buildCortexNode(meta, projectIndex.get(meta.documentId) ?? null),
   );
   const placements = await getCastlePlacementsForDocuments(
     nodesRaw.map((node) => node.id),

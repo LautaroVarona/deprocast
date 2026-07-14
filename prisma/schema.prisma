@@ -240,13 +240,15 @@ model ProjectIncubationSession {
 
 // Módulo Chat Exocórtex — sesiones, mensajes y relaciones de contexto (@mentions).
 model ChatSession {
-  id        String        @id @default(uuid())
-  title     String        @default("Nueva conversación")
-  createdAt DateTime      @default(now())
-  updatedAt DateTime      @updatedAt
-  messages  ChatMessage[]
+  id           String        @id @default(uuid())
+  title        String        @default("Nueva conversación")
+  universeSlug String?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  messages     ChatMessage[]
 
   @@index([updatedAt])
+  @@index([universeSlug, updatedAt])
 }
 
 model ChatMessage {
@@ -320,7 +322,26 @@ model Universe {
   discoveredAt   DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
-  records BabelRecord[]
+  records      BabelRecord[]
+  projections  UniverseProjection[] @relation("ProjectionTarget")
+}
+
+// Proyección manual: enlaza materia de otro universo sin mover el registro original.
+model UniverseProjection {
+  id          String   @id @default(uuid())
+  targetSlug  String
+  kind        String
+  physicalRef String
+  sourceSlug  String
+  scope       String?
+  scopeRef    String?
+  importedAt  DateTime @default(now())
+
+  target Universe @relation("ProjectionTarget", fields: [targetSlug], references: [slug])
+
+  @@unique([targetSlug, kind, physicalRef])
+  @@index([targetSlug])
+  @@index([sourceSlug])
 }
 
 // Registro canónico raíz — índice unificado de toda materia prima.
@@ -660,4 +681,28 @@ model MemoryEmbedding {
   @@unique([sourceType, sourceId, chunkIndex])
   @@index([sourceType, sourceId])
   @@index([contentHash])
+}
+
+// Log unificado de actividad de la plataforma (pipelines, agentes, HITL).
+model ActivityLog {
+  id            String   @id @default(uuid())
+  occurredAt    DateTime
+  category      String
+  action        String
+  title         String
+  summary       String?
+  agentId       String?
+  agentName     String?
+  modelUsed     String?
+  sourceType    String?
+  sourceRef     String?
+  correlationId String?
+  metadata      Json
+  createdAt     DateTime @default(now())
+
+  @@unique([sourceType, sourceRef, action])
+  @@index([occurredAt])
+  @@index([category, occurredAt])
+  @@index([agentId, occurredAt])
+  @@index([correlationId])
 }

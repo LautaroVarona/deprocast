@@ -1,17 +1,65 @@
 "use client";
 
 import { AgentCard } from "@/components/agentes/agent-card";
+import { AgentRow } from "@/components/agentes/agent-row";
 import { IncubationLab } from "@/components/agentes/incubation-lab";
 import { MetaMeteadorPanel } from "@/components/agentes/meta-meteador-panel";
 import { SubprocessorsSection } from "@/components/agentes/subprocessors-section";
+import { Button } from "@/components/ui/button";
 import {
   ECOSYSTEM_STATS,
   OPERATIONAL_AGENTS,
+  type OperationalAgent,
 } from "@/lib/agentes/catalog";
-import { ActivityIcon, BotIcon, FileTextIcon } from "lucide-react";
+import { cn } from "@/lib/utils";
+import {
+  ActivityIcon,
+  BotIcon,
+  FileTextIcon,
+  LayoutGridIcon,
+  ListIcon,
+  SearchIcon,
+} from "lucide-react";
 import Link from "next/link";
+import { useEffect, useMemo, useState } from "react";
+
+type ViewMode = "cards" | "list";
+type ToneFilter = "all" | OperationalAgent["badgeTone"];
 
 export function AgentesWorkspace() {
+  const [viewMode, setViewMode] = useState<ViewMode>("cards");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [toneFilter, setToneFilter] = useState<ToneFilter>("all");
+  const [activeAgentIds, setActiveAgentIds] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    void fetch("/api/historial/active-agents", { cache: "no-store" })
+      .then((res) => res.json())
+      .then((data: { agentIds?: string[] }) => {
+        setActiveAgentIds(new Set(data.agentIds ?? []));
+      })
+      .catch(() => undefined);
+  }, []);
+
+  const filteredAgents = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+    return OPERATIONAL_AGENTS.filter((agent) => {
+      if (toneFilter !== "all" && agent.badgeTone !== toneFilter) {
+        return false;
+      }
+      if (!query) return true;
+      const haystack = [
+        agent.name,
+        agent.badge,
+        ...agent.functions,
+        ...agent.technologies,
+      ]
+        .join(" ")
+        .toLowerCase();
+      return haystack.includes(query);
+    });
+  }, [searchQuery, toneFilter]);
+
   return (
     <div className="min-h-full bg-slate-950 text-zinc-100">
       <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-cyan-950/20 via-slate-950 to-slate-950" />
@@ -72,18 +120,126 @@ export function AgentesWorkspace() {
         </header>
 
         <section className="space-y-5">
-          <div className="flex items-center gap-2">
-            <ActivityIcon className="size-4 text-emerald-400/80" aria-hidden />
-            <h2 className="text-sm font-semibold uppercase tracking-wider text-zinc-400">
-              Agentes operativos
-            </h2>
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-2">
+              <ActivityIcon className="size-4 text-emerald-400/80" aria-hidden />
+              <h2 className="text-sm font-semibold uppercase tracking-wider text-zinc-400">
+                Agentes operativos
+              </h2>
+              <span className="font-mono text-[10px] text-zinc-600">
+                {filteredAgents.length}
+              </span>
+            </div>
+
+            <div className="flex items-center gap-1 rounded-md border border-zinc-800 p-0.5">
+              <Button
+                type="button"
+                size="sm"
+                variant="ghost"
+                onClick={() => setViewMode("cards")}
+                className={cn(
+                  "h-8 gap-1.5 font-mono text-[10px] uppercase tracking-wider",
+                  viewMode === "cards"
+                    ? "bg-zinc-800 text-zinc-100"
+                    : "text-zinc-500 hover:text-zinc-300",
+                )}
+              >
+                <LayoutGridIcon className="size-3.5" />
+                Cuadrícula
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant="ghost"
+                onClick={() => setViewMode("list")}
+                className={cn(
+                  "h-8 gap-1.5 font-mono text-[10px] uppercase tracking-wider",
+                  viewMode === "list"
+                    ? "bg-zinc-800 text-zinc-100"
+                    : "text-zinc-500 hover:text-zinc-300",
+                )}
+              >
+                <ListIcon className="size-3.5" />
+                Línea
+              </Button>
+            </div>
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-            {OPERATIONAL_AGENTS.map((agent) => (
-              <AgentCard key={agent.id} agent={agent} />
-            ))}
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+            <div className="relative flex-1">
+              <SearchIcon className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-zinc-600" />
+              <input
+                type="search"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Buscar agente, función o tecnología…"
+                className="w-full rounded-lg border border-zinc-800 bg-zinc-950/80 py-2 pl-10 pr-4 text-sm text-zinc-200 outline-none focus:border-cyan-500/40"
+              />
+            </div>
+
+            <div className="flex flex-wrap gap-1.5">
+              {(
+                [
+                  ["all", "Todos"],
+                  ["cyan", "LLM"],
+                  ["emerald", "Activo"],
+                  ["rose", "HITL"],
+                  ["zinc", "Det."],
+                  ["violet", "Multimodal"],
+                ] as const
+              ).map(([tone, label]) => (
+                <button
+                  key={tone}
+                  type="button"
+                  onClick={() => setToneFilter(tone)}
+                  className={cn(
+                    "rounded-full border px-2.5 py-1 font-mono text-[10px] uppercase tracking-wider transition",
+                    toneFilter === tone
+                      ? "border-cyan-500/40 bg-cyan-500/10 text-cyan-200"
+                      : "border-zinc-700 text-zinc-500 hover:border-zinc-600",
+                  )}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
           </div>
+
+          {viewMode === "cards" ? (
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+              {filteredAgents.map((agent) => (
+                <AgentCard
+                  key={agent.id}
+                  agent={agent}
+                  isActiveToday={activeAgentIds.has(agent.id)}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="overflow-x-auto rounded-xl border border-zinc-800/80">
+              <table className="w-full min-w-[720px] text-left text-sm">
+                <thead className="border-b border-zinc-800 bg-zinc-900/60 font-mono text-[10px] uppercase tracking-wider text-zinc-500">
+                  <tr>
+                    <th className="px-3 py-2 w-10" />
+                    <th className="px-3 py-2">Agente</th>
+                    <th className="hidden px-3 py-2 md:table-cell">Tecnología</th>
+                    <th className="hidden px-3 py-2 lg:table-cell">Funciones</th>
+                    <th className="px-3 py-2">Estado</th>
+                    <th className="px-3 py-2 text-right">Rutas</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredAgents.map((agent) => (
+                    <AgentRow
+                      key={agent.id}
+                      agent={agent}
+                      isActiveToday={activeAgentIds.has(agent.id)}
+                    />
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </section>
 
         <MetaMeteadorPanel />
@@ -101,6 +257,11 @@ export function AgentesWorkspace() {
             ["/grafo", "Grafo"],
             ["/calibrador", "Calibrador"],
             ["/diario", "Diario"],
+            ["/pendientes", "Pendientes"],
+            ["/enciclopedia", "Enciclopedia"],
+            ["/ludus", "Ludus"],
+            ["/historial", "Historial"],
+            ["/molecular", "Molecular"],
           ].map(([href, label], index, arr) => (
             <span key={href}>
               <Link

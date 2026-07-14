@@ -24,22 +24,26 @@ export type MetabolismCardTone =
   | "processing"
   | "hitl"
   | "alma"
-  | "error"
+  | "attention"
   | "idle";
 
 export function resolveMetabolismCardTone(
   pipeline: AudioPipelineInfo,
 ): MetabolismCardTone {
+  if (pipeline.needsAttention) {
+    return "attention";
+  }
+
   switch (pipeline.stage) {
     case "stt_processing":
     case "stt_queued":
+    case "purifying":
+    case "pending_stt":
       return "processing";
     case "in_validation":
       return "hitl";
     case "validated":
       return "alma";
-    case "stt_error":
-      return "error";
     default:
       return "idle";
   }
@@ -48,6 +52,7 @@ export function resolveMetabolismCardTone(
 export const METABOLISM_FILTER_OPTIONS = [
   { id: "all", label: "Todos" },
   { id: "processing", label: "Procesando" },
+  { id: "attention", label: "Atención requerida" },
   { id: "hitl", label: "Requiere validación" },
   { id: "alma", label: "Metabolizado" },
 ] as const;
@@ -61,7 +66,7 @@ export function matchesMetabolismFilter(
 ): boolean {
   if (filter === "all") return true;
   if (filter === "processing") {
-    return tone === "processing" || tone === "idle";
+    return tone === "processing";
   }
   return tone === filter;
 }

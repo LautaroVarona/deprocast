@@ -4,6 +4,7 @@ import {
   AudioPipelineBadge,
   AudioPipelineNextAction,
 } from "@/components/audio-station/audio-pipeline-badge";
+import { MetabolismPhaseStrip } from "@/components/audio-station/metabolism-phase-strip";
 import { DeleteAssetButton } from "@/components/delete-asset-button";
 import { DownloadTranscriptButton } from "@/components/download-transcript-button";
 import { LiveTranscript } from "@/components/live-transcript";
@@ -51,9 +52,10 @@ const TONE_STYLES: Record<
     glow: "shadow-[0_0_20px_rgba(52,211,153,0.06)]",
     label: "Alma · Restricción superada",
   },
-  error: {
-    border: "border-red-500/35",
-    glow: "shadow-[0_0_20px_rgba(248,113,113,0.08)]",
+  attention: {
+    border: "border-amber-500/30",
+    glow: "shadow-[0_0_20px_rgba(251,191,36,0.06)]",
+    label: "Atención requerida",
   },
   idle: {
     border: "border-white/10",
@@ -81,6 +83,7 @@ function WaveformPulse() {
 type AudioMetabolismCardProps = {
   asset: AudioAssetSummary;
   queuedIds: Set<string>;
+  purifyingIds?: Set<string>;
   activeId: string | null;
   reviewByAssetId: Map<string, string>;
   metabolism?: AssetMetabolismSummary;
@@ -90,6 +93,7 @@ type AudioMetabolismCardProps = {
 export function AudioMetabolismCard({
   asset,
   queuedIds,
+  purifyingIds = new Set(),
   activeId,
   reviewByAssetId,
   metabolism,
@@ -102,16 +106,19 @@ export function AudioMetabolismCard({
       resolveAudioPipelineStage(asset, {
         queuedIds,
         activeId,
+        purifyingIds,
         reviewByAssetId,
       }),
-    [asset, queuedIds, activeId, reviewByAssetId],
+    [asset, queuedIds, activeId, purifyingIds, reviewByAssetId],
   );
 
   const tone = resolveMetabolismCardTone(pipeline);
   const toneStyle = TONE_STYLES[tone];
   const displayStatus = getAssetDisplayStatus(asset, queuedIds, activeId);
   const isProcessing =
-    pipeline.stage === "stt_processing" || pipeline.stage === "stt_queued";
+    pipeline.stage === "stt_processing" ||
+    pipeline.stage === "stt_queued" ||
+    pipeline.stage === "purifying";
   const canExpand =
     Boolean(asset.transcript) ||
     pipeline.stage === "in_validation" ||
@@ -158,15 +165,17 @@ export function AudioMetabolismCard({
                 {createdLabel}
               </span>
             </div>
+            <MetabolismPhaseStrip pipeline={pipeline} compact />
             {toneStyle.label ? (
               <p
                 className={cn(
                   "flex items-center gap-1.5 font-mono text-[10px]",
                   tone === "hitl" && "text-amber-200/90",
                   tone === "alma" && "text-emerald-200/80",
+                  tone === "attention" && "text-amber-200/80",
                 )}
               >
-                {tone === "hitl" ? (
+                {tone === "hitl" || tone === "attention" ? (
                   <AlertTriangleIcon className="size-3" />
                 ) : (
                   <CheckCircle2Icon className="size-3" />
@@ -313,8 +322,7 @@ export function AudioMetabolismCard({
           ) : null}
 
           <div className="flex flex-wrap items-center gap-2 border-t border-white/6 pt-3">
-            {(asset.status === "PENDING" || asset.status === "ERROR") &&
-            !isProcessing ? (
+            {pipeline.stage === "stt_error" ? (
               <ProcessButton assetId={asset.id} onQueued={onRefresh} />
             ) : null}
             {isProcessing ? (

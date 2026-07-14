@@ -1,5 +1,4 @@
 import { extractLinkedCampoSlugs, type Campo } from "@/lib/projects/campos";
-import { isUniverseSlug } from "@/lib/babel/context-seal";
 import {
   createCampo,
   getCampo,
@@ -7,6 +6,8 @@ import {
   listProjects,
 } from "@/lib/projects/service";
 import type { Project } from "@/lib/projects/types";
+import { getUniverseFilterSlugFromRequest } from "@/lib/babel/universe-scope";
+import { filterProjectsForUniverse } from "@/lib/babel/universe-refs";
 import { ensureRuntimeReady } from "@/lib/runtime-setup";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -16,15 +17,14 @@ export async function GET(request: NextRequest) {
   try {
     await ensureRuntimeReady();
 
-    const universeParam = request.nextUrl.searchParams.get("universe") ?? undefined;
-    if (universeParam && !isUniverseSlug(universeParam)) {
-      return NextResponse.json({ error: "Universo inválido." }, { status: 400 });
-    }
+    const universeSlug = getUniverseFilterSlugFromRequest(request);
 
-    const [campos, projects] = await Promise.all([
-      listCampos(universeParam),
+    const [campos, allProjects] = await Promise.all([
+      listCampos(universeSlug),
       listProjects(),
     ]);
+    const projects = await filterProjectsForUniverse(allProjects, universeSlug);
+
     const camposWithProjects = await Promise.all(
       campos.map(async (info) => {
         const detailed = await getCampo(info.slug);
@@ -55,6 +55,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       campos: camposWithProjects satisfies Campo[],
       projectsByCampo,
+      universe: universeSlug ?? "babel",
     });
   } catch (error) {
     console.error("List campos error:", error);

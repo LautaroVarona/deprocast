@@ -1,4 +1,3 @@
-import { BabelProvider } from "@/components/babel/babel-context";
 import { CortexDashboard } from "@/components/cortex/cortex-dashboard";
 import type { Metadata } from "next";
 
@@ -9,9 +8,5 @@ export const metadata: Metadata = {
 };
 
 export default function CortexPage() {
-  return (
-    <BabelProvider>
-      <CortexDashboard />
-    </BabelProvider>
-  );
+  return <CortexDashboard />;
 }

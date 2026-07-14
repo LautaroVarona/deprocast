@@ -33,7 +33,16 @@ export function resetPrismaClient(): void {
   globalForPrisma.prisma = undefined;
 }
 
+function isPrismaClientStale(client: PrismaClient): boolean {
+  return !("activityLog" in client) || client.activityLog === undefined;
+}
+
 export function getPrismaClient(): PrismaClient {
+  if (globalForPrisma.prisma && isPrismaClientStale(globalForPrisma.prisma)) {
+    void globalForPrisma.prisma.$disconnect().catch(() => undefined);
+    globalForPrisma.prisma = undefined;
+  }
+
   if (!globalForPrisma.prisma) {
     globalForPrisma.prisma = createPrismaClient();
   }

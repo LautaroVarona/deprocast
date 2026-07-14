@@ -4,6 +4,7 @@ import {
   buildCaptureGravity,
   postIngestaCapture,
 } from "@/components/ingesta/capture-client";
+import { useBabel } from "@/components/babel/babel-context";
 import { useIngesta } from "@/components/ingesta/ingesta-context";
 import { UploadDropzone } from "@/components/upload-dropzone";
 import { Badge } from "@/components/ui/badge";
@@ -123,6 +124,7 @@ function AssetPreview({ asset }: { asset: AssetRow }) {
 
 export function AudioChannel() {
   const { gravity } = useIngesta();
+  const { activeUniverse } = useBabel();
   const [assets, setAssets] = useState<AssetRow[]>([]);
   const [loadingAssets, setLoadingAssets] = useState(true);
   const [queueStatus, setQueueStatus] = useState<QueueStatus | null>(null);
@@ -201,16 +203,19 @@ export function AudioChannel() {
       setPurifying((current) => ({ ...current, [asset.id]: true }));
 
       try {
-        const data = await postIngestaCapture({
-          channel: "audio",
-          assetId: asset.id,
-          gravity: {
-            ...buildCaptureGravity(gravity),
-            title:
-              gravity.title ||
-              asset.filename.replace(/\.[^.]+$/, ""),
+        const data = await postIngestaCapture(
+          {
+            channel: "audio",
+            assetId: asset.id,
+            gravity: {
+              ...buildCaptureGravity(gravity, activeUniverse?.slug),
+              title:
+                gravity.title ||
+                asset.filename.replace(/\.[^.]+$/, ""),
+            },
           },
-        });
+          { universeSlug: activeUniverse?.slug },
+        );
 
         setReviewByAssetId((current) => {
           const next = new Map(current);
@@ -242,7 +247,7 @@ export function AudioChannel() {
         setPurifying((current) => ({ ...current, [asset.id]: false }));
       }
     },
-    [gravity],
+    [gravity, activeUniverse?.slug],
   );
 
   const handleIngest = useCallback(
@@ -309,6 +314,7 @@ export function AudioChannel() {
         <div className="shrink-0">
           <UploadDropzone
             variant="embedded"
+            universeSlug={activeUniverse?.slug}
             onUploaded={() => void refresh()}
           />
         </div>

@@ -45,3 +45,5 @@ export type CreateUniverseInput = {
   label: string;
   description?: string;
 };
+
+export type ImportScope = "universe" | "campo" | "particula";

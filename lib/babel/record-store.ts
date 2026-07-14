@@ -97,6 +97,18 @@ export async function registerBabelRecord(
   return mapRecord(row);
 }
 
+export async function getBabelRecordByPhysicalRef(
+  kind: string,
+  physicalRef: string,
+): Promise<BabelRecordDto | null> {
+  const row = await prisma.babelRecord.findFirst({
+    where: { kind, physicalRef },
+    orderBy: { createdAt: "desc" },
+  });
+
+  return row ? mapRecord(row) : null;
+}
+
 export async function listBabelRecords(
   input: ListBabelRecordsInput = {},
 ): Promise<BabelRecordDto[]> {
