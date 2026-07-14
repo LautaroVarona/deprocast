@@ -79,17 +79,17 @@ export type ActivityListResult = {
 };
 
 export type LogActivityInput = {
-  occurredAt?: Date;
+  occurredAt?: Date | null;
   category: ActivityCategory;
   action: ActivityAction | string;
   title: string;
-  summary?: string;
-  agentId?: string;
-  agentName?: string;
-  modelUsed?: string;
-  sourceType?: string;
-  sourceRef?: string;
-  correlationId?: string;
+  summary?: string | null;
+  agentId?: string | null;
+  agentName?: string | null;
+  modelUsed?: string | null;
+  sourceType?: string | null;
+  sourceRef?: string | null;
+  correlationId?: string | null;
   metadata?: Record<string, unknown>;
 };
 

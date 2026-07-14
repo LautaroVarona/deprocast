@@ -41,7 +41,7 @@ export async function logActivity(input: LogActivityInput): Promise<string | nul
 
     const entry = await prisma.activityLog.create({
       data: {
-        occurredAt,
+        occurredAt: occurredAt ?? new Date(),
         category,
         action,
         title,

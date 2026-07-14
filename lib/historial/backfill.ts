@@ -32,7 +32,7 @@ export async function backfillActivityLog(): Promise<{
       category: "ingesta",
       action: "captured",
       title: `Captura ${record.kind}: ${record.physicalRef.slice(0, 60)}`,
-      summary: record.contentPreview.slice(0, 200) || undefined,
+      summary: record.contentPreview.slice(0, 200) || null,
       agentId: agent.agentId,
       agentName: agent.agentName,
       sourceType: "babel_record",
@@ -63,7 +63,7 @@ export async function backfillActivityLog(): Promise<{
       summary: row.particula,
       agentId: ORCHESTRATOR_AGENT.agentId,
       agentName: ORCHESTRATOR_AGENT.agentName,
-      modelUsed: payload.model ?? undefined,
+      modelUsed: payload.model,
       sourceType: "purifier_review",
       sourceRef: row.reviewId,
       correlationId: row.reviewId,
@@ -97,7 +97,7 @@ export async function backfillActivityLog(): Promise<{
       title: `Transcripción: ${asset.filename}`,
       summary: asset.transcript
         ? `${asset.transcript.rawText.slice(0, 120)}…`
-        : undefined,
+        : null,
       agentId: "stt",
       modelUsed: "deepgram",
       sourceType: "audio_asset",
@@ -134,7 +134,7 @@ export async function backfillActivityLog(): Promise<{
       agentId,
       sourceType: "context_event",
       sourceRef: event.id,
-      correlationId: event.correlationId ?? undefined,
+      correlationId: event.correlationId,
       metadata: {
         pillar: event.pillar,
         status: event.status,
@@ -159,7 +159,7 @@ export async function backfillActivityLog(): Promise<{
       title: `Meta-Meteador: ${meta.titulo}`,
       summary: meta.particula,
       agentId: "meta-meteador",
-      modelUsed: meta.modelUsed ?? undefined,
+      modelUsed: meta.modelUsed,
       sourceType: "document_meta",
       sourceRef: meta.documentId,
       metadata: { materia: meta.materia, campo: meta.campo },
@@ -182,7 +182,7 @@ export async function backfillActivityLog(): Promise<{
       title: `Chat: ${message.content.slice(0, 80)}`,
       summary: message.content.slice(0, 200),
       agentId: "exocortex",
-      modelUsed: message.model ?? undefined,
+      modelUsed: message.model,
       sourceType: "chat_message",
       sourceRef: message.id,
       correlationId: message.sessionId,
@@ -201,15 +201,15 @@ export async function backfillActivityLog(): Promise<{
     const agentId =
       task.source === "journal" ? "listador" : "extractor-trailing";
     const id = await logActivity({
-      occurredAt: task.recognizedAt,
+      occurredAt: task.recognizedAt ?? task.createdAt,
       category: "events",
       action: "extracted_tasks",
       title: `Tarea: ${task.title}`,
-      summary: task.description?.slice(0, 120) ?? undefined,
+      summary: task.description?.slice(0, 120) ?? null,
       agentId,
       sourceType: "pending_task",
       sourceRef: task.id,
-      correlationId: task.reviewId ?? undefined,
+      correlationId: task.reviewId,
       metadata: {
         source: task.source,
         status: task.status,
