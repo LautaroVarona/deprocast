@@ -323,7 +323,7 @@ export function AudioMetabolismCard({
 
           <div className="flex flex-wrap items-center gap-2 border-t border-white/6 pt-3">
             {pipeline.stage === "stt_error" ? (
-              <ProcessButton assetId={asset.id} onQueued={onRefresh} />
+              <ProcessButton assetId={asset.id} onProcessed={onRefresh} />
             ) : null}
             {isProcessing ? (
               <StopProcessButton assetId={asset.id} onStopped={onRefresh} />
