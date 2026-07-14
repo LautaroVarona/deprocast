@@ -29,7 +29,7 @@ export function UniverseImportSheet({
   onImported,
 }: UniverseImportSheetProps) {
   const { activeUniverse, universes } = useBabel();
-  const [sourceSlug, setSourceSlug] = useState(ROOT_UNIVERSE_SLUG);
+  const [sourceSlug, setSourceSlug] = useState<string>(ROOT_UNIVERSE_SLUG);
   const [scope, setScope] = useState<ImportScope>("universe");
   const [scopeRef, setScopeRef] = useState("");
   const [campos, setCampos] = useState<Campo[]>([]);
