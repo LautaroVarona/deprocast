@@ -6,7 +6,7 @@ import {
   buildPurifierStageAgents,
 } from "@/lib/historial/pipeline-log";
 import { logActivity } from "@/lib/historial/log";
-import { resolveAgentName, ORCHESTRATOR_AGENT } from "@/lib/historial/agent-map";
+import { ORCHESTRATOR_AGENT } from "@/lib/historial/agent-map";
 import type { IngestaChannel } from "@/lib/purifier/constants";
 import { prisma } from "@/lib/prisma";
 
@@ -99,7 +99,6 @@ export async function backfillActivityLog(): Promise<{
         ? `${asset.transcript.rawText.slice(0, 120)}…`
         : undefined,
       agentId: "stt",
-      agentName: resolveAgentName("stt"),
       modelUsed: "deepgram",
       sourceType: "audio_asset",
       sourceRef: asset.id,
@@ -133,7 +132,6 @@ export async function backfillActivityLog(): Promise<{
       title: event.content.slice(0, 120),
       summary: `Pilar: ${event.pillar} · ${event.status}`,
       agentId,
-      agentName: resolveAgentName(agentId),
       sourceType: "context_event",
       sourceRef: event.id,
       correlationId: event.correlationId ?? undefined,
@@ -161,8 +159,7 @@ export async function backfillActivityLog(): Promise<{
       title: `Meta-Meteador: ${meta.titulo}`,
       summary: meta.particula,
       agentId: "meta-meteador",
-      agentName: resolveAgentName("meta-meteador"),
-      modelUsed: meta.modelUsed,
+      modelUsed: meta.modelUsed ?? undefined,
       sourceType: "document_meta",
       sourceRef: meta.documentId,
       metadata: { materia: meta.materia, campo: meta.campo },
@@ -185,8 +182,7 @@ export async function backfillActivityLog(): Promise<{
       title: `Chat: ${message.content.slice(0, 80)}`,
       summary: message.content.slice(0, 200),
       agentId: "exocortex",
-      agentName: resolveAgentName("exocortex"),
-      modelUsed: message.model,
+      modelUsed: message.model ?? undefined,
       sourceType: "chat_message",
       sourceRef: message.id,
       correlationId: message.sessionId,
@@ -211,7 +207,6 @@ export async function backfillActivityLog(): Promise<{
       title: `Tarea: ${task.title}`,
       summary: task.description?.slice(0, 120) ?? undefined,
       agentId,
-      agentName: resolveAgentName(agentId),
       sourceType: "pending_task",
       sourceRef: task.id,
       correlationId: task.reviewId ?? undefined,
