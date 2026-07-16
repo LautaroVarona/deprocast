@@ -5,6 +5,7 @@ import {
   rejectPendingTask,
 } from "@/lib/pendientes/store";
 import { patchPendingTaskSchema } from "@/lib/pendientes/types";
+import { rescheduleTask } from "@/lib/temporal/mutations";
 import { ensureRuntimeReady } from "@/lib/runtime-setup";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -53,6 +54,20 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       case "complete":
         task = await completePendingTask(id);
         break;
+      case "reschedule": {
+        if (!parsed.data.targetDay) {
+          return NextResponse.json(
+            { error: "targetDay es obligatorio para reprogramar." },
+            { status: 400 },
+          );
+        }
+        const targetDay = new Date(parsed.data.targetDay);
+        if (Number.isNaN(targetDay.getTime())) {
+          return NextResponse.json({ error: "targetDay inválido." }, { status: 400 });
+        }
+        task = await rescheduleTask(id, targetDay);
+        break;
+      }
     }
 
     return NextResponse.json({ task });

@@ -5,6 +5,8 @@ export const CASTLE_SOURCE_TYPES = [
   "context_event",
   "encyclopedia_entry",
   "x_bookmark",
+  "project",
+  "vision_image",
   "freeform",
 ] as const;
 
@@ -28,6 +30,7 @@ export type CastleCardDto = {
   tags: string[];
   layout: CastleCardLayout;
   deepLink: string | null;
+  metadata: Record<string, unknown>;
   createdAt: string;
   updatedAt: string;
 };

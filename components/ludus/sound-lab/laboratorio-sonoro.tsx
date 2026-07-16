@@ -60,11 +60,13 @@ function formatPracticeTime(totalSec: number): string {
 type LaboratorioSonoroProps = {
   snapshot: TrincheraSnapshot;
   className?: string;
+  variant?: "default" | "compact";
 };
 
 export function LaboratorioSonoro({
   snapshot,
   className,
+  variant = "default",
 }: LaboratorioSonoroProps) {
   const {
     hydrated,
@@ -152,7 +154,12 @@ export function LaboratorioSonoro({
         ))}
       </div>
 
-      <div className="relative grid min-h-0 flex-1 grid-cols-[1fr_11rem] overflow-hidden">
+      <div
+        className={cn(
+          "relative grid min-h-0 flex-1 overflow-hidden",
+          variant === "compact" ? "grid-cols-1" : "grid-cols-[1fr_11rem]",
+        )}
+      >
         <div className="relative flex min-h-0 items-center justify-center overflow-hidden px-3 py-2">
           <FocalVisual
             shape={visual.shape}
@@ -173,7 +180,12 @@ export function LaboratorioSonoro({
           />
         </div>
 
-        <aside className="min-h-0 overflow-y-auto border-l border-white/10 bg-black/30 px-2.5 py-2">
+        <aside
+          className={cn(
+            "min-h-0 overflow-y-auto bg-black/30 px-2.5 py-2",
+            variant === "compact" ? "border-t border-white/10" : "border-l border-white/10",
+          )}
+        >
           <VisualControls visual={visual} onChange={setVisual} />
         </aside>
       </div>

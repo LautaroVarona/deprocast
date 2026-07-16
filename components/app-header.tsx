@@ -1,5 +1,6 @@
 "use client";
 
+import { HistorialTrigger } from "@/components/historial/historial-sheet";
 import { LudusHeader } from "@/components/ludus/ludus-header";
 import { UniverseHeader } from "@/components/babel/universe-header";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -61,6 +62,15 @@ export function AppHeader({ onOpenCommandMenu }: AppHeaderProps) {
         </nav>
 
         <div className="ml-auto flex items-center gap-2">
+          <HistorialTrigger
+            isActive={pathname.startsWith("/historial")}
+            className="hidden sm:inline-flex"
+          />
+          <HistorialTrigger
+            isActive={pathname.startsWith("/historial")}
+            showLabel={false}
+            className="sm:hidden"
+          />
           <UniverseHeader />
           <Button
             type="button"

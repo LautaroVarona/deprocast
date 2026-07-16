@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { logVibeCalibratedActivity } from "@/lib/historial/domain-log";
 import { clampScale } from "@/lib/projects/priority";
 import type {
   CalibratorQueueConfig,
@@ -42,10 +43,25 @@ export async function recordCalibrationVote(input: {
 }
 
 export async function completeCalibrationSession(sessionId: string) {
-  return prisma.vibeCalibrationSession.update({
+  const session = await prisma.vibeCalibrationSession.update({
     where: { id: sessionId },
     data: { completedAt: new Date() },
+    include: {
+      votes: true,
+    },
   });
+
+  const config = session.config as CalibratorQueueConfig;
+  void logVibeCalibratedActivity({
+    sessionId: session.id,
+    config,
+    voteCount: session.votes.length,
+    completedAt: session.completedAt ?? new Date(),
+  }).catch((error) => {
+    console.error("Historial vibe calibrate log error:", error);
+  });
+
+  return session;
 }
 
 export async function getCalibrationSession(sessionId: string) {

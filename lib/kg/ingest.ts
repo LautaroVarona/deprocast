@@ -25,10 +25,18 @@ export async function ingestKgExtraction(input: IngestInput): Promise<IngestResu
   const edgeIds = [...new Set([...dualEdgeIds, ...relationEdgeIds])];
   const resolved = Object.fromEntries(nameToIdMap.entries());
 
-  return {
+  const result: IngestResult = {
     nodeIds,
     edgeIds,
     mentionIds,
     resolved,
   };
+
+  void import("@/lib/historial/domain-log")
+    .then(({ logKgIngestedActivity }) => logKgIngestedActivity(input, result))
+    .catch((error) => {
+      console.error("Historial KG ingest log error:", error);
+    });
+
+  return result;
 }

@@ -56,6 +56,18 @@ export async function POST(request: NextRequest) {
     );
     const result = await runCamRecorderWatcher(body);
 
+    void import("@/lib/historial/domain-log").then(({ logWatcherAnalyzedActivity }) =>
+      logWatcherAnalyzedActivity({
+        sessionId: result.sessionId,
+        filename: body.filename,
+        durationSeconds: body.durationSeconds,
+        noteCount: result.notas.length,
+        durationMs: result.duracionMs,
+      }).catch((error) => {
+        console.error("Historial watcher log error:", error);
+      }),
+    );
+
     return NextResponse.json(result, { status: 201 });
   } catch (error) {
     console.error("Cam-Recorder analyze error:", error);

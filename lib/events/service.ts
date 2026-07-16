@@ -338,6 +338,18 @@ export async function getEventById(eventId: string): Promise<ContextEventDto | n
   return event ? mapContextEvent(event) : null;
 }
 
+export async function rescheduleEvent(
+  eventId: string,
+  occurredAt: Date,
+): Promise<ContextEventDto> {
+  const updated = await prisma.contextEvent.update({
+    where: { id: eventId },
+    data: { occurredAt },
+    include: { links: true },
+  });
+  return mapContextEvent(updated);
+}
+
 export async function listEventsBySource(
   source: string,
   sourceRef: string,

@@ -5,6 +5,7 @@ import {
   savePageVisionResult,
 } from "@/lib/cuadernos/service";
 import { runAtomicVisionAgent } from "@/lib/cuadernos/vision-agent";
+import { logNotebookProcessedActivity } from "@/lib/historial/domain-log";
 import { indexNotebookPageMemory } from "@/lib/mnemosyne/hooks";
 import { captureAndPurify } from "@/lib/purifier/capture";
 import { prisma } from "@/lib/prisma";
@@ -77,6 +78,18 @@ export async function POST(
     const notebook = await prisma.notebook.findUnique({
       where: { id: page.notebookId },
       select: { title: true },
+    });
+
+    void logNotebookProcessedActivity({
+      pageId,
+      notebookId: page.notebookId,
+      notebookTitle: notebook?.title ?? "Cuaderno",
+      pageNumber: page.pageNumber,
+      semanticPreview: vision.semanticVector,
+      corpusCaptureId,
+      quantaCount: vision.quanta.length,
+    }).catch((error) => {
+      console.error("Historial notebook process log error:", error);
     });
 
     void indexNotebookPageMemory({

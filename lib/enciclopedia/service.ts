@@ -6,6 +6,7 @@ import {
   MIN_CONCEPT_LENGTH,
 } from "@/lib/enciclopedia/constants";
 import { generateEncyclopediaEntry } from "@/lib/enciclopedia/generator";
+import { logEncyclopediaGeneratedActivity } from "@/lib/historial/domain-log";
 import { conceptToSlug, normalizeConcept } from "@/lib/enciclopedia/slug";
 import type {
   EncyclopediaEntryDto,
@@ -134,6 +135,18 @@ export async function getOrExploreConcept(
     fromEntryId: input.parentEntryId,
     toEntryId: entry.id,
     triggerTerm: input.triggerTerm ?? concept,
+  });
+
+  void logEncyclopediaGeneratedActivity({
+    entryId: entry.id,
+    slug: entry.slug,
+    title: entry.title,
+    bodyPreview: entry.body,
+    model: entry.model,
+    parentEntryId: entry.parentEntryId,
+    regenerated: Boolean(existing),
+  }).catch((error) => {
+    console.error("Historial encyclopedia log error:", error);
   });
 
   return {

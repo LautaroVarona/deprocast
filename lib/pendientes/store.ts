@@ -167,6 +167,19 @@ export async function completePendingTask(id: string): Promise<PendingTaskDto> {
   return mapPendingTask(row);
 }
 
+export async function reschedulePendingTask(
+  id: string,
+  targetDay: Date,
+): Promise<PendingTaskDto> {
+  const updated = await prisma.pendingTask.update({
+    where: { id },
+    data: {
+      targetDay: normalizeDayStart(targetDay),
+    },
+  });
+  return mapPendingTask(updated);
+}
+
 export async function calibratePendingTask(
   id: string,
   weight: number,

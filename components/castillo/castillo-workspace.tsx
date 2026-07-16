@@ -10,18 +10,79 @@ import { CastilloGridTabs } from "@/components/castillo/castillo-grid-tabs";
 import { CalibracionReino } from "@/components/ludus/calibracion-reino";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useBabel } from "@/components/babel/babel-context";
+import { CastilloProjectsWidget } from "@/components/castillo/castillo-projects-widget";
 import {
   ArrowLeftIcon,
   CastleIcon,
   CrownIcon,
   RefreshCwIcon,
+  ImageIcon,
 } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import type { Project } from "@/lib/projects/types";
+import { SOURCE_TYPE_ACCENTS } from "@/lib/castillo/constants";
 
 function CastilloShell() {
-  const { isLoading, isBusy, error, refresh } = useCastillo();
+  const { universeFetch } = useBabel();
+  const { isLoading, isBusy, error, refresh, placeItem } = useCastillo();
   const [showCalibration, setShowCalibration] = useState(false);
+  const [showVisionModal, setShowVisionModal] = useState(false);
+  const [visionImageUrl, setVisionImageUrl] = useState("");
+  const [linkedProjectId, setLinkedProjectId] = useState("");
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [isProjectsLoading, setIsProjectsLoading] = useState(false);
+
+  const linkedProject = useMemo(
+    () => projects.find((p) => p.id === linkedProjectId) ?? null,
+    [projects, linkedProjectId],
+  );
+
+  useEffect(() => {
+    if (!showVisionModal) return;
+    if (projects.length > 0) return;
+    setIsProjectsLoading(true);
+    void universeFetch("/api/proyectos", { cache: "no-store" })
+      .then(async (res) => {
+        if (!res.ok) throw new Error("No se pudieron cargar proyectos.");
+        const data = (await res.json()) as { projects?: Project[] };
+        const loaded = data.projects ?? [];
+        setProjects(loaded);
+        setLinkedProjectId((current) => current || loaded[0]?.id || "");
+      })
+      .catch(() => {
+        setProjects([]);
+      })
+      .finally(() => {
+        setIsProjectsLoading(false);
+      });
+  }, [projects.length, showVisionModal, universeFetch]);
+
+  const handleCreateVisionCard = async () => {
+    const imageUrl = visionImageUrl.trim();
+    if (!imageUrl) {
+      return;
+    }
+    await placeItem({
+      sourceType: "vision_image",
+      sourceId: imageUrl,
+      title: "Visión",
+      subtitle: linkedProject ? linkedProject.title : null,
+      accentHint: SOURCE_TYPE_ACCENTS.vision_image,
+      deepLink: linkedProjectId
+        ? `/proyectos?highlight=${linkedProjectId}`
+        : "/ludus/castillo",
+      meta: {
+        imageUrl,
+        linkedProjectId: linkedProjectId || null,
+      },
+      placed: false,
+    });
+
+    setShowVisionModal(false);
+    setVisionImageUrl("");
+  };
 
   return (
     <div className="flex h-[calc(100dvh-3.5rem)] flex-col overflow-hidden">
@@ -60,6 +121,18 @@ function CastilloShell() {
 
         <Button
           type="button"
+          variant="outline"
+          size="sm"
+          className="border-violet-500/30 bg-violet-500/10 text-xs text-violet-200 hover:bg-violet-500/20"
+          onClick={() => setShowVisionModal(true)}
+          disabled={isBusy}
+        >
+          <ImageIcon className="size-3.5" />
+          Nueva visión
+        </Button>
+
+        <Button
+          type="button"
           variant="ghost"
           size="icon-sm"
           className="text-white/50 hover:bg-white/5 hover:text-white"
@@ -82,6 +155,7 @@ function CastilloShell() {
       <div className="flex min-h-0 flex-1">
         <aside className="flex w-72 shrink-0 flex-col border-r border-white/10 bg-black/25 lg:w-80">
           <CastilloGridTabs />
+          <CastilloProjectsWidget />
           <CastilloCatalogPanel />
         </aside>
         <main className="min-w-0 flex-1 overflow-hidden">
@@ -96,6 +170,73 @@ function CastilloShell() {
               embedded
               onClose={() => setShowCalibration(false)}
             />
+          </div>
+        </div>
+      ) : null}
+
+      {showVisionModal ? (
+        <div className="fixed inset-0 z-[160] flex items-start justify-center overflow-y-auto bg-black/80 backdrop-blur-sm pt-8 pb-16">
+          <div className="castillo-card mx-4 w-full max-w-2xl border border-violet-500/20 p-2 shadow-2xl">
+            <div className="border-b border-white/10 px-4 py-3">
+              <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+                Vision Board
+              </p>
+              <h2 className="mt-1 text-sm font-semibold text-white">Agregar imagen</h2>
+            </div>
+
+            <div className="space-y-3 px-4 py-4">
+              <label className="space-y-1">
+                <span className="font-mono text-[10px] uppercase tracking-wider text-white/40">
+                  URL de imagen
+                </span>
+                <input
+                  value={visionImageUrl}
+                  onChange={(e) => setVisionImageUrl(e.target.value)}
+                  placeholder="https://..."
+                  className="w-full rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-sm text-white outline-none"
+                />
+              </label>
+
+              <label className="space-y-1">
+                <span className="font-mono text-[10px] uppercase tracking-wider text-white/40">
+                  Vincular a proyecto (opcional)
+                </span>
+                {isProjectsLoading ? (
+                  <p className="text-sm text-white/50">Cargando proyectos…</p>
+                ) : (
+                  <select
+                    value={linkedProjectId}
+                    onChange={(e) => setLinkedProjectId(e.target.value)}
+                    className="w-full rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-sm text-white outline-none"
+                  >
+                    <option value="">Sin vínculo</option>
+                    {projects.map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.title}
+                      </option>
+                    ))}
+                  </select>
+                )}
+              </label>
+            </div>
+
+            <div className="flex justify-end gap-2 border-t border-white/10 px-4 py-3">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setShowVisionModal(false)}
+                disabled={isBusy}
+              >
+                Cancelar
+              </Button>
+              <Button
+                type="button"
+                onClick={() => void handleCreateVisionCard()}
+                disabled={isBusy || !visionImageUrl.trim()}
+              >
+                Crear
+              </Button>
+            </div>
           </div>
         </div>
       ) : null}

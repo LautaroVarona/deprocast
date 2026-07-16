@@ -1,6 +1,5 @@
-import { backfillActivityLog, backfillHealthRecords } from "@/lib/historial/backfill";
-import { listActivityByDays, listActivityLogs } from "@/lib/historial/queries";
-import type { ActivityCategory } from "@/lib/historial/types";
+import { backfillActivityLog, backfillExtendedActivitySources, backfillHealthRecords } from "@/lib/historial/backfill";
+import { getActivityDayCounts, listActivityByDays, listActivityLogs } from "@/lib/historial/queries";import type { ActivityCategory } from "@/lib/historial/types";
 import { ACTIVITY_CATEGORIES } from "@/lib/historial/types";
 import { getUniverseFilterSlugFromRequest } from "@/lib/babel/universe-scope";
 import { prisma } from "@/lib/prisma";
@@ -22,6 +21,10 @@ export async function GET(request: NextRequest) {
 
     void backfillHealthRecords().catch((error) => {
       console.error("Historial health backfill error:", error);
+    });
+
+    void backfillExtendedActivitySources().catch((error) => {
+      console.error("Historial extended backfill error:", error);
     });
 
     const { searchParams } = request.nextUrl;
@@ -47,7 +50,18 @@ export async function GET(request: NextRequest) {
         universeSlug,
       });
 
-      return NextResponse.json({ groups, universe: universeSlug ?? "babel" });
+      const dayCounts = await getActivityDayCounts({
+        category,
+        agentId,
+        days: days ?? 14,
+        universeSlug,
+      });
+
+      return NextResponse.json({
+        groups,
+        dayCounts,
+        universe: universeSlug ?? "babel",
+      });
     }
 
     const result = await listActivityLogs({

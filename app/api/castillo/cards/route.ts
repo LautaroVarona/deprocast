@@ -13,6 +13,7 @@ const bodySchema = z.object({
   title: z.string().min(1),
   subtitle: z.string().nullable().optional(),
   accent: z.string().nullable().optional(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
 });
 
 export async function POST(request: NextRequest) {

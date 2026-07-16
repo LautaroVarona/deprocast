@@ -58,7 +58,8 @@ export const createPendingTaskSchema = z.object({
 });
 
 export const patchPendingTaskSchema = z.object({
-  action: z.enum(["recognize", "reject", "complete"]),
+  action: z.enum(["recognize", "reject", "complete", "reschedule"]),
+  targetDay: z.string().datetime().optional(),
 });
 
 export const calibratePendingTaskSchema = z.object({

@@ -9,12 +9,15 @@ import { Button } from "@/components/ui/button";
 import {
   ECOSYSTEM_STATS,
   OPERATIONAL_AGENTS,
+  TEMPORAL_ECOSYSTEM_AGENT_IDS,
   type OperationalAgent,
 } from "@/lib/agentes/catalog";
 import { cn } from "@/lib/utils";
 import {
   ActivityIcon,
   BotIcon,
+  CalendarIcon,
+  ClockIcon,
   FileTextIcon,
   LayoutGridIcon,
   ListIcon,
@@ -41,9 +44,29 @@ export function AgentesWorkspace() {
       .catch(() => undefined);
   }, []);
 
-  const filteredAgents = useMemo(() => {
+  const temporalAgents = useMemo(() => {
+    const ids = new Set<string>(TEMPORAL_ECOSYSTEM_AGENT_IDS);
     const query = searchQuery.trim().toLowerCase();
     return OPERATIONAL_AGENTS.filter((agent) => {
+      if (!ids.has(agent.id)) return false;
+      if (!query) return true;
+      const haystack = [
+        agent.name,
+        agent.badge,
+        ...agent.functions,
+        ...agent.technologies,
+      ]
+        .join(" ")
+        .toLowerCase();
+      return haystack.includes(query);
+    });
+  }, [searchQuery]);
+
+  const filteredAgents = useMemo(() => {
+    const temporalIds = new Set<string>(TEMPORAL_ECOSYSTEM_AGENT_IDS);
+    const query = searchQuery.trim().toLowerCase();
+    return OPERATIONAL_AGENTS.filter((agent) => {
+      if (temporalIds.has(agent.id)) return false;
       if (toneFilter !== "all" && agent.badgeTone !== toneFilter) {
         return false;
       }
@@ -118,6 +141,57 @@ export function AgentesWorkspace() {
             />
           </div>
         </header>
+
+        <section className="space-y-4 rounded-xl border border-cyan-500/20 bg-cyan-500/5 p-4">
+          <div className="flex flex-wrap items-center gap-2">
+            <ClockIcon className="size-4 text-cyan-300/80" aria-hidden />
+            <h2 className="text-sm font-semibold uppercase tracking-wider text-cyan-200/90">
+              Eje temporal y calendario
+            </h2>
+            <span className="font-mono text-[10px] text-cyan-400/60">
+              SSOT · Ludus + /calendario
+            </span>
+          </div>
+          <p className="max-w-3xl text-xs leading-relaxed text-zinc-400">
+            Agentes que gestionan eventos, tareas y planificación. Comparten la
+            capa unificada{" "}
+            <code className="rounded bg-zinc-900 px-1 py-0.5 text-cyan-300/80">
+              lib/temporal
+            </code>{" "}
+            y se invalidan entre vistas con{" "}
+            <code className="rounded bg-zinc-900 px-1 py-0.5 text-cyan-300/80">
+              bumpTemporal()
+            </code>
+            .
+          </p>
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+            {temporalAgents.map((agent) => (
+              <AgentCard
+                key={agent.id}
+                agent={agent}
+                isActiveToday={activeAgentIds.has(agent.id)}
+              />
+            ))}
+          </div>
+          <div className="flex flex-wrap gap-2 pt-1">
+            {[
+              ["/calendario", "Calendario"],
+              ["/ludus/campamento", "Campamento"],
+              ["/ludus/trinchera", "Trinchera"],
+              ["/pendientes", "Pendientes"],
+              ["/salud", "Salud"],
+            ].map(([href, label]) => (
+              <Link
+                key={href}
+                href={href}
+                className="inline-flex items-center gap-1.5 rounded-full border border-cyan-500/25 bg-cyan-500/10 px-3 py-1 text-[11px] text-cyan-200/90 hover:border-cyan-400/40"
+              >
+                <CalendarIcon className="size-3" />
+                {label}
+              </Link>
+            ))}
+          </div>
+        </section>
 
         <section className="space-y-5">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -260,6 +334,8 @@ export function AgentesWorkspace() {
             ["/pendientes", "Pendientes"],
             ["/enciclopedia", "Enciclopedia"],
             ["/ludus", "Ludus"],
+            ["/calendario", "Calendario"],
+            ["/salud", "Salud"],
             ["/historial", "Historial"],
             ["/molecular", "Molecular"],
           ].map(([href, label], index, arr) => (

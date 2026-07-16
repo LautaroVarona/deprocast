@@ -18,6 +18,8 @@ export function CastilloCardSurface({ card }: CastilloCardProps) {
   const [tagInput, setTagInput] = useState("");
   const accentClass =
     ACCENT_CLASSES[card.accent ?? "zinc"] ?? ACCENT_CLASSES.zinc;
+  const imageUrl =
+    typeof card.metadata?.imageUrl === "string" ? card.metadata.imageUrl : null;
 
   const addTag = () => {
     const trimmed = tagInput.trim();
@@ -74,6 +76,18 @@ export function CastilloCardSurface({ card }: CastilloCardProps) {
           </Button>
         </div>
       </div>
+
+      {imageUrl ? (
+        // El tablero de visión usa imágenes opcionales en tarjetas especiales.
+        <div className="border-b border-white/8 bg-black/30 px-2 py-2">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={imageUrl}
+            alt={card.title}
+            className="h-24 w-full rounded-md object-cover"
+          />
+        </div>
+      ) : null}
 
       <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto p-3">
         {card.subtitle ? (

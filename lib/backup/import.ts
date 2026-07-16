@@ -43,6 +43,7 @@ import {
   databaseHasAppSchema,
   ensureRuntimeReady,
 } from "@/lib/runtime-setup";
+import { logBackupImportedActivity } from "@/lib/historial/domain-log";
 
 type ValidatedBackup = {
   manifest: BackupManifest;
@@ -282,6 +283,14 @@ export async function restoreBackupFromZip(
       await cleanupTempDir(tempDir);
       tempDir = null;
 
+      void logBackupImportedActivity({
+        restoredAt,
+        exportMode: "full",
+        stats: validated.manifest.stats,
+      }).catch((error) => {
+        console.error("Historial backup import log error:", error);
+      });
+
       return {
         success: true,
         restoredAt,
@@ -340,6 +349,15 @@ export async function restoreBackupFromZip(
     const restoredAt = new Date().toISOString();
     await cleanupTempDir(tempDir);
     tempDir = null;
+
+    void logBackupImportedActivity({
+      restoredAt,
+      exportMode: "partial",
+      stats: validated.manifest.stats,
+      restoredDomains: restoreDomains,
+    }).catch((error) => {
+      console.error("Historial backup import log error:", error);
+    });
 
     return {
       success: true,

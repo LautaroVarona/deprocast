@@ -42,9 +42,16 @@ function parseLayout(value: unknown): CastleCardLayout {
   return { x: 0, y: 0, w: DEFAULT_CARD_LAYOUT.w, h: DEFAULT_CARD_LAYOUT.h };
 }
 
+function parseMetadata(value: unknown): Record<string, unknown> {
+  return value && typeof value === "object"
+    ? (value as Record<string, unknown>)
+    : {};
+}
+
 function resolveDeepLink(
   sourceType: CastleSourceType,
   sourceId: string | null,
+  metadata?: Record<string, unknown>,
 ): string | null {
   if (!sourceId) return null;
   switch (sourceType) {
@@ -60,6 +67,13 @@ function resolveDeepLink(
       return "/enciclopedia";
     case "x_bookmark":
       return "/ingesta";
+    case "project":
+      return `/proyectos?highlight=${sourceId}`;
+    case "vision_image":
+      if (typeof metadata?.linkedProjectId === "string" && metadata?.linkedProjectId) {
+        return `/proyectos?highlight=${metadata.linkedProjectId}`;
+      }
+      return "/ludus/castillo";
     default:
       return null;
   }
@@ -91,6 +105,7 @@ function mapCard(card: {
   layout: unknown;
   createdAt: Date;
   updatedAt: Date;
+  metadata: unknown;
 }): CastleCardDto {
   return {
     id: card.id,
@@ -105,7 +120,9 @@ function mapCard(card: {
     deepLink: resolveDeepLink(
       card.sourceType as CastleSourceType,
       card.sourceId,
+      card.metadata as Record<string, unknown> | undefined,
     ),
+    metadata: parseMetadata(card.metadata),
     createdAt: card.createdAt.toISOString(),
     updatedAt: card.updatedAt.toISOString(),
   };
@@ -203,6 +220,7 @@ export async function placeCatalogItem(input: {
   title: string;
   subtitle?: string | null;
   accent?: string | null;
+  metadata?: Record<string, unknown>;
 }): Promise<CastleCardDto> {
   const existing = await prisma.castleCard.findFirst({
     where: {
@@ -233,6 +251,7 @@ export async function placeCatalogItem(input: {
       subtitle: input.subtitle ?? null,
       accent: input.accent ?? SOURCE_TYPE_ACCENTS[input.sourceType],
       tags: [] as Prisma.InputJsonValue,
+      metadata: (input.metadata ?? {}) as Prisma.InputJsonValue,
       layout: layout as Prisma.InputJsonValue,
     },
   });
@@ -248,6 +267,7 @@ export async function updateCastleCard(
     accent?: string | null;
     tags?: string[];
     layout?: CastleCardLayout;
+    metadata?: Record<string, unknown>;
     emitClassificationEvent?: boolean;
   },
 ): Promise<CastleCardDto> {
@@ -271,6 +291,9 @@ export async function updateCastleCard(
         : {}),
       ...(patch.layout !== undefined
         ? { layout: patch.layout as Prisma.InputJsonValue }
+        : {}),
+      ...(patch.metadata !== undefined
+        ? { metadata: patch.metadata as Prisma.InputJsonValue }
         : {}),
     },
   });

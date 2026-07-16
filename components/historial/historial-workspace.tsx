@@ -1,261 +1,77 @@
 "use client";
 
 import { useBabel } from "@/components/babel/babel-context";
-import type { ActivityEntry } from "@/lib/historial/types";
+import type { ActivityDayGroup } from "@/components/historial/historial-day-section";
+import { HistorialDaySection } from "@/components/historial/historial-day-section";
+import { HistorialDayStrip, type DayCount } from "@/components/historial/historial-day-strip";
+import { HistorialExportMenu } from "@/components/historial/historial-export-menu";
+import { HistorialStatsBar } from "@/components/historial/historial-stats-bar";
+import { toDayKey } from "@/components/historial/historial-utils";
 import {
-  ACTION_LABELS,
   ACTIVITY_CATEGORIES,
   CATEGORY_LABELS,
 } from "@/lib/historial/types";
 import { cn } from "@/lib/utils";
 import {
-  BotIcon,
-  ChevronDownIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
-  CpuIcon,
-  DownloadIcon,
   HistoryIcon,
   Loader2Icon,
 } from "lucide-react";
-import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 
-type ActivityDayGroup = {
-  dayKey: string;
-  dayLabel: string;
-  entries: ActivityEntry[];
-};
-
-const CATEGORY_ICONS: Record<string, string> = {
-  ingesta: "📥",
-  audio: "🎙️",
-  purifier: "🧪",
-  validation: "✅",
-  chat: "💬",
-  events: "📅",
-  salud: "🫀",
-  kg: "🕸️",
-  molecular: "🔬",
-  meta: "🏷️",
-  cuadernos: "📓",
-  ludus: "⚔️",
-  vibe: "🎛️",
-  journal: "📔",
-  backup: "💾",
-};
-
-function formatTime(iso: string): string {
-  const date = new Date(iso);
-  if (Number.isNaN(date.getTime())) return iso;
-  return date.toLocaleTimeString("es-AR", {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
-
-function toDayKey(date: Date): string {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, "0");
-  const d = String(date.getDate()).padStart(2, "0");
-  return `${y}-${m}-${d}`;
-}
-
-function resolveSourceLink(entry: ActivityEntry): string | null {
-  if (entry.category === "purifier" || entry.category === "validation") {
-    return entry.correlationId ? `/validar?id=${entry.correlationId}` : "/validar";
-  }
-  if (entry.category === "audio" && entry.sourceRef) {
-    return `/audio/${entry.sourceRef}`;
-  }
-  if (entry.category === "chat") {
-    return "/chat";
-  }
-  if (entry.category === "journal") {
-    return "/diario";
-  }
-  if (entry.category === "meta") {
-    return "/agentes";
-  }
-  if (entry.category === "ingesta") {
-    return "/ingesta";
-  }
-  if (entry.category === "salud") {
-    return "/salud";
-  }
-  return null;
-}
-
-function ActivityEntryRow({ entry }: { entry: ActivityEntry }) {
-  const [expanded, setExpanded] = useState(false);
-  const sourceLink = resolveSourceLink(entry);
-  const stageAgents = Array.isArray(entry.metadata.stageAgents)
-    ? (entry.metadata.stageAgents as Array<{
-        station: number;
-        name: string;
-        agentName: string;
-      }>)
-    : [];
-  const healthMetrics =
-    entry.category === "salud" &&
-    entry.metadata.metrics &&
-    typeof entry.metadata.metrics === "object"
-      ? (entry.metadata.metrics as Record<string, unknown>)
-      : null;
-  const macroTotals =
-    healthMetrics?.totals && typeof healthMetrics.totals === "object"
-      ? (healthMetrics.totals as {
-          calories?: number;
-          proteinG?: number;
-          carbsG?: number;
-          fatG?: number;
-        })
-      : null;
-
-  return (
-    <article className="rounded-lg border border-zinc-800/80 bg-zinc-900/40 transition hover:border-cyan-500/20">
-      <button
-        type="button"
-        onClick={() => setExpanded((v) => !v)}
-        className="flex w-full items-start gap-3 p-3 text-left sm:p-4"
-      >
-        <span className="mt-0.5 text-lg" aria-hidden>
-          {CATEGORY_ICONS[entry.category] ?? "📋"}
-        </span>
-
-        <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-2">
-            <time className="font-mono text-[10px] text-zinc-500">
-              {formatTime(entry.occurredAt)}
-            </time>
-            <span className="rounded-full border border-zinc-700/80 bg-zinc-950 px-2 py-0.5 font-mono text-[10px] uppercase tracking-wider text-zinc-400">
-              {CATEGORY_LABELS[entry.category] ?? entry.category}
-            </span>
-            <span className="rounded-full border border-zinc-700/80 px-2 py-0.5 font-mono text-[10px] text-zinc-500">
-              {ACTION_LABELS[entry.action] ?? entry.action}
-            </span>
-          </div>
-
-          <h3 className="mt-1 text-sm font-medium text-zinc-100">{entry.title}</h3>
-
-          <div className="mt-2 flex flex-wrap gap-1.5">
-            {entry.agentName ? (
-              <span className="inline-flex items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-[10px] text-emerald-300">
-                <BotIcon className="size-3" />
-                {entry.agentName}
-              </span>
-            ) : null}
-            {entry.modelUsed ? (
-              <span className="inline-flex items-center gap-1 rounded-full border border-cyan-500/30 bg-cyan-500/10 px-2 py-0.5 text-[10px] text-cyan-300">
-                <CpuIcon className="size-3" />
-                {entry.modelUsed}
-              </span>
-            ) : null}
-          </div>
-        </div>
-
-        <ChevronDownIcon
-          className={cn(
-            "size-4 shrink-0 text-zinc-500 transition",
-            expanded && "rotate-180",
-          )}
-        />
-      </button>
-
-      {expanded ? (
-        <div className="border-t border-zinc-800/60 px-4 pb-4 pt-3 text-xs text-zinc-400">
-          {entry.summary ? (
-            <p className="mb-3 leading-relaxed text-zinc-400">{entry.summary}</p>
-          ) : null}
-
-          {macroTotals ? (
-            <div className="mb-3 flex flex-wrap gap-2 font-mono text-[10px] text-emerald-300/90">
-              {typeof macroTotals.calories === "number" ? (
-                <span>{Math.round(macroTotals.calories)} kcal</span>
-              ) : null}
-              {typeof macroTotals.proteinG === "number" ? (
-                <span>P {Math.round(macroTotals.proteinG)}g</span>
-              ) : null}
-              {typeof macroTotals.carbsG === "number" ? (
-                <span>C {Math.round(macroTotals.carbsG)}g</span>
-              ) : null}
-              {typeof macroTotals.fatG === "number" ? (
-                <span>G {Math.round(macroTotals.fatG)}g</span>
-              ) : null}
-            </div>
-          ) : null}
-
-          {stageAgents.length > 0 ? (
-            <div className="mb-3">
-              <p className="mb-1.5 font-mono text-[10px] uppercase tracking-wider text-zinc-500">
-                Agentes por estación
-              </p>
-              <ul className="space-y-1">
-                {stageAgents.map((stage) => (
-                  <li key={`${stage.station}-${stage.name}`} className="text-zinc-400">
-                    Est. {stage.station} · {stage.name} →{" "}
-                    <span className="text-emerald-300/90">{stage.agentName}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ) : null}
-
-          <dl className="grid gap-1 font-mono text-[10px] text-zinc-500 sm:grid-cols-2">
-            {entry.sourceType ? (
-              <>
-                <dt>Fuente</dt>
-                <dd>{entry.sourceType}</dd>
-              </>
-            ) : null}
-            {entry.sourceRef ? (
-              <>
-                <dt>Ref</dt>
-                <dd className="truncate">{entry.sourceRef}</dd>
-              </>
-            ) : null}
-            {entry.correlationId ? (
-              <>
-                <dt>Correlación</dt>
-                <dd className="truncate">{entry.correlationId}</dd>
-              </>
-            ) : null}
-          </dl>
-
-          {sourceLink ? (
-            <Link
-              href={sourceLink}
-              className="mt-3 inline-flex text-cyan-400/80 hover:text-cyan-300 hover:underline"
-            >
-              Ver en la plataforma →
-            </Link>
-          ) : null}
-        </div>
-      ) : null}
-    </article>
-  );
-}
+const DAYS_WINDOW = 30;
 
 export function HistorialWorkspace() {
   const { universeSlug, universeFetch, isLoading: isUniverseLoading } = useBabel();
   const [groups, setGroups] = useState<ActivityDayGroup[]>([]);
+  const [dayCounts, setDayCounts] = useState<DayCount[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [category, setCategory] = useState<string>("all");
+  const [agentId, setAgentId] = useState<string>("all");
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
 
-  const totalEntries = useMemo(
-    () => groups.reduce((sum, g) => sum + g.entries.length, 0),
+  const allEntries = useMemo(
+    () => groups.flatMap((group) => group.entries),
     [groups],
   );
+
+  const totalEntries = allEntries.length;
+
+  const agentCount = useMemo(() => {
+    const ids = new Set<string>();
+    for (const entry of allEntries) {
+      if (entry.agentId) ids.add(entry.agentId);
+    }
+    return ids.size;
+  }, [allEntries]);
+
+  const agentOptions = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const group of groups) {
+      for (const entry of group.entries) {
+        if (entry.agentId && entry.agentName) {
+          map.set(entry.agentId, entry.agentName);
+        }
+      }
+    }
+    return Array.from(map.entries()).sort((a, b) =>
+      a[1].localeCompare(b[1], "es"),
+    );
+  }, [groups]);
 
   const fetchHistorial = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
-      const params = new URLSearchParams({ grouped: "true", days: "14" });
+      const params = new URLSearchParams({
+        grouped: "true",
+        days: String(DAYS_WINDOW),
+      });
       if (category !== "all") params.set("category", category);
+      if (agentId !== "all") params.set("agentId", agentId);
       if (selectedDay) params.set("day", selectedDay);
 
       const response = await universeFetch(`/api/historial?${params}`, {
@@ -266,25 +82,30 @@ export function HistorialWorkspace() {
         throw new Error(data.error ?? "Error al cargar historial");
       }
 
-      const data = (await response.json()) as { groups: ActivityDayGroup[] };
+      const data = (await response.json()) as {
+        groups: ActivityDayGroup[];
+        dayCounts?: DayCount[];
+      };
       setGroups(data.groups ?? []);
+      setDayCounts(data.dayCounts ?? []);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error desconocido");
     } finally {
       setIsLoading(false);
     }
-  }, [category, selectedDay, universeFetch]);
+  }, [category, agentId, selectedDay, universeFetch]);
 
   const runBackfillIfNeeded = useCallback(async () => {
     void universeFetch("/api/historial", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "backfill" }),
-      }).catch(() => undefined);
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "backfill" }),
+    }).catch(() => undefined);
   }, [universeFetch]);
 
   useEffect(() => {
     setGroups([]);
+    setDayCounts([]);
   }, [universeSlug]);
 
   useEffect(() => {
@@ -296,13 +117,6 @@ export function HistorialWorkspace() {
     const base = selectedDay ? new Date(`${selectedDay}T12:00:00`) : new Date();
     base.setDate(base.getDate() + delta);
     setSelectedDay(toDayKey(base));
-  };
-
-  const exportUrl = (format: "json" | "csv") => {
-    const params = new URLSearchParams({ format, days: "30" });
-    if (category !== "all") params.set("category", category);
-    if (selectedDay) params.set("day", selectedDay);
-    return `/api/historial/export?${params}`;
   };
 
   return (
@@ -317,49 +131,46 @@ export function HistorialWorkspace() {
               Registro de actividad
             </span>
             <span className="text-xs text-zinc-500">
-              {totalEntries} evento{totalEntries === 1 ? "" : "s"}
+              {totalEntries} evento{totalEntries === 1 ? "" : "s"} · últimos{" "}
+              {DAYS_WINDOW} días
             </span>
           </div>
 
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <div className="space-y-4">
             <div>
               <h1 className="text-3xl font-semibold tracking-tight text-zinc-50">
                 Historial
               </h1>
               <p className="mt-2 max-w-2xl text-sm text-zinc-500">
-                Log unificado de ingesta, audio, purificación, validación, chat y
-                agentes — con atribución de IA y pipeline.
+                Log unificado de ingesta, audio, purificación, validación, chat,
+                cuadernos, molecular, KG, vibe, enciclopedia y respaldo — con
+                atribución de agente e IA por intervención. Exportable para
+                análisis automático o revisión por coaches y profesionales.
               </p>
             </div>
 
-            <div className="flex flex-wrap gap-2">
-              <a
-                href={exportUrl("json")}
-                download
-                className={cn(
-                  buttonVariants({ variant: "outline", size: "sm" }),
-                  "border-zinc-700 bg-zinc-900/60 text-zinc-300",
-                )}
-              >
-                <DownloadIcon className="size-3.5" />
-                JSON
-              </a>
-              <a
-                href={exportUrl("csv")}
-                download
-                className={cn(
-                  buttonVariants({ variant: "outline", size: "sm" }),
-                  "border-zinc-700 bg-zinc-900/60 text-zinc-300",
-                )}
-              >
-                <DownloadIcon className="size-3.5" />
-                CSV
-              </a>
-            </div>
+            <HistorialExportMenu
+              category={category}
+              agentId={agentId}
+              selectedDay={selectedDay}
+              days={DAYS_WINDOW}
+            />
           </div>
         </header>
 
+        {!isLoading && allEntries.length > 0 ? (
+          <HistorialStatsBar entries={allEntries} agentCount={agentCount} />
+        ) : null}
+
         <div className="flex flex-col gap-4">
+          {dayCounts.length > 0 ? (
+            <HistorialDayStrip
+              dayCounts={dayCounts}
+              selectedDay={selectedDay}
+              onSelectDay={setSelectedDay}
+            />
+          ) : null}
+
           <div className="flex flex-wrap items-center gap-2">
             <Button
               type="button"
@@ -381,7 +192,7 @@ export function HistorialWorkspace() {
               )}
               onClick={() => setSelectedDay(null)}
             >
-              Últimos 14 días
+              Todos los días
             </Button>
             <Button
               type="button"
@@ -427,6 +238,41 @@ export function HistorialWorkspace() {
               </button>
             ))}
           </div>
+
+          {agentOptions.length > 0 ? (
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="font-mono text-[10px] uppercase tracking-wider text-zinc-600">
+                Agente
+              </span>
+              <button
+                type="button"
+                onClick={() => setAgentId("all")}
+                className={cn(
+                  "rounded-full border px-2.5 py-1 font-mono text-[10px] uppercase tracking-wider transition",
+                  agentId === "all"
+                    ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-200"
+                    : "border-zinc-700 text-zinc-500 hover:border-zinc-600",
+                )}
+              >
+                Todos
+              </button>
+              {agentOptions.map(([id, name]) => (
+                <button
+                  key={id}
+                  type="button"
+                  onClick={() => setAgentId(id)}
+                  className={cn(
+                    "rounded-full border px-2.5 py-1 font-mono text-[10px] tracking-wider transition",
+                    agentId === id
+                      ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-200"
+                      : "border-zinc-700 text-zinc-500 hover:border-zinc-600",
+                  )}
+                >
+                  {name}
+                </button>
+              ))}
+            </div>
+          ) : null}
         </div>
 
         {isLoading ? (
@@ -443,24 +289,13 @@ export function HistorialWorkspace() {
             No hay actividad registrada para este período.
           </p>
         ) : (
-          <div className="space-y-8">
+          <div className="space-y-10">
             {groups.map((group) => (
-              <section key={group.dayKey} className="space-y-3">
-                <div className="flex items-center gap-3">
-                  <h2 className="text-sm font-semibold capitalize text-zinc-300">
-                    {group.dayLabel}
-                  </h2>
-                  <div className="h-px flex-1 bg-zinc-800" />
-                  <span className="font-mono text-[10px] text-zinc-600">
-                    {group.entries.length}
-                  </span>
-                </div>
-                <div className="space-y-2">
-                  {group.entries.map((entry) => (
-                    <ActivityEntryRow key={entry.id} entry={entry} />
-                  ))}
-                </div>
-              </section>
+              <HistorialDaySection
+                key={group.dayKey}
+                group={group}
+                stickyHeader
+              />
             ))}
           </div>
         )}

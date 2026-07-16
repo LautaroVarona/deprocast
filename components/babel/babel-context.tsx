@@ -20,8 +20,20 @@ type BabelContextValue = {
   universeSlug: string;
   universes: UniverseDto[];
   selectedDay: DayOffset;
+  temporalVersion: number;
+  plannerMode: "week" | "month";
+  weekAnchor: Date;
+  monthAnchor: { year: number; month: number };
   isLoading: boolean;
   setSelectedDay: (day: DayOffset) => void;
+  bumpTemporal: () => void;
+  setPlannerMode: (mode: "week" | "month") => void;
+  setWeekAnchor: (date: Date) => void;
+  goToPrevWeek: () => void;
+  goToNextWeek: () => void;
+  setMonthAnchor: (year: number, month: number) => void;
+  goToPrevMonth: () => void;
+  goToNextMonth: () => void;
   switchUniverse: (slug: string) => void;
   discoverUniverse: (label: string) => Promise<UniverseDto | null>;
   calibrateUniverse: (slug: string, weight: number) => Promise<void>;
@@ -38,6 +50,13 @@ export function BabelProvider({ children }: { children: React.ReactNode }) {
   const [universes, setUniverses] = useState<UniverseDto[]>([]);
   const [activeSlug, setActiveSlug] = useState<string>(ROOT_UNIVERSE_SLUG);
   const [selectedDay, setSelectedDay] = useState<DayOffset>("today");
+  const [temporalVersion, setTemporalVersion] = useState(0);
+  const [plannerMode, setPlannerMode] = useState<"week" | "month">("week");
+  const [weekAnchor, setWeekAnchor] = useState<Date>(() => new Date());
+  const [monthAnchor, setMonthAnchorState] = useState(() => {
+    const now = new Date();
+    return { year: now.getFullYear(), month: now.getMonth() + 1 };
+  });
   const [isLoading, setIsLoading] = useState(true);
 
   const refreshUniverses = useCallback(async () => {
@@ -115,14 +134,56 @@ export function BabelProvider({ children }: { children: React.ReactNode }) {
     [],
   );
 
+  const bumpTemporal = useCallback(() => {
+    setTemporalVersion((current) => current + 1);
+  }, []);
+
+  const goToPrevWeek = useCallback(() => {
+    setWeekAnchor((current) => new Date(current.getTime() - 7 * 86_400_000));
+  }, []);
+
+  const goToNextWeek = useCallback(() => {
+    setWeekAnchor((current) => new Date(current.getTime() + 7 * 86_400_000));
+  }, []);
+
+  const setMonthAnchor = useCallback((year: number, month: number) => {
+    setMonthAnchorState({ year, month });
+  }, []);
+
+  const goToPrevMonth = useCallback(() => {
+    setMonthAnchorState((current) => {
+      if (current.month === 1) return { year: current.year - 1, month: 12 };
+      return { year: current.year, month: current.month - 1 };
+    });
+  }, []);
+
+  const goToNextMonth = useCallback(() => {
+    setMonthAnchorState((current) => {
+      if (current.month === 12) return { year: current.year + 1, month: 1 };
+      return { year: current.year, month: current.month + 1 };
+    });
+  }, []);
+
   const value = useMemo(
     () => ({
       activeUniverse,
       universeSlug,
       universes,
       selectedDay,
+      temporalVersion,
+      plannerMode,
+      weekAnchor,
+      monthAnchor,
       isLoading,
       setSelectedDay,
+      bumpTemporal,
+      setPlannerMode,
+      setWeekAnchor,
+      goToPrevWeek,
+      goToNextWeek,
+      setMonthAnchor,
+      goToPrevMonth,
+      goToNextMonth,
       switchUniverse,
       discoverUniverse,
       calibrateUniverse,
@@ -134,7 +195,18 @@ export function BabelProvider({ children }: { children: React.ReactNode }) {
       universeSlug,
       universes,
       selectedDay,
+      temporalVersion,
+      plannerMode,
+      weekAnchor,
+      monthAnchor,
       isLoading,
+      bumpTemporal,
+      setPlannerMode,
+      goToPrevWeek,
+      goToNextWeek,
+      setMonthAnchor,
+      goToPrevMonth,
+      goToNextMonth,
       switchUniverse,
       discoverUniverse,
       calibrateUniverse,

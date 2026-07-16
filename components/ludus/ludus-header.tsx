@@ -1,5 +1,6 @@
 "use client";
 
+import { HistorialTrigger } from "@/components/historial/historial-sheet";
 import { LudusAreaNav } from "@/components/ludus/ludus-area-nav";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { buttonVariants } from "@/components/ui/button";
@@ -56,12 +57,8 @@ export function LudusHeader({ signalPoints = 0, onOpenCommandMenu }: LudusHeader
             {signalPoints} Puntos de Señal
           </span>
           <ThemeToggle />
-          <Link
-            href="/historial"
-            className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "hidden sm:inline-flex")}
-          >
-            Historial
-          </Link>
+          <HistorialTrigger variant="ghost" className="hidden sm:inline-flex" />
+          <HistorialTrigger variant="ghost" showLabel={false} className="sm:hidden" />
           <Link
             href="/cortex"
             className={cn(buttonVariants({ variant: "outline", size: "sm" }))}

@@ -32,6 +32,7 @@ import {
   getUploadDir,
 } from "@/lib/runtime-paths";
 import { ensureRuntimeReady } from "@/lib/runtime-setup";
+import { logBackupExportedActivity } from "@/lib/historial/domain-log";
 
 import packageJson from "../../package.json";
 
@@ -162,6 +163,10 @@ export async function buildBackupArchive(
       zip.file(zipPath, content);
     }
 
+    void logBackupExportedActivity(manifest).catch((error) => {
+      console.error("Historial backup export log error:", error);
+    });
+
     return zip.generateAsync({
       type: "nodebuffer",
       compression: "DEFLATE",
@@ -232,6 +237,10 @@ export async function buildBackupArchive(
     manifest.stats.totalBytes = totalBytes;
     zip.file(BACKUP_MANIFEST_FILENAME, JSON.stringify(manifest, null, 2));
   }
+
+  void logBackupExportedActivity(manifest).catch((error) => {
+    console.error("Historial backup export log error:", error);
+  });
 
   return zip.generateAsync({
     type: "nodebuffer",

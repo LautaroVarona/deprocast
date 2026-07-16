@@ -14,6 +14,8 @@ export const ACTIVITY_CATEGORIES = [
   "vibe",
   "journal",
   "backup",
+  "encyclopedia",
+  "watcher",
 ] as const;
 
 export type ActivityCategory = (typeof ACTIVITY_CATEGORIES)[number];
@@ -36,6 +38,9 @@ export const ACTIVITY_ACTIONS = [
   "vibe_calibrated",
   "health_recorded",
   "encyclopedia_generated",
+  "backup_exported",
+  "backup_imported",
+  "watcher_analyzed",
 ] as const;
 
 export type ActivityAction = (typeof ACTIVITY_ACTIONS)[number];
@@ -109,6 +114,8 @@ export const CATEGORY_LABELS: Record<ActivityCategory, string> = {
   vibe: "Calibrador Vibe",
   journal: "Diario",
   backup: "Respaldo",
+  encyclopedia: "Enciclopedia",
+  watcher: "Watcher",
 };
 
 export const ACTION_LABELS: Record<string, string> = {
@@ -129,4 +136,7 @@ export const ACTION_LABELS: Record<string, string> = {
   vibe_calibrated: "Vibe calibrado",
   health_recorded: "Registro de salud",
   encyclopedia_generated: "Entrada enciclopedia",
+  backup_exported: "Respaldo exportado",
+  backup_imported: "Respaldo importado",
+  watcher_analyzed: "Video analizado",
 };

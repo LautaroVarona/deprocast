@@ -4,6 +4,7 @@ import { useBabel } from "@/components/babel/babel-context";
 import { UniverseSwitcher } from "@/components/babel/universe-switcher";
 import { AreaFilterChips } from "@/components/cortex/area-filter-chips";
 import { CortexMetricsBar } from "@/components/cortex/cortex-metrics-bar";
+import { HistorialTodayWidget } from "@/components/cortex/historial-today-widget";
 import { IngestModal } from "@/components/cortex/ingest-modal";
 import { KnowledgeGrid } from "@/components/cortex/knowledge-grid";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -144,6 +145,8 @@ export function CortexDashboard() {
       </section>
 
       <CortexMetricsBar snapshot={snapshot} isLoading={isLoading} />
+
+      <HistorialTodayWidget />
 
       <section aria-label="Matriz de nodos" className="space-y-4">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">

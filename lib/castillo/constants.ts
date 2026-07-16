@@ -18,6 +18,8 @@ export const SOURCE_TYPE_ACCENTS: Record<CastleSourceType, string> = {
   context_event: "cyan",
   encyclopedia_entry: "violet",
   x_bookmark: "amber",
+  project: "emerald",
+  vision_image: "violet",
   freeform: "zinc",
 };
 
@@ -28,6 +30,8 @@ export const SOURCE_TYPE_LABELS: Record<CastleSourceType, string> = {
   context_event: "Evento",
   encyclopedia_entry: "Enciclopedia",
   x_bookmark: "Bookmark X",
+  project: "Proyecto",
+  vision_image: "Vision",
   freeform: "Nota libre",
 };
 
@@ -38,5 +42,6 @@ export const ACCENT_CLASSES: Record<string, string> = {
   cyan: "castillo-accent-cyan",
   violet: "castillo-accent-violet",
   amber: "castillo-accent-amber",
+  emerald: "castillo-accent-green",
   zinc: "castillo-accent-zinc",
 };

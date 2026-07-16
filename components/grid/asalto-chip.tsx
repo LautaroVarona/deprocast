@@ -7,6 +7,7 @@ import { Loader2Icon, ShieldIcon, ZapIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
+import { useBabel } from "@/components/babel/babel-context";
 
 type AsaltoChipProps = {
   asalto: AsaltoItem;
@@ -15,6 +16,7 @@ type AsaltoChipProps = {
 
 export function AsaltoChip({ asalto, onStarted }: AsaltoChipProps) {
   const router = useRouter();
+  const { bumpTemporal } = useBabel();
   const [isStarting, setIsStarting] = useState(false);
 
   const defaultDuration =
@@ -39,6 +41,7 @@ export function AsaltoChip({ asalto, onStarted }: AsaltoChipProps) {
         throw new Error(data.error ?? "No se pudo iniciar el asalto.");
       }
       toast.success("Asalto iniciado");
+      bumpTemporal();
       onStarted?.();
       router.push("/ludus/trinchera");
     } catch (error) {

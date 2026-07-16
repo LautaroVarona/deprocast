@@ -18,6 +18,7 @@ const patchSchema = z.object({
   accent: z.string().nullable().optional(),
   tags: z.array(z.string()).optional(),
   layout: layoutSchema.optional(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
   emitClassificationEvent: z.boolean().optional(),
 });
 

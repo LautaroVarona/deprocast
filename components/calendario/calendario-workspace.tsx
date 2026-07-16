@@ -2,7 +2,10 @@
 
 import { MiniCalendar } from "@/components/diario/mini-calendar";
 import { DayNavigator } from "@/components/grid/day-navigator";
+import { useBabel } from "@/components/babel/babel-context";
 import type { DayOffset } from "@/lib/pendientes/types";
+import type { TemporalBlock } from "@/lib/temporal/types";
+import { useTemporalData } from "@/hooks/use-temporal-data";
 import { cn } from "@/lib/utils";
 import {
   ActivityIcon,
@@ -13,16 +16,7 @@ import {
   ZapIcon,
 } from "lucide-react";
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useState } from "react";
-
-type CalendarEvent = {
-  id: string;
-  content: string;
-  pillar: string;
-  occurredAt: string;
-  status: string;
-  structuredData: Record<string, unknown>;
-};
+import { useEffect, useMemo, useState } from "react";
 
 const HEALTH_PILLARS = new Set([
   "rendimiento",
@@ -47,8 +41,9 @@ function formatEventTime(iso: string): string {
   });
 }
 
-function resolveHealthLabel(event: CalendarEvent): string | null {
-  if (!HEALTH_PILLARS.has(event.pillar)) return null;
+function resolveHealthLabel(event: TemporalBlock): string | null {
+  const pillar = event.pillar;
+  if (!pillar || !HEALTH_PILLARS.has(pillar)) return null;
 
   const metrics =
     event.structuredData?.metrics &&
@@ -56,10 +51,10 @@ function resolveHealthLabel(event: CalendarEvent): string | null {
       ? (event.structuredData.metrics as Record<string, unknown>)
       : null;
 
-  if (event.pillar === "combustible") {
+  if (pillar === "combustible") {
     return metrics?.kind === "comida" ? "Ingesta" : "Combustible";
   }
-  if (event.pillar === "rendimiento") {
+  if (pillar === "rendimiento") {
     return "Actividad";
   }
   return "Salud";
@@ -106,42 +101,28 @@ function PillarBadge({ pillar }: { pillar: string }) {
 }
 
 export function CalendarioWorkspace() {
-  const [selectedDay, setSelectedDay] = useState<DayOffset>("today");
-  const [events, setEvents] = useState<CalendarEvent[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const { selectedDay, setSelectedDay } = useBabel();
   const [year, setYear] = useState(() => new Date().getFullYear());
   const [month, setMonth] = useState(() => new Date().getMonth() + 1);
   const [calendarDay, setCalendarDay] = useState<number | null>(
     () => new Date().getDate(),
   );
 
+  const { events, isLoading } = useTemporalData({
+    mode: "day",
+    day: selectedDay,
+  });
+
   const selectedDate = useMemo(
     () => dayOffsetToDate(selectedDay),
     [selectedDay],
   );
 
-  const load = useCallback(async () => {
-    setIsLoading(true);
-    try {
-      const response = await fetch(`/api/calendario?day=${selectedDay}`, {
-        cache: "no-store",
-      });
-      if (!response.ok) throw new Error("Error al cargar.");
-      const data = await response.json();
-      setEvents(data.events ?? []);
-    } catch {
-      setEvents([]);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [selectedDay]);
-
   useEffect(() => {
-    void load();
     setYear(selectedDate.getFullYear());
     setMonth(selectedDate.getMonth() + 1);
     setCalendarDay(selectedDate.getDate());
-  }, [load, selectedDate]);
+  }, [selectedDate]);
 
   return (
     <div className="flex h-full min-h-0 flex-col overflow-hidden">
@@ -197,7 +178,7 @@ export function CalendarioWorkspace() {
             <ul className="space-y-2 overflow-y-auto">
               {events.map((event) => {
                 const healthLabel = resolveHealthLabel(event);
-                const isHealth = HEALTH_PILLARS.has(event.pillar);
+                const isHealth = event.pillar ? HEALTH_PILLARS.has(event.pillar) : false;
 
                 return (
                   <li
@@ -210,14 +191,14 @@ export function CalendarioWorkspace() {
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0 flex-1">
                         <div className="mb-1.5 flex flex-wrap items-center gap-1.5">
-                          <PillarBadge pillar={event.pillar} />
+                          {event.pillar ? <PillarBadge pillar={event.pillar} /> : null}
                           {healthLabel ? (
                             <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
                               {healthLabel}
                             </span>
                           ) : null}
                         </div>
-                        <p className="text-sm">{event.content}</p>
+                        <p className="text-sm">{event.title}</p>
                         {isHealth ? (
                           <Link
                             href="/salud"
@@ -227,12 +208,12 @@ export function CalendarioWorkspace() {
                           </Link>
                         ) : (
                           <p className="mt-1 font-mono text-[10px] text-muted-foreground">
-                            {event.status}
+                              {event.status}
                           </p>
                         )}
                       </div>
                       <time className="shrink-0 font-mono text-xs tabular-nums text-muted-foreground">
-                        {formatEventTime(event.occurredAt)}
+                        {formatEventTime(event.start)}
                       </time>
                     </div>
                   </li>

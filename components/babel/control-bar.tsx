@@ -22,7 +22,9 @@ export function ControlBar({ area = "default" }: ControlBarProps) {
         </div>
       ) : null}
       <UniverseSwitcher />
-      <DayNavigator selectedDay={selectedDay} onDayChange={setSelectedDay} />
+      {area !== "campamento" ? (
+        <DayNavigator selectedDay={selectedDay} onDayChange={setSelectedDay} />
+      ) : null}
     </header>
   );
 }

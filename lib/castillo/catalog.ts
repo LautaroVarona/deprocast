@@ -11,6 +11,7 @@ import type {
 } from "@/lib/castillo/types";
 import { searchNodes } from "@/lib/kg/queries";
 import { prisma } from "@/lib/prisma";
+import { listProjects } from "@/lib/projects/service";
 
 function truncate(text: string, max: number): string {
   const trimmed = text.trim();
@@ -40,6 +41,10 @@ function resolveDeepLink(
       return "/enciclopedia";
     case "x_bookmark":
       return "/ingesta";
+    case "project":
+      return `/proyectos?highlight=${sourceId}`;
+    case "vision_image":
+      return "/ludus/castillo";
     default:
       return "/ludus/castillo";
   }
@@ -48,7 +53,16 @@ function resolveDeepLink(
 export async function buildCastleCatalog(
   gridId: string,
 ): Promise<CastleCatalogSnapshot> {
-  const [cortex, kgNodes, pages, events, entries, bookmarks, placedCards] =
+  const [
+    cortex,
+    kgNodes,
+    pages,
+    events,
+    entries,
+    bookmarks,
+    projects,
+    placedCards,
+  ] =
     await Promise.all([
       getCortexSnapshot(),
       searchNodes({ limit: 120 }),
@@ -70,6 +84,7 @@ export async function buildCastleCatalog(
         orderBy: { createdAt: "desc" },
         take: 60,
       }),
+      listProjects(),
       prisma.castleCard.findMany({
         where: { gridId },
         select: { sourceType: true, sourceId: true },
@@ -184,11 +199,33 @@ export async function buildCastleCatalog(
     });
   }
 
-  const placedCount = items.filter((item) => item.placed).length;
+  const projectItems: CastleCatalogItem[] = projects.slice(0, 80).map((project) => {
+    const key = `project:${project.id}`;
+    return {
+      sourceType: "project",
+      sourceId: project.id,
+      title: project.title,
+      subtitle: project.objetivo || project.resumen || null,
+      accentHint: SOURCE_TYPE_ACCENTS.project,
+      deepLink: `/proyectos?highlight=${project.id}`,
+      meta: {
+        campoSlug: project.campoSlug,
+        status: project.estado,
+      },
+      placed: isPlaced("project", project.id),
+    };
+  });
+
+  const allItems = [...items, ...projectItems];
+  const placedCount = allItems.filter((item) => item.placed).length;
 
   return {
-    items,
-    totalCount: items.length,
+    items: allItems.sort(
+      (a, b) =>
+        Number(a.placed) - Number(b.placed) ||
+        a.title.localeCompare(b.title, "es"),
+    ),
+    totalCount: allItems.length,
     placedCount,
   };
 }

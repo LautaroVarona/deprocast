@@ -101,6 +101,21 @@ export async function indexMemoryDocument(input: {
       ),
     );
 
+    void import("@/lib/historial/domain-log")
+      .then(({ logMemoryIndexedActivity }) =>
+        logMemoryIndexedActivity({
+          sourceType: input.sourceType,
+          sourceId: input.sourceId,
+          title: input.title,
+          chunkCount: chunks.length,
+          contentHash,
+          embedModel,
+        }),
+      )
+      .catch((error) => {
+        console.error("Historial memory index log error:", error);
+      });
+
     return { indexed: chunks.length, skipped: false };
   } catch (error) {
     if (isMissingMemoryTableError(error)) {

@@ -7,6 +7,7 @@ import {
 } from "@/lib/historial/pipeline-log";
 import { logActivity } from "@/lib/historial/log";
 import { ORCHESTRATOR_AGENT } from "@/lib/historial/agent-map";
+import { getCohereModelName } from "@/lib/cohere/config";
 import type { IngestaChannel } from "@/lib/purifier/constants";
 import { prisma } from "@/lib/prisma";
 
@@ -296,4 +297,193 @@ export async function backfillHealthRecords(options?: {
   }
 
   return { created, skipped };
+}
+
+async function trackLog(
+  id: string | null,
+  counters: { created: number; skipped: number },
+): Promise<void> {
+  if (id) counters.created++;
+  else counters.skipped++;
+}
+
+/** Backfill idempotente de fuentes que antes no registraban ActivityLog. */
+export async function backfillExtendedActivitySources(options?: {
+  limit?: number;
+}): Promise<{ created: number; skipped: number }> {
+  const counters = { created: 0, skipped: 0 };
+  const limit = options?.limit ?? 500;
+
+  const notebookPages = await prisma.notebookPage.findMany({
+    where: { status: "COMPLETED" },
+    include: { notebook: { select: { title: true } } },
+    orderBy: { processedAt: "desc" },
+    take: limit,
+  });
+
+  for (const page of notebookPages) {
+    const id = await logActivity({
+      occurredAt: page.processedAt ?? page.updatedAt,
+      category: "cuadernos",
+      action: "notebook_processed",
+      title: `${page.notebook.title} · p.${page.pageNumber}`,
+      summary: page.semanticVector?.slice(0, 200) ?? null,
+      agentId: "vision-atomica",
+      agentName: "Agente de Visión Atómica",
+      modelUsed: getCohereModelName("vision"),
+      sourceType: "notebook_page",
+      sourceRef: page.id,
+      correlationId: page.notebookId,
+      metadata: {
+        pageNumber: page.pageNumber,
+        corpusCaptureId: page.corpusCaptureId,
+        backfill: true,
+      },
+    });
+    await trackLog(id, counters);
+  }
+
+  const vibeSessions = await prisma.vibeCalibrationSession.findMany({
+    where: { completedAt: { not: null } },
+    include: { votes: true },
+    orderBy: { completedAt: "desc" },
+    take: limit,
+  });
+
+  for (const session of vibeSessions) {
+    const config = session.config as { sources?: string[] };
+    const id = await logActivity({
+      occurredAt: session.completedAt ?? session.startedAt,
+      category: "vibe",
+      action: "vibe_calibrated",
+      title: `Sesión calibrada · ${session.votes.length} votos`,
+      summary: `Fuentes: ${(config.sources ?? []).join(", ") || "—"}`,
+      agentId: "calibrador",
+      agentName: "Calibrador de Vibe",
+      sourceType: "vibe_calibration_session",
+      sourceRef: session.id,
+      metadata: { voteCount: session.votes.length, backfill: true },
+    });
+    await trackLog(id, counters);
+  }
+
+  const encyclopediaEntries = await prisma.encyclopediaEntry.findMany({
+    orderBy: { createdAt: "desc" },
+    take: limit,
+  });
+
+  for (const entry of encyclopediaEntries) {
+    const id = await logActivity({
+      occurredAt: entry.createdAt,
+      category: "encyclopedia",
+      action: "encyclopedia_generated",
+      title: entry.title,
+      summary: entry.body.slice(0, 200),
+      agentId: "enciclopediador",
+      agentName: "Enciclopediador",
+      modelUsed: entry.model,
+      sourceType: "encyclopedia_entry",
+      sourceRef: entry.id,
+      metadata: { slug: entry.slug, backfill: true },
+    });
+    await trackLog(id, counters);
+  }
+
+  const memoryGroups = await prisma.memoryEmbedding.groupBy({
+    by: ["sourceType", "sourceId"],
+    _max: { createdAt: true, embedModel: true, title: true },
+    _count: { id: true },
+    orderBy: { _max: { createdAt: "desc" } },
+    take: limit,
+  });
+
+  for (const group of memoryGroups) {
+    const category =
+      group.sourceType === "notebook_page"
+        ? "cuadernos"
+        : group.sourceType === "journal"
+          ? "journal"
+          : group.sourceType === "kg_mention"
+            ? "kg"
+            : group.sourceType === "purifier_doc"
+              ? "purifier"
+              : "meta";
+
+    const id = await logActivity({
+      occurredAt: group._max.createdAt ?? new Date(),
+      category,
+      action: "indexed",
+      title: `Indexado: ${group._max.title ?? group.sourceId}`,
+      summary: `${group._count.id} chunk${group._count.id === 1 ? "" : "s"}`,
+      agentId: "mnemosyne",
+      agentName: "Mnemosyne",
+      modelUsed: group._max.embedModel,
+      sourceType: group.sourceType,
+      sourceRef: group.sourceId,
+      metadata: { chunkCount: group._count.id, backfill: true },
+    });
+    await trackLog(id, counters);
+  }
+
+  try {
+    const { listValidatedParticulas } = await import(
+      "@/lib/molecular-processing/store"
+    );
+    const particulas = (await listValidatedParticulas()).slice(0, limit);
+
+    for (const particula of particulas) {
+      const id = await logActivity({
+        occurredAt: particula.validadaAt
+          ? new Date(particula.validadaAt)
+          : new Date(),
+        category: "molecular",
+        action: "molecular_validated",
+        title: `Partícula: ${particula.textoFragmento.slice(0, 80)}`,
+        summary: `${particula.ejeX} · Y${particula.ejeY} Z${particula.ejeZ}`,
+        agentId: "calibrador-central",
+        agentName: "Calibrador Central",
+        sourceType: "molecular_particula",
+        sourceRef: particula.id,
+        metadata: { backfill: true },
+      });
+      await trackLog(id, counters);
+    }
+  } catch {
+    // store de molecular puede no existir aún
+  }
+
+  const kgSources = await prisma.kgSource.findMany({
+    orderBy: { lastIngestedAt: "desc" },
+    take: limit,
+  });
+
+  for (const source of kgSources) {
+    const metadata =
+      source.metadata && typeof source.metadata === "object"
+        ? (source.metadata as Record<string, unknown>)
+        : {};
+
+    const id = await logActivity({
+      occurredAt: source.lastIngestedAt,
+      category: "kg",
+      action: "kg_ingested",
+      title: `KG: ${source.sourceType} · ${source.sourceId}`,
+      summary: `${source.nodeCount} nodos · ${source.edgeCount} aristas`,
+      agentId: "motor-kg",
+      agentName: "Motor de Extracción KG",
+      modelUsed:
+        typeof metadata.model === "string" ? metadata.model : null,
+      sourceType: source.sourceType,
+      sourceRef: source.sourceId,
+      metadata: {
+        nodeCount: source.nodeCount,
+        edgeCount: source.edgeCount,
+        mentionCount: source.mentionCount,
+        backfill: true,
+      },
+    });
+    await trackLog(id, counters);
+  }
+
+  return counters;
 }

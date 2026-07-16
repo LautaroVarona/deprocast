@@ -2,6 +2,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { getDataPath } from "@/lib/runtime-paths";
 import { computeTaskCurrency } from "@/lib/jornada/utils";
+import { logMolecularValidatedActivity } from "@/lib/historial/domain-log";
 import {
   MOLECULAR_STORAGE_DIR,
   MOLECULAR_VALIDATED_FILE,
@@ -54,6 +55,11 @@ export async function persistValidatedParticula(
   }
 
   await writeValidatedStore(store);
+
+  void logMolecularValidatedActivity(record).catch((error) => {
+    console.error("Historial molecular validate log error:", error);
+  });
+
   return record;
 }
 

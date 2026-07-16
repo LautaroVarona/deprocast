@@ -39,6 +39,7 @@ type CastilloContextValue = {
       tags?: string[];
       layout?: CastleCardDto["layout"];
       accent?: string | null;
+      metadata?: Record<string, unknown>;
       emitClassificationEvent?: boolean;
     },
   ) => Promise<void>;
@@ -163,6 +164,7 @@ export function CastilloProvider({ children }: { children: ReactNode }) {
             title: item.title,
             subtitle: item.subtitle,
             accent: item.accentHint,
+            metadata: item.meta ?? {},
           }),
         });
         await refresh();
@@ -182,6 +184,7 @@ export function CastilloProvider({ children }: { children: ReactNode }) {
         tags?: string[];
         layout?: CastleCardDto["layout"];
         accent?: string | null;
+        metadata?: Record<string, unknown>;
         emitClassificationEvent?: boolean;
       },
     ) => {

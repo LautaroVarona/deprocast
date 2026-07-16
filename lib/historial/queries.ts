@@ -265,6 +265,58 @@ export async function getActiveAgentIds(withinHours = 24): Promise<string[]> {
     .filter((id): id is string => Boolean(id));
 }
 
+export async function getActivityDayCounts(
+  filters: Omit<ActivityListFilters, "cursor" | "limit" | "day"> & {
+    days?: number;
+  } = {},
+): Promise<Array<{ dayKey: string; dayLabel: string; count: number }>> {
+  const days = filters.days ?? 14;
+  const since = startOfDay(new Date());
+  since.setDate(since.getDate() - (days - 1));
+
+  const where: {
+    category?: string;
+    agentId?: string;
+    occurredAt: { gte: Date };
+  } = {
+    occurredAt: { gte: since },
+  };
+
+  if (filters.category) where.category = filters.category;
+  if (filters.agentId) where.agentId = filters.agentId;
+
+  const rows = await prisma.activityLog.findMany({
+    where,
+    orderBy: { occurredAt: "desc" },
+    take: 5000,
+  });
+
+  const filtered = await filterActivityEntriesForUniverse(
+    rows.map(toActivityEntry),
+    filters.universeSlug,
+  );
+
+  const counts = new Map<string, number>();
+  for (const entry of filtered) {
+    const key = toDayKey(new Date(entry.occurredAt));
+    counts.set(key, (counts.get(key) ?? 0) + 1);
+  }
+
+  const result: Array<{ dayKey: string; dayLabel: string; count: number }> = [];
+  for (let i = 0; i < days; i++) {
+    const date = new Date();
+    date.setDate(date.getDate() - i);
+    const dayKey = toDayKey(startOfDay(date));
+    result.push({
+      dayKey,
+      dayLabel: formatDayLabel(startOfDay(date)),
+      count: counts.get(dayKey) ?? 0,
+    });
+  }
+
+  return result;
+}
+
 export async function getAllActivityForExport(
   filters: Omit<ActivityListFilters, "cursor" | "limit"> & { days?: number } = {},
 ): Promise<ActivityEntry[]> {
@@ -289,13 +341,14 @@ export async function getAllActivityForExport(
     where.occurredAt = { gte: since };
   }
 
-  const rows = await prisma.activityLog.findMany({
+    const rows = await prisma.activityLog.findMany({
     where,
     orderBy: { occurredAt: "desc" },
     take: 5000,
   });
 
-  return rows.map(toActivityEntry);
+  const entries = rows.map(toActivityEntry);
+  return filterActivityEntriesForUniverse(entries, filters.universeSlug);
 }
 
 export { toDayKey, formatDayLabel, parseDayKey };

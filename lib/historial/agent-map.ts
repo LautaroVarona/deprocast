@@ -65,6 +65,9 @@ export const AGENT_DISPLAY_NAMES: Record<string, string> = {
   somatometron: "Somatometrón",
   ambientografo: "Ambientógrafo",
   cronista: "Cronista",
+  "orquestador-temporal": "Orquestador Temporal",
+  "planificador-campamento": "Planificador de Campamento",
+  "foco-trinchera": "Foco de Trinchera",
 };
 
 export function resolveAgentName(agentId: string | undefined | null): string | null {

@@ -28,7 +28,12 @@ const TABS: { id: TabId; label: string; icon: typeof SparklesIcon }[] = [
 ];
 
 export function PendientesWorkspace() {
-  const { universeSlug, universeFetch, isLoading: isUniverseLoading } = useBabel();
+  const {
+    universeSlug,
+    universeFetch,
+    isLoading: isUniverseLoading,
+    bumpTemporal,
+  } = useBabel();
   const [tab, setTab] = useState<TabId>("suggested");
   const [suggested, setSuggested] = useState<PendingTaskDto[]>([]);
   const [calibrationQueue, setCalibrationQueue] = useState<PendingTaskDto[]>([]);
@@ -105,6 +110,7 @@ export function PendientesWorkspace() {
         throw new Error(data.error ?? "Error al actualizar.");
       }
       toast.success(action === "recognize" ? "Tarea reconocida" : "Tarea rechazada");
+      bumpTemporal();
       await load();
       if (andCalibrate && action === "recognize") {
         setActiveCalibration(data.task);
@@ -141,6 +147,7 @@ export function PendientesWorkspace() {
       toast.success("Pendiente creada");
       setManualTitle("");
       setActiveCalibration(data.task);
+      bumpTemporal();
       await load();
       setTab("calibrator");
     } catch (error) {
@@ -319,6 +326,7 @@ export function PendientesWorkspace() {
                   key={activeCalibration.id}
                   task={activeCalibration}
                   onCalibrated={async () => {
+                    bumpTemporal();
                     await load();
                   }}
                 />

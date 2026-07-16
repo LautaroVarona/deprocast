@@ -1,8 +1,8 @@
 "use client";
 
-import { BabelViewport } from "@/components/babel/babel-viewport";
+import { CampamentoPlanner } from "@/components/ludus/campamento/campamento-planner";
 
 /** Campamento: planificación meso — universos, día y asaltos de la jornada. */
 export function CampamentoHub() {
-  return <BabelViewport embedded area="campamento" />;
+  return <CampamentoPlanner />;
 }

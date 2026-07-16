@@ -596,6 +596,7 @@ model CastleCard {
   subtitle   String?
   accent     String?
   tags       Json     @default("[]")
+  metadata   Json     @default("{}")
   layout     Json
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
