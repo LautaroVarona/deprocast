@@ -130,6 +130,15 @@ export const proposedEventInputSchema = z.object({
   links: z.array(eventLinkInputSchema).default([]),
 });
 
+/** Ubicación geográfica opcional embebida en structuredData.location */
+export const eventLocationSchema = z.object({
+  locationId: z.string().min(1).optional(),
+  latitude: z.number().min(-90).max(90),
+  longitude: z.number().min(-180).max(180),
+  address: z.string().optional(),
+  label: z.string().optional(),
+});
+
 export const createProposedEventsInputSchema = z.object({
   source: z.enum(EVENT_SOURCES),
   sourceRef: z.string().optional(),

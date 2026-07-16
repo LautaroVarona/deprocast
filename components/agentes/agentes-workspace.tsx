@@ -7,6 +7,7 @@ import { MetaMeteadorPanel } from "@/components/agentes/meta-meteador-panel";
 import { SubprocessorsSection } from "@/components/agentes/subprocessors-section";
 import { Button } from "@/components/ui/button";
 import {
+  CARTOGRAPHY_ECOSYSTEM_AGENT_IDS,
   ECOSYSTEM_STATS,
   OPERATIONAL_AGENTS,
   TEMPORAL_ECOSYSTEM_AGENT_IDS,
@@ -18,9 +19,11 @@ import {
   BotIcon,
   CalendarIcon,
   ClockIcon,
+  CompassIcon,
   FileTextIcon,
   LayoutGridIcon,
   ListIcon,
+  MapIcon,
   SearchIcon,
 } from "lucide-react";
 import Link from "next/link";
@@ -62,11 +65,32 @@ export function AgentesWorkspace() {
     });
   }, [searchQuery]);
 
-  const filteredAgents = useMemo(() => {
-    const temporalIds = new Set<string>(TEMPORAL_ECOSYSTEM_AGENT_IDS);
+  const cartographyAgents = useMemo(() => {
+    const ids = new Set<string>(CARTOGRAPHY_ECOSYSTEM_AGENT_IDS);
     const query = searchQuery.trim().toLowerCase();
     return OPERATIONAL_AGENTS.filter((agent) => {
-      if (temporalIds.has(agent.id)) return false;
+      if (!ids.has(agent.id)) return false;
+      if (!query) return true;
+      const haystack = [
+        agent.name,
+        agent.badge,
+        ...agent.functions,
+        ...agent.technologies,
+      ]
+        .join(" ")
+        .toLowerCase();
+      return haystack.includes(query);
+    });
+  }, [searchQuery]);
+
+  const filteredAgents = useMemo(() => {
+    const temporalIds = new Set<string>(TEMPORAL_ECOSYSTEM_AGENT_IDS);
+    const cartographyIds = new Set<string>(CARTOGRAPHY_ECOSYSTEM_AGENT_IDS);
+    const query = searchQuery.trim().toLowerCase();
+    return OPERATIONAL_AGENTS.filter((agent) => {
+      if (temporalIds.has(agent.id) || cartographyIds.has(agent.id)) {
+        return false;
+      }
       if (toneFilter !== "all" && agent.badgeTone !== toneFilter) {
         return false;
       }
@@ -187,6 +211,56 @@ export function AgentesWorkspace() {
                 className="inline-flex items-center gap-1.5 rounded-full border border-cyan-500/25 bg-cyan-500/10 px-3 py-1 text-[11px] text-cyan-200/90 hover:border-cyan-400/40"
               >
                 <CalendarIcon className="size-3" />
+                {label}
+              </Link>
+            ))}
+          </div>
+        </section>
+
+        <section className="space-y-4 rounded-xl border border-amber-500/20 bg-amber-500/5 p-4">
+          <div className="flex flex-wrap items-center gap-2">
+            <CompassIcon className="size-4 text-amber-300/80" aria-hidden />
+            <h2 className="text-sm font-semibold uppercase tracking-wider text-amber-200/90">
+              Cartografía dual · Ludus
+            </h2>
+            <span className="font-mono text-[10px] text-amber-400/60">
+              Plano mental + terreno real
+            </span>
+          </div>
+          <p className="max-w-3xl text-xs leading-relaxed text-zinc-400">
+            Orientación en dos planos: el grafo semántico del Castillo (YO,
+            personas, proyectos) y el mapa geográfico del Campamento (hitos
+            permanentes + eventos temporales). SSOT en{" "}
+            <code className="rounded bg-zinc-900 px-1 py-0.5 text-amber-300/80">
+              lib/geo
+            </code>{" "}
+            y{" "}
+            <code className="rounded bg-zinc-900 px-1 py-0.5 text-amber-300/80">
+              lib/castillo/semantic-map
+            </code>
+            .
+          </p>
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+            {cartographyAgents.map((agent) => (
+              <AgentCard
+                key={agent.id}
+                agent={agent}
+                isActiveToday={activeAgentIds.has(agent.id)}
+              />
+            ))}
+          </div>
+          <div className="flex flex-wrap gap-2 pt-1">
+            {[
+              ["/ludus/castillo", "Castillo · Mapa"],
+              ["/ludus/campamento", "Campamento · Mapa"],
+              ["/ludus", "Ludus"],
+            ].map(([href, label]) => (
+              <Link
+                key={href}
+                href={href}
+                className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/25 bg-amber-500/10 px-3 py-1 text-[11px] text-amber-200/90 hover:border-amber-400/40"
+              >
+                <MapIcon className="size-3" />
                 {label}
               </Link>
             ))}

@@ -205,7 +205,7 @@ export async function buildCastleCatalog(
       sourceType: "project",
       sourceId: project.id,
       title: project.title,
-      subtitle: project.objetivo || project.resumen || null,
+      subtitle: project.description || null,
       accentHint: SOURCE_TYPE_ACCENTS.project,
       deepLink: `/proyectos?highlight=${project.id}`,
       meta: {

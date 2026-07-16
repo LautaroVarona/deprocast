@@ -475,11 +475,71 @@ Especialista reservado para la pestaña Más de `/salud`. Espacio para métricas
 - Generar microtareas atómicas (< 15 min) y Puntos de Señal.
 
 **Descripción:**  
-Director de juego para la capa gamificada del ecosistema. El avatar **Estudianta**, Focus Work y Puntos de Señal están especificados en `deprocast_master_plan.md` y referenciados en UI (`components/home/gnosis-metrics.tsx` como “en preparación”), pero sin motor ejecutor ni agente LLM operativo.
+Director de juego para la capa gamificada del ecosistema. El avatar **Estudianta**, Focus Work y Puntos de Señal están especificados en `deprocast_master_plan.md` y referenciados en UI (`components/home/gnosis-metrics.tsx` como “en preparación”), pero sin motor ejecutor ni agente LLM operativo. En producción opera las tres lentes Ludus (Castillo / Campamento / Trinchera) y coordina la cartografía dual (Grafólogo + Cartógrafo + Georreferenciador).
 
 **Ubicación prevista:** futuro `lib/ludus/` o integración con módulo laboral (`app/laboral/`, `app/api/laboral/focus/route.ts` hoy solo expone datos).
 
 **Tecnologías previstas:** cola de microtareas, Prisma (modelos Boss/Microtask/FocusSession aún no implementados), posible señal desde KG y Calibrador de Vibe.
+
+---
+
+### 🧭 Grafólogo del Castillo
+
+**Funciones:**
+- Construir el snapshot ego-céntrico (nodo YO + personas, proyectos, cuadernos).
+- Mantener el nodo YO fijo como núcleo gravitacional del corpus.
+- Buscador semántico con resaltado y atenuación de nodos.
+- Filtros rápidos por tipo de entidad (Personas, Proyectos, Cuadernos).
+- Deep links a `/grafo`, `/proyectos` e `/ingesta/cuadernos` desde nodos del mapa.
+
+**Descripción:**  
+Especialista del plano mental/conceptual. Renderiza el grafo semántico del Castillo con React Flow.
+
+**Ubicación:** `lib/castillo/semantic-map.ts`, `app/api/castillo/semantic-map/route.ts`, `components/castillo/castillo-semantic-map.tsx`.
+
+**Tecnologías:** `@xyflow/react`, Prisma (`KgNode`, `KgEdge`, `Notebook`), Babel (filtro de universo).
+
+**Ruta UI:** `/ludus/castillo` (vista Mapa).
+
+---
+
+### 🗺️ Cartógrafo del Campamento
+
+**Funciones:**
+- Renderizar marcadores permanentes (`isPermanent`) en React Leaflet con tiles oscuros.
+- Pintar marcadores temporales desde `GET /api/campamento/geo` según rango Babel.
+- Popup con detalle del bloque y acción HITL: completar tarea o confirmar evento.
+- Sincronizar invalidación con `bumpTemporal()` tras acciones desde el mapa.
+- Filtros Hoy | Esta semana alineados al planificador.
+
+**Descripción:**  
+Especialista del plano físico/temporal. Superpone capa fija (hitos) y capa dinámica (eventos/tareas geolocalizados).
+
+**Ubicación:** `lib/geo/campamento-map.ts`, `app/api/campamento/geo/route.ts`, `components/ludus/campamento/campamento-geo-map.tsx`.
+
+**Tecnologías:** `react-leaflet`, Leaflet, CartoDB Dark Matter, `lib/temporal`.
+
+**Ruta UI:** `/ludus/campamento` (vista Mapa).
+
+---
+
+### 📍 Georreferenciador
+
+**Funciones:**
+- Geocodificar direcciones vía Nominatim con cache y User-Agent identificable.
+- Seed de hitos permanentes (Varona HQ, Casa) desde variables de entorno.
+- CRUD de ubicaciones en `GeoLocation` y endpoint `POST /api/geo/geocode`.
+- Enriquecer `structuredData.location` de eventos al resolver coordenadas.
+- Rechazar coordenadas inventadas si el geocode falla.
+
+**Descripción:**  
+Puente geográfico compartido. Resuelve direcciones a coordenadas y persiste `GeoLocation`.
+
+**Ubicación:** `lib/geo/geocode.ts`, `lib/geo/service.ts`, `app/api/geo/locations/route.ts`, `app/api/geo/geocode/route.ts`.
+
+**Tecnologías:** Nominatim (OpenStreetMap), Prisma (`GeoLocation`), Zod.
+
+**Ruta UI:** infra compartida (sin UI propia); consumido desde Campamento.
 
 ---
 
@@ -513,6 +573,10 @@ Subsistema de archivado de memoria líquida para el corpus unificado. Hoy el gra
 | `/grafo` | Visualización KG |
 | `/calibrador` | Calibrador de Vibe |
 | `/agentes/binauralizer` | Binauralizer |
+| `/ludus` | LudusDirector |
+| `/ludus/castillo` | Grafólogo del Castillo (vista Mapa) |
+| `/ludus/campamento` | Planificador + Cartógrafo del Campamento |
+| `/ludus/trinchera` | Foco de Trinchera |
 | `/diario` | Diario → Purifier + KG |
 | `/audio/[id]` | Motor STT + revisión de transcripción |
 

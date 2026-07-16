@@ -501,6 +501,8 @@ export const OPERATIONAL_AGENTS: OperationalAgent[] = [
       "Trinchera: foco diario Ayer/Hoy/Mañana + asaltos + Laboratorio Sonoro integrado.",
       "Compartir SSOT temporal con Calendario vía BabelProvider y useTemporalData.",
       "Persistencia de layout y tags en CastleGrid/CastleCard con trazabilidad vía ContextEvent.",
+      "Cartografía dual: grafo semántico (Castillo) + mapa geográfico (Campamento).",
+      "Coordinar Grafólogo, Cartógrafo y Georreferenciador bajo las lentes Alpha/Beta/Gamma.",
     ],
     technologies: [
       "react-grid-layout",
@@ -845,6 +847,88 @@ export const OPERATIONAL_AGENTS: OperationalAgent[] = [
     ],
     uiRoute: "/ludus/trinchera",
   },
+  {
+    id: "grafologo-castillo",
+    emoji: "🧭",
+    name: "Grafólogo del Castillo",
+    badge: "Determinístico · Grafo semántico",
+    badgeTone: "amber",
+    locations: [
+      "lib/castillo/semantic-map.ts",
+      "lib/castillo/semantic-map-types.ts",
+      "app/api/castillo/semantic-map/route.ts",
+      "components/castillo/castillo-semantic-map.tsx",
+    ],
+    functions: [
+      "Construir el snapshot ego-céntrico (nodo YO + personas, proyectos, cuadernos).",
+      "Mantener el nodo YO fijo como núcleo gravitacional del corpus.",
+      "Buscador semántico con resaltado y atenuación de nodos.",
+      "Filtros rápidos por tipo de entidad (Personas, Proyectos, Cuadernos).",
+      "Deep links a /grafo, /proyectos e /ingesta/cuadernos desde nodos del mapa.",
+    ],
+    technologies: [
+      "@xyflow/react",
+      "Prisma (KgNode, KgEdge, Notebook)",
+      "lib/projects/service.ts",
+      "Babel (filtro de universo)",
+    ],
+    uiRoute: "/ludus/castillo",
+  },
+  {
+    id: "cartografo-campamento",
+    emoji: "🗺️",
+    name: "Cartógrafo del Campamento",
+    badge: "Determinístico · Terreno real",
+    badgeTone: "emerald",
+    locations: [
+      "lib/geo/campamento-map.ts",
+      "app/api/campamento/geo/route.ts",
+      "components/ludus/campamento/campamento-geo-map.tsx",
+      "components/ludus/campamento/campamento-geo-map-inner.tsx",
+    ],
+    functions: [
+      "Renderizar marcadores permanentes (isPermanent) en React Leaflet con tiles oscuros.",
+      "Pintar marcadores temporales desde GET /api/campamento/geo según rango Babel.",
+      "Popup con detalle del bloque y acción HITL: completar tarea o confirmar evento.",
+      "Sincronizar invalidación con bumpTemporal() tras acciones desde el mapa.",
+      "Filtros Hoy | Esta semana alineados al planificador.",
+    ],
+    technologies: [
+      "react-leaflet",
+      "leaflet",
+      "CartoDB Dark Matter",
+      "lib/temporal/queries.ts",
+      "hooks/use-temporal-data.ts",
+    ],
+    uiRoute: "/ludus/campamento",
+  },
+  {
+    id: "georreferenciador",
+    emoji: "📍",
+    name: "Georreferenciador",
+    badge: "Determinístico · Nominatim",
+    badgeTone: "zinc",
+    locations: [
+      "lib/geo/geocode.ts",
+      "lib/geo/types.ts",
+      "lib/geo/service.ts",
+      "app/api/geo/locations/route.ts",
+      "app/api/geo/geocode/route.ts",
+    ],
+    functions: [
+      "Geocodificar direcciones vía Nominatim con cache y User-Agent identificable.",
+      "Seed de hitos permanentes (Varona HQ, Casa) desde variables de entorno.",
+      "CRUD de ubicaciones en GeoLocation y endpoint POST /api/geo/geocode.",
+      "Enriquecer structuredData.location de eventos al resolver coordenadas.",
+      "Rechazar coordenadas inventadas si el geocode falla.",
+    ],
+    technologies: [
+      "Nominatim (OpenStreetMap)",
+      "Prisma (GeoLocation)",
+      "Zod (geoPayloadSchema)",
+    ],
+    uiRoute: "/ludus/campamento",
+  },
 ];
 
 /** Agentes del eje temporal: calendario, eventos y planificación Ludus. */
@@ -858,6 +942,14 @@ export const TEMPORAL_ECOSYSTEM_AGENT_IDS = [
   "task-calibrator",
   "babel-universes",
   "extractor-trailing",
+  "ludus",
+] as const;
+
+/** Agentes de cartografía dual: grafo semántico + mapa geográfico. */
+export const CARTOGRAPHY_ECOSYSTEM_AGENT_IDS = [
+  "grafologo-castillo",
+  "cartografo-campamento",
+  "georreferenciador",
   "ludus",
 ] as const;
 

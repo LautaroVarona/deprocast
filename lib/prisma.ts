@@ -34,7 +34,12 @@ export function resetPrismaClient(): void {
 }
 
 function isPrismaClientStale(client: PrismaClient): boolean {
-  return !("activityLog" in client) || client.activityLog === undefined;
+  return (
+    !("activityLog" in client) ||
+    client.activityLog === undefined ||
+    !("geoLocation" in client) ||
+    client.geoLocation === undefined
+  );
 }
 
 export function getPrismaClient(): PrismaClient {

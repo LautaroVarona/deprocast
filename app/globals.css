@@ -1020,3 +1020,39 @@
     transform: translateX(2%);
   }
 }
+
+/* Cartografía dual — mapas Castillo / Campamento */
+.castillo-semantic-map .react-flow__attribution {
+  display: none;
+}
+
+.castillo-semantic-map .react-flow__controls-button {
+  border-bottom-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+.ludus-geo-map .leaflet-container {
+  background: #0a0a0c;
+  font-family: inherit;
+}
+
+.ludus-geo-map .leaflet-popup-content-wrapper {
+  background: rgba(10, 10, 14, 0.95);
+  color: #e4e4e7;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
+}
+
+.ludus-geo-map .leaflet-popup-tip {
+  background: rgba(10, 10, 14, 0.95);
+}
+
+.ludus-geo-map .leaflet-control-attribution {
+  background: rgba(0, 0, 0, 0.55) !important;
+  color: rgba(255, 255, 255, 0.35) !important;
+  font-size: 9px;
+}
+
+.ludus-geo-map .leaflet-control-attribution a {
+  color: rgba(52, 211, 153, 0.7) !important;
+}

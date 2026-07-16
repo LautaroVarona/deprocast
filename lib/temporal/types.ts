@@ -1,3 +1,5 @@
+import type { GeoPayload } from "@/lib/geo/types";
+
 export type TemporalBlockKind = "task" | "event";
 
 export type TemporalBlock = {
@@ -12,6 +14,7 @@ export type TemporalBlock = {
   source: string;
   pillar?: string;
   structuredData?: Record<string, unknown>;
+  location?: GeoPayload | null;
 };
 
 export type TemporalRangeResponse = {

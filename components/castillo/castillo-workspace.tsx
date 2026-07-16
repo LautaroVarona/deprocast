@@ -7,6 +7,7 @@ import {
   useCastillo,
 } from "@/components/castillo/castillo-context";
 import { CastilloGridTabs } from "@/components/castillo/castillo-grid-tabs";
+import { CastilloSemanticMap } from "@/components/castillo/castillo-semantic-map";
 import { CalibracionReino } from "@/components/ludus/calibracion-reino";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -16,6 +17,8 @@ import {
   ArrowLeftIcon,
   CastleIcon,
   CrownIcon,
+  LayoutGridIcon,
+  NetworkIcon,
   RefreshCwIcon,
   ImageIcon,
 } from "lucide-react";
@@ -24,9 +27,12 @@ import { useEffect, useMemo, useState } from "react";
 import type { Project } from "@/lib/projects/types";
 import { SOURCE_TYPE_ACCENTS } from "@/lib/castillo/constants";
 
+type CastilloView = "lienzo" | "mapa";
+
 function CastilloShell() {
   const { universeFetch } = useBabel();
   const { isLoading, isBusy, error, refresh, placeItem } = useCastillo();
+  const [view, setView] = useState<CastilloView>("lienzo");
   const [showCalibration, setShowCalibration] = useState(false);
   const [showVisionModal, setShowVisionModal] = useState(false);
   const [visionImageUrl, setVisionImageUrl] = useState("");
@@ -108,6 +114,35 @@ function CastilloShell() {
           </div>
         </div>
 
+        <div className="flex items-center gap-0.5 rounded-lg border border-white/10 bg-black/30 p-0.5">
+          <button
+            type="button"
+            onClick={() => setView("lienzo")}
+            className={cn(
+              "inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 font-mono text-[10px] uppercase tracking-wider transition-colors",
+              view === "lienzo"
+                ? "bg-amber-500/20 text-amber-100"
+                : "text-white/40 hover:text-white/70",
+            )}
+          >
+            <LayoutGridIcon className="size-3" />
+            Lienzo
+          </button>
+          <button
+            type="button"
+            onClick={() => setView("mapa")}
+            className={cn(
+              "inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 font-mono text-[10px] uppercase tracking-wider transition-colors",
+              view === "mapa"
+                ? "bg-amber-500/20 text-amber-100"
+                : "text-white/40 hover:text-white/70",
+            )}
+          >
+            <NetworkIcon className="size-3" />
+            Mapa
+          </button>
+        </div>
+
         <Button
           type="button"
           variant="outline"
@@ -153,13 +188,15 @@ function CastilloShell() {
       ) : null}
 
       <div className="flex min-h-0 flex-1">
-        <aside className="flex w-72 shrink-0 flex-col border-r border-white/10 bg-black/25 lg:w-80">
-          <CastilloGridTabs />
-          <CastilloProjectsWidget />
-          <CastilloCatalogPanel />
-        </aside>
-        <main className="min-w-0 flex-1 overflow-hidden">
-          <CastilloCanvas />
+        {view === "lienzo" ? (
+          <aside className="flex w-72 shrink-0 flex-col border-r border-white/10 bg-black/25 transition-opacity duration-300 lg:w-80">
+            <CastilloGridTabs />
+            <CastilloProjectsWidget />
+            <CastilloCatalogPanel />
+          </aside>
+        ) : null}
+        <main className="min-w-0 flex-1 overflow-hidden transition-opacity duration-300">
+          {view === "mapa" ? <CastilloSemanticMap /> : <CastilloCanvas />}
         </main>
       </div>
 

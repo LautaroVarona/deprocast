@@ -2,16 +2,21 @@
 
 import { useBabel } from "@/components/babel/babel-context";
 import { UniverseSwitcher } from "@/components/babel/universe-switcher";
+import { CampamentoGeoMap } from "@/components/ludus/campamento/campamento-geo-map";
 import { CampamentoMonthView } from "@/components/ludus/campamento/campamento-month-view";
 import { CampamentoWeekGrid } from "@/components/ludus/campamento/campamento-week-grid";
 import { QuickIdeasPanel } from "@/components/ludus/campamento/quick-ideas-panel";
 import { Button } from "@/components/ui/button";
-import Link from "next/link";
+import { GridBottomNavWithPlus } from "@/components/grid/grid-bottom-nav";
 import { useTemporalData } from "@/hooks/use-temporal-data";
 import { addDays, monthRange, weekRangeForDate } from "@/lib/temporal/ranges";
-import { Loader2Icon } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { CalendarIcon, Loader2Icon, MapIcon } from "lucide-react";
+import Link from "next/link";
+import { useState } from "react";
 import { toast } from "sonner";
-import { GridBottomNavWithPlus } from "@/components/grid/grid-bottom-nav";
+
+type CampamentoView = "planner" | "mapa";
 
 export function CampamentoPlanner() {
   const {
@@ -27,6 +32,8 @@ export function CampamentoPlanner() {
     universeFetch,
     bumpTemporal,
   } = useBabel();
+
+  const [view, setView] = useState<CampamentoView>("planner");
 
   const weekRange = weekRangeForDate(weekAnchor);
   const month = monthRange(monthAnchor.year, monthAnchor.month);
@@ -48,14 +55,19 @@ export function CampamentoPlanner() {
       const response = await universeFetch(`/api/pendientes/${taskId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "reschedule", targetDay: day.toISOString() }),
+        body: JSON.stringify({
+          action: "reschedule",
+          targetDay: day.toISOString(),
+        }),
       });
       const data = (await response.json()) as { error?: string };
       if (!response.ok) throw new Error(data.error ?? "No se pudo reprogramar.");
       bumpTemporal();
       await refresh();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Error de reprogramación.");
+      toast.error(
+        error instanceof Error ? error.message : "Error de reprogramación.",
+      );
     }
   };
 
@@ -83,12 +95,16 @@ export function CampamentoPlanner() {
         body: JSON.stringify({ occurredAt: nextOccurredAt.toISOString() }),
       });
       const data = (await response.json()) as { error?: string };
-      if (!response.ok) throw new Error(data.error ?? "No se pudo reprogramar evento.");
+      if (!response.ok) {
+        throw new Error(data.error ?? "No se pudo reprogramar evento.");
+      }
       bumpTemporal();
       await refresh();
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "Error de reprogramación de evento.",
+        error instanceof Error
+          ? error.message
+          : "Error de reprogramación de evento.",
       );
     }
   };
@@ -97,23 +113,57 @@ export function CampamentoPlanner() {
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-[#040505]">
       <header className="border-b border-white/[0.06] px-4 py-3">
         <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-emerald-300/70">
-          Campamento · Planificador
+          Campamento · {view === "mapa" ? "Mapa" : "Planificador"}
         </p>
         <div className="mt-2 flex flex-wrap items-center gap-2">
-          <Button
-            variant={plannerMode === "week" ? "default" : "outline"}
-            size="sm"
-            onClick={() => setPlannerMode("week")}
-          >
-            Semana
-          </Button>
-          <Button
-            variant={plannerMode === "month" ? "default" : "outline"}
-            size="sm"
-            onClick={() => setPlannerMode("month")}
-          >
-            Mes
-          </Button>
+          <div className="flex items-center gap-0.5 rounded-lg border border-white/10 bg-black/30 p-0.5">
+            <button
+              type="button"
+              onClick={() => setView("planner")}
+              className={cn(
+                "inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 font-mono text-[10px] uppercase tracking-wider transition-colors",
+                view === "planner"
+                  ? "bg-emerald-500/20 text-emerald-100"
+                  : "text-white/40 hover:text-white/70",
+              )}
+            >
+              <CalendarIcon className="size-3" />
+              Planner
+            </button>
+            <button
+              type="button"
+              onClick={() => setView("mapa")}
+              className={cn(
+                "inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 font-mono text-[10px] uppercase tracking-wider transition-colors",
+                view === "mapa"
+                  ? "bg-emerald-500/20 text-emerald-100"
+                  : "text-white/40 hover:text-white/70",
+              )}
+            >
+              <MapIcon className="size-3" />
+              Mapa
+            </button>
+          </div>
+
+          {view === "planner" ? (
+            <>
+              <Button
+                variant={plannerMode === "week" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setPlannerMode("week")}
+              >
+                Semana
+              </Button>
+              <Button
+                variant={plannerMode === "month" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setPlannerMode("month")}
+              >
+                Mes
+              </Button>
+            </>
+          ) : null}
+
           <div className="ml-auto flex gap-2">
             <Button
               variant="outline"
@@ -135,8 +185,14 @@ export function CampamentoPlanner() {
 
       <UniverseSwitcher />
 
-      <div className="min-h-0 flex-1 overflow-hidden p-4">
-        {isLoading ? (
+      <div className="min-h-0 flex-1 overflow-hidden p-4 transition-opacity duration-300">
+        {view === "mapa" ? (
+          <CampamentoGeoMap
+            fromIso={activeFrom.toISOString()}
+            toIso={activeTo.toISOString()}
+            onActionDone={() => void refresh()}
+          />
+        ) : isLoading ? (
           <div className="flex h-full items-center justify-center text-white/40">
             <Loader2Icon className="size-5 animate-spin" />
           </div>

@@ -2,9 +2,49 @@ import "server-only";
 
 import { buildPendingTaskUniverseFilter } from "@/lib/babel/projection";
 import { filterContextEventsForUniverse } from "@/lib/babel/universe-refs";
+import {
+  extractLocationFromStructuredData,
+  parseGeoPayload,
+  type GeoPayload,
+} from "@/lib/geo/types";
 import { mapPendingTask } from "@/lib/pendientes/mappers";
 import { prisma } from "@/lib/prisma";
 import type { TemporalBlock } from "@/lib/temporal/types";
+
+function parseStructuredData(value: unknown): Record<string, unknown> {
+  if (value && typeof value === "object" && !Array.isArray(value)) {
+    return value as Record<string, unknown>;
+  }
+  return {};
+}
+
+async function resolveLocationFromData(
+  structuredData: Record<string, unknown>,
+): Promise<GeoPayload | null> {
+  const inline = extractLocationFromStructuredData(structuredData);
+  if (inline) return inline;
+
+  const locationId =
+    typeof structuredData.locationId === "string"
+      ? structuredData.locationId
+      : typeof (structuredData.location as { locationId?: string } | undefined)
+            ?.locationId === "string"
+        ? (structuredData.location as { locationId: string }).locationId
+        : null;
+
+  if (!locationId) return null;
+
+  const row = await prisma.geoLocation.findUnique({ where: { id: locationId } });
+  if (!row) return null;
+
+  return parseGeoPayload({
+    locationId: row.id,
+    latitude: row.latitude,
+    longitude: row.longitude,
+    address: row.address ?? undefined,
+    label: row.name,
+  });
+}
 
 function taskToBlock(task: ReturnType<typeof mapPendingTask>): TemporalBlock {
   return {
@@ -20,13 +60,19 @@ function taskToBlock(task: ReturnType<typeof mapPendingTask>): TemporalBlock {
   };
 }
 
-function eventToBlock(event: {
-  id: string;
-  content: string;
-  occurredAt: Date;
-  status: string;
-  source: string;
-}): TemporalBlock {
+function eventToBlock(
+  event: {
+    id: string;
+    content: string;
+    occurredAt: Date;
+    status: string;
+    source: string;
+    pillar?: string;
+    structuredData?: unknown;
+  },
+  location: GeoPayload | null,
+): TemporalBlock {
+  const structuredData = parseStructuredData(event.structuredData);
   return {
     kind: "event",
     id: event.id,
@@ -37,6 +83,9 @@ function eventToBlock(event: {
     projectId: null,
     weight: null,
     source: event.source,
+    pillar: event.pillar,
+    structuredData,
+    location,
   };
 }
 
@@ -70,7 +119,14 @@ export async function listTemporalBlocksByRange(input: {
     eventsRows,
     input.universeSlug,
   );
-  const events = filteredEvents.map(eventToBlock);
+
+  const events: TemporalBlock[] = [];
+  for (const event of filteredEvents) {
+    const structuredData = parseStructuredData(event.structuredData);
+    const location = await resolveLocationFromData(structuredData);
+    events.push(eventToBlock(event, location));
+  }
+
   const blocks = [...tasks, ...events].sort((a, b) =>
     a.start.localeCompare(b.start),
   );

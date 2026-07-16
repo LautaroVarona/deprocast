@@ -684,6 +684,24 @@ model MemoryEmbedding {
   @@index([contentHash])
 }
 
+// Ubicaciones geográficas — hitos permanentes y lugares temporales.
+model GeoLocation {
+  id          String   @id @default(uuid())
+  name        String
+  address     String?
+  latitude    Float
+  longitude   Float
+  isPermanent Boolean  @default(false)
+  source      String   @default("manual")
+  placeId     String?
+  metadata    Json
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([isPermanent])
+  @@index([latitude, longitude])
+}
+
 // Log unificado de actividad de la plataforma (pipelines, agentes, HITL).
 model ActivityLog {
   id            String   @id @default(uuid())
