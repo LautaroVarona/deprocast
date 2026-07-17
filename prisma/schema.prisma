@@ -702,6 +702,33 @@ model GeoLocation {
   @@index([latitude, longitude])
 }
 
+// Mago 22 — colecciones indexadas 1–22 sobre la matriz hermética fija.
+model MagoColeccion {
+  id          String   @id @default(uuid())
+  nombre      String
+  descripcion String   @default("")
+  kind        String   @default("generic")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  items       MagoColeccionItem[]
+}
+
+model MagoColeccionItem {
+  id          String @id @default(uuid())
+  coleccionId String
+  slot        Int
+  titulo      String @default("")
+  contenido   String @default("")
+  refKind     String @default("none")
+  refId       String?
+  metadata    Json
+
+  coleccion MagoColeccion @relation(fields: [coleccionId], references: [id], onDelete: Cascade)
+
+  @@unique([coleccionId, slot])
+  @@index([refKind, refId])
+}
+
 // Log unificado de actividad de la plataforma (pipelines, agentes, HITL).
 model ActivityLog {
   id            String   @id @default(uuid())

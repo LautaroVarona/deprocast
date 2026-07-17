@@ -1048,11 +1048,128 @@ export const DESIGN_AGENTS: DesignAgent[] = [
   },
 ];
 
+export type MagoAgent = OperationalAgent & {
+  category: "magos";
+};
+
+/** Categoría Magos — agentes herméticos indexados sobre la matriz de 22. */
+export const MAGOS_AGENTS: MagoAgent[] = [
+  {
+    id: "mago-22",
+    emoji: "✦",
+    name: "El Mago 22",
+    badge: "Matriz · 22 arcanos",
+    badgeTone: "amber",
+    status: "operational",
+    category: "magos",
+    locations: [
+      "lib/mago/constants.ts",
+      "lib/mago/tradition.ts",
+      "lib/mago/projection.ts",
+      "lib/mago/store.ts",
+      "app/api/mago/route.ts",
+      "app/ludus/mago/page.tsx",
+      "components/mago/mago-workspace.tsx",
+    ],
+    functions: [
+      "Exponer la matriz fija CORE_ARCANA_22 (letra hebrea ↔ tarot ↔ tipo madre/doble/simple).",
+      "Unificar tradición hermética de los Magos 3, 7 y 12 en una sola proyección relacional.",
+      "Proyectar colecciones indexadas 1–22 sobre proyectos, Libro Rojo y capítulos.",
+      "Derivar fricción de proyectos vinculados vía fogLevel / días sin actividad.",
+      "Ofrecer filtros cabalísticos (Total / 3 Madres / 7 Dobles / 12 Simples) en /ludus/mago.",
+    ],
+    technologies: [
+      "Prisma (MagoColeccion, MagoColeccionItem)",
+      "lib/mago/tradition.ts",
+      "lib/projects/service",
+      "lib/ludus/project-activity",
+      "Ludus noir UI",
+    ],
+    uiRoute: "/ludus/mago",
+  },
+  {
+    id: "mago-3",
+    emoji: "☿",
+    name: "El Mago 3",
+    badge: "Madres · Mercurio, Azufre, Sal",
+    badgeTone: "rose",
+    status: "operational",
+    category: "magos",
+    locations: [
+      "lib/mago/tradition.ts",
+      "app/ludus/mago/3/page.tsx",
+      "components/mago/mago-workspace.tsx",
+    ],
+    functions: [
+      "Enfocar las 3 Letras Madres (Aleph, Mem, Shin): principios elementales y alquímicos.",
+      "Exponer Mercurio/Azufre/Sal, género y atributos (volatilidad, combustibilidad, fijación).",
+      "Compartir la misma matriz y colecciones indexadas 1–22 con el Mago 22.",
+    ],
+    technologies: [
+      "lib/mago/tradition.ts (TRADICION_MADRES)",
+      "lib/mago/projection.ts",
+      "Ludus noir UI",
+    ],
+    uiRoute: "/ludus/mago/3",
+  },
+  {
+    id: "mago-7",
+    emoji: "☉",
+    name: "El Mago 7",
+    badge: "Dobles · V.I.T.R.I.O.L.",
+    badgeTone: "amber",
+    status: "operational",
+    category: "magos",
+    locations: [
+      "lib/mago/tradition.ts",
+      "app/ludus/mago/7/page.tsx",
+      "components/mago/mago-workspace.tsx",
+    ],
+    functions: [
+      "Enfocar las 7 Letras Dobles: Sephirot, hermetismo, chakras y V.I.T.R.I.O.L.",
+      "Mapear cuerpo, emoción y desbalance por nivel doble (Bet, Gimel, Daleth, Kaph, Pe, Resh, Tav).",
+      "Compartir proyección relacional con proyectos y dimensiones Deprocast.",
+    ],
+    technologies: [
+      "lib/mago/tradition.ts (TRADICION_DOBLES)",
+      "lib/mago/projection.ts",
+      "Ludus noir UI",
+    ],
+    uiRoute: "/ludus/mago/7",
+  },
+  {
+    id: "mago-12",
+    emoji: "☽",
+    name: "El Mago 12",
+    badge: "Simples · Gran Obra",
+    badgeTone: "violet",
+    status: "operational",
+    category: "magos",
+    locations: [
+      "lib/mago/tradition.ts",
+      "app/ludus/mago/12/page.tsx",
+      "components/mago/mago-workspace.tsx",
+    ],
+    functions: [
+      "Enfocar las 12 Letras Simples: astrología, fisiología y procesos de la Gran Obra.",
+      "Exponer bodas alquímicas (Nigredo, Albedo, Citrinitas, Rubedo) donde aplica.",
+      "Relacionar signos zodiacales, partes del cuerpo y procesos químicos con la vida Deprocast.",
+    ],
+    technologies: [
+      "lib/mago/tradition.ts (TRADICION_SIMPLES)",
+      "lib/mago/projection.ts",
+      "Ludus noir UI",
+    ],
+    uiRoute: "/ludus/mago/12",
+  },
+];
+
 export const ECOSYSTEM_STATS = {
   operationalCount: OPERATIONAL_AGENTS.length,
   subprocessorsCount: SUBPROCESSORS.length,
   kgSourcesCount: KG_INGEST_SOURCES.length,
   designCount: DESIGN_AGENTS.length,
+  magosCount: MAGOS_AGENTS.length,
   llmProvider: "command-r-plus-08-2024",
   docSource: "docs/agentes.md",
 } as const;

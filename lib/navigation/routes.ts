@@ -22,6 +22,7 @@ import {
   TentIcon,
   UserRoundIcon,
   VideoIcon,
+  WandSparklesIcon,
   WrenchIcon,
 } from "lucide-react";
 
@@ -244,6 +245,15 @@ export const COMMAND_ROUTES: CommandRoute[] = [
     hotkey: "3",
     category: "ludus",
     icon: SwordsIcon,
+  },
+  {
+    id: "mago",
+    href: "/ludus/mago",
+    label: "Mago 22",
+    description: "Matriz hermética · letras y tarot",
+    hotkey: "4",
+    category: "ludus",
+    icon: WandSparklesIcon,
   },
   {
     id: "calendario",

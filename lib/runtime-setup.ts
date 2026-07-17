@@ -172,6 +172,8 @@ export async function ensureRuntimeReady(): Promise<void> {
       await ensureRuntimeDirs();
       await ensureDatabase();
       await ensureLocalDatabaseSchema();
+      const { ensureMagoRuntime } = await import("@/lib/mago/ensure-schema");
+      await ensureMagoRuntime();
       const { ensureRootUniverse } = await import("@/lib/babel/universe-store");
       await ensureRootUniverse();
     })().catch((error) => {

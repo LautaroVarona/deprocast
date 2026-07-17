@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import {
   CARTOGRAPHY_ECOSYSTEM_AGENT_IDS,
   ECOSYSTEM_STATS,
+  MAGOS_AGENTS,
   OPERATIONAL_AGENTS,
   TEMPORAL_ECOSYSTEM_AGENT_IDS,
   type OperationalAgent,
@@ -25,6 +26,7 @@ import {
   ListIcon,
   MapIcon,
   SearchIcon,
+  SparklesIcon,
 } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
@@ -264,6 +266,60 @@ export function AgentesWorkspace() {
                 {label}
               </Link>
             ))}
+          </div>
+        </section>
+
+        <section className="space-y-4 rounded-xl border border-amber-500/20 bg-amber-500/5 p-4">
+          <div className="flex flex-wrap items-center gap-2">
+            <SparklesIcon className="size-4 text-amber-300/80" aria-hidden />
+            <h2 className="text-sm font-semibold uppercase tracking-wider text-amber-200/90">
+              Magos
+            </h2>
+            <span className="font-mono text-[10px] text-amber-400/60">
+              {ECOSYSTEM_STATS.magosCount} · matriz hermética
+            </span>
+          </div>
+          <p className="max-w-3xl text-xs leading-relaxed text-zinc-400">
+            Agentes indexados sobre la matriz de 22 niveles (letra hebrea ↔
+            tarot). Relacionan dimensiones reales de Deprocast con la estructura
+            cabalística. SSOT en{" "}
+            <code className="rounded bg-zinc-900 px-1 py-0.5 text-amber-300/80">
+              lib/mago/
+            </code>
+            .
+          </p>
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+            {MAGOS_AGENTS.map((agent) => (
+              <AgentCard
+                key={agent.id}
+                agent={agent}
+                isActiveToday={activeAgentIds.has(agent.id)}
+              />
+            ))}
+          </div>
+          <div className="flex flex-wrap gap-2 pt-1">
+            {[
+              ["/ludus/mago", "Mago 22"],
+              ["/ludus/mago/3", "Mago 3"],
+              ["/ludus/mago/7", "Mago 7"],
+              ["/ludus/mago/12", "Mago 12"],
+            ].map(([href, label]) => (
+              <Link
+                key={href}
+                href={href}
+                className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/25 bg-amber-500/10 px-3 py-1 text-[11px] text-amber-200/90 hover:border-amber-400/40"
+              >
+                <SparklesIcon className="size-3" />
+                {label}
+              </Link>
+            ))}
+            <Link
+              href="/ludus/castillo"
+              className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/25 bg-amber-500/10 px-3 py-1 text-[11px] text-amber-200/90 hover:border-amber-400/40"
+            >
+              <MapIcon className="size-3" />
+              Castillo
+            </Link>
           </div>
         </section>
 

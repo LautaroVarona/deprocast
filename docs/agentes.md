@@ -15,6 +15,7 @@
 4. [Subprocesadores determinísticos del Purifier](#4-subprocesadores-determinísticos-del-purifier)
 5. [Ingesta y persistencia del Knowledge Graph](#5-ingesta-y-persistencia-del-knowledge-graph)
 6. [Agentes en fase de diseño](#6-agentes-en-fase-de-diseño)
+7. [Magos](#7-magos)
 
 ---
 
@@ -559,6 +560,72 @@ Subsistema de archivado de memoria líquida para el corpus unificado. Hoy el gra
 
 ---
 
+## 7. Magos
+
+Categoría de agentes herméticos indexados sobre una matriz fija de **22 niveles** (letras hebreas ↔ arcanos mayores). Catálogo en código: `MAGOS_AGENTS` en `lib/agentes/catalog.ts`. Dominio: `lib/mago/`.
+
+### ✦ El Mago 22
+
+**Funciones:**
+- Exponer la matriz fija `CORE_ARCANA_22` (letra, significado, tarot, tipo madre/doble/simple).
+- Proyectar colecciones indexadas 1–22 (proyectos, Libro Rojo, capítulos, genéricas) sobre la matriz.
+- Derivar fricción de proyectos vinculados vía `fogLevel` / días sin actividad (`lib/ludus/project-activity`).
+- Filtrar la UI por tradición cabalística: Total / 3 Madres / 7 Dobles / 12 Simples.
+- Dejar el contexto unificado (`GET /api/mago`) listo para sugerencias de productividad (sin LLM en esta fase).
+
+**Descripción:**  
+Especialista de la capa simbólica de Ludus. Relaciona dimensiones reales de Deprocast con la estructura hermética tradicional. Entrada desde el botón **Mago** en el Castillo.
+
+**Ubicación:** `lib/mago/`, `app/api/mago/`, `app/ludus/mago/page.tsx`, `components/mago/`.
+
+**Tecnologías:** Prisma (`MagoColeccion`, `MagoColeccionItem`), `lib/projects/service`, calibración Ludus.
+
+**Ruta UI:** `/ludus/mago`.
+
+### ☿ El Mago 3
+
+**Funciones:**
+- Enfocar las **3 Letras Madres** (Aleph, Mem, Shin): Mercurio, Azufre y Sal.
+- Exponer género y atributos alquímicos (volatilidad, combustibilidad, fijación).
+- Compartir la misma proyección relacional y colecciones 1–22 que el Mago 22.
+
+**Descripción:**  
+Especialista de los principios elementales y alquímicos primordiales. Tres fuerzas de la creación.
+
+**Ubicación:** `lib/mago/tradition.ts` (`TRADICION_MADRES`), `app/ludus/mago/3/page.tsx`.
+
+**Ruta UI:** `/ludus/mago/3`.
+
+### ☉ El Mago 7
+
+**Funciones:**
+- Enfocar las **7 Letras Dobles**: Sephirot inferiores, hermetismo, chakras y V.I.T.R.I.O.L.
+- Mapear cuerpo, emoción y desbalance por nivel (Bet → Tav).
+- Relacionar planetas, metales y elementos con dimensiones Deprocast.
+
+**Descripción:**  
+Especialista de la cosmología doble: los siete planetas clásicos y la palabra de poder alquímica.
+
+**Ubicación:** `lib/mago/tradition.ts` (`TRADICION_DOBLES`), `app/ludus/mago/7/page.tsx`.
+
+**Ruta UI:** `/ludus/mago/7`.
+
+### ☽ El Mago 12
+
+**Funciones:**
+- Enfocar las **12 Letras Simples**: signos zodiacales, fisiología y procesos químicos.
+- Exponer bodas alquímicas (Nigredo, Albedo, Citrinitas, Rubedo) donde aplica.
+- Relacionar acciones fisiológicas y partes del cuerpo con la Gran Obra.
+
+**Descripción:**  
+Especialista de la astrología y la transformación alquímica de la materia — el esquema de la vida encarnada.
+
+**Ubicación:** `lib/mago/tradition.ts` (`TRADICION_SIMPLES`), `app/ludus/mago/12/page.tsx`.
+
+**Ruta UI:** `/ludus/mago/12`.
+
+---
+
 ## Apéndice: rutas de UI por agente
 
 | Ruta | Agente / módulo |
@@ -575,6 +642,10 @@ Subsistema de archivado de memoria líquida para el corpus unificado. Hoy el gra
 | `/agentes/binauralizer` | Binauralizer |
 | `/ludus` | LudusDirector |
 | `/ludus/castillo` | Grafólogo del Castillo (vista Mapa) |
+| `/ludus/mago` | El Mago 22 |
+| `/ludus/mago/3` | El Mago 3 (Madres) |
+| `/ludus/mago/7` | El Mago 7 (Dobles · V.I.T.R.I.O.L.) |
+| `/ludus/mago/12` | El Mago 12 (Simples · Gran Obra) |
 | `/ludus/campamento` | Planificador + Cartógrafo del Campamento |
 | `/ludus/trinchera` | Foco de Trinchera |
 | `/diario` | Diario → Purifier + KG |

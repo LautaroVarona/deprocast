@@ -21,6 +21,7 @@ import {
   NetworkIcon,
   RefreshCwIcon,
   ImageIcon,
+  SparklesIcon,
 } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
@@ -143,11 +144,22 @@ function CastilloShell() {
           </button>
         </div>
 
+        <Link
+          href="/ludus/mago"
+          className={cn(
+            buttonVariants({ variant: "outline", size: "sm" }),
+            "ml-auto border-white/15 bg-black/40 text-xs text-white/70 hover:border-amber-500/30 hover:bg-amber-500/10 hover:text-amber-100",
+          )}
+        >
+          <SparklesIcon className="size-3.5" />
+          Mago
+        </Link>
+
         <Button
           type="button"
           variant="outline"
           size="sm"
-          className="ml-auto border-amber-500/30 bg-amber-500/10 text-xs text-amber-200 hover:bg-amber-500/20"
+          className="border-amber-500/30 bg-amber-500/10 text-xs text-amber-200 hover:bg-amber-500/20"
           onClick={() => setShowCalibration(true)}
         >
           <CrownIcon className="size-3.5" />
