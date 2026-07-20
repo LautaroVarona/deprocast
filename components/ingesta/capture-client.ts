@@ -60,6 +60,7 @@ export async function postIngestaCapture(
           campoSlug: body.gravity.campoSlug,
           onda: body.gravity.onda ?? "sin-clasificar",
           sourceType: body.gravity.sourceType,
+          locationName: body.gravity.locationName ?? body.locationName ?? "",
         },
         universeSlug,
       ),
