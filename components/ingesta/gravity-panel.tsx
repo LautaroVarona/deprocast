@@ -88,6 +88,25 @@ export function GravityPanel() {
 
         <div className="space-y-1">
           <label
+            htmlFor="ingesta-entorno"
+            className="text-[10px] font-medium tracking-wide text-muted-foreground uppercase"
+          >
+            Entorno
+          </label>
+          <input
+            id="ingesta-entorno"
+            type="text"
+            value={gravity.locationName}
+            onChange={(event) =>
+              setGravity({ locationName: event.target.value })
+            }
+            placeholder="Opcional — ej. Paterna, Oficina Varona…"
+            className="h-7 w-full rounded border border-input bg-background px-2 font-mono text-[11px] outline-none placeholder:text-muted-foreground focus:border-ring focus:ring-1 focus:ring-ring"
+          />
+        </div>
+
+        <div className="space-y-1">
+          <label
             htmlFor="ingesta-onda"
             className="text-[10px] font-medium tracking-wide text-muted-foreground uppercase"
           >

@@ -174,8 +174,14 @@ export async function ensureRuntimeReady(): Promise<void> {
       await ensureLocalDatabaseSchema();
       const { ensureMagoRuntime } = await import("@/lib/mago/ensure-schema");
       await ensureMagoRuntime();
+      const { ensureFeedbackRuntime } = await import(
+        "@/lib/ingesta/ensure-feedback-schema"
+      );
+      await ensureFeedbackRuntime();
       const { ensureRootUniverse } = await import("@/lib/babel/universe-store");
       await ensureRootUniverse();
+      const { processingQueue } = await import("@/lib/processing-queue");
+      await processingQueue.reclaimAndDrain();
     })().catch((error) => {
       setupPromise = null;
       throw error;

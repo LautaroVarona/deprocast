@@ -129,6 +129,10 @@ export async function ensureRuntimeDirs(): Promise<void> {
     getDataPath("tacho"),
     getDataPath("tacho", "notas"),
     getDataPath("projects", "laboral", "pending"),
+    getDataPath("memory"),
+    getDataPath("memory", "sessions"),
+    getDataPath("memory", "knowledge"),
+    getDataPath("memory", "knowledge", "translators"),
     path.dirname(getDatabaseFilePath()),
   ];
 

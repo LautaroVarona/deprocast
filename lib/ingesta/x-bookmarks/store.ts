@@ -1,4 +1,4 @@
-import { mockEnrichXBookmark } from "@/lib/ingesta/x-bookmarks/enrich";
+import { enrichXBookmark } from "@/lib/ingesta/x-bookmarks/enrich";
 import { ingestXBookmark } from "@/lib/kg/sources";
 import type {
   XBookmarkImportResult,
@@ -7,10 +7,18 @@ import type {
   XBookmarkStatus,
   XBookmarkTweet,
 } from "@/lib/ingesta/x-bookmarks/types";
+import {
+  buildOriginAttribution,
+  personActor,
+  selfActor,
+  originToJson,
+} from "@/lib/ingesta/origin";
+import { recordFeedbackSignal } from "@/lib/ingesta/feedback";
 import { prisma } from "@/lib/prisma";
 import { ROOT_UNIVERSE_SLUG } from "@/lib/babel/constants";
 import { registerBabelRecord } from "@/lib/babel/record-store";
 import { DEFAULT_CAMPO_SLUG } from "@/lib/projects/campos";
+import { normalizeKgEdgeWeight } from "@/lib/validations/kg-schema";
 import { randomUUID } from "node:crypto";
 import type { Prisma } from "@prisma/client";
 
@@ -63,13 +71,29 @@ function toRecord(row: {
 
 export async function importXBookmarks(
   tweets: XBookmarkTweet[],
+  options?: { sourceNetwork?: string },
 ): Promise<XBookmarkImportResult> {
   const importBatchId = randomUUID();
+  const sourceNetwork = options?.sourceNetwork ?? "x";
   let imported = 0;
   let updated = 0;
   let skipped = 0;
 
   for (const tweet of tweets) {
+    const origin = buildOriginAttribution({
+      channel: "social",
+      actors: [
+        selfActor(),
+        personActor(tweet.author || tweet.handle, tweet.handle),
+      ],
+      meta: {
+        sourceNetwork,
+        handle: tweet.handle,
+        tweetUrl: tweet.tweetUrl,
+        importBatchId,
+      },
+    });
+
     if (tweet.externalId) {
       const existing = await prisma.xBookmark.findFirst({
         where: { externalId: tweet.externalId },
@@ -119,7 +143,12 @@ export async function importXBookmarks(
       contextSeal: ROOT_UNIVERSE_SLUG,
       campoSlug: DEFAULT_CAMPO_SLUG,
       channel: "x-bookmarks",
-      metadata: { handle: created.handle, importBatchId },
+      metadata: {
+        handle: created.handle,
+        importBatchId,
+        sourceNetwork,
+        origin: originToJson(origin),
+      },
     }).catch((error) => {
       console.error("Babel x-bookmark record error:", error);
     });
@@ -165,14 +194,31 @@ export async function calibrateXBookmark(
   id: string,
   weight: number,
 ): Promise<XBookmarkRecord> {
+  const normalized = normalizeKgEdgeWeight(weight);
   const row = await prisma.xBookmark.update({
     where: { id },
     data: {
-      weight,
+      weight: normalized.weight,
       calibratedAt: new Date(),
       status: "calibrated",
     },
   });
+
+  await recordFeedbackSignal({
+    action: "weight_calibrated",
+    polarity: "positive",
+    targetKind: "x_bookmark",
+    targetId: id,
+    channel: "social",
+    previousValue: String(weight),
+    nextValue: String(normalized.weight),
+    metadata: {
+      fellBack: normalized.fellBack,
+      originalWeight: normalized.original,
+    },
+    applyLearning: false,
+  });
+
   return toRecord(row);
 }
 
@@ -191,7 +237,7 @@ export async function processCalibratedAboveThreshold(
   let kgIngested = 0;
 
   for (const row of candidates) {
-    const enrichment = await mockEnrichXBookmark({
+    const enrichment = await enrichXBookmark({
       externalId: row.externalId ?? undefined,
       author: row.author,
       handle: row.handle,

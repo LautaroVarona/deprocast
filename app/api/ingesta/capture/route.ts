@@ -1,6 +1,7 @@
 import { type IngestaChannel } from "@/lib/purifier/constants";
 import type { CaptureGravity } from "@/lib/purifier/capture";
 import { isSourceType } from "@/lib/document-constants";
+import { parseOriginFromBody } from "@/lib/ingesta/origin";
 import { isCampoSlug } from "@/lib/projects/campos";
 import { isUniverseSlug } from "@/lib/babel/context-seal";
 import { ensureRuntimeReady } from "@/lib/runtime-setup";
@@ -29,6 +30,9 @@ function parseGravity(body: Record<string, unknown>): CaptureGravity | undefined
   }
   if (typeof gravity.onda === "string") {
     parsed.onda = gravity.onda;
+  }
+  if (typeof gravity.locationName === "string") {
+    parsed.locationName = gravity.locationName;
   }
   if (isSourceType(gravity.sourceType)) {
     parsed.sourceType = gravity.sourceType;
@@ -114,6 +118,15 @@ export async function POST(request: NextRequest) {
       filename,
       assetId,
       metadata,
+      origin: parseOriginFromBody(body.origin),
+      locationName:
+        typeof body.locationName === "string"
+          ? body.locationName
+          : typeof parseGravity(body)?.locationName === "string"
+            ? parseGravity(body)!.locationName
+            : undefined,
+      geoLocationId:
+        typeof body.geoLocationId === "string" ? body.geoLocationId : undefined,
       gravity: {
         ...parseGravity(body),
         universeSlug:

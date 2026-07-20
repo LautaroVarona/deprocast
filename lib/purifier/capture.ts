@@ -2,6 +2,14 @@ import "server-only";
 
 import type { SourceType } from "@/lib/document-constants";
 import {
+  assertOriginAttribution,
+  buildOriginAttribution,
+  mapIngestaChannelToOrigin,
+  originToJson,
+  selfActor,
+  type OriginAttribution,
+} from "@/lib/ingesta/origin";
+import {
   MATERIA_ESTADO_PENDING_PURIFICATION,
   type IngestaChannel,
 } from "@/lib/purifier/constants";
@@ -15,6 +23,7 @@ import {
 import { resolveContextSeal } from "@/lib/babel/context-seal";
 import { registerBabelRecord } from "@/lib/babel/record-store";
 import { getRawDocumentsPath } from "@/lib/runtime-paths";
+import { sanitizeHiddenChars } from "@/lib/utils/text-sanitizer";
 import { randomUUID } from "node:crypto";
 import { access, mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
@@ -35,6 +44,7 @@ export type CaptureGravity = {
   universeSlug?: string;
   onda?: string;
   sourceType?: SourceType;
+  locationName?: string;
 };
 
 export type CaptureInput = {
@@ -44,6 +54,14 @@ export type CaptureInput = {
   assetId?: string;
   metadata?: Record<string, string | null>;
   gravity?: CaptureGravity;
+  /** Linaje de origen; si falta se infiere del canal con actor self. */
+  origin?: OriginAttribution;
+  /** Entorno físico opcional (HITL fricción cero). */
+  locationName?: string | null;
+  /** GeoLocation id para resolver nombre automáticamente. */
+  geoLocationId?: string | null;
+  /** FK persistida tras captura (inyectada internamente). */
+  originAttributionId?: string;
 };
 
 export type CaptureOptions = {
@@ -144,14 +162,43 @@ export async function captureAndPurify(
   input: CaptureInput,
   options?: CaptureOptions,
 ) {
-  const trimmed = input.rawText.trim();
+  const trimmed = sanitizeHiddenChars(input.rawText);
   if (!trimmed) {
     throw new Error("La prima materia no puede estar vacía.");
   }
 
+  const originChannel =
+    mapIngestaChannelToOrigin(input.channel) ??
+    (input.channel === "tablas" ? "texto" : null);
+
+  const origin =
+    input.origin ??
+    buildOriginAttribution({
+      channel: originChannel ?? "texto",
+      actors: [selfActor()],
+      meta: { ingestaChannel: input.channel },
+    });
+  assertOriginAttribution(origin);
+
+  const { persistOriginAttribution, resolveLocationNameFromGeo } = await import(
+    "@/lib/ingesta/origin-store"
+  );
+
+  const resolvedLocation =
+    input.locationName?.trim() ||
+    (await resolveLocationNameFromGeo(input.geoLocationId)) ||
+    null;
+
+  const { id: originAttributionId } = await persistOriginAttribution({
+    origin,
+    locationName: resolvedLocation,
+    geoLocationId: input.geoLocationId,
+  });
+
   const { captureId, filename } = await savePendingPurification({
     ...input,
     rawText: trimmed,
+    originAttributionId,
   });
 
   const contextSeal = resolveContextSeal({
@@ -170,6 +217,9 @@ export async function captureAndPurify(
         captureId,
         pendingPurificationFile: filename,
         created_at: new Date().toISOString(),
+        origin: JSON.stringify(originToJson(origin)),
+        originAttributionId,
+        locationName: resolvedLocation,
       },
       gravity: toGravityInput(input.gravity),
     },
@@ -224,10 +274,20 @@ export async function captureAndPurify(
     },
   );
 
+  void import("@/lib/agentes/quantador").then(({ enqueueQuantadorPipeline }) =>
+    enqueueQuantadorPipeline({
+      rawText: trimmed,
+      originAttributionId,
+      universoSlug: contextSeal,
+      reviewId: record.reviewId,
+    }),
+  );
+
   return {
     captureId,
     pendingFilename: filename,
     reviewId: record.reviewId,
     particula: record.particula,
+    originAttributionId,
   };
 }

@@ -49,7 +49,7 @@ async function unlinkWithRetry(filePath: string, attempts = 5): Promise<void> {
 }
 
 export async function wipeCurrentState(): Promise<void> {
-  processingQueue.clearQueue();
+  await processingQueue.clearQueue();
   await disconnectPrismaClient();
 
   const dbPath = getDatabaseFilePath();

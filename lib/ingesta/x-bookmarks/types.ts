@@ -19,6 +19,8 @@ export const EXISTENTIAL_PROJECTS = [
   "Studianta",
   "Versa",
   "El Fotógrafo",
+  "Botmed",
+  "Tuitmark",
 ] as const;
 
 export type ExistentialProject = (typeof EXISTENTIAL_PROJECTS)[number];

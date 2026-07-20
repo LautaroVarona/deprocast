@@ -28,7 +28,7 @@ export async function POST(_request: NextRequest, context: RouteContext) {
       );
     }
 
-    if (processingQueue.isQueued(id)) {
+    if (await processingQueue.isQueued(id)) {
       const status = await processingQueue.getStatusWithActive();
       const position =
         status.active?.id === id

@@ -3,16 +3,21 @@
 import { QuantaOverlay } from "@/components/cuadernos/quanta-overlay";
 import { Switch } from "@/components/cuadernos/switch";
 import { Button } from "@/components/ui/button";
-import type { NotebookDetail, NotebookPageDto } from "@/lib/cuadernos/types";
+import type {
+  NotebookDetail,
+  NotebookPageDto,
+  PageAnalysis,
+  PageNerEntities,
+} from "@/lib/cuadernos/types";
 import { fetchJson } from "@/lib/fetch-json";
 import { cn } from "@/lib/utils";
 import {
   ArrowLeftIcon,
-  ChevronLeftIcon,
-  ChevronRightIcon,
   Loader2Icon,
+  SaveIcon,
   ScanEyeIcon,
   UploadIcon,
+  XIcon,
 } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -29,6 +34,43 @@ const STATUS_LABEL: Record<string, string> = {
   ERROR: "Error",
 };
 
+const NER_KEYS: Array<keyof PageNerEntities> = [
+  "persona",
+  "org",
+  "proyecto",
+  "lugar",
+  "concepto",
+];
+
+const NER_LABEL: Record<keyof PageNerEntities, string> = {
+  persona: "Persona",
+  org: "Org",
+  proyecto: "Proyecto",
+  lugar: "Lugar",
+  concepto: "Concepto",
+};
+
+function emptyAnalysis(pageNumber: number): PageAnalysis {
+  return {
+    suggestedTitle: "",
+    explanation: "",
+    writtenContentDescription: "",
+    semanticTags: [],
+    ner: { persona: [], org: [], proyecto: [], lugar: [], concepto: [] },
+    pageNumber,
+  };
+}
+
+function analysisFromPage(page: NotebookPageDto): PageAnalysis {
+  if (page.pageAnalysis) return page.pageAnalysis;
+  return {
+    ...emptyAnalysis(page.pageNumber),
+    suggestedTitle: "",
+    writtenContentDescription: page.semanticVector?.slice(0, 400) ?? "",
+    semanticTags: page.structuralVector?.tags ?? page.pageMetatags.map((t) => t.label),
+  };
+}
+
 export function NotebookViewer({ notebookId }: NotebookViewerProps) {
   const [notebook, setNotebook] = useState<NotebookDetail | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -36,6 +78,16 @@ export function NotebookViewer({ notebookId }: NotebookViewerProps) {
   const [showQuanta, setShowQuanta] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [form, setForm] = useState<PageAnalysis>(emptyAnalysis(1));
+  const [tagDraft, setTagDraft] = useState("");
+  const [nerDraft, setNerDraft] = useState<Record<keyof PageNerEntities, string>>({
+    persona: "",
+    org: "",
+    proyecto: "",
+    lugar: "",
+    concepto: "",
+  });
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const loadNotebook = useCallback(async () => {
@@ -68,6 +120,12 @@ export function NotebookViewer({ notebookId }: NotebookViewerProps) {
   const activePage: NotebookPageDto | null =
     notebook?.pages[activeIndex] ?? null;
 
+  useEffect(() => {
+    if (activePage) {
+      setForm(analysisFromPage(activePage));
+    }
+  }, [activePage?.id, activePage?.pageAnalysis, activePage?.status]);
+
   const handleProcess = async () => {
     if (!activePage) return;
 
@@ -88,6 +146,7 @@ export function NotebookViewer({ notebookId }: NotebookViewerProps) {
           processedCount: pages.filter((p) => p.status === "COMPLETED").length,
         };
       });
+      setForm(analysisFromPage(data.page));
       toast.success("Página procesada · vectores guardados en corpus.");
     } catch (error) {
       toast.error(
@@ -96,6 +155,36 @@ export function NotebookViewer({ notebookId }: NotebookViewerProps) {
       void loadNotebook();
     } finally {
       setIsProcessing(false);
+    }
+  };
+
+  const handleSaveAnalysis = async () => {
+    if (!activePage) return;
+    setIsSaving(true);
+    try {
+      const data = await fetchJson<{ page: NotebookPageDto }>(
+        `/api/cuadernos/pages/${activePage.id}/analysis`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(form),
+        },
+      );
+      setNotebook((prev) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          pages: prev.pages.map((p) => (p.id === data.page.id ? data.page : p)),
+        };
+      });
+      setForm(analysisFromPage(data.page));
+      toast.success("Análisis guardado (HITL).");
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "No se pudo guardar.",
+      );
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -122,6 +211,35 @@ export function NotebookViewer({ notebookId }: NotebookViewerProps) {
       setIsUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
     }
+  };
+
+  const addTag = () => {
+    const tag = tagDraft.trim();
+    if (!tag) return;
+    if (form.semanticTags.includes(tag)) {
+      setTagDraft("");
+      return;
+    }
+    setForm((prev) => ({
+      ...prev,
+      semanticTags: [...prev.semanticTags, tag],
+    }));
+    setTagDraft("");
+  };
+
+  const addNer = (kind: keyof PageNerEntities) => {
+    const label = nerDraft[kind].trim();
+    if (!label) return;
+    setForm((prev) => ({
+      ...prev,
+      ner: {
+        ...prev.ner,
+        [kind]: prev.ner[kind].includes(label)
+          ? prev.ner[kind]
+          : [...prev.ner[kind], label],
+      },
+    }));
+    setNerDraft((prev) => ({ ...prev, [kind]: "" }));
   };
 
   if (isLoading) {
@@ -159,7 +277,7 @@ export function NotebookViewer({ notebookId }: NotebookViewerProps) {
           </Link>
           <div className="min-w-0 border-l border-zinc-800 pl-3">
             <p className="font-mono text-[9px] tracking-[0.25em] text-zinc-600 uppercase">
-              Páginas del Cuaderno
+              Espejo · Split Pane
             </p>
             <h1 className="truncate text-sm font-medium">{notebook.title}</h1>
           </div>
@@ -193,69 +311,30 @@ export function NotebookViewer({ notebookId }: NotebookViewerProps) {
       </header>
 
       <div className="flex min-h-0 flex-1 overflow-hidden">
-        <aside className="hidden w-44 shrink-0 flex-col border-r border-zinc-900 md:flex">
-          <p className="px-3 py-2 font-mono text-[9px] tracking-widest text-zinc-600 uppercase">
-            Índice
-          </p>
-          <div className="min-h-0 flex-1 overflow-y-auto px-2 pb-2">
-            {notebook.pages.length === 0 ? (
-              <p className="px-1 py-4 text-center font-mono text-[9px] text-zinc-700">
-                Sin páginas
-              </p>
-            ) : (
-              notebook.pages.map((page, index) => (
-                <button
-                  key={page.id}
-                  type="button"
-                  onClick={() => setActiveIndex(index)}
-                  className={cn(
-                    "mb-1 flex w-full items-center justify-between rounded px-2 py-1.5 font-mono text-[10px] transition-colors",
-                    index === activeIndex
-                      ? "bg-zinc-800 text-zinc-100"
-                      : "text-zinc-500 hover:bg-zinc-900 hover:text-zinc-300",
-                  )}
-                >
-                  <span>p.{page.pageNumber}</span>
-                  <span
-                    className={cn(
-                      "size-1.5 rounded-full",
-                      page.status === "COMPLETED" && "bg-emerald-500",
-                      page.status === "PENDING" && "bg-zinc-600",
-                      page.status === "PROCESSING" && "bg-amber-400 animate-pulse",
-                      page.status === "ERROR" && "bg-red-500",
-                    )}
-                  />
-                </button>
-              ))
-            )}
-          </div>
-        </aside>
-
-        <main className="flex min-w-0 flex-1 flex-col">
-          {activePage ? (
-            <>
+        {activePage ? (
+          <>
+            {/* Izquierda: imagen + paginación */}
+            <section className="flex min-w-0 flex-1 flex-col border-r border-zinc-900 lg:w-1/2 lg:flex-none">
               <div className="flex shrink-0 items-center justify-between gap-2 border-b border-zinc-900 px-3 py-2">
                 <div className="flex items-center gap-2">
                   <button
                     type="button"
                     disabled={activeIndex === 0}
                     onClick={() => setActiveIndex((i) => i - 1)}
-                    className="rounded p-1 text-zinc-500 hover:bg-zinc-900 hover:text-zinc-200 disabled:opacity-30"
-                    aria-label="Página anterior"
+                    className="rounded px-2 py-1 font-mono text-[10px] text-zinc-400 hover:bg-zinc-900 hover:text-zinc-200 disabled:opacity-30"
                   >
-                    <ChevronLeftIcon className="size-4" />
+                    ◀ Anterior
                   </button>
                   <span className="font-mono text-[10px] text-zinc-400">
-                    {activeIndex + 1} / {notebook.pages.length}
+                    Página {activeIndex + 1} / {notebook.pages.length}
                   </span>
                   <button
                     type="button"
                     disabled={activeIndex >= notebook.pages.length - 1}
                     onClick={() => setActiveIndex((i) => i + 1)}
-                    className="rounded p-1 text-zinc-500 hover:bg-zinc-900 hover:text-zinc-200 disabled:opacity-30"
-                    aria-label="Página siguiente"
+                    className="rounded px-2 py-1 font-mono text-[10px] text-zinc-400 hover:bg-zinc-900 hover:text-zinc-200 disabled:opacity-30"
                   >
-                    <ChevronRightIcon className="size-4" />
+                    Siguiente ▶
                   </button>
                 </div>
 
@@ -278,7 +357,7 @@ export function NotebookViewer({ notebookId }: NotebookViewerProps) {
                     ) : (
                       <ScanEyeIcon className="size-3.5" />
                     )}
-                    Agente de Visión
+                    Visión
                   </Button>
                 </div>
               </div>
@@ -300,49 +379,290 @@ export function NotebookViewer({ notebookId }: NotebookViewerProps) {
                 </div>
               </div>
 
-              <footer className="shrink-0 border-t border-zinc-900 px-4 py-2">
-                <div className="flex flex-wrap items-center gap-3 font-mono text-[9px] tracking-wider text-zinc-500 uppercase">
+              <footer className="shrink-0 border-t border-zinc-900 px-4 py-2 font-mono text-[9px] tracking-wider text-zinc-500 uppercase">
+                <span
+                  className={cn(
+                    activePage.status === "COMPLETED" && "text-emerald-500",
+                    activePage.status === "ERROR" && "text-red-400",
+                    activePage.status === "PROCESSING" && "text-amber-400",
+                  )}
+                >
+                  {STATUS_LABEL[activePage.status] ?? activePage.status}
+                </span>
+              </footer>
+            </section>
+
+            {/* Derecha: formulario HITL */}
+            <aside className="flex min-h-0 w-full flex-col overflow-y-auto lg:w-1/2">
+              <div className="flex items-center justify-between border-b border-zinc-900 px-4 py-2">
+                <p className="font-mono text-[9px] tracking-widest text-zinc-600 uppercase">
+                  Átomo editable
+                </p>
+                <Button
+                  type="button"
+                  size="sm"
+                  disabled={isSaving}
+                  onClick={() => void handleSaveAnalysis()}
+                  className="bg-emerald-600 text-white hover:bg-emerald-500"
+                >
+                  {isSaving ? (
+                    <Loader2Icon className="size-3.5 animate-spin" />
+                  ) : (
+                    <SaveIcon className="size-3.5" />
+                  )}
+                  Guardar
+                </Button>
+              </div>
+
+              <div className="space-y-4 px-4 py-4">
+                <label className="block space-y-1">
+                  <span className="font-mono text-[9px] tracking-widest text-zinc-500 uppercase">
+                    Título sugerido
+                  </span>
+                  <input
+                    value={form.suggestedTitle}
+                    onChange={(e) =>
+                      setForm((prev) => ({
+                        ...prev,
+                        suggestedTitle: e.target.value,
+                      }))
+                    }
+                    className="w-full rounded border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 outline-none focus:border-zinc-600"
+                  />
+                </label>
+
+                <label className="block space-y-1">
+                  <span className="font-mono text-[9px] tracking-widest text-zinc-500 uppercase">
+                    Explicación
+                  </span>
+                  <textarea
+                    value={form.explanation}
+                    onChange={(e) =>
+                      setForm((prev) => ({
+                        ...prev,
+                        explanation: e.target.value,
+                      }))
+                    }
+                    rows={3}
+                    className="w-full rounded border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 outline-none focus:border-zinc-600"
+                  />
+                </label>
+
+                <label className="block space-y-1">
+                  <span className="font-mono text-[9px] tracking-widest text-zinc-500 uppercase">
+                    Descripción del contenido escrito
+                  </span>
+                  <textarea
+                    value={form.writtenContentDescription}
+                    onChange={(e) =>
+                      setForm((prev) => ({
+                        ...prev,
+                        writtenContentDescription: e.target.value,
+                      }))
+                    }
+                    rows={4}
+                    className="w-full rounded border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 outline-none focus:border-zinc-600"
+                  />
+                </label>
+
+                <div className="space-y-2">
+                  <span className="font-mono text-[9px] tracking-widest text-zinc-500 uppercase">
+                    Tags semánticos
+                  </span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {form.semanticTags.map((tag) => (
+                      <span
+                        key={tag}
+                        className="inline-flex items-center gap-1 rounded border border-zinc-700 bg-zinc-900 px-2 py-0.5 font-mono text-[10px] text-zinc-300"
+                      >
+                        {tag}
+                        <button
+                          type="button"
+                          aria-label={`Quitar ${tag}`}
+                          onClick={() =>
+                            setForm((prev) => ({
+                              ...prev,
+                              semanticTags: prev.semanticTags.filter(
+                                (t) => t !== tag,
+                              ),
+                            }))
+                          }
+                          className="text-zinc-500 hover:text-zinc-200"
+                        >
+                          <XIcon className="size-3" />
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                  <div className="flex gap-2">
+                    <input
+                      value={tagDraft}
+                      onChange={(e) => setTagDraft(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          addTag();
+                        }
+                      }}
+                      placeholder="Nuevo tag"
+                      className="min-w-0 flex-1 rounded border border-zinc-800 bg-zinc-950 px-3 py-1.5 text-sm outline-none focus:border-zinc-600"
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={addTag}
+                      className="border-zinc-800"
+                    >
+                      +
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <span className="font-mono text-[9px] tracking-widest text-zinc-500 uppercase">
+                    Entidades NER
+                  </span>
+                  {NER_KEYS.map((kind) => (
+                    <div key={kind} className="space-y-1.5">
+                      <p className="font-mono text-[10px] text-zinc-500">
+                        {NER_LABEL[kind]}
+                      </p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {form.ner[kind].map((entity) => (
+                          <span
+                            key={`${kind}-${entity}`}
+                            className="inline-flex items-center gap-1 rounded-full border border-zinc-700 bg-zinc-900/80 px-2.5 py-0.5 text-[11px] text-zinc-200"
+                          >
+                            {entity}
+                            <button
+                              type="button"
+                              aria-label={`Quitar ${entity}`}
+                              onClick={() =>
+                                setForm((prev) => ({
+                                  ...prev,
+                                  ner: {
+                                    ...prev.ner,
+                                    [kind]: prev.ner[kind].filter(
+                                      (e) => e !== entity,
+                                    ),
+                                  },
+                                }))
+                              }
+                              className="text-zinc-500 hover:text-zinc-200"
+                            >
+                              <XIcon className="size-3" />
+                            </button>
+                          </span>
+                        ))}
+                      </div>
+                      <div className="flex gap-2">
+                        <input
+                          value={nerDraft[kind]}
+                          onChange={(e) =>
+                            setNerDraft((prev) => ({
+                              ...prev,
+                              [kind]: e.target.value,
+                            }))
+                          }
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                              e.preventDefault();
+                              addNer(kind);
+                            }
+                          }}
+                          placeholder={`Añadir ${NER_LABEL[kind].toLowerCase()}`}
+                          className="min-w-0 flex-1 rounded border border-zinc-800 bg-zinc-950 px-3 py-1.5 text-sm outline-none focus:border-zinc-600"
+                        />
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => addNer(kind)}
+                          className="border-zinc-800"
+                        >
+                          +
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Mini índice de páginas en móvil */}
+                <div className="border-t border-zinc-900 pt-3 lg:hidden">
+                  <div className="flex flex-wrap gap-1">
+                    {notebook.pages.map((page, index) => (
+                      <button
+                        key={page.id}
+                        type="button"
+                        onClick={() => setActiveIndex(index)}
+                        className={cn(
+                          "rounded px-2 py-1 font-mono text-[10px]",
+                          index === activeIndex
+                            ? "bg-zinc-800 text-zinc-100"
+                            : "text-zinc-500 hover:bg-zinc-900",
+                        )}
+                      >
+                        p.{page.pageNumber}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </aside>
+          </>
+        ) : (
+          <div className="flex flex-1 flex-col items-center justify-center gap-4 text-zinc-600">
+            <p className="font-mono text-[10px] tracking-widest uppercase">
+              Cuaderno sin páginas
+            </p>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => fileInputRef.current?.click()}
+              className="border-zinc-800 bg-zinc-950"
+            >
+              <UploadIcon className="size-4" />
+              Subir primera página
+            </Button>
+          </div>
+        )}
+      </div>
+
+      {/* Índice lateral desktop */}
+      {notebook.pages.length > 0 ? (
+        <div className="pointer-events-none absolute bottom-4 left-4 hidden md:block">
+          <div className="pointer-events-auto max-h-40 overflow-y-auto rounded border border-zinc-800 bg-zinc-950/90 p-2 shadow-xl backdrop-blur">
+            <div className="flex flex-col gap-0.5">
+              {notebook.pages.map((page, index) => (
+                <button
+                  key={page.id}
+                  type="button"
+                  onClick={() => setActiveIndex(index)}
+                  className={cn(
+                    "flex items-center justify-between gap-3 rounded px-2 py-1 font-mono text-[10px]",
+                    index === activeIndex
+                      ? "bg-zinc-800 text-zinc-100"
+                      : "text-zinc-500 hover:bg-zinc-900 hover:text-zinc-300",
+                  )}
+                >
+                  <span>p.{page.pageNumber}</span>
                   <span
                     className={cn(
-                      activePage.status === "COMPLETED" && "text-emerald-500",
-                      activePage.status === "ERROR" && "text-red-400",
-                      activePage.status === "PROCESSING" && "text-amber-400",
+                      "size-1.5 rounded-full",
+                      page.status === "COMPLETED" && "bg-emerald-500",
+                      page.status === "PENDING" && "bg-zinc-600",
+                      page.status === "PROCESSING" &&
+                        "animate-pulse bg-amber-400",
+                      page.status === "ERROR" && "bg-red-500",
                     )}
-                  >
-                    {STATUS_LABEL[activePage.status] ?? activePage.status}
-                  </span>
-                  {activePage.quanta?.length ? (
-                    <span>{activePage.quanta.length} quántomos</span>
-                  ) : null}
-                  {activePage.structuralVector?.tags.length ? (
-                    <span>tags: {activePage.structuralVector.tags.join(", ")}</span>
-                  ) : null}
-                </div>
-                {activePage.semanticVector && showQuanta ? (
-                  <p className="mt-2 line-clamp-3 font-mono text-[10px] leading-relaxed text-zinc-600">
-                    {activePage.semanticVector}
-                  </p>
-                ) : null}
-              </footer>
-            </>
-          ) : (
-            <div className="flex flex-1 flex-col items-center justify-center gap-4 text-zinc-600">
-              <p className="font-mono text-[10px] tracking-widest uppercase">
-                Cuaderno sin páginas
-              </p>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => fileInputRef.current?.click()}
-                className="border-zinc-800 bg-zinc-950"
-              >
-                <UploadIcon className="size-4" />
-                Subir primera página
-              </Button>
+                  />
+                </button>
+              ))}
             </div>
-          )}
-        </main>
-      </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

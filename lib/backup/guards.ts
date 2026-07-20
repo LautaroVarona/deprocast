@@ -21,7 +21,7 @@ export function assertLocalBackupAllowed(): void {
 }
 
 export async function assertNoActiveProcessing(): Promise<void> {
-  if (processingQueue.hasActiveJobs()) {
+  if (await processingQueue.hasActiveJobs()) {
     throw new BackupGuardError(
       "Hay procesamiento de audio en curso. Esperá a que termine antes de exportar o importar.",
       409,

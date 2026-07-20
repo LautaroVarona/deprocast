@@ -8,6 +8,7 @@ import type {
   NotebookPageDto,
   NotebookPageStatus,
   NotebookSummary,
+  PageAnalysis,
   PageEnrichment,
   PageMetatag,
   Quanta,
@@ -120,6 +121,9 @@ function mapPage(page: {
   corpusCaptureId: string | null;
   createdAt: Date;
 }): NotebookPageDto {
+  const structural =
+    (page.structuralVector as StructuralVector | null) ?? null;
+
   return {
     id: page.id,
     notebookId: page.notebookId,
@@ -129,8 +133,9 @@ function mapPage(page: {
     mimeType: page.mimeType,
     status: page.status as NotebookPageStatus,
     semanticVector: page.semanticVector,
-    structuralVector: (page.structuralVector as StructuralVector | null) ?? null,
+    structuralVector: structural,
     quanta: (page.quanta as Quanta[] | null) ?? null,
+    pageAnalysis: structural?.analysis ?? null,
     pageMetatags: parsePageMetatags(page.pageMetatags),
     enrichments: parseEnrichments(page.enrichments),
     processedAt: page.processedAt?.toISOString() ?? null,
@@ -302,24 +307,75 @@ export async function savePageVisionResult(
     semanticVector: string;
     structuralVector: StructuralVector;
     quanta: Quanta[];
+    pageAnalysis?: PageAnalysis;
     corpusCaptureId?: string;
   },
 ): Promise<NotebookPageDto> {
+  const structuralVector: StructuralVector = {
+    ...result.structuralVector,
+    ...(result.pageAnalysis
+      ? { analysis: result.pageAnalysis }
+      : result.structuralVector.analysis
+        ? { analysis: result.structuralVector.analysis }
+        : {}),
+  };
+
   const page = await prisma.notebookPage.update({
     where: { id: pageId },
     data: {
       status: "COMPLETED",
       semanticVector: result.semanticVector,
-      structuralVector: result.structuralVector,
+      structuralVector,
       quanta: result.quanta,
       processedAt: new Date(),
       corpusCaptureId: result.corpusCaptureId ?? null,
+      pageMetatags: tagsToPageMetatags(
+        result.pageAnalysis?.semanticTags ?? structuralVector.tags,
+      ),
     },
   });
 
   await prisma.notebook.update({
     where: { id: page.notebookId },
     data: { updatedAt: new Date() },
+  });
+
+  return mapPage(page);
+}
+
+export async function updatePageAnalysis(
+  pageId: string,
+  analysis: PageAnalysis,
+): Promise<NotebookPageDto> {
+  const existing = await prisma.notebookPage.findUnique({ where: { id: pageId } });
+  if (!existing) {
+    throw new Error("Página no encontrada.");
+  }
+
+  const structural =
+    (existing.structuralVector as StructuralVector | null) ?? {
+      tags: [],
+      projects: [],
+      hasDiagram: false,
+      hasSymbols: false,
+      hasArrows: false,
+      hasRunes: false,
+      hasGeometry: false,
+      visualRelations: [],
+    };
+
+  const nextStructural: StructuralVector = {
+    ...structural,
+    tags: analysis.semanticTags.length ? analysis.semanticTags : structural.tags,
+    analysis,
+  };
+
+  const page = await prisma.notebookPage.update({
+    where: { id: pageId },
+    data: {
+      structuralVector: nextStructural,
+      pageMetatags: tagsToPageMetatags(analysis.semanticTags),
+    },
   });
 
   return mapPage(page);

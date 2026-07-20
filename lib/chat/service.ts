@@ -114,6 +114,10 @@ export async function updateChatSessionTitle(
 
 export async function deleteChatSession(sessionId: string): Promise<boolean> {
   try {
+    const { distillChatSession } = await import("@/lib/memory/session-distill");
+    await distillChatSession(sessionId).catch((error) => {
+      console.error("Session distill before delete failed:", error);
+    });
     await prisma.chatSession.delete({ where: { id: sessionId } });
     return true;
   } catch {

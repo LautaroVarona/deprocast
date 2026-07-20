@@ -169,16 +169,34 @@ export async function buildChatContext(
 ): Promise<string> {
   const blocks: ContextBlock[] = [];
 
-  for (const mention of mentions) {
-    const block = await buildMentionBlock(mention);
-    if (block) blocks.push(block);
-  }
-
   const personaNodeIds = mentions
     .filter((mention) => mention.entityType === "persona")
     .map((mention) => mention.entityId);
 
   const plainQuery = userQuery.replace(/@\S+/g, "").trim();
+
+  try {
+    const { buildRecallPath } = await import("@/lib/memory/recall-path");
+    const recall = await buildRecallPath({
+      query: plainQuery || userQuery,
+      mentionedNodeIds: personaNodeIds,
+    });
+    if (recall.text.trim()) {
+      blocks.push({
+        title: "Recall path (bajo costo)",
+        body: recall.text,
+        priority: 120,
+      });
+    }
+  } catch (error) {
+    console.warn("Recall path skip:", error);
+  }
+
+  for (const mention of mentions) {
+    const block = await buildMentionBlock(mention);
+    if (block) blocks.push(block);
+  }
+
   if (plainQuery) {
     const hits = await hybridSearch({
       query: plainQuery,

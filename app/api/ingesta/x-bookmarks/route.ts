@@ -40,6 +40,11 @@ export async function POST(request: Request) {
 
     const formData = await request.formData();
     const file = formData.get("file");
+    const rawNetwork = formData.get("sourceNetwork");
+    const sourceNetwork =
+      typeof rawNetwork === "string" && rawNetwork.trim()
+        ? rawNetwork.trim().toLowerCase()
+        : "x";
 
     if (!(file instanceof File)) {
       return NextResponse.json(
@@ -58,10 +63,10 @@ export async function POST(request: Request) {
       );
     }
 
-    const result = await importXBookmarks(parsed);
+    const result = await importXBookmarks(parsed, { sourceNetwork });
     const bookmarks = await listPendingXBookmarks();
 
-    return NextResponse.json({ ...result, bookmarks }, { status: 201 });
+    return NextResponse.json({ ...result, bookmarks, sourceNetwork }, { status: 201 });
   } catch (error) {
     console.error("Import x-bookmarks error:", error);
     const message =

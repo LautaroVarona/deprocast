@@ -6,6 +6,11 @@ import {
 } from "@/lib/cuadernos/service";
 import { runAtomicVisionAgent } from "@/lib/cuadernos/vision-agent";
 import { logNotebookProcessedActivity } from "@/lib/historial/domain-log";
+import {
+  aiAgentActor,
+  buildOriginAttribution,
+  selfActor,
+} from "@/lib/ingesta/origin";
 import { indexNotebookPageMemory } from "@/lib/mnemosyne/hooks";
 import { captureAndPurify } from "@/lib/purifier/capture";
 import { prisma } from "@/lib/prisma";
@@ -47,6 +52,7 @@ export async function POST(
     const vision = await runAtomicVisionAgent({
       buffer,
       mimeType: page.mimeType,
+      pageNumberHint: page.pageNumber,
     });
 
     let corpusCaptureId: string | undefined;
@@ -63,9 +69,22 @@ export async function POST(
           channel: "cuadernos",
         },
         gravity: {
-          title: `Cuaderno p.${page.pageNumber}`,
+          title:
+            vision.pageAnalysis.suggestedTitle ||
+            `Cuaderno p.${page.pageNumber}`,
           sourceType: "personal_writing",
         },
+        origin: buildOriginAttribution({
+          channel: "cuadernos",
+          actors: [
+            selfActor(),
+            aiAgentActor("vision-atomica", "cuadernos-vision"),
+          ],
+          meta: {
+            notebookPageId: pageId,
+            pageNumber: page.pageNumber,
+          },
+        }),
       });
       corpusCaptureId = capture.captureId;
     }

@@ -1,5 +1,6 @@
 import type { LlmEntity, LlmKgExtraction, LlmRelation } from "@/lib/kg/types";
 import { isNodeType, isRelationType } from "@/lib/kg/types";
+import { normalizeKgEdgeWeight } from "@/lib/validations/kg-schema";
 
 function parseEntity(raw: unknown): LlmEntity | null {
   if (!raw || typeof raw !== "object") return null;
@@ -59,12 +60,17 @@ function parseRelation(raw: unknown): LlmRelation | null {
   const context = typeof item.context === "string" ? item.context.trim() : "";
   if (!fromName || !toName || !isRelationType(relationType) || !context) return null;
 
+  let weight: number | undefined;
+  if (item.weight !== undefined && item.weight !== null) {
+    weight = normalizeKgEdgeWeight(item.weight).weight;
+  }
+
   return {
     fromName,
     toName,
     relationType,
     context,
-    weight: typeof item.weight === "number" ? item.weight : undefined,
+    weight,
     confidence: typeof item.confidence === "number" ? item.confidence : undefined,
   };
 }

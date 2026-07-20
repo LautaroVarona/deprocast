@@ -145,7 +145,12 @@ export async function recognizePendingTask(
       recognizedAt: new Date(),
     },
   });
-  return mapPendingTask(row);
+  const task = mapPendingTask(row);
+  const { syncAsaltoMirrorFromTask } = await import(
+    "@/lib/pendientes/asalto-mirror"
+  );
+  await syncAsaltoMirrorFromTask(task, { action: "recognize" });
+  return task;
 }
 
 export async function rejectPendingTask(id: string): Promise<PendingTaskDto> {
@@ -153,7 +158,12 @@ export async function rejectPendingTask(id: string): Promise<PendingTaskDto> {
     where: { id },
     data: { status: "rejected" },
   });
-  return mapPendingTask(row);
+  const task = mapPendingTask(row);
+  const { syncAsaltoMirrorFromTask } = await import(
+    "@/lib/pendientes/asalto-mirror"
+  );
+  await syncAsaltoMirrorFromTask(task, { action: "reject" });
+  return task;
 }
 
 export async function completePendingTask(id: string): Promise<PendingTaskDto> {
@@ -196,7 +206,15 @@ export async function calibratePendingTask(
         calibratedAt: now,
       },
     });
-    return mapPendingTask(row);
+    const task = mapPendingTask(row);
+    const { syncAsaltoMirrorFromTask } = await import(
+      "@/lib/pendientes/asalto-mirror"
+    );
+    await syncAsaltoMirrorFromTask(task, {
+      action: "reject",
+      weight: clamped,
+    });
+    return task;
   }
 
   const row = await prisma.pendingTask.update({
@@ -207,7 +225,15 @@ export async function calibratePendingTask(
       calibratedAt: now,
     },
   });
-  return mapPendingTask(row);
+  const task = mapPendingTask(row);
+  const { syncAsaltoMirrorFromTask } = await import(
+    "@/lib/pendientes/asalto-mirror"
+  );
+  await syncAsaltoMirrorFromTask(task, {
+    action: "calibrate",
+    weight: clamped,
+  });
+  return task;
 }
 
 export async function listTasksForCalibration(

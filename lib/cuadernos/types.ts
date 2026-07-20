@@ -66,6 +66,23 @@ export type Quanta = {
   confidence?: number;
 };
 
+export type PageNerEntities = {
+  persona: string[];
+  org: string[];
+  proyecto: string[];
+  lugar: string[];
+  concepto: string[];
+};
+
+export type PageAnalysis = {
+  suggestedTitle: string;
+  explanation: string;
+  writtenContentDescription: string;
+  semanticTags: string[];
+  ner: PageNerEntities;
+  pageNumber: number;
+};
+
 export type StructuralVector = {
   tags: string[];
   projects: string[];
@@ -88,6 +105,8 @@ export type StructuralVector = {
     relation: string;
   }>;
   rawNotes?: string;
+  /** Análisis HITL editable (título, explicación, NER). */
+  analysis?: PageAnalysis;
 };
 
 export type NotebookSummary = {
@@ -116,6 +135,7 @@ export type NotebookPageDto = {
   semanticVector: string | null;
   structuralVector: StructuralVector | null;
   quanta: Quanta[] | null;
+  pageAnalysis: PageAnalysis | null;
   pageMetatags: PageMetatag[];
   enrichments: PageEnrichment[];
   processedAt: string | null;
@@ -132,4 +152,5 @@ export type VisionAgentResult = {
   semanticVector: string;
   structuralVector: StructuralVector;
   quanta: Quanta[];
+  pageAnalysis: PageAnalysis;
 };

@@ -1,6 +1,11 @@
 import { isCampoSlug, type CampoSlug } from "@/lib/projects/campos";
 import { tableBufferToRawText } from "@/lib/ingesta/tablas/to-raw-text";
+import {
+  buildOriginAttribution,
+  selfActor,
+} from "@/lib/ingesta/origin";
 import { captureAndPurify } from "@/lib/purifier/capture";
+import { sanitizeAndNormalizeTabularText } from "@/lib/utils/text-sanitizer";
 import { NextRequest, NextResponse } from "next/server";
 
 export const runtime = "nodejs";
@@ -51,12 +56,19 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "El archivo está vacío." }, { status: 400 });
     }
 
-    const rawText = await tableBufferToRawText(buffer, file.name);
+    const rawText = sanitizeAndNormalizeTabularText(
+      await tableBufferToRawText(buffer, file.name),
+    );
     const result = await captureAndPurify({
       channel: "tablas",
       rawText,
       filename: file.name,
       gravity: { campoSlug },
+      origin: buildOriginAttribution({
+        channel: "texto",
+        actors: [selfActor()],
+        meta: { ingestaChannel: "tablas", filename: file.name },
+      }),
     });
 
     return NextResponse.json(result, { status: 201 });

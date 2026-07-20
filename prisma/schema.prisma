@@ -122,6 +122,7 @@ model KgEdge {
   relationType String
   context      String
   weight       Int?
+  reconocido   Boolean  @default(false)
   confidence   Float    @default(0.6)
   metadata     Json
   createdAt    DateTime @default(now())
@@ -133,6 +134,40 @@ model KgEdge {
   @@index([sourceNodeId])
   @@index([targetNodeId])
   @@index([relationType])
+  @@index([reconocido])
+}
+
+// Linaje ambiental de captura — metadata contextual y actores tipados.
+model OriginAttribution {
+  id              String   @id @default(uuid())
+  channel         String
+  timestampExacto DateTime
+  diaSemana       String
+  locationName    String?
+  actors          Json
+  createdAt       DateTime @default(now())
+
+  quantomos Quantomo[]
+
+  @@index([channel])
+  @@index([timestampExacto])
+}
+
+// Partícula mínima de conocimiento (fragmento atómico de ingesta).
+model Quantomo {
+  id                  String   @id @default(uuid())
+  titleSugerido       String
+  content             String
+  tagsSemanticos      Json     @default("[]")
+  universo            String
+  createdAt           DateTime @default(now())
+  originAttributionId String
+
+  originAttribution OriginAttribution @relation(fields: [originAttributionId], references: [id], onDelete: Cascade)
+
+  @@index([universo])
+  @@index([originAttributionId])
+  @@index([createdAt])
 }
 
 model KgMention {
@@ -751,4 +786,23 @@ model ActivityLog {
   @@index([category, occurredAt])
   @@index([agentId, occurredAt])
   @@index([correlationId])
+}
+
+// Señales HITL / RLHF local (ediciones humanas sobre nodos, aristas y campos UI).
+model FeedbackSignal {
+  id            String   @id @default(uuid())
+  action        String
+  polarity      String   @default("positive")
+  targetKind    String
+  targetId      String?
+  fieldPath     String?
+  previousValue String?
+  nextValue     String?
+  channel       String?
+  metadata      Json
+  createdAt     DateTime @default(now())
+
+  @@index([action, createdAt])
+  @@index([targetKind, targetId])
+  @@index([channel])
 }

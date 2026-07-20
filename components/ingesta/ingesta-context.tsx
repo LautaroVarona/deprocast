@@ -26,6 +26,7 @@ export type IngestaGravity = {
   campoSlug: CampoSlug;
   onda: string;
   sourceType: SourceType;
+  locationName: string;
 };
 
 type IngestaContextValue = {
@@ -42,6 +43,7 @@ const DEFAULT_GRAVITY: IngestaGravity = {
   campoSlug: DEFAULT_CAMPO_SLUG,
   onda: "sin-clasificar",
   sourceType: "ai_chat",
+  locationName: "",
 };
 
 const IngestaContext = createContext<IngestaContextValue | null>(null);

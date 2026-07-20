@@ -1,7 +1,8 @@
 import { parseStructuredTable } from "@/lib/ingesta/tablas/parser";
+import { sanitizeHiddenChars } from "@/lib/utils/text-sanitizer";
 
 function escapeCell(value: string): string {
-  return value.replace(/\|/g, "\\|").replace(/\n/g, " ").trim();
+  return sanitizeHiddenChars(value.replace(/\|/g, "\\|").replace(/\n/g, " "));
 }
 
 export async function tableBufferToRawText(

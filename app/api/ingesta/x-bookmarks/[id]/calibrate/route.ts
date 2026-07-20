@@ -1,6 +1,6 @@
-import { isValidCalibrationWeight } from "@/lib/ingesta/x-bookmarks/types";
 import { calibrateXBookmark } from "@/lib/ingesta/x-bookmarks/store";
 import { ensureRuntimeReady } from "@/lib/runtime-setup";
+import { normalizeKgEdgeWeight } from "@/lib/validations/kg-schema";
 import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
@@ -16,15 +16,20 @@ export async function PATCH(request: Request, context: RouteContext) {
     const { id } = await context.params;
     const body = (await request.json()) as { weight?: number };
 
-    if (body.weight === undefined || !isValidCalibrationWeight(body.weight)) {
+    if (body.weight === undefined || typeof body.weight !== "number") {
       return NextResponse.json(
-        { error: "El puntaje debe ser un entero entre 1 y 12." },
+        { error: "Se requiere un weight numérico." },
         { status: 400 },
       );
     }
 
-    const bookmark = await calibrateXBookmark(id, body.weight);
-    return NextResponse.json({ bookmark });
+    const normalized = normalizeKgEdgeWeight(body.weight);
+    const bookmark = await calibrateXBookmark(id, normalized.weight);
+    return NextResponse.json({
+      bookmark,
+      weightFallback: normalized.fellBack,
+      requestedWeight: body.weight,
+    });
   } catch (error) {
     console.error("Calibrate x-bookmark error:", error);
     const message =

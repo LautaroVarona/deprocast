@@ -298,6 +298,24 @@ Módulo **HITL de calibración atencional**, no usa LLM. El Observador asigna pe
 
 ---
 
+### ⚛️ Quantador
+
+**Funciones:**
+- Fragmentar bloques masivos de texto en Quantomos atómicos (título, contenido, tags semánticos).
+- Vincular cada Quantomo a su `OriginAttribution` en SQLite para trazabilidad cuántica.
+- Derivar asaltos sugeridos (`PendingTask` + espejo `KgEdge`) de forma asíncrona post-captura.
+- Ejecutarse tras `captureAndPurify` sin bloquear la UI de ingesta.
+
+**Ubicación:**
+- Lógica: `lib/agentes/quantador.ts`
+- API: `app/api/agentes/quantador/route.ts`
+- Linaje: `lib/ingesta/origin-store.ts`, hook en `lib/purifier/capture.ts`
+- Espejo KG: `lib/pendientes/asalto-mirror.ts`
+
+**Tecnologías/Dependencias:** Cohere Command R+ (JSON), Prisma (`Quantomo`, `OriginAttribution`, `KgEdge.reconocido`).
+
+---
+
 ### 🎯 Calibrador de Tareas
 
 **Funciones:**

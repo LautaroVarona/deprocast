@@ -12,6 +12,7 @@ export function buildCaptureGravity(
     campoSlug: gravity.campoSlug,
     onda: gravity.onda,
     sourceType: gravity.sourceType,
+    locationName: gravity.locationName.trim() || undefined,
     ...(universeSlug ? { universeSlug } : {}),
   };
 }
@@ -21,6 +22,8 @@ export type CaptureRequestBody = {
   rawText?: string;
   assetId?: string;
   filename?: string;
+  locationName?: string;
+  geoLocationId?: string;
   gravity: ReturnType<typeof buildCaptureGravity>;
 };
 
@@ -50,6 +53,7 @@ export async function postIngestaCapture(
     headers,
     body: JSON.stringify({
       ...body,
+      locationName: body.locationName ?? body.gravity.locationName,
       gravity: buildCaptureGravity(
         {
           title: body.gravity.title ?? "",

@@ -198,36 +198,42 @@ export function PendientesWorkspace() {
             <Loader2Icon className="size-5 animate-spin" />
           </div>
         ) : tab === "suggested" ? (
-          <div className="flex h-full flex-col gap-2 overflow-hidden">
+          <div className="grid h-full auto-rows-min gap-3 overflow-y-auto sm:grid-cols-2">
             {suggested.length === 0 ? (
-              <p className="text-sm text-muted-foreground">
-                Sin tareas sugeridas. El Listador extraerá acciones de ingesta y diario.
+              <p className="col-span-full text-sm text-muted-foreground">
+                Sin asaltos sugeridos. El Quantador y el Listador extraerán acciones de ingesta y diario.
               </p>
             ) : (
               suggested.map((task) => (
                 <article
                   key={task.id}
-                  className="shrink-0 rounded-lg border border-border bg-card p-3"
+                  className="flex flex-col rounded-lg border border-border bg-card p-3"
                 >
-                  <h3 className="text-sm font-medium">{task.title}</h3>
+                  <div className="flex items-start justify-between gap-2">
+                    <h3 className="text-sm font-medium leading-snug">{task.title}</h3>
+                    <span className="shrink-0 rounded border border-border px-1.5 py-0.5 font-mono text-[9px] text-muted-foreground uppercase">
+                      {task.source}
+                    </span>
+                  </div>
                   {task.description ? (
-                    <p className="mt-1 text-xs text-muted-foreground">
+                    <p className="mt-1 line-clamp-3 text-xs text-muted-foreground">
                       {task.description}
                     </p>
                   ) : null}
                   <p className="mt-1 font-mono text-[10px] text-muted-foreground">
-                    {task.source}
+                    {task.universeSlug ?? "babel"}
                     {task.listadorConfidence !== null
                       ? ` · conf ${Math.round(task.listadorConfidence * 100)}%`
                       : ""}
                   </p>
-                  <div className="mt-3 flex flex-wrap gap-2">
+                  <div className="mt-auto flex flex-wrap gap-2 pt-3">
                     <Button
                       size="sm"
+                      className="flex-1"
                       onClick={() => void handleAction(task.id, "recognize", true)}
                     >
                       <CheckIcon className="size-3.5" />
-                      Reconocer
+                      Reconocido
                     </Button>
                     <Button
                       size="sm"
@@ -235,7 +241,6 @@ export function PendientesWorkspace() {
                       onClick={() => void handleAction(task.id, "reject")}
                     >
                       <XIcon className="size-3.5" />
-                      Rechazar
                     </Button>
                   </div>
                 </article>

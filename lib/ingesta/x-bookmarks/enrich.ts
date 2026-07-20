@@ -1,3 +1,6 @@
+import "server-only";
+
+import { cohereGenerateJson } from "@/lib/cohere/chat";
 import {
   EXISTENTIAL_PROJECTS,
   type ExistentialProject,
@@ -62,6 +65,29 @@ const PROJECT_KEYWORDS: Record<ExistentialProject, string[]> = {
     "cinematografia",
     "edición",
     "edicion",
+  ],
+  Botmed: [
+    "botmed",
+    "medico",
+    "médico",
+    "salud",
+    "clinica",
+    "clínica",
+    "paciente",
+    "farmacia",
+    "diagnostico",
+    "diagnóstico",
+    "telemedicina",
+  ],
+  Tuitmark: [
+    "tuitmark",
+    "bookmark",
+    "marcador",
+    "twitter",
+    "x.com",
+    "social",
+    "clip",
+    "guardado",
   ],
 };
 
@@ -144,7 +170,10 @@ function buildTitleEs(tweet: XBookmarkTweet, keywords: string[]): string {
     .replace(/\s+/g, " ")
     .trim();
 
-  const firstSentence = cleaned.split(/[.!?¡¿\n]/).find((part) => part.trim())?.trim();
+  const firstSentence = cleaned
+    .split(/[.!?¡¿\n]/)
+    .find((part) => part.trim())
+    ?.trim();
   const base = firstSentence || cleaned;
   const truncated =
     base.length > 72 ? `${base.slice(0, 69).trimEnd()}…` : base;
@@ -156,28 +185,96 @@ function buildTitleEs(tweet: XBookmarkTweet, keywords: string[]): string {
   return truncated || `Insight de ${tweet.author}`;
 }
 
-/**
- * Mock del agente de IA: genera título, tags y vínculos existenciales
- * a partir de heurísticas locales (sin llamada a Vertex).
- */
-export async function mockEnrichXBookmark(
-  tweet: XBookmarkTweet,
-): Promise<XBookmarkEnrichment> {
-  await new Promise((resolve) => setTimeout(resolve, 12));
-
+function heuristicEnrich(tweet: XBookmarkTweet): XBookmarkEnrichment {
   const metaTags = extractKeywords(tweet.text);
   const linkedProjects = detectLinkedProjects(tweet.text);
   const titleEs = buildTitleEs(tweet, metaTags);
-
-  return {
-    titleEs,
-    metaTags,
-    linkedProjects,
-  };
+  return { titleEs, metaTags, linkedProjects };
 }
 
+function isExistentialProject(value: string): value is ExistentialProject {
+  return (EXISTENTIAL_PROJECTS as readonly string[]).includes(value);
+}
+
+/**
+ * Enriquecimiento cognitivo Cohere: titleEs, metaTags, linkedProjects.
+ * Fallback heurístico si Cohere falla.
+ */
+export async function enrichXBookmark(
+  tweet: XBookmarkTweet,
+): Promise<XBookmarkEnrichment> {
+  const fallback = heuristicEnrich(tweet);
+
+  try {
+    const result = await cohereGenerateJson<{
+      titleEs?: string;
+      metaTags?: string[];
+      linkedProjects?: string[];
+    }>({
+      systemPrompt: `Sos un motor cognitivo de marcadores sociales.
+Devolvé SOLO JSON con:
+- titleEs: título corto en español (máx 90 chars)
+- metaTags: 3-8 tags semánticos
+- linkedProjects: subset de [${EXISTENTIAL_PROJECTS.map((p) => `"${p}"`).join(", ")}]
+No inventes proyectos fuera de esa lista.`,
+      userContent: JSON.stringify({
+        author: tweet.author,
+        handle: tweet.handle,
+        text: tweet.text,
+        url: tweet.tweetUrl,
+      }),
+      temperature: 0.2,
+      maxTokens: 400,
+      throttle: true,
+    });
+
+    const metaTags = Array.isArray(result.metaTags)
+      ? result.metaTags.filter((t) => typeof t === "string" && t.trim())
+      : fallback.metaTags;
+
+    const linkedProjects = Array.isArray(result.linkedProjects)
+      ? result.linkedProjects.filter(isExistentialProject)
+      : fallback.linkedProjects;
+
+    const titleEs =
+      typeof result.titleEs === "string" && result.titleEs.trim()
+        ? result.titleEs.trim().slice(0, 120)
+        : fallback.titleEs;
+
+    return {
+      titleEs,
+      metaTags: metaTags.length > 0 ? metaTags : fallback.metaTags,
+      linkedProjects:
+        linkedProjects.length > 0
+          ? linkedProjects
+          : fallback.linkedProjects,
+    };
+  } catch (error) {
+    console.warn("Cohere enrich fallback:", error);
+    return fallback;
+  }
+}
+
+/** @deprecated Usar enrichXBookmark */
+export async function mockEnrichXBookmark(
+  tweet: XBookmarkTweet,
+): Promise<XBookmarkEnrichment> {
+  return enrichXBookmark(tweet);
+}
+
+export async function enrichXBookmarks(
+  tweets: XBookmarkTweet[],
+): Promise<XBookmarkEnrichment[]> {
+  const results: XBookmarkEnrichment[] = [];
+  for (const tweet of tweets) {
+    results.push(await enrichXBookmark(tweet));
+  }
+  return results;
+}
+
+/** @deprecated Usar enrichXBookmarks */
 export async function mockEnrichXBookmarks(
   tweets: XBookmarkTweet[],
 ): Promise<XBookmarkEnrichment[]> {
-  return Promise.all(tweets.map((tweet) => mockEnrichXBookmark(tweet)));
+  return enrichXBookmarks(tweets);
 }

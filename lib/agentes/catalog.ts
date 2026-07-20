@@ -602,6 +602,32 @@ export const OPERATIONAL_AGENTS: OperationalAgent[] = [
     uiRoute: "/molecular",
   },
   {
+    id: "quantador",
+    emoji: "⚛️",
+    name: "Quantador",
+    badge: "LLM · Cohere Command R+",
+    badgeTone: "violet",
+    locations: [
+      "lib/agentes/quantador.ts",
+      "app/api/agentes/quantador/route.ts",
+      "lib/ingesta/origin-store.ts",
+      "lib/purifier/capture.ts",
+    ],
+    functions: [
+      "Fragmentar bloques masivos de texto en Quantomos atómicos con título y tags semánticos.",
+      "Vincular cada Quantomo a su OriginAttribution para trazabilidad cuántica.",
+      "Derivar asaltos sugeridos (PendingTask + espejo KgEdge) post-captura de forma asíncrona.",
+      "Ejecutarse tras captureAndPurify sin bloquear la UI de ingesta.",
+    ],
+    technologies: [
+      "Cohere Command R+ (JSON)",
+      "Prisma (Quantomo, OriginAttribution)",
+      "lib/pendientes/asalto-mirror.ts",
+      "SQLite local-first",
+    ],
+    uiRoute: "/agentes",
+  },
+  {
     id: "calibrador-central",
     emoji: "⚖️",
     name: "Calibrador Central",
@@ -1054,6 +1080,26 @@ export type MagoAgent = OperationalAgent & {
 
 /** Categoría Magos — agentes herméticos indexados sobre la matriz de 22. */
 export const MAGOS_AGENTS: MagoAgent[] = [
+  {
+    id: "mago-traductor",
+    emoji: "🜍",
+    name: "Mago Traductor",
+    badge: "Magic System Bridge · tech under demand",
+    badgeTone: "violet",
+    status: "operational",
+    category: "magos",
+    locations: [
+      "lib/agentes/mago-traductor.ts",
+      "app/api/agentes/mago-traductor/route.ts",
+      "data/memory/knowledge/translators/INDEX.md",
+    ],
+    functions: [
+      "Recomendar la mejor magia disponible según RAM mental (1–12), stack local-first y urgencia de la Run.",
+      "Devolver guías sintácticas ultra-cortas (snippet + pasos) sin saturar el contexto de tokens.",
+      "Anclar el Qorpus cultural (translators/) como referencia de indexación multilingüe.",
+    ],
+    technologies: ["Cohere JSON", "Next.js route handlers", "Prisma/SQLite"],
+  },
   {
     id: "mago-22",
     emoji: "✦",

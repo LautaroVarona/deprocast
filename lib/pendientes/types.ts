@@ -13,6 +13,7 @@ export type PendingTaskStatus = (typeof PENDING_TASK_STATUSES)[number];
 
 export const PENDING_TASK_SOURCES = [
   "listador",
+  "quantador",
   "manual",
   "journal",
   "audio",

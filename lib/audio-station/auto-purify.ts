@@ -1,6 +1,11 @@
 import "server-only";
 
 import { resolveAudioAssetGravity } from "@/lib/audio-station/gravity";
+import {
+  buildOriginAttribution,
+  selfActor,
+  speakerActor,
+} from "@/lib/ingesta/origin";
 import { captureAndPurify } from "@/lib/purifier/capture";
 import { getReviewQueueAssetIds } from "@/lib/purifier/review-store";
 import { prisma } from "@/lib/prisma";
@@ -51,6 +56,14 @@ export async function autoPurifyAudioAsset(
           ...gravity,
           title: gravity.title ?? title,
         },
+        origin: buildOriginAttribution({
+          channel: "audio",
+          actors: [
+            selfActor(),
+            speakerActor(title, asset.id),
+          ],
+          meta: { assetId: asset.id, filename: asset.filename },
+        }),
       },
       { extractKg: true },
     );
