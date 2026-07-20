@@ -12,9 +12,7 @@ import {
 } from "@/lib/projects/campos";
 
 import { extractKgFromText } from "@/lib/kg/extract";
-import { ingestKgExtraction } from "@/lib/kg/ingest";
-import { ingestDocumentSource } from "@/lib/kg/sources/common";
-import type { IngestResult, LlmKgExtraction, MentionSourceType } from "@/lib/kg/types";
+import type { LlmKgExtraction } from "@/lib/kg/types";
 import type {
   FractalParent,
   GravityInput,
@@ -120,54 +118,6 @@ Reglas:
 - NO inventes hechos no presentes.
 - Preserva todos los ==DUDA:...== intactos.
 - Devuelve SOLO el Markdown completo.`;
-}
-
-// ---------------------------------------------------------------------------
-// KG source resolution
-// ---------------------------------------------------------------------------
-
-function resolveKgSource(
-  input: PurifierInput,
-  reviewId: string,
-): { type: MentionSourceType; id: string; metadata?: Record<string, unknown> } {
-  const journalId = input.metadata?.journalId;
-  if (journalId) {
-    return {
-      type: "journal",
-      id: journalId,
-      metadata: {
-        campoSlug: input.gravity?.campoSlug,
-        journalPath: input.metadata?.journalPath,
-      },
-    };
-  }
-
-  if (input.assetId) {
-    return {
-      type: "transcript",
-      id: input.assetId,
-      metadata: { campoSlug: input.gravity?.campoSlug },
-    };
-  }
-
-  const captureId = input.metadata?.captureId;
-  if (captureId) {
-    return {
-      type: "raw_document",
-      id: captureId,
-      metadata: {
-        campoSlug: input.gravity?.campoSlug,
-        channel: input.metadata?.channel,
-        pendingPurificationFile: input.metadata?.pendingPurificationFile,
-      },
-    };
-  }
-
-  return {
-    type: "raw_document",
-    id: reviewId,
-    metadata: { campoSlug: input.gravity?.campoSlug },
-  };
 }
 
 // ---------------------------------------------------------------------------
@@ -647,7 +597,6 @@ export async function runPurificationPipeline(
   });
 
   let kgExtraction: LlmKgExtraction | undefined;
-  let kgIngest: IngestResult | undefined;
 
   if (options.extractKg) {
     kgExtraction = await extractKgFromText(dedupResult.text, options.model);
@@ -660,42 +609,10 @@ export async function runPurificationPipeline(
         entityCount: kgExtraction.entities.length,
         relationCount: kgExtraction.relations.length,
         inputChars: dedupResult.text.length,
+        deferredIngest: true,
       },
     });
-
-    if (kgExtraction.entities.length > 0) {
-      const captureId = input.metadata?.captureId;
-      const pendingFile = input.metadata?.pendingPurificationFile;
-
-      if (captureId && pendingFile) {
-        const documentPath = `data/raw_documents/pending_purification/${pendingFile}`;
-        const outcome = await ingestDocumentSource({
-          sourceType: "raw_document",
-          sourceId: captureId,
-          documentPath,
-          title: input.gravity?.title ?? filename,
-          documentMeta: {
-            captureId,
-            channel: input.metadata?.channel,
-            reviewId,
-          },
-          body: "",
-          structured: kgExtraction,
-          sourceMetadata: {
-            campoSlug: input.gravity?.campoSlug,
-            channel: input.metadata?.channel,
-            reviewId,
-          },
-          model: options.model,
-        });
-        kgIngest = outcome.result;
-      } else {
-        kgIngest = await ingestKgExtraction({
-          extraction: kgExtraction,
-          source: resolveKgSource(input, reviewId),
-        });
-      }
-    }
+    // HITL gate: extraction stays on the review; SQLite ingest happens on approve only.
   }
 
   // Station 5
@@ -787,7 +704,6 @@ export async function runPurificationPipeline(
     processedAt: new Date().toISOString(),
     model: getCohereModelName("default"),
     kgExtraction,
-    kgIngest,
   };
 
   record.metaTagsSecundarios = mergedMetaTags;

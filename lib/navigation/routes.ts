@@ -2,7 +2,6 @@ import type { LucideIcon } from "lucide-react";
 import {
   ArchiveIcon,
   BookOpenIcon,
-  BrainIcon,
   CalendarIcon,
   CastleIcon,
   FlaskConicalIcon,
@@ -40,13 +39,13 @@ export type CommandRoute = {
 
 export const COMMAND_ROUTES: CommandRoute[] = [
   {
-    id: "cortex",
-    href: "/cortex",
-    label: "Córtex",
-    description: "Centro de control y dashboard",
+    id: "yo",
+    href: "/yo",
+    label: "Yo",
+    description: "Centro de mando del operador",
     hotkey: "C",
     category: "nav",
-    icon: BrainIcon,
+    icon: UserRoundIcon,
   },
   {
     id: "ingesta",

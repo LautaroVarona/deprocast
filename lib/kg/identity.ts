@@ -126,8 +126,10 @@ export function resolveNameToId(
 
 export async function resolveEntities(
   entities: LlmEntity[],
+  options: { reconocido?: boolean } = {},
 ): Promise<NameToIdMap> {
   const map: NameToIdMap = new Map();
+  const reconocido = options.reconocido ?? false;
 
   for (const entity of entities) {
     const aliases = entity.aliases ?? [];
@@ -152,6 +154,7 @@ export async function resolveEntities(
         data: {
           metadata: mergedMetadata as Prisma.InputJsonValue,
           confidence: reinforced,
+          ...(reconocido ? { reconocido: true } : {}),
         },
       });
 
@@ -166,6 +169,7 @@ export async function resolveEntities(
         aliases,
         metadata: buildNodeMetadata(entity) as Prisma.InputJsonValue,
         confidence: clampConfidence(entity.confidence),
+        reconocido,
       },
     });
 
@@ -178,8 +182,10 @@ export async function resolveEntities(
 export async function createDualNatureEdges(
   entities: LlmEntity[],
   map: NameToIdMap,
+  options: { reconocido?: boolean } = {},
 ): Promise<string[]> {
   const edgeIds: string[] = [];
+  const reconocido = options.reconocido ?? false;
 
   for (const entity of entities) {
     if (!entity.secondaryTypes?.length) continue;
@@ -204,6 +210,12 @@ export async function createDualNatureEdges(
 
       if (secondaryNode) {
         targetId = secondaryNode.id;
+        if (reconocido && !secondaryNode.reconocido) {
+          await prisma.kgNode.update({
+            where: { id: secondaryNode.id },
+            data: { reconocido: true },
+          });
+        }
       } else if (!targetId) {
         const created = await prisma.kgNode.create({
           data: {
@@ -212,6 +224,7 @@ export async function createDualNatureEdges(
             aliases: entity.aliases ?? [],
             metadata: buildNodeMetadata(entity) as Prisma.InputJsonValue,
             confidence: clampConfidence(entity.confidence),
+            reconocido,
           },
         });
         targetId = created.id;
@@ -233,10 +246,12 @@ export async function createDualNatureEdges(
           targetNodeId: targetId,
           relationType: "relacionado_con",
           context: `Naturaleza dual: ${entity.type} y ${secondaryType} según extracción.`,
+          reconocido,
           metadata: {},
         },
         update: {
           context: `Naturaleza dual: ${entity.type} y ${secondaryType} según extracción.`,
+          ...(reconocido ? { reconocido: true } : {}),
         },
       });
 

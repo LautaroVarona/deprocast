@@ -27,7 +27,7 @@ export function AppHeader({ onOpenCommandMenu }: AppHeaderProps) {
   return (
     <header className="sticky top-0 z-50 shrink-0 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/90">
       <div className="flex h-14 w-full items-center gap-4 px-4 sm:gap-6 sm:px-6">
-        <Link href="/cortex" className="flex items-center gap-2">
+        <Link href="/yo" className="flex items-center gap-2">
           <span className="flex size-7 items-center justify-center rounded-lg bg-primary text-primary-foreground">
             <FlaskConicalIcon className="size-4" aria-hidden />
           </span>
@@ -39,8 +39,8 @@ export function AppHeader({ onOpenCommandMenu }: AppHeaderProps) {
         <nav className="flex items-center gap-1" aria-label="Principal">
           {NAV_LINKS.map((link) => {
             const isActive =
-              link.href === "/cortex"
-                ? pathname === "/cortex" || pathname === "/"
+              link.href === "/yo"
+                ? pathname === "/yo" || pathname === "/cortex"
                 : pathname.startsWith(link.href);
 
             return (

@@ -9,8 +9,10 @@ import {
 export async function createEdgesFromExtraction(
   relations: LlmRelation[],
   nameToIdMap: NameToIdMap,
+  options: { reconocido?: boolean } = {},
 ): Promise<string[]> {
   const edgeIds: string[] = [];
+  const reconocido = options.reconocido ?? false;
 
   for (const relation of relations) {
     const sourceNodeId = resolveNameToId(relation.fromName, nameToIdMap);
@@ -56,6 +58,7 @@ export async function createEdgesFromExtraction(
         relationType: relation.relationType,
         context: relation.context,
         weight: normalized.weight,
+        reconocido,
         confidence:
           typeof relation.confidence === "number"
             ? Math.min(1, Math.max(0, relation.confidence))
@@ -76,6 +79,7 @@ export async function createEdgesFromExtraction(
       update: {
         context: relation.context,
         weight: normalized.weight,
+        ...(reconocido ? { reconocido: true } : {}),
         confidence:
           typeof relation.confidence === "number"
             ? Math.min(1, Math.max(0, relation.confidence))

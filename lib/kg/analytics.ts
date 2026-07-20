@@ -150,7 +150,11 @@ export async function getRepeatedIdeas(input: {
   if (grouped.length === 0) return [];
 
   const nodes = await prisma.kgNode.findMany({
-    where: { id: { in: grouped.map((g) => g.nodeId) }, type: { in: types } },
+    where: {
+      id: { in: grouped.map((g) => g.nodeId) },
+      type: { in: types },
+      reconocido: true,
+    },
   });
   const nodeMap = new Map(nodes.map((n) => [n.id, n]));
 
@@ -216,8 +220,13 @@ export async function getCentralityRanking(input: {
       ? {
           sourceNodeId: { in: [...input.nodeIds] },
           targetNodeId: { in: [...input.nodeIds] },
+          sourceNode: { reconocido: true },
+          targetNode: { reconocido: true },
         }
-      : undefined,
+      : {
+          sourceNode: { reconocido: true },
+          targetNode: { reconocido: true },
+        },
     select: { sourceNodeId: true, targetNodeId: true, weight: true },
   });
 
@@ -239,6 +248,7 @@ export async function getCentralityRanking(input: {
   const nodes = await prisma.kgNode.findMany({
     where: {
       id: { in: ids },
+      reconocido: true,
       ...(input.type ? { type: input.type } : {}),
       ...(input.excludeCode ? { type: { notIn: [...codeTypes] } } : {}),
     },
@@ -303,6 +313,7 @@ export async function getGraphSnapshot(input: {
   const nodes = await prisma.kgNode.findMany({
     where: {
       ...typeFilter,
+      reconocido: true,
       ...(input.nodeIds ? { id: { in: [...input.nodeIds] } } : {}),
     },
     take: input.limit ?? 1500,
@@ -316,7 +327,10 @@ export async function getGraphSnapshot(input: {
           sourceNodeId: { in: [...input.nodeIds] },
           targetNodeId: { in: [...input.nodeIds] },
         }
-      : undefined,
+      : {
+          sourceNodeId: { in: [...nodeIds] },
+          targetNodeId: { in: [...nodeIds] },
+        },
     take: 6000,
   });
   const filteredEdges = edges.filter(
@@ -392,8 +406,10 @@ export async function getKgStats(input: {
     edgesByTypeRaw,
   ] = await Promise.all([
     nodeIdList
-      ? Promise.resolve(nodeIdList.length)
-      : prisma.kgNode.count(),
+      ? prisma.kgNode.count({
+          where: { id: { in: nodeIdList }, reconocido: true },
+        })
+      : prisma.kgNode.count({ where: { reconocido: true } }),
     nodeIdList
       ? prisma.kgEdge.count({
           where: {
@@ -401,18 +417,32 @@ export async function getKgStats(input: {
             targetNodeId: { in: nodeIdList },
           },
         })
-      : prisma.kgEdge.count(),
+      : prisma.kgEdge.count({
+          where: {
+            sourceNode: { reconocido: true },
+            targetNode: { reconocido: true },
+          },
+        }),
     nodeIdList
-      ? prisma.kgMention.count({ where: { nodeId: { in: nodeIdList } } })
-      : prisma.kgMention.count(),
+      ? prisma.kgMention.count({
+          where: {
+            nodeId: { in: nodeIdList },
+            node: { reconocido: true },
+          },
+        })
+      : prisma.kgMention.count({ where: { node: { reconocido: true } } }),
     prisma.kgSource.count(),
     nodeIdList
       ? prisma.kgNode.groupBy({
           by: ["type"],
-          where: { id: { in: nodeIdList } },
+          where: { id: { in: nodeIdList }, reconocido: true },
           _count: { type: true },
         })
-      : prisma.kgNode.groupBy({ by: ["type"], _count: { type: true } }),
+      : prisma.kgNode.groupBy({
+          by: ["type"],
+          where: { reconocido: true },
+          _count: { type: true },
+        }),
     nodeIdList
       ? prisma.kgEdge.groupBy({
           by: ["relationType"],
@@ -422,7 +452,14 @@ export async function getKgStats(input: {
           },
           _count: { relationType: true },
         })
-      : prisma.kgEdge.groupBy({ by: ["relationType"], _count: { relationType: true } }),
+      : prisma.kgEdge.groupBy({
+          by: ["relationType"],
+          where: {
+            sourceNode: { reconocido: true },
+            targetNode: { reconocido: true },
+          },
+          _count: { relationType: true },
+        }),
   ]);
 
   return {

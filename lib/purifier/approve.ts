@@ -103,8 +103,32 @@ async function ingestFractalChunksToKg(
         metadata: { assetId, reviewId, source: "purifier_approve" },
         confidence: 0.75,
       },
+      reconocido: true,
     });
   }
+}
+
+async function ingestReviewExtractionToKg(
+  record: PurifierReviewRecord,
+  reviewId: string,
+): Promise<void> {
+  const extraction = record.kgExtraction;
+  if (!extraction?.entities.length) return;
+
+  await ingestKgExtraction({
+    extraction,
+    source: {
+      type: "raw_document",
+      id: reviewId,
+      metadata: {
+        assetId: record.assetId,
+        source: "purifier_approve",
+        reviewId,
+      },
+      confidence: 0.8,
+    },
+    reconocido: true,
+  });
 }
 
 export async function approveToProposal(
@@ -149,6 +173,9 @@ export async function approveToProposal(
   }).catch((error) => {
     console.error("Mnemosyne purifier index error:", error);
   });
+
+  // Coagulate KG only after HITL approve — nodes marked reconocido:true
+  await ingestReviewExtractionToKg(loaded.record, input.reviewId);
 
   if (loaded.record.assetId) {
     const transcript = await prisma.transcript.findUnique({

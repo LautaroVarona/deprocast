@@ -103,6 +103,7 @@ model KgNode {
   aliases     Json
   metadata    Json
   confidence  Float    @default(0.6)
+  reconocido  Boolean  @default(false)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -113,6 +114,18 @@ model KgNode {
   @@unique([primaryName, type])
   @@index([type])
   @@index([primaryName])
+  @@index([reconocido])
+}
+
+// Perfil singleton del Observador — Centro de Mando /yo
+model OperatorProfile {
+  id                String   @id @default("operator")
+  displayName       String   @default("Lautaro")
+  operationalStatus String   @default("OPERATIVO")
+  energyLevel       Int      @default(6)
+  calibration       Json
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 }
 
 model KgEdge {

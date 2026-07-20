@@ -19,6 +19,8 @@ import {
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
+const SUCCESS_FLASH_MS = 2000;
+
 async function waitForTranscript(
   assetId: string,
   universeSlug: string | null | undefined,
@@ -51,6 +53,8 @@ export function PulseInjection() {
   const { activeUniverse } = useBabel();
   const [text, setText] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [successFlash, setSuccessFlash] = useState(false);
+  const successTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const {
     isRecording,
     audioBlob,
@@ -60,6 +64,25 @@ export function PulseInjection() {
     clearRecording,
   } = useVoiceRecorder();
   const pendingBlobRef = useRef(false);
+
+  const triggerSuccessFlash = useCallback(() => {
+    if (successTimerRef.current) {
+      clearTimeout(successTimerRef.current);
+    }
+    setSuccessFlash(true);
+    successTimerRef.current = setTimeout(() => {
+      setSuccessFlash(false);
+      successTimerRef.current = null;
+    }, SUCCESS_FLASH_MS);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (successTimerRef.current) {
+        clearTimeout(successTimerRef.current);
+      }
+    };
+  }, []);
 
   const submitText = useCallback(async () => {
     const content = text.trim();
@@ -86,6 +109,7 @@ export function PulseInjection() {
       );
 
       setText("");
+      triggerSuccessFlash();
       toast.success(CAPTURE_SUCCESS_TOAST, {
         description: "Materia · texto_directo",
         action: {
@@ -102,7 +126,7 @@ export function PulseInjection() {
     } finally {
       setIsSubmitting(false);
     }
-  }, [text, isSubmitting, activeUniverse?.slug]);
+  }, [text, isSubmitting, activeUniverse?.slug, triggerSuccessFlash]);
 
   const submitAudioBlob = useCallback(
     async (blob: Blob) => {
@@ -161,6 +185,7 @@ export function PulseInjection() {
         );
 
         clearRecording();
+        triggerSuccessFlash();
         toast.success(CAPTURE_SUCCESS_TOAST, {
           description: "Materia · stt_audio",
           action: {
@@ -180,7 +205,7 @@ export function PulseInjection() {
         setIsSubmitting(false);
       }
     },
-    [activeUniverse?.slug, clearRecording],
+    [activeUniverse?.slug, clearRecording, triggerSuccessFlash],
   );
 
   useEffect(() => {
@@ -211,6 +236,7 @@ export function PulseInjection() {
         className={cn(
           "flex items-stretch gap-2 rounded-2xl border border-amber-500/20 bg-black/40 p-2 shadow-[inset_0_1px_0_rgba(251,191,36,0.08)]",
           "focus-within:border-amber-400/40 focus-within:ring-1 focus-within:ring-amber-500/20",
+          successFlash && "border-emerald-400/40",
         )}
       >
         <textarea
@@ -251,9 +277,17 @@ export function PulseInjection() {
           <Button
             type="button"
             size="icon"
-            disabled={isSubmitting || isRecording || !text.trim()}
+            disabled={
+              isSubmitting ||
+              isRecording ||
+              successFlash ||
+              !text.trim()
+            }
             onClick={() => void submitText()}
-            className="size-11 shrink-0 bg-amber-600 text-black hover:bg-amber-500"
+            className={cn(
+              "size-11 shrink-0 bg-amber-600 text-black hover:bg-amber-500",
+              successFlash && "bg-emerald-500 hover:bg-emerald-500",
+            )}
             aria-label="Inyectar texto"
           >
             {isSubmitting ? (
@@ -266,7 +300,17 @@ export function PulseInjection() {
       </div>
 
       <div className="mt-2 flex flex-wrap items-center gap-3 font-mono text-[10px] text-white/35">
-        <span>Ctrl/⌘ + Enter · texto_directo</span>
+        {successFlash ? (
+          <span className="tracking-[0.18em] text-[#7CFF9A] uppercase">
+            [ INYECCIÓN EXITOSA ]
+          </span>
+        ) : isSubmitting ? (
+          <span className="tracking-[0.18em] text-amber-400/80 uppercase">
+            [ CAPTURANDO… ]
+          </span>
+        ) : (
+          <span>Ctrl/⌘ + Enter · texto_directo</span>
+        )}
         {isRecording ? (
           <span className="text-rose-300/80">Grabando {durationSec}s…</span>
         ) : null}

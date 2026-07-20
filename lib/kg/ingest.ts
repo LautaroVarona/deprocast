@@ -8,12 +8,18 @@ import type { IngestInput, IngestResult } from "@/lib/kg/types";
 
 export async function ingestKgExtraction(input: IngestInput): Promise<IngestResult> {
   const { extraction, source } = input;
+  const reconocido = input.reconocido ?? false;
 
-  const nameToIdMap = await resolveEntities(extraction.entities);
-  const dualEdgeIds = await createDualNatureEdges(extraction.entities, nameToIdMap);
+  const nameToIdMap = await resolveEntities(extraction.entities, { reconocido });
+  const dualEdgeIds = await createDualNatureEdges(
+    extraction.entities,
+    nameToIdMap,
+    { reconocido },
+  );
   const relationEdgeIds = await createEdgesFromExtraction(
     extraction.relations,
     nameToIdMap,
+    { reconocido },
   );
   const mentionIds = await createMentionsFromExtraction(
     extraction.entities,

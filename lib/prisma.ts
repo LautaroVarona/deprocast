@@ -40,7 +40,9 @@ function isPrismaClientStale(client: PrismaClient): boolean {
     !("geoLocation" in client) ||
     client.geoLocation === undefined ||
     !("magoColeccion" in client) ||
-    client.magoColeccion === undefined
+    client.magoColeccion === undefined ||
+    !("operatorProfile" in client) ||
+    client.operatorProfile === undefined
   );
 }
 

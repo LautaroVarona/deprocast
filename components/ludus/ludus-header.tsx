@@ -60,11 +60,11 @@ export function LudusHeader({ signalPoints = 0, onOpenCommandMenu }: LudusHeader
           <HistorialTrigger variant="ghost" className="hidden sm:inline-flex" />
           <HistorialTrigger variant="ghost" showLabel={false} className="sm:hidden" />
           <Link
-            href="/cortex"
+            href="/yo"
             className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
           >
             <ArrowLeftIcon className="size-3.5" />
-            Córtex
+            Yo
           </Link>
         </div>
       </div>

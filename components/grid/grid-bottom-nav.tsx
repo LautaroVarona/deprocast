@@ -8,19 +8,19 @@ import {
 import { cn } from "@/lib/utils";
 import {
   BookOpenIcon,
-  BrainIcon,
   Gamepad2Icon,
   InboxIcon,
   MessageSquareIcon,
   MicIcon,
   PlusIcon,
   ShieldCheckIcon,
+  UserRoundIcon,
 } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 
 const PLUS_LINKS = [
-  { href: "/cortex", label: "Córtex", icon: BrainIcon },
+  { href: "/yo", label: "Yo", icon: UserRoundIcon },
   { href: "/ingesta", label: "Ingesta", icon: InboxIcon },
   { href: "/audio", label: "Audio", icon: MicIcon },
   { href: "/chat", label: "Chat", icon: MessageSquareIcon },

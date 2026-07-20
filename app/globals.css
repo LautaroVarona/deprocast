@@ -536,6 +536,29 @@
   box-shadow: 0 12px 32px -20px rgba(0, 0, 0, 0.75);
 }
 
+/* Centro de Mando /yo — Terminal Ámbar */
+.yo-noir-root {
+  position: relative;
+  background:
+    radial-gradient(ellipse 65% 40% at 15% -5%, rgba(255, 176, 0, 0.12), transparent),
+    radial-gradient(ellipse 45% 35% at 90% 85%, rgba(255, 176, 0, 0.05), transparent),
+    #000000;
+  min-height: calc(100dvh - 3.5rem);
+}
+
+.yo-noir-panel {
+  border: 1px solid rgba(255, 176, 0, 0.28);
+  background: linear-gradient(
+    160deg,
+    rgba(255, 176, 0, 0.04) 0%,
+    rgba(0, 0, 0, 0.72) 55%,
+    rgba(0, 0, 0, 0.9) 100%
+  );
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.02) inset,
+    0 20px 48px -28px rgba(0, 0, 0, 0.9);
+}
+
 /* HUD Táctico — home noir/ámbar */
 .hud-noir-root {
   position: relative;

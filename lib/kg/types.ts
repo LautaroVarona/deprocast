@@ -110,6 +110,8 @@ export type MentionSource = {
 export type IngestInput = {
   extraction: LlmKgExtraction;
   source: MentionSource;
+  /** When true, nodes/edges are marked HITL-validated and appear in the graph. */
+  reconocido?: boolean;
 };
 
 export type IngestResult = {

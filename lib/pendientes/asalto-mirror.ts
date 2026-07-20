@@ -13,8 +13,10 @@ async function ensureKgNode(
   primaryName: string,
   type: string,
   metadata: Prisma.InputJsonValue = {} as Prisma.InputJsonValue,
+  options: { reconocido?: boolean } = {},
 ): Promise<string> {
   const trimmed = primaryName.trim();
+  const reconocido = options.reconocido ?? false;
   const existing = await prisma.kgNode.findUnique({
     where: {
       primaryName_type: {
@@ -24,7 +26,15 @@ async function ensureKgNode(
     },
   });
 
-  if (existing) return existing.id;
+  if (existing) {
+    if (reconocido && !existing.reconocido) {
+      await prisma.kgNode.update({
+        where: { id: existing.id },
+        data: { reconocido: true },
+      });
+    }
+    return existing.id;
+  }
 
   const created = await prisma.kgNode.create({
     data: {
@@ -33,6 +43,7 @@ async function ensureKgNode(
       aliases: [],
       metadata,
       confidence: 0.65,
+      reconocido,
     },
   });
 
@@ -66,12 +77,44 @@ export async function syncAsaltoMirrorFromTask(
   task: PendingTaskDto,
   input: SyncAsaltoMirrorInput,
 ): Promise<void> {
+  let reconocido = false;
+
+  switch (input.action) {
+    case "suggest":
+      reconocido = false;
+      break;
+    case "recognize":
+    case "calibrate":
+      reconocido = true;
+      break;
+    case "reject":
+      reconocido = false;
+      break;
+  }
+
   const selfNodeId = await resolveSelfNodeId();
-  const actionNodeId = await ensureKgNode(task.title, "accion", {
-    pendingTaskId: task.id,
-    source: task.source,
+  // Observador is always part of the validated graph surface
+  await prisma.kgNode.updateMany({
+    where: { id: selfNodeId, reconocido: false },
+    data: { reconocido: true },
   });
+
+  const actionNodeId = await ensureKgNode(
+    task.title,
+    "accion",
+    {
+      pendingTaskId: task.id,
+      source: task.source,
+    },
+    { reconocido },
+  );
   const projectNodeId = await resolveProjectNodeId(task);
+  if (reconocido) {
+    await prisma.kgNode.updateMany({
+      where: { id: { in: [projectNodeId] }, reconocido: false },
+      data: { reconocido: true },
+    });
+  }
 
   const existing = await prisma.kgEdge.findUnique({
     where: {
@@ -88,23 +131,16 @@ export async function syncAsaltoMirrorFromTask(
   ).weight;
 
   let weight = baseWeight;
-  let reconocido = false;
 
   switch (input.action) {
     case "suggest":
-      reconocido = false;
       weight = baseWeight;
       break;
     case "recognize":
-      reconocido = true;
       weight = Math.min(12, baseWeight + 1);
       break;
     case "calibrate":
-      reconocido = true;
-      weight = baseWeight;
-      break;
     case "reject":
-      reconocido = false;
       weight = baseWeight;
       break;
   }
