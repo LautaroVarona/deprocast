@@ -536,6 +536,29 @@
   box-shadow: 0 12px 32px -20px rgba(0, 0, 0, 0.75);
 }
 
+/* HUD Táctico — home noir/ámbar */
+.hud-noir-root {
+  position: relative;
+  background:
+    radial-gradient(ellipse 70% 45% at 20% -10%, rgba(251, 191, 36, 0.1), transparent),
+    radial-gradient(ellipse 50% 40% at 100% 80%, rgba(245, 158, 11, 0.05), transparent),
+    #050506;
+  min-height: calc(100dvh - 3.5rem);
+}
+
+.hud-noir-panel {
+  border-radius: 0.875rem;
+  border: 1px solid rgba(251, 191, 36, 0.14);
+  background: linear-gradient(
+    155deg,
+    rgba(255, 255, 255, 0.04) 0%,
+    rgba(0, 0, 0, 0.55) 100%
+  );
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.03) inset,
+    0 24px 60px -28px rgba(0, 0, 0, 0.85);
+}
+
 /* Enciclopedia — noir ámbar */
 .enciclopedia-noir-root {
   background:

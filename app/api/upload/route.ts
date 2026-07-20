@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
 
     if (!isAllowedAudioFile(file.name, file.type)) {
       return NextResponse.json(
-        { error: "Formato no permitido. Usá .mp3, .m4a, .wav u .ogg." },
+        { error: "Formato no permitido. Usá .mp3, .m4a, .wav, .ogg o .webm." },
         { status: 400 },
       );
     }

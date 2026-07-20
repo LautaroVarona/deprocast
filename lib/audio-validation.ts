@@ -1,4 +1,4 @@
-const ALLOWED_EXTENSIONS = [".mp3", ".m4a", ".wav", ".ogg"] as const;
+const ALLOWED_EXTENSIONS = [".mp3", ".m4a", ".wav", ".ogg", ".webm"] as const;
 
 const ALLOWED_MIME_TYPES = [
   "audio/mpeg",
@@ -12,6 +12,8 @@ const ALLOWED_MIME_TYPES = [
   "audio/ogg",
   "application/ogg",
   "audio/opus",
+  "audio/webm",
+  "video/webm",
 ] as const;
 
 export function getFileExtension(filename: string): string {

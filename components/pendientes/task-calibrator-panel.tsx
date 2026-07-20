@@ -1,7 +1,6 @@
 "use client";
 
-import { WeightSlider } from "@/components/vibe-calibrator/weight-slider";
-import { Button } from "@/components/ui/button";
+import { HermeticScale } from "@/components/pendientes/hermetic-scale";
 import type { PendingTaskDto } from "@/lib/pendientes/types";
 import { MIN_CALIBRATION_WEIGHT } from "@/lib/pendientes/types";
 import { Loader2Icon } from "lucide-react";
@@ -17,24 +16,27 @@ export function TaskCalibratorPanel({
   task,
   onCalibrated,
 }: TaskCalibratorPanelProps) {
+  const [weight, setWeight] = useState(task.weight ?? 6);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleRelease = async (weight: number) => {
+  const handleCommit = async (nextWeight: number) => {
     setIsSubmitting(true);
     try {
       const response = await fetch(`/api/pendientes/${task.id}/calibrate`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ weight }),
+        body: JSON.stringify({ weight: nextWeight }),
       });
       const data = await response.json();
       if (!response.ok) {
         throw new Error(data.error ?? "Error al calibrar.");
       }
-      if (weight < MIN_CALIBRATION_WEIGHT) {
-        toast.info(`Peso ${weight} — tarea desvalidada (< ${MIN_CALIBRATION_WEIGHT}).`);
+      if (nextWeight < MIN_CALIBRATION_WEIGHT) {
+        toast.info(
+          `Peso ${nextWeight} — tarea desvalidada (< ${MIN_CALIBRATION_WEIGHT}).`,
+        );
       } else {
-        toast.success(`Calibrada con peso ${weight}.`);
+        toast.success(`Calibrada con peso ${nextWeight}.`);
       }
       onCalibrated(data.task);
     } catch (error) {
@@ -47,9 +49,9 @@ export function TaskCalibratorPanel({
   };
 
   return (
-    <div className="space-y-4 rounded-xl border border-border bg-muted/20 p-4">
+    <div className="space-y-4 rounded-xl border border-amber-500/20 bg-[#0a0a0c] p-4 shadow-[inset_0_1px_0_rgba(251,191,36,0.06)]">
       <div>
-        <p className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+        <p className="font-mono text-[10px] tracking-wider text-amber-500/70 uppercase">
           Calibrador de Tareas
         </p>
         <h3 className="text-sm font-medium">{task.title}</h3>
@@ -57,9 +59,10 @@ export function TaskCalibratorPanel({
           <p className="mt-1 text-xs text-muted-foreground">{task.description}</p>
         ) : null}
       </div>
-      <WeightSlider
-        defaultValue={task.weight ?? 6}
-        onRelease={(value) => void handleRelease(value)}
+      <HermeticScale
+        value={weight}
+        onChange={setWeight}
+        onCommit={(value) => void handleCommit(value)}
         disabled={isSubmitting}
       />
       {isSubmitting ? (
@@ -69,7 +72,8 @@ export function TaskCalibratorPanel({
         </div>
       ) : (
         <p className="font-mono text-[10px] text-muted-foreground">
-          Voto &lt; {MIN_CALIBRATION_WEIGHT} desvalida la tarea automáticamente.
+          Tocá un bloque para fijar el peso. Voto &lt; {MIN_CALIBRATION_WEIGHT}{" "}
+          desvalida la tarea.
         </p>
       )}
     </div>

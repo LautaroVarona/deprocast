@@ -1,6 +1,7 @@
 "use client";
 
 import { useBabel } from "@/components/babel/babel-context";
+import { QuantomoEnergyCard } from "@/components/pendientes/quantomo-energy-card";
 import { TaskCalibratorPanel } from "@/components/pendientes/task-calibrator-panel";
 import { Button } from "@/components/ui/button";
 import { BLOQUE_PRIORIDADES } from "@/lib/jornada/types";
@@ -8,13 +9,11 @@ import type { PendingTaskDto } from "@/lib/pendientes/types";
 import type { DayOffset } from "@/lib/pendientes/types";
 import { cn } from "@/lib/utils";
 import {
-  CheckIcon,
   ListTodoIcon,
   Loader2Icon,
   PlusIcon,
   ScaleIcon,
   SparklesIcon,
-  XIcon,
 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -99,27 +98,58 @@ export function PendientesWorkspace() {
     action: "recognize" | "reject",
     andCalibrate = false,
   ) => {
+    const response = await universeFetch(`/api/pendientes/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action }),
+    });
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.error ?? "Error al actualizar.");
+    }
+    bumpTemporal();
+    if (andCalibrate && action === "recognize") {
+      setActiveCalibration(data.task);
+    }
+    return data.task as PendingTaskDto;
+  };
+
+  const handleCrystallize = async (id: string, weight: number) => {
     try {
-      const response = await universeFetch(`/api/pendientes/${id}`, {
-        method: "PATCH",
+      await handleAction(id, "recognize", true);
+      const calibrateRes = await universeFetch(`/api/pendientes/${id}/calibrate`, {
+        method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action }),
+        body: JSON.stringify({ weight }),
       });
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.error ?? "Error al actualizar.");
+      const calibrateData = await calibrateRes.json();
+      if (!calibrateRes.ok) {
+        throw new Error(calibrateData.error ?? "Error al calibrar.");
       }
-      toast.success(action === "recognize" ? "Tarea reconocida" : "Tarea rechazada");
       bumpTemporal();
-      await load();
-      if (andCalibrate && action === "recognize") {
-        setActiveCalibration(data.task);
-        setTab("calibrator");
-      }
+      // Delay list refresh so the crystallize flash can play
+      window.setTimeout(() => {
+        void load();
+      }, 1400);
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "No se pudo actualizar.",
+        error instanceof Error ? error.message : "No se pudo cristalizar.",
       );
+      throw error;
+    }
+  };
+
+  const handleRejectSuggested = async (id: string) => {
+    try {
+      await handleAction(id, "reject");
+      window.setTimeout(() => {
+        void load();
+      }, 1400);
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "No se pudo rechazar.",
+      );
+      throw error;
     }
   };
 
@@ -205,45 +235,12 @@ export function PendientesWorkspace() {
               </p>
             ) : (
               suggested.map((task) => (
-                <article
+                <QuantomoEnergyCard
                   key={task.id}
-                  className="flex flex-col rounded-lg border border-border bg-card p-3"
-                >
-                  <div className="flex items-start justify-between gap-2">
-                    <h3 className="text-sm font-medium leading-snug">{task.title}</h3>
-                    <span className="shrink-0 rounded border border-border px-1.5 py-0.5 font-mono text-[9px] text-muted-foreground uppercase">
-                      {task.source}
-                    </span>
-                  </div>
-                  {task.description ? (
-                    <p className="mt-1 line-clamp-3 text-xs text-muted-foreground">
-                      {task.description}
-                    </p>
-                  ) : null}
-                  <p className="mt-1 font-mono text-[10px] text-muted-foreground">
-                    {task.universeSlug ?? "babel"}
-                    {task.listadorConfidence !== null
-                      ? ` · conf ${Math.round(task.listadorConfidence * 100)}%`
-                      : ""}
-                  </p>
-                  <div className="mt-auto flex flex-wrap gap-2 pt-3">
-                    <Button
-                      size="sm"
-                      className="flex-1"
-                      onClick={() => void handleAction(task.id, "recognize", true)}
-                    >
-                      <CheckIcon className="size-3.5" />
-                      Reconocido
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => void handleAction(task.id, "reject")}
-                    >
-                      <XIcon className="size-3.5" />
-                    </Button>
-                  </div>
-                </article>
+                  task={task}
+                  onCrystallize={handleCrystallize}
+                  onReject={handleRejectSuggested}
+                />
               ))
             )}
           </div>

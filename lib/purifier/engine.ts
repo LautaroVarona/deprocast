@@ -28,6 +28,10 @@ import {
   resolveReviewMetaTags,
 } from "@/lib/purifier/meta-tags";
 import {
+  inferMateriaFromChannel,
+  normalizeMateria,
+} from "@/lib/purifier/hitl-metadata";
+import {
   saveReviewRecord,
 } from "@/lib/purifier/review-store";
 export {
@@ -82,7 +86,8 @@ Incluye: nombres propios, leyes, bugs, tecnologías, procesos, entidades y conce
 Responde ÚNICAMENTE con un array JSON de strings en español, sin explicaciones.
 Ejemplo: ["Ley 24.240", "Margarita", "bug de autenticación", "NFC"]`;
 
-const NORMALIZE_SYSTEM_PROMPT = `Eres un archivista del sistema DeProcast. Recibes una transcripción ya limpia.
+function buildNormalizeSystemPrompt(defaultMateria: string): string {
+  return `Eres un archivista del sistema DeProcast. Recibes una captura ya limpia (texto, audio/STT, visión u otro canal).
 
 Genera un archivo Markdown completo con frontmatter YAML que incluya las Siete Dimensiones, título sugerido y vectores de gravedad (prioridad, impacto, dificultad: enteros del 1 al 12).
 
@@ -110,11 +115,12 @@ meta_tags_secundarios: ["tag1", "tag2"]
 
 Reglas:
 - field por defecto: "babel"
-- materia por defecto: "audio/transcript"
+- materia por defecto: "${defaultMateria}" (respeta el canal de captura; no uses audio/transcript si el origen es texto)
 - espacio por defecto: "local-atanor"
 - NO inventes hechos no presentes.
 - Preserva todos los ==DUDA:...== intactos.
 - Devuelve SOLO el Markdown completo.`;
+}
 
 // ---------------------------------------------------------------------------
 // KG source resolution
@@ -456,10 +462,14 @@ function buildNormalizePrompt(
   metaTags: string[],
   gravity: ReturnType<typeof resolveGravity>,
   filename: string,
+  channel?: string | null,
+  defaultMateria?: string,
 ): string {
   return [
     "Metadatos del bloque:",
     `filename: ${filename}`,
+    `channel: ${channel ?? "texto"}`,
+    `materia_sugerida: ${defaultMateria ?? inferMateriaFromChannel(channel)}`,
     `campo_sugerido: ${gravity.campoSlug}`,
     `onda_sugerida: ${gravity.onda}`,
     `prioridad_sugerida: ${gravity.prioridad}`,
@@ -467,7 +477,7 @@ function buildNormalizePrompt(
     `dificultad_sugerida: ${gravity.dificultad}`,
     `titulo_sugerido: ${gravity.title || filename}`,
     `meta_tags_secundarios: ${JSON.stringify(metaTags)}`,
-  ].join("\n") + `\n\nTranscripción purificada:\n\n${dedupedText}`;
+  ].join("\n") + `\n\nCaptura purificada:\n\n${dedupedText}`;
 }
 
 export async function station5Normalize(
@@ -476,10 +486,19 @@ export async function station5Normalize(
   gravity: ReturnType<typeof resolveGravity>,
   filename: string,
   model?: string,
+  channel?: string | null,
 ): Promise<{ normalizedMarkdown: string; dimensions: SevenDimensions & { title: string; prioridad: number; impacto: number; dificultad: number } }> {
+  const defaultMateria = inferMateriaFromChannel(channel);
   const normalizedMarkdown = await generateLlmText(
-    NORMALIZE_SYSTEM_PROMPT,
-    buildNormalizePrompt(dedupedText, metaTags, gravity, filename),
+    buildNormalizeSystemPrompt(defaultMateria),
+    buildNormalizePrompt(
+      dedupedText,
+      metaTags,
+      gravity,
+      filename,
+      channel,
+      defaultMateria,
+    ),
     { model, modelKind: "default" },
   );
 
@@ -487,7 +506,7 @@ export async function station5Normalize(
   const particula = fields.particula || slugifyParticula(filename);
 
   const dimensions = {
-    materia: fields.materia || "audio/transcript",
+    materia: normalizeMateria(fields.materia || defaultMateria, channel),
     particula,
     posicion: fields.posicion || "observador",
     onda: fields.onda || gravity.onda,
@@ -686,6 +705,7 @@ export async function runPurificationPipeline(
     gravity,
     filename,
     options.model,
+    input.metadata?.channel,
   );
   stages.push({
     station: 5,
