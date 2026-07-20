@@ -3,6 +3,7 @@ import "server-only";
 import { DEFAULT_KG_EDGE_WEIGHT, normalizeKgEdgeWeight } from "@/lib/validations/kg-schema";
 import type { PendingTaskDto } from "@/lib/pendientes/types";
 import { prisma } from "@/lib/prisma";
+import type { Prisma } from "@prisma/client";
 
 const ASALTO_RELATION = "asalto_trinchera";
 const SELF_NODE_NAME = "Observador";
@@ -11,7 +12,7 @@ const SELF_NODE_TYPE = "persona";
 async function ensureKgNode(
   primaryName: string,
   type: string,
-  metadata: Record<string, unknown> = {},
+  metadata: Prisma.InputJsonValue = {} as Prisma.InputJsonValue,
 ): Promise<string> {
   const trimmed = primaryName.trim();
   const existing = await prisma.kgNode.findUnique({
