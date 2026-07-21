@@ -3,7 +3,11 @@ import {
   deleteHealthRecord,
   listHealthRecords,
 } from "@/lib/health/service";
-import { isHealthPillar } from "@/lib/events/types";
+import { listTodayHealthEntries } from "@/lib/health/entries-service";
+import {
+  isHealthPillar,
+  type HealthPillar,
+} from "@/lib/events/types";
 import { ensureRuntimeReady } from "@/lib/runtime-setup";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -14,6 +18,7 @@ export async function GET(request: NextRequest) {
     await ensureRuntimeReady();
 
     const { searchParams } = request.nextUrl;
+    const view = searchParams.get("view");
     const pillar = searchParams.get("pillar");
     const from = searchParams.get("from");
     const to = searchParams.get("to");
@@ -23,8 +28,13 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Pilar inválido." }, { status: 400 });
     }
 
+    if (view === "today") {
+      const result = await listTodayHealthEntries();
+      return NextResponse.json(result);
+    }
+
     const records = await listHealthRecords({
-      pillar: pillar && isHealthPillar(pillar) ? pillar : undefined,
+      pillar: pillar && isHealthPillar(pillar) ? (pillar as HealthPillar) : undefined,
       from: from ? new Date(from) : undefined,
       to: to ? new Date(to) : undefined,
       limit: limit ? Number(limit) : undefined,

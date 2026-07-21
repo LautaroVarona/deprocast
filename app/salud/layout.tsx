@@ -3,5 +3,5 @@ export default function SaludLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return <div className="h-[calc(100dvh-3.5rem)]">{children}</div>;
+  return <div className="h-[calc(100dvh-3.5rem)] min-h-0 overflow-hidden">{children}</div>;
 }

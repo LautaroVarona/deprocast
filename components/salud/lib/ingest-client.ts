@@ -1,22 +1,29 @@
 "use client";
 
-import type { NutritionAnalysis } from "@/lib/health/nutrition-types";
-import type { HealthRecordDto } from "@/lib/events/types";
-import type { InputModality } from "@/components/salud/types";
+import type {
+  HealthDraft,
+  HealthIngestModality,
+} from "@/lib/health/health-broker-types";
+import type {
+  NutritionEntryDto,
+  TrainingSessionDto,
+} from "@/lib/health/entries-service";
 
-export type SaludIngestResponse = {
-  record: HealthRecordDto;
-  analysis: NutritionAnalysis;
+export type SaludDraftResponse = {
+  draft: HealthDraft;
+  sourceRaw: string;
+  sourceChannel: HealthIngestModality;
+  occurredAt: string;
 };
 
-export async function postSaludIngest(
+export async function postSaludIngestDraft(
   formData: FormData,
-): Promise<SaludIngestResponse> {
+): Promise<SaludDraftResponse> {
   const response = await fetch("/api/salud/ingest", {
     method: "POST",
     body: formData,
   });
-  const data = (await response.json()) as SaludIngestResponse & {
+  const data = (await response.json()) as SaludDraftResponse & {
     error?: string;
   };
   if (!response.ok) {
@@ -25,8 +32,31 @@ export async function postSaludIngest(
   return data;
 }
 
+export type SaludConfirmResponse = {
+  nutritionEntry?: NutritionEntryDto;
+  trainingSession?: TrainingSessionDto;
+};
+
+export async function confirmSaludDraft(input: {
+  draft: HealthDraft;
+  sourceRaw: string;
+  sourceChannel: HealthIngestModality;
+  occurredAt: string;
+}): Promise<SaludConfirmResponse> {
+  const response = await fetch("/api/salud/ingest", {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+  });
+  const data = (await response.json()) as SaludConfirmResponse & { error?: string };
+  if (!response.ok) {
+    throw new Error(data.error ?? "No se pudo confirmar el borrador");
+  }
+  return data;
+}
+
 export function buildSaludIngestFormData(input: {
-  modality: InputModality;
+  modality: HealthIngestModality;
   text?: string;
   occurredAt: Date;
   file?: File | Blob;

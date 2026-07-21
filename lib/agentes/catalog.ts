@@ -694,9 +694,8 @@ export const OPERATIONAL_AGENTS: OperationalAgent[] = [
     badge: "Captura · Salud multimodal",
     badgeTone: "emerald",
     locations: [
-      "components/salud/panels/alimentacion-panel.tsx",
-      "lib/health/ingest-service.ts",
-      "lib/health/vision-food.ts",
+      "components/salud/salud-workspace.tsx",
+      "lib/agentes/health-broker.ts",
       "lib/health/transcribe-note.ts",
       "app/api/salud/ingest/route.ts",
     ],
@@ -713,16 +712,42 @@ export const OPERATIONAL_AGENTS: OperationalAgent[] = [
     uiRoute: "/salud",
   },
   {
+    id: "health-broker",
+    emoji: "🧠",
+    name: "Health Broker",
+    badge: "HITL · Ingesta salud",
+    badgeTone: "emerald",
+    locations: [
+      "lib/agentes/health-broker.ts",
+      "lib/health/entries-service.ts",
+      "app/api/salud/ingest/route.ts",
+      "components/salud/salud-workspace.tsx",
+      "prisma/schema.prisma",
+    ],
+    functions: [
+      "Parsear entrada multimodal de salud (texto, tabla, imagen y audio).",
+      "Clasificar automáticamente alimentación o entrenamiento.",
+      "Extraer borradores estructurados y resolver tiempo natural (ahora, anoche, 14:30hs).",
+      "Enviar tarjeta HITL compacta para confirmar antes de persistir.",
+    ],
+    technologies: [
+      "Cohere Command (JSON)",
+      "Cohere Vision",
+      "Deepgram STT",
+      "Prisma (NutritionEntry, TrainingSession)",
+    ],
+    uiRoute: "/salud",
+  },
+  {
     id: "nutrimetron",
     emoji: "🥑",
     name: "Nutrimetron",
     badge: "HITL · Combustible",
     badgeTone: "rose",
     locations: [
-      "components/salud/panels/alimentacion-panel.tsx",
-      "components/salud/fasting-strip.tsx",
+      "components/salud/shared/health-draft-card.tsx",
       "lib/health/nutrition-extract.ts",
-      "lib/health/ingest-service.ts",
+      "lib/health/entries-service.ts",
     ],
     functions: [
       "Desglosar ingestas en ítems, macros estimados y metadata de combustible.",
@@ -742,8 +767,8 @@ export const OPERATIONAL_AGENTS: OperationalAgent[] = [
     badge: "HITL · Rendimiento",
     badgeTone: "rose",
     locations: [
-      "components/salud/panels/deporte-panel.tsx",
-      "lib/health/service.ts",
+      "components/salud/salud-workspace.tsx",
+      "lib/health/entries-service.ts",
     ],
     functions: [
       "Registrar actividad física con duración, distancia o intensidad.",

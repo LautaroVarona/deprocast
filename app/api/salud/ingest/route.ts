@@ -1,4 +1,9 @@
-import { ingestSaludMeal } from "@/lib/health/ingest-service";
+import { ingestHealthDraft } from "@/lib/agentes/health-broker";
+import {
+  healthDraftSchema,
+  type HealthIngestModality,
+} from "@/lib/health/health-broker-types";
+import { persistHealthDraft } from "@/lib/health/entries-service";
 import { ensureRuntimeReady } from "@/lib/runtime-setup";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -23,7 +28,12 @@ export async function POST(request: NextRequest) {
     const occurredAtRaw = formData.get("occurredAt");
     const file = formData.get("file");
 
-    if (modality !== "texto" && modality !== "imagen" && modality !== "audio") {
+    if (
+      modality !== "text" &&
+      modality !== "table" &&
+      modality !== "image" &&
+      modality !== "audio"
+    ) {
       return NextResponse.json({ error: "Modalidad inválida." }, { status: 400 });
     }
 
@@ -39,7 +49,7 @@ export async function POST(request: NextRequest) {
     let filePayload: { buffer: Buffer; filename: string; mimeType: string } | undefined;
 
     if (file instanceof File && file.size > 0) {
-      if (modality === "imagen" && !hasExtension(file.name, IMAGE_EXT)) {
+      if (modality === "image" && !hasExtension(file.name, IMAGE_EXT)) {
         return NextResponse.json(
           { error: "Imagen no soportada." },
           { status: 400 },
@@ -59,17 +69,17 @@ export async function POST(request: NextRequest) {
       };
     }
 
-    if (modality !== "texto" && !filePayload) {
+    if ((modality === "image" || modality === "audio") && !filePayload) {
       return NextResponse.json(
         { error: "Se requiere archivo para esta modalidad." },
         { status: 400 },
       );
     }
 
-    const result = await ingestSaludMeal({
+    const result = await ingestHealthDraft({
       modality,
       text: typeof text === "string" ? text : undefined,
-      occurredAt,
+      occurredAt: Number.isNaN(occurredAt.getTime()) ? new Date() : occurredAt,
       file: filePayload,
     });
 
@@ -78,6 +88,47 @@ export async function POST(request: NextRequest) {
     console.error("Salud ingest error:", error);
     const message =
       error instanceof Error ? error.message : "No se pudo procesar la ingesta.";
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
+}
+
+export async function PUT(request: NextRequest) {
+  try {
+    await ensureRuntimeReady();
+    const body = (await request.json()) as {
+      draft?: unknown;
+      occurredAt?: string;
+      sourceRaw?: string;
+      sourceChannel?: "text" | "table" | "audio" | "image";
+    };
+
+    if (
+      body.sourceChannel !== "text" &&
+      body.sourceChannel !== "table" &&
+      body.sourceChannel !== "audio" &&
+      body.sourceChannel !== "image"
+    ) {
+      return NextResponse.json({ error: "Canal de origen inválido." }, { status: 400 });
+    }
+
+    const parsedDraft = healthDraftSchema.safeParse(body.draft);
+    if (!parsedDraft.success) {
+      return NextResponse.json({ error: "Borrador inválido." }, { status: 400 });
+    }
+
+    const occurredAt = body.occurredAt ? new Date(body.occurredAt) : new Date();
+    const result = await persistHealthDraft({
+      draft: parsedDraft.data,
+      occurredAt: Number.isNaN(occurredAt.getTime()) ? new Date() : occurredAt,
+      sourceChannel: body.sourceChannel as HealthIngestModality,
+      sourceRaw: body.sourceRaw,
+    });
+
+    return NextResponse.json(result, { status: 201 });
+  } catch (error) {
+    console.error("Salud confirm error:", error);
+    const message =
+      error instanceof Error ? error.message : "No se pudo confirmar la ingesta.";
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

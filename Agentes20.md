@@ -20,7 +20,7 @@ Con la ingesta molecular (jul 2026), cada captura porta **OriginAttribution** (l
 
 | Bucket | Cantidad |
 |--------|----------|
-| Operativos | 39 (incluye Quantador, Financial Broker, Eco-Pulse, Reclutador, Coagulador) |
+| Operativos | 40 (incluye Quantador, Health Broker, Financial Broker, Eco-Pulse, Reclutador, Coagulador) |
 | Magos | 5 |
 | Diseño (incubación) | 2 |
 | Subprocesadores Purifier | 3 |
@@ -30,7 +30,7 @@ Con la ingesta molecular (jul 2026), cada captura porta **OriginAttribution** (l
 
 ---
 
-## 1. Agentes operativos (39)
+## 1. Agentes operativos (40)
 
 ### Conversación y memoria
 
@@ -104,6 +104,7 @@ Con la ingesta molecular (jul 2026), cada captura porta **OriginAttribution** (l
 | id | Nombre | Qué hace | Funciones principales |
 |----|--------|----------|----------------------|
 | `centinela-somatico` | Centinela Somático | Captura salud multimodal | Texto/foto/voz → visión/STT/Nutrimetron |
+| `health-broker` | Health Broker | Broker HITL de salud | Texto/tabla/audio/imagen → draft estructurado + confirmación compacta |
 | `nutrimetron` | Nutrimetron | Combustible / macros | Ítems+macros HITL, foto/voz |
 | `kinetometro` | Kinetómetro | Rendimiento físico | Duración/intensidad, historial carga |
 | `cronista` | Cronista | Salud → timeline | ContextEvent, Historial, backfill |

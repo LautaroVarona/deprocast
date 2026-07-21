@@ -471,9 +471,95 @@ model HealthRecord {
   createdAt     DateTime @default(now())
 
   sourceEvent ContextEvent? @relation(fields: [sourceEventId], references: [id], onDelete: SetNull)
+  nutritionEntries NutritionEntry[] @relation("HealthRecordNutritionEntry")
+  trainingSessions TrainingSession[] @relation("HealthRecordTrainingSession")
 
   @@index([pillar, occurredAt])
   @@index([sourceEventId])
+}
+
+// Salud v2 — registros dedicados para alimentación y entrenamiento.
+model NutritionEntry {
+  id            String   @id @default(uuid())
+  summary       String
+  sourceChannel String
+  sourceRaw     String?
+  occurredAt    DateTime
+  parsedBy      String
+  confidence    Float?
+  totalCalories Float?
+  totalProtein  Float?
+  totalCarbs    Float?
+  totalFat      Float?
+  notes         String?
+  healthRecordId String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  items        NutritionItem[]
+  healthRecord HealthRecord? @relation("HealthRecordNutritionEntry", fields: [healthRecordId], references: [id], onDelete: SetNull)
+
+  @@index([occurredAt])
+  @@index([sourceChannel, occurredAt])
+  @@index([healthRecordId])
+}
+
+model NutritionItem {
+  id         String   @id @default(uuid())
+  entryId    String
+  name       String
+  quantity   String?
+  grams      Float?
+  calories   Float?
+  protein    Float?
+  carbs      Float?
+  fat        Float?
+  createdAt  DateTime @default(now())
+
+  entry NutritionEntry @relation(fields: [entryId], references: [id], onDelete: Cascade)
+
+  @@index([entryId])
+}
+
+model TrainingSession {
+  id             String   @id @default(uuid())
+  summary        String
+  sourceChannel  String
+  sourceRaw      String?
+  occurredAt     DateTime
+  parsedBy       String
+  confidence     Float?
+  durationMin    Int?
+  totalVolumeKg  Float?
+  intensity      String?
+  notes          String?
+  healthRecordId String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  sets        TrainingSet[]
+  healthRecord HealthRecord? @relation("HealthRecordTrainingSession", fields: [healthRecordId], references: [id], onDelete: SetNull)
+
+  @@index([occurredAt])
+  @@index([sourceChannel, occurredAt])
+  @@index([healthRecordId])
+}
+
+model TrainingSet {
+  id         String   @id @default(uuid())
+  sessionId  String
+  exercise   String
+  series     Int?
+  reps       Int?
+  weightKg   Float?
+  durationMin Int?
+  distanceKm Float?
+  intensity  String?
+  createdAt  DateTime @default(now())
+
+  session TrainingSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId])
 }
 
 // Módulo Cuadernos — entidades físicas antes del procesamiento de texto.

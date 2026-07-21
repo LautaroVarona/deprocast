@@ -4,7 +4,7 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "Salud · DeProcast",
   description:
-    "Telemetría, alimentación, deporte y métricas de bienestar.",
+    "Registro denso de alimentación y entrenamiento con health-broker HITL.",
 };
 
 export default function SaludPage() {
