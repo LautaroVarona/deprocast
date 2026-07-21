@@ -53,7 +53,7 @@ function dayBounds(day?: Date): { start: Date; end: Date } {
 }
 
 function sumVolume(
-  sets: Array<{ series: number | null; reps: number | null; weightKg: number | null }>,
+  sets: Array<{ series?: number | null; reps?: number | null; weightKg?: number | null }>,
 ): number {
   return sets.reduce((acc, set) => {
     const series = set.series ?? 0;
