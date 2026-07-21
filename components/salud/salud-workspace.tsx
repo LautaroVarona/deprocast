@@ -18,9 +18,13 @@ export function SaludWorkspace() {
   );
   const [text, setText] = useState("");
   const [ingestMode, setIngestMode] = useState<"libre" | "tabla">("libre");
-  const [foodRows, setFoodRows] = useState([{ name: "", quantity: "", grams: undefined as number | undefined }]);
-  const [trainingRows, setTrainingRows] = useState([
-    { exercise: "", series: undefined as number | undefined, reps: undefined as number | undefined, weightKg: undefined as number | undefined },
+  const [foodRows, setFoodRows] = useState<
+    Array<{ name: string; quantity?: string; grams?: number }>
+  >([{ name: "", quantity: "", grams: undefined }]);
+  const [trainingRows, setTrainingRows] = useState<
+    Array<{ exercise: string; series?: number; reps?: number; weightKg?: number }>
+  >([
+    { exercise: "", series: undefined, reps: undefined, weightKg: undefined },
   ]);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [audioFile, setAudioFile] = useState<File | null>(null);
