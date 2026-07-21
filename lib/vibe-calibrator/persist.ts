@@ -1,6 +1,10 @@
 import { prisma } from "@/lib/prisma";
 import { logVibeCalibratedActivity } from "@/lib/historial/domain-log";
 import { clampScale } from "@/lib/projects/priority";
+import {
+  applyVoteToOrigin,
+  type OriginSyncResult,
+} from "@/lib/vibe-calibrator/apply-origin";
 import type {
   CalibratorQueueConfig,
   VibeCalibrationCard,
@@ -23,10 +27,14 @@ export async function recordCalibrationVote(input: {
   card: VibeCalibrationCard;
   weight: number;
   metadata?: Record<string, unknown>;
-}) {
+}): Promise<{
+  vote: Awaited<ReturnType<typeof prisma.vibeCalibrationVote.create>>;
+  originSync: OriginSyncResult;
+}> {
   const weight = clampScale(input.weight);
+  const originSync = await applyVoteToOrigin(input.card, weight);
 
-  return prisma.vibeCalibrationVote.create({
+  const vote = await prisma.vibeCalibrationVote.create({
     data: {
       sessionId: input.sessionId,
       cardId: input.card.id,
@@ -37,9 +45,12 @@ export async function recordCalibrationVote(input: {
         title: input.card.title,
         ...input.card.metadata,
         ...input.metadata,
+        originSync,
       } as object,
     },
   });
+
+  return { vote, originSync };
 }
 
 export async function completeCalibrationSession(sessionId: string) {

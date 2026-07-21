@@ -198,14 +198,44 @@ export function CalibratorProvider({ children }: { children: ReactNode }) {
           metadata: currentCard.metadata,
         }),
       }).then(async (response) => {
+        const data = await response.json().catch(() => ({}));
+        const { toast } = await import("sonner");
+
         if (!response.ok) {
-          const data = await response.json().catch(() => ({}));
-          const { toast } = await import("sonner");
           toast.error(
             typeof data.error === "string"
               ? data.error
               : "No se pudo guardar el voto.",
           );
+          return;
+        }
+
+        const sync = data.originSync as
+          | {
+              applied?: boolean;
+              kind?: string;
+              error?: string;
+            }
+          | undefined;
+
+        if (sync?.applied) {
+          toast.success("Gravedad aplicada a origen ✓", {
+            description:
+              sync.kind === "project"
+                ? "Prioridad del proyecto actualizada en el Atanor."
+                : sync.kind === "pending_task"
+                  ? "Peso de la PendingTask sincronizado."
+                  : undefined,
+            duration: 2200,
+          });
+        } else if (sync?.kind === "failed") {
+          toast.warning("Voto guardado, origen sin sincronizar", {
+            description:
+              typeof sync.error === "string"
+                ? sync.error
+                : "Revisá el archivo o la tarea de origen.",
+            duration: 3200,
+          });
         }
       });
 

@@ -285,6 +285,21 @@ export function updateTitleInMarkdown(content: string, title: string): string {
   return `---\n${updatedBlock}\n---\n${body}`;
 }
 
+/** Actualiza `prioridad` (gravedad 1–12) en el frontmatter YAML del proyecto. */
+export function updatePrioridadInMarkdown(content: string, prioridad: number): string {
+  const frontmatterMatch = content.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n([\s\S]*)$/);
+  if (!frontmatterMatch) return content;
+
+  const clamped = clampScale(prioridad);
+  const [, frontmatterBlock, body] = frontmatterMatch;
+  const hasPrioridad = /^prioridad:\s*.+$/m.test(frontmatterBlock);
+  const updatedBlock = hasPrioridad
+    ? frontmatterBlock.replace(/^prioridad:\s*.+$/m, `prioridad: ${clamped}`)
+    : `${frontmatterBlock.trimEnd()}\nprioridad: ${clamped}`;
+
+  return `---\n${updatedBlock}\n---\n${body}`;
+}
+
 export function appendProgressToMarkdown(
   content: string,
   entry: ProgressEntry,

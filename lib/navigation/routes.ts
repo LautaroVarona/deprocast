@@ -2,6 +2,7 @@ import type { LucideIcon } from "lucide-react";
 import {
   ArchiveIcon,
   BookOpenIcon,
+  BrainCircuitIcon,
   CalendarIcon,
   CastleIcon,
   FlaskConicalIcon,
@@ -47,6 +48,15 @@ export const COMMAND_ROUTES: CommandRoute[] = [
     hotkey: "C",
     category: "nav",
     icon: UserRoundIcon,
+  },
+  {
+    id: "cortex",
+    href: "/cortex",
+    label: "Córtex",
+    description: "Snapshot de corpus y conocimiento",
+    hotkey: "X",
+    category: "nav",
+    icon: BrainCircuitIcon,
   },
   {
     id: "ingesta",

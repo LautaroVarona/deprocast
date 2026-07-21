@@ -3,7 +3,9 @@
 import { useBabel } from "@/components/babel/babel-context";
 import { PersonaFormSheet } from "@/components/personas/persona-form-sheet";
 import { PersonaCard } from "@/components/personas/persona-card";
+import { PersonaMergeSheet } from "@/components/personas/persona-merge-sheet";
 import { PersonaRelationsSheet } from "@/components/personas/persona-relations-sheet";
+import { PersonasCandidatesPanel } from "@/components/personas/personas-candidates-panel";
 import { PersonasGraphWorkspace } from "@/components/personas/personas-graph-workspace";
 import { PersonasTable } from "@/components/personas/personas-table";
 import { Button } from "@/components/ui/button";
@@ -16,28 +18,42 @@ import {
   NetworkIcon,
   PlusIcon,
   SearchIcon,
+  SparklesIcon,
   TableIcon,
   UsersRoundIcon,
 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-type DashboardTab = "lista" | "grafo";
+type DashboardTab = "lista" | "candidatas" | "grafo";
 type ListView = "cards" | "table";
+
+function tabFromSearch(value: string | null): DashboardTab {
+  if (value === "grafo") return "grafo";
+  if (value === "candidatas" || value === "pending") return "candidatas";
+  return "lista";
+}
 
 export function PersonasDashboard() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { universeSlug, universeFetch, isLoading: isUniverseLoading } = useBabel();
-  const initialTab = searchParams.get("tab") === "grafo" ? "grafo" : "lista";
-  const [tab, setTab] = useState<DashboardTab>(initialTab);
+  const [tab, setTab] = useState<DashboardTab>(() =>
+    tabFromSearch(searchParams.get("tab")),
+  );
   const [listView, setListView] = useState<ListView>("table");
   const [personas, setPersonas] = useState<PersonaCardDto[]>([]);
+  const [candidates, setCandidates] = useState<PersonaCardDto[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingCandidates, setIsLoadingCandidates] = useState(true);
   const [query, setQuery] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [showRelations, setShowRelations] = useState(false);
+  const [showMerge, setShowMerge] = useState(false);
   const [editPersona, setEditPersona] = useState<Persona | null>(null);
+  const [mergeCandidate, setMergeCandidate] = useState<PersonaCardDto | null>(
+    null,
+  );
   const [linkPersona, setLinkPersona] = useState<{
     id: string;
     nombrePrincipal: string;
@@ -46,7 +62,9 @@ export function PersonasDashboard() {
   const loadPersonas = useCallback(async () => {
     setIsLoading(true);
     try {
-      const response = await universeFetch("/api/personas", { cache: "no-store" });
+      const response = await universeFetch("/api/personas?status=verified", {
+        cache: "no-store",
+      });
       if (!response.ok) return;
       const data: { personas: PersonaCardDto[] } = await response.json();
       setPersonas(data.personas);
@@ -57,18 +75,39 @@ export function PersonasDashboard() {
     }
   }, [universeFetch]);
 
+  const loadCandidates = useCallback(async () => {
+    setIsLoadingCandidates(true);
+    try {
+      const response = await universeFetch("/api/personas?status=pending", {
+        cache: "no-store",
+      });
+      if (!response.ok) return;
+      const data: { personas: PersonaCardDto[] } = await response.json();
+      setCandidates(data.personas);
+    } catch {
+      setCandidates([]);
+    } finally {
+      setIsLoadingCandidates(false);
+    }
+  }, [universeFetch]);
+
+  const reloadAll = useCallback(async () => {
+    await Promise.all([loadPersonas(), loadCandidates()]);
+  }, [loadPersonas, loadCandidates]);
+
   useEffect(() => {
     setPersonas([]);
+    setCandidates([]);
   }, [universeSlug]);
 
   useEffect(() => {
-    setTab(searchParams.get("tab") === "grafo" ? "grafo" : "lista");
+    setTab(tabFromSearch(searchParams.get("tab")));
   }, [searchParams]);
 
   useEffect(() => {
     if (isUniverseLoading) return;
-    void loadPersonas();
-  }, [loadPersonas, universeSlug, isUniverseLoading]);
+    void reloadAll();
+  }, [reloadAll, universeSlug, isUniverseLoading]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -84,11 +123,16 @@ export function PersonasDashboard() {
   const stats = useMemo(() => {
     const withMentions = personas.filter((p) => p.mentionCount > 0).length;
     const withProjects = personas.filter((p) => p.projects.length > 0).length;
-    return { total: personas.length, withMentions, withProjects };
-  }, [personas]);
+    return {
+      total: personas.length,
+      withMentions,
+      withProjects,
+      pending: candidates.length,
+    };
+  }, [personas, candidates]);
 
   const handleCreated = (persona: Persona) => {
-    void loadPersonas();
+    void reloadAll();
     router.push(`/personas/${personaSlugFromName(persona.nombrePrincipal)}`);
   };
 
@@ -105,11 +149,33 @@ export function PersonasDashboard() {
     }
   };
 
-  const tabs: { id: DashboardTab; label: string; icon: typeof LayoutGridIcon }[] =
-    [
-      { id: "lista", label: "Lista", icon: LayoutGridIcon },
-      { id: "grafo", label: "Grafo", icon: NetworkIcon },
-    ];
+  const selectTab = (next: DashboardTab) => {
+    setTab(next);
+    const params = new URLSearchParams(searchParams.toString());
+    if (next === "lista") {
+      params.delete("tab");
+    } else {
+      params.set("tab", next);
+    }
+    const qs = params.toString();
+    router.replace(qs ? `/personas?${qs}` : "/personas");
+  };
+
+  const tabs: {
+    id: DashboardTab;
+    label: string;
+    icon: typeof LayoutGridIcon;
+    badge?: number;
+  }[] = [
+    { id: "lista", label: "Lista", icon: LayoutGridIcon },
+    {
+      id: "candidatas",
+      label: "Candidatas",
+      icon: SparklesIcon,
+      badge: stats.pending > 0 ? stats.pending : undefined,
+    },
+    { id: "grafo", label: "Grafo", icon: NetworkIcon },
+  ];
 
   return (
     <div className="relative flex h-[calc(100dvh-3.5rem)] flex-col overflow-hidden bg-background text-foreground">
@@ -128,27 +194,35 @@ export function PersonasDashboard() {
           </div>
         </div>
         <div className="hidden items-center gap-3 font-mono text-[10px] text-muted-foreground sm:flex">
-          <span>{stats.total} personas</span>
+          <span>{stats.total} verificadas</span>
+          <span>{stats.pending} en revisión</span>
           <span>{stats.withMentions} con menciones</span>
           <span>{stats.withProjects} en proyectos activos</span>
         </div>
       </header>
 
       <div className="flex shrink-0 items-center gap-1 border-b border-border px-4 sm:px-6">
-        {tabs.map(({ id, label, icon: Icon }) => (
+        {tabs.map(({ id, label, icon: Icon, badge }) => (
           <button
             key={id}
             type="button"
-            onClick={() => setTab(id)}
+            onClick={() => selectTab(id)}
             className={cn(
               "flex items-center gap-1.5 border-b-2 px-3 py-2 text-xs font-medium transition-colors",
               tab === id
-                ? "border-emerald-500 text-foreground"
+                ? id === "candidatas"
+                  ? "border-amber-500 text-foreground"
+                  : "border-emerald-500 text-foreground"
                 : "border-transparent text-muted-foreground hover:text-foreground",
             )}
           >
             <Icon className="size-3.5" />
             {label}
+            {typeof badge === "number" ? (
+              <span className="rounded-full bg-amber-500/20 px-1.5 py-0.5 font-mono text-[9px] text-amber-700 dark:text-amber-400">
+                {badge}
+              </span>
+            ) : null}
           </button>
         ))}
       </div>
@@ -156,7 +230,7 @@ export function PersonasDashboard() {
       {tab === "lista" && (
         <>
           <div className="flex shrink-0 flex-wrap items-center gap-2 border-b border-border px-4 py-2 sm:px-6">
-            <div className="relative min-w-[200px] flex-1 max-w-md">
+            <div className="relative min-w-[200px] max-w-md flex-1">
               <SearchIcon
                 className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground"
                 aria-hidden
@@ -204,8 +278,19 @@ export function PersonasDashboard() {
                 <p>
                   {query
                     ? "Ninguna persona coincide con la búsqueda."
-                    : "Todavía no hay personas indexadas."}
+                    : "Todavía no hay personas verificadas."}
                 </p>
+                {!query && stats.pending > 0 ? (
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={() => selectTab("candidatas")}
+                  >
+                    Revisar {stats.pending} candidata
+                    {stats.pending === 1 ? "" : "s"}
+                  </Button>
+                ) : null}
                 {!query && (
                   <Button
                     type="button"
@@ -254,13 +339,28 @@ export function PersonasDashboard() {
         </>
       )}
 
+      {tab === "candidatas" && (
+        <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4 sm:px-6">
+          <PersonasCandidatesPanel
+            candidates={candidates}
+            isLoading={isLoadingCandidates}
+            onEdit={(persona) => void openEdit(persona)}
+            onMerge={(persona) => {
+              setMergeCandidate(persona);
+              setShowMerge(true);
+            }}
+            onChanged={() => void reloadAll()}
+          />
+        </div>
+      )}
+
       {tab === "grafo" && (
         <div className="min-h-0 flex-1">
           <PersonasGraphWorkspace />
         </div>
       )}
 
-      {tab === "lista" && (
+      {(tab === "lista" || tab === "candidatas") && (
         <Button
           type="button"
           size="lg"
@@ -288,7 +388,7 @@ export function PersonasDashboard() {
         initialPersona={editPersona}
         onSaved={(persona) => {
           if (editPersona) {
-            void loadPersonas();
+            void reloadAll();
           } else {
             handleCreated(persona);
           }
@@ -302,7 +402,17 @@ export function PersonasDashboard() {
           setShowRelations(open);
           if (!open) setLinkPersona(null);
         }}
-        onCreated={() => void loadPersonas()}
+        onCreated={() => void reloadAll()}
+      />
+
+      <PersonaMergeSheet
+        open={showMerge}
+        candidate={mergeCandidate}
+        onOpenChange={(open) => {
+          setShowMerge(open);
+          if (!open) setMergeCandidate(null);
+        }}
+        onMerged={() => void reloadAll()}
       />
     </div>
   );

@@ -40,7 +40,7 @@ export function AppHeader({ onOpenCommandMenu }: AppHeaderProps) {
           {NAV_LINKS.map((link) => {
             const isActive =
               link.href === "/yo"
-                ? pathname === "/yo" || pathname === "/cortex"
+                ? pathname === "/yo"
                 : pathname.startsWith(link.href);
 
             return (

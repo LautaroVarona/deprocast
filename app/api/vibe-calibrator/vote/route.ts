@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
       metadata: body.metadata ?? {},
     };
 
-    const vote = await recordCalibrationVote({
+    const { vote, originSync } = await recordCalibrationVote({
       sessionId: body.sessionId.trim(),
       card,
       weight,
@@ -71,6 +71,7 @@ export async function POST(request: NextRequest) {
           timestamp: vote.votedAt.toISOString(),
           metadata: vote.metadata,
         },
+        originSync,
       },
       { status: 201 },
     );

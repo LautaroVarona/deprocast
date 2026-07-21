@@ -20,6 +20,7 @@ import {
   createProjectFromInput,
   parseProjectFile,
   updateCampoInMarkdown,
+  updatePrioridadInMarkdown,
 } from "@/lib/projects/markdown";
 import {
   getProjectDir,
@@ -326,6 +327,32 @@ export async function createProject(input: CreateProjectInput): Promise<Project>
 export async function findProjectById(projectId: string): Promise<Project | null> {
   const projects = await getCachedProjects();
   return projects.find((project) => project.id === projectId) ?? null;
+}
+
+/**
+ * Escribe la gravedad calibrada (1–12) en el frontmatter `prioridad` del .md.
+ * Usado por el Calibrador de Vibe para cerrar el bucle SSOT.
+ */
+export async function updateProjectPriority(
+  projectId: string,
+  prioridad: number,
+): Promise<Project> {
+  const project = await findProjectById(projectId);
+  if (!project) {
+    throw new Error("Proyecto no encontrado en el Atanor local.");
+  }
+
+  const content = await readFile(project.filePath, "utf8");
+  const updatedContent = updatePrioridadInMarkdown(content, prioridad);
+  await writeFile(project.filePath, updatedContent, "utf8");
+  invalidateProjectCache();
+
+  const updated = parseProjectFile(project.filePath, updatedContent);
+  if (!updated) {
+    throw new Error("No se pudo actualizar la prioridad del proyecto.");
+  }
+
+  return updated;
 }
 
 export async function addProgressEntry(input: AddProgressInput): Promise<Project> {

@@ -3,29 +3,46 @@ import { createPersona, createPersonaEntity } from "@/lib/personas/service";
 import { isPersonaKind } from "@/lib/kg/types";
 import { getUniverseFilterSlugFromRequest } from "@/lib/babel/universe-scope";
 import { resolveUniverseKgNodeIds } from "@/lib/babel/universe-refs";
+import type { PersonaListStatus } from "@/lib/personas/types";
 import { NextRequest, NextResponse } from "next/server";
 
 export const runtime = "nodejs";
 
+function parseStatus(value: string | null): PersonaListStatus {
+  if (value === "pending" || value === "all" || value === "verified") {
+    return value;
+  }
+  return "verified";
+}
+
 export async function GET(request: NextRequest) {
   try {
+    const status = parseStatus(request.nextUrl.searchParams.get("status"));
     const universeSlug = getUniverseFilterSlugFromRequest(request);
-    const allPersonas = await listPersonas();
+    const allPersonas = await listPersonas(status);
 
     if (!universeSlug) {
-      return NextResponse.json({ personas: allPersonas, universe: "babel" });
+      return NextResponse.json({
+        personas: allPersonas,
+        universe: "babel",
+        status,
+      });
     }
 
     const nodeIds = await resolveUniverseKgNodeIds(universeSlug);
     if (nodeIds && nodeIds.size === 0) {
-      return NextResponse.json({ personas: [], universe: universeSlug });
+      return NextResponse.json({
+        personas: [],
+        universe: universeSlug,
+        status,
+      });
     }
 
-    const personas = allPersonas.filter((persona) =>
-      nodeIds?.has(persona.id) ?? false,
+    const personas = allPersonas.filter(
+      (persona) => nodeIds?.has(persona.id) ?? false,
     );
 
-    return NextResponse.json({ personas, universe: universeSlug });
+    return NextResponse.json({ personas, universe: universeSlug, status });
   } catch (error) {
     console.error("Personas list error:", error);
     const message =

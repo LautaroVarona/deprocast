@@ -20,11 +20,14 @@ export type PersonaCardDto = {
   role: string | null;
   campoSlug: string | null;
   confidence: number;
+  reconocido: boolean;
   lastMentionAt: string | null;
   mentionCount: number;
   projects: { id: string; title: string }[];
   updatedAt: string;
 };
+
+export type PersonaListStatus = "verified" | "pending" | "all";
 
 export type PersonaActivityItem = {
   id: string;

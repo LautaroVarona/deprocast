@@ -12,6 +12,7 @@ import type {
   PersonaActivityItem,
   PersonaCardDto,
   PersonaDetailDto,
+  PersonaListStatus,
   PersonaProjectLink,
 } from "@/lib/personas/types";
 
@@ -188,9 +189,53 @@ async function getMentionStats(personaIds: string[]) {
   );
 }
 
-export async function listPersonas(): Promise<PersonaCardDto[]> {
+function isLikelyLegacyCrmPersona(metadata: Record<string, unknown>): boolean {
+  if (metadata.stub === true) return false;
+  if (metadata.source === "incubadora") return false;
+  if (typeof metadata.notas === "string") return true;
+  if (typeof metadata.primaryRole === "string") return true;
+  if (Array.isArray(metadata.roles) && metadata.roles.length > 0) return true;
+  return false;
+}
+
+/**
+ * Sella como verificadas personas CRM legacy que nacieron con `reconocido: false`
+ * antes del flujo HITL de candidatas (stubs de incubadora quedan pending).
+ */
+export async function sealLegacyCrmPersonas(): Promise<number> {
+  const pending = await prisma.kgNode.findMany({
+    where: { type: "persona", reconocido: false },
+    select: { id: true, metadata: true },
+  });
+
+  const toSeal = pending.filter((node) =>
+    isLikelyLegacyCrmPersona(parseMetadataJson(node.metadata)),
+  );
+
+  if (toSeal.length === 0) return 0;
+
+  await prisma.kgNode.updateMany({
+    where: { id: { in: toSeal.map((node) => node.id) } },
+    data: { reconocido: true },
+  });
+
+  return toSeal.length;
+}
+
+export async function listPersonas(
+  status: PersonaListStatus = "verified",
+): Promise<PersonaCardDto[]> {
+  if (status === "verified") {
+    await sealLegacyCrmPersonas();
+  }
+
   const nodes = await prisma.kgNode.findMany({
-    where: { type: "persona" },
+    where: {
+      type: "persona",
+      ...(status === "all"
+        ? {}
+        : { reconocido: status === "verified" }),
+    },
     orderBy: { updatedAt: "desc" },
   });
 
@@ -249,6 +294,7 @@ export async function listPersonas(): Promise<PersonaCardDto[]> {
       role: extractRole(metadata),
       campoSlug: extractCampoSlug(metadata),
       confidence: node.confidence,
+      reconocido: node.reconocido,
       lastMentionAt: stats?.lastAt?.toISOString() ?? null,
       mentionCount: stats?.count ?? 0,
       projects: (projectsByPersona.get(node.id) ?? [])

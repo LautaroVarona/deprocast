@@ -79,16 +79,19 @@ export async function createPersonaEntity(
     notasGenerales: input.notasGenerales ?? "",
   });
 
-  const nameToIdMap = await resolveEntities([
-    {
-      name: nombrePrincipal,
-      type: "persona",
-      aliases,
-      personaKind: "fisica",
-      metadata,
-      confidence: 0.85,
-    },
-  ]);
+  const nameToIdMap = await resolveEntities(
+    [
+      {
+        name: nombrePrincipal,
+        type: "persona",
+        aliases,
+        personaKind: "fisica",
+        metadata,
+        confidence: 0.85,
+      },
+    ],
+    { reconocido: true },
+  );
 
   const nodeId = [...nameToIdMap.values()][0];
   if (!nodeId) {
@@ -110,6 +113,7 @@ export async function createPersonaEntity(
           ...aliases,
         ]),
         metadata: mergedMeta as Prisma.InputJsonValue,
+        reconocido: true,
       },
     });
   }
@@ -133,16 +137,19 @@ export async function createPersona(
   const aliases = sanitizeAliases(name, input.aliases ?? []);
   const metadata = buildLegacyMetadata(input);
 
-  const nameToIdMap = await resolveEntities([
-    {
-      name,
-      type: "persona",
-      aliases,
-      personaKind,
-      metadata,
-      confidence: 0.85,
-    },
-  ]);
+  const nameToIdMap = await resolveEntities(
+    [
+      {
+        name,
+        type: "persona",
+        aliases,
+        personaKind,
+        metadata,
+        confidence: 0.85,
+      },
+    ],
+    { reconocido: true },
+  );
 
   const nodeId = [...nameToIdMap.values()][0];
   if (!nodeId) throw new Error("No se pudo resolver la identidad de la persona.");
@@ -155,7 +162,15 @@ export async function createPersona(
     };
     await prisma.kgNode.update({
       where: { id: nodeId },
-      data: { metadata: merged as Prisma.InputJsonValue },
+      data: {
+        metadata: merged as Prisma.InputJsonValue,
+        reconocido: true,
+      },
+    });
+  } else if (existing && !existing.reconocido) {
+    await prisma.kgNode.update({
+      where: { id: nodeId },
+      data: { reconocido: true },
     });
   }
 
@@ -210,4 +225,56 @@ export async function updatePersonaEntity(
 export async function deletePersonaEntity(id: string): Promise<void> {
   await assertPersonaNode(id);
   await prisma.kgNode.delete({ where: { id } });
+}
+
+/** Sella una candidata como persona verificada en el grafo principal. */
+export async function promotePersona(id: string): Promise<Persona> {
+  await assertPersonaNode(id);
+  const updated = await prisma.kgNode.update({
+    where: { id },
+    data: { reconocido: true },
+  });
+  return kgNodeToPersona(updated);
+}
+
+/**
+ * Fusiona identidad: `dropId` (alias/mención errónea) se absorbe en `keepId` (canónica).
+ * El nodo canónico queda sellado como verificado.
+ */
+export async function mergePersonaIdentities(
+  keepId: string,
+  dropId: string,
+): Promise<{
+  persona: Persona;
+  movedEdges: number;
+  movedMentions: number;
+  mergedAliases: number;
+}> {
+  if (keepId === dropId) {
+    throw new Error("Seleccioná dos personas distintas para fusionar.");
+  }
+
+  const [keep, drop] = await Promise.all([
+    assertPersonaNode(keepId),
+    assertPersonaNode(dropId),
+  ]);
+
+  if (keep.type !== "persona" || drop.type !== "persona") {
+    throw new Error("Solo se pueden fusionar nodos de tipo persona.");
+  }
+
+  const { mergeNodes } = await import("@/lib/kg/merge");
+  const result = await mergeNodes(keepId, dropId);
+
+  const sealed = await prisma.kgNode.update({
+    where: { id: keepId },
+    data: { reconocido: true },
+  });
+
+  return {
+    persona: kgNodeToPersona(sealed),
+    movedEdges: result.movedEdges,
+    movedMentions: result.movedMentions,
+    mergedAliases: result.mergedAliases,
+  };
 }

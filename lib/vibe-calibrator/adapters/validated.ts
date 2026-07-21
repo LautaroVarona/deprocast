@@ -66,6 +66,7 @@ async function fetchValidatedCards(
       sourceRef: project.filename,
       metadata: {
         kind: "project",
+        projectId: project.id,
         campoSlug: project.campoSlug,
         campo: project.campo,
         prioridad: project.prioridad,

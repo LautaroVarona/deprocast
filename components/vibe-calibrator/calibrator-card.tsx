@@ -55,6 +55,7 @@ export function CalibratorCard({
           onRelease={onRelease}
           disabled={disabled || isHistoryOpen}
           isExiting={isExiting}
+          originSynced={isExiting}
         />
 
         <CalibratorCardBack votes={votes} onClose={onToggleHistory} />

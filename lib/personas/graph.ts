@@ -37,7 +37,7 @@ export async function buildPersonaGraphSnapshot(
   mode: PersonaGraphViewMode,
 ): Promise<PersonaGraphSnapshot> {
   const personaNodes = await prisma.kgNode.findMany({
-    where: { type: "persona" },
+    where: { type: "persona", reconocido: true },
     orderBy: { primaryName: "asc" },
   });
   const personaIds = new Set(personaNodes.map((node) => node.id));
@@ -163,7 +163,15 @@ export async function buildPersonaGraphSnapshot(
             personaIds.has(edge.source) &&
             personaIds.has(edge.target),
         )
-      : graphEdges;
+      : graphEdges.filter((edge) => {
+          if (edge.kind === "persona-persona") {
+            return personaIds.has(edge.source) && personaIds.has(edge.target);
+          }
+          if (edge.kind === "persona-proyecto" || edge.kind === "persona-campo") {
+            return personaIds.has(edge.source) || personaIds.has(edge.target);
+          }
+          return true;
+        });
 
   return {
     mode,

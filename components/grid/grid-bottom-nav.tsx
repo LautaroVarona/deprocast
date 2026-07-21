@@ -8,6 +8,7 @@ import {
 import { cn } from "@/lib/utils";
 import {
   BookOpenIcon,
+  BrainCircuitIcon,
   Gamepad2Icon,
   InboxIcon,
   MessageSquareIcon,
@@ -21,6 +22,7 @@ import { useState } from "react";
 
 const PLUS_LINKS = [
   { href: "/yo", label: "Yo", icon: UserRoundIcon },
+  { href: "/cortex", label: "Córtex", icon: BrainCircuitIcon },
   { href: "/ingesta", label: "Ingesta", icon: InboxIcon },
   { href: "/audio", label: "Audio", icon: MicIcon },
   { href: "/chat", label: "Chat", icon: MessageSquareIcon },

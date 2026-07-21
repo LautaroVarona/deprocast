@@ -3,6 +3,7 @@
 import type { VibeCalibrationCard } from "./types";
 import { WeightSlider } from "./weight-slider";
 import { cn } from "@/lib/utils";
+import { CheckIcon } from "lucide-react";
 
 type CalibratorCardFrontProps = {
   card: VibeCalibrationCard;
@@ -10,6 +11,7 @@ type CalibratorCardFrontProps = {
   onRelease: (weight: number) => void;
   disabled?: boolean;
   isExiting?: boolean;
+  originSynced?: boolean;
 };
 
 export function CalibratorCardFront({
@@ -18,6 +20,7 @@ export function CalibratorCardFront({
   onRelease,
   disabled = false,
   isExiting = false,
+  originSynced = false,
 }: CalibratorCardFrontProps) {
   return (
     <div
@@ -38,6 +41,18 @@ export function CalibratorCardFront({
             </p>
           ) : null}
         </div>
+
+        {originSynced || isExiting ? (
+          <p
+            className={cn(
+              "inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 font-mono text-[10px] tracking-wide text-emerald-600 uppercase dark:text-emerald-400",
+              "animate-in fade-in duration-200",
+            )}
+          >
+            <CheckIcon className="size-3" aria-hidden />
+            Gravedad aplicada a origen
+          </p>
+        ) : null}
       </div>
 
       <div className="mt-auto pt-6">
