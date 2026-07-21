@@ -33,7 +33,8 @@ const THEME_META: Record<
 function resolveAppTheme(theme: string | undefined): AppTheme {
   if (theme === "legion" || theme === "theme-legion") return "legion";
   if (theme === "light") return "light";
-  return "dark";
+  if (theme === "dark") return "dark";
+  return "legion";
 }
 
 export function ThemeToggle({ className }: { className?: string }) {

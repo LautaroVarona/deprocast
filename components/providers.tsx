@@ -7,7 +7,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <ThemeProvider
       attribute="class"
-      defaultTheme="dark"
+      defaultTheme="legion"
       enableSystem={false}
       themes={["light", "dark", "legion"]}
       value={{ light: "light", dark: "dark", legion: "theme-legion" }}
