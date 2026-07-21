@@ -87,7 +87,7 @@ function eventToBlock(
     end: event.endsAt?.toISOString() ?? null,
     status: event.status,
     projectId: null,
-    weight: event.actionCost,
+    weight: event.actionCost ?? null,
     source: event.source,
     pillar: event.pillar,
     structuredData,
