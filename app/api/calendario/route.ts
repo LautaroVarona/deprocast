@@ -1,10 +1,8 @@
+import { listCalendarEvents, isBlockKind, isEcosystemArea } from "@/lib/calendario/service";
 import { dayRangeForOffset } from "@/lib/pendientes/day";
 import { isDayOffset } from "@/lib/pendientes/types";
-import { filterContextEventsForUniverse } from "@/lib/babel/universe-refs";
 import { getUniverseFilterSlugFromRequest } from "@/lib/babel/universe-scope";
 import { parseIsoDateParam } from "@/lib/temporal/ranges";
-import { mapContextEvent } from "@/lib/events/mappers";
-import { prisma } from "@/lib/prisma";
 import { ensureRuntimeReady } from "@/lib/runtime-setup";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -17,6 +15,8 @@ export async function GET(request: NextRequest) {
     const dayParam = request.nextUrl.searchParams.get("day");
     const fromParam = request.nextUrl.searchParams.get("from");
     const toParam = request.nextUrl.searchParams.get("to");
+    const areaParam = request.nextUrl.searchParams.get("area");
+    const blockKindParam = request.nextUrl.searchParams.get("blockKind");
     const universeSlug = getUniverseFilterSlugFromRequest(request);
     let start: Date;
     let end: Date;
@@ -39,22 +39,20 @@ export async function GET(request: NextRequest) {
       end = range.end;
     }
 
-    const events = await prisma.contextEvent.findMany({
-      where: {
-        occurredAt: { gte: start, lt: end },
-        status: { not: "rejected" },
-      },
-      orderBy: { occurredAt: "asc" },
-      take: 50,
+    const events = await listCalendarEvents({
+      from: start,
+      to: end,
+      universeSlug,
+      area: areaParam && isEcosystemArea(areaParam) ? areaParam : undefined,
+      blockKind:
+        blockKindParam && isBlockKind(blockKindParam) ? blockKindParam : undefined,
     });
-
-    const filtered = await filterContextEventsForUniverse(events, universeSlug);
 
     return NextResponse.json({
       day: dayParam ?? null,
       from: start.toISOString(),
       to: end.toISOString(),
-      events: filtered.map(mapContextEvent),
+      events,
       universe: universeSlug ?? "babel",
     });
   } catch (error) {

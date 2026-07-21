@@ -1,4 +1,12 @@
 import { z } from "zod";
+import {
+  BLOCK_KINDS,
+  ECOSYSTEM_AREAS,
+  EXECUTION_STATUSES,
+  type BlockKind,
+  type EcosystemArea,
+  type ExecutionStatus,
+} from "@/lib/calendario/constants";
 
 export const EVENT_SOURCES = ["chat", "journal", "manual", "import", "audio"] as const;
 export type EventSource = (typeof EVENT_SOURCES)[number];
@@ -172,9 +180,18 @@ export type ContextEventDto = {
   pillar: EventPillar;
   status: EventStatus;
   correlationId: string | null;
+  blockKind: BlockKind;
+  actionCost: number | null;
+  executionStatus: ExecutionStatus;
+  ecosystemArea: EcosystemArea | null;
+  endsAt: string | null;
+  durationMin: number | null;
   createdAt: string;
   links: ContextEventLinkDto[];
 };
+
+export { BLOCK_KINDS, ECOSYSTEM_AREAS, EXECUTION_STATUSES };
+export type { BlockKind, EcosystemArea, ExecutionStatus };
 
 export type HealthRecordDto = {
   id: string;

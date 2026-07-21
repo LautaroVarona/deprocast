@@ -23,6 +23,7 @@ import {
   VideoIcon,
   WandSparklesIcon,
   WrenchIcon,
+  WalletIcon,
 } from "lucide-react";
 
 export type CommandCategory = "nav" | "ludus" | "extra";
@@ -91,6 +92,15 @@ export const COMMAND_ROUTES: CommandRoute[] = [
     hotkey: "S",
     category: "nav",
     icon: HeartPulseIcon,
+  },
+  {
+    id: "finanzas",
+    href: "/finanzas",
+    label: "Finanzas",
+    description: "Ledger financiero y eco-pulse",
+    hotkey: "F",
+    category: "nav",
+    icon: WalletIcon,
   },
   {
     id: "chat",
@@ -258,7 +268,7 @@ export const COMMAND_ROUTES: CommandRoute[] = [
     id: "calendario",
     href: "/calendario",
     label: "Calendario",
-    description: "Vista temporal",
+    description: "Simulador de turnos / draft de misiones",
     hotkey: "Y",
     category: "extra",
     icon: CalendarIcon,

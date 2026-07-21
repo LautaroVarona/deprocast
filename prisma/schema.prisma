@@ -412,17 +412,26 @@ model BabelRecord {
 }
 
 // Event log unificado — cruza Chat, Diario, Salud y Proyectos.
+// blockKind: IMMUTABLE | ROUTINE | SUGGESTION
+// executionStatus: scheduled | confirmed_day | skipped | executed | coagulated
+// ecosystemArea: legal | salud | finanzas | tecnologia | arte | meta
 model ContextEvent {
-  id             String   @id @default(uuid())
-  occurredAt     DateTime
-  source         String
-  sourceRef      String?
-  content        String
-  structuredData Json
-  pillar         String
-  status         String   @default("proposed")
-  correlationId  String?
-  createdAt      DateTime @default(now())
+  id              String    @id @default(uuid())
+  occurredAt      DateTime
+  source          String
+  sourceRef       String?
+  content         String
+  structuredData  Json
+  pillar          String
+  status          String    @default("proposed")
+  correlationId   String?
+  blockKind       String    @default("ROUTINE")
+  actionCost      Int?
+  executionStatus String    @default("scheduled")
+  ecosystemArea   String?
+  endsAt          DateTime?
+  durationMin     Int?
+  createdAt       DateTime  @default(now())
 
   links         ContextEventLink[]
   healthRecords HealthRecord[]
@@ -431,6 +440,9 @@ model ContextEvent {
   @@index([status, occurredAt])
   @@index([pillar, occurredAt])
   @@index([correlationId])
+  @@index([blockKind, occurredAt])
+  @@index([ecosystemArea, occurredAt])
+  @@index([executionStatus, occurredAt])
 }
 
 model ContextEventLink {
@@ -799,6 +811,44 @@ model ActivityLog {
   @@index([category, occurredAt])
   @@index([agentId, occurredAt])
   @@index([correlationId])
+}
+
+// Ledger financiero — transacciones con flujo HITL (pending → confirmed).
+model FinancialTransaction {
+  id              String    @id @default(uuid())
+  type            String
+  amount          Float
+  currency        String    @default("EUR")
+  concept         String
+  vendor          String?
+  incomeCategory  String?
+  expenseTier     String?
+  projectLabel    String?
+  status          String    @default("pending")
+  sourceChannel   String
+  sourceRaw       String?
+  confidence      Float?
+  occurredAt      DateTime
+  isRecurring     Boolean   @default(false)
+  isActive        Boolean   @default(true)
+  approvedAt      DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([status, occurredAt])
+  @@index([type, status])
+  @@index([expenseTier, status])
+  @@index([occurredAt])
+}
+
+// Capital económico del operador (singleton id = "operator").
+model FinancialCapital {
+  id        String   @id @default("operator")
+  amount    Float    @default(0)
+  currency  String   @default("EUR")
+  note      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 // Señales HITL / RLHF local (ediciones humanas sobre nodos, aristas y campos UI).

@@ -8,7 +8,7 @@ import {
   collectBrowserPreferences,
 } from "@/lib/backup/browser-preferences-client";
 import type { ExportDomainId, DomainPreviewStat } from "@/lib/backup/domains";
-import { getDeployLabel } from "@/lib/deploy-env";
+import { isEphemeralDeployTarget } from "@/lib/deploy-env";
 import { cn } from "@/lib/utils";
 import {
   AlertTriangleIcon,
@@ -38,13 +38,13 @@ type ValidatedBackup = {
 };
 
 export function BackupWorkspace() {
-  const isVercel = getDeployLabel() === "Vercel";
+  const isEphemeralDeploy = isEphemeralDeployTarget();
   const inputRef = useRef<HTMLInputElement>(null);
 
   const [isExporting, setIsExporting] = useState(false);
   const [isPartialExporting, setIsPartialExporting] = useState(false);
   const [previewStats, setPreviewStats] = useState<DomainPreviewStat[]>([]);
-  const [isPreviewLoading, setIsPreviewLoading] = useState(!isVercel);
+  const [isPreviewLoading, setIsPreviewLoading] = useState(true);
   const [selectedExportDomains, setSelectedExportDomains] = useState<ExportDomainId[]>([]);
 
   const [isDragging, setIsDragging] = useState(false);
@@ -59,10 +59,6 @@ export function BackupWorkspace() {
   const [isValidating, setIsValidating] = useState(false);
 
   useEffect(() => {
-    if (isVercel) {
-      return;
-    }
-
     let cancelled = false;
 
     async function loadPreview() {
@@ -93,7 +89,7 @@ export function BackupWorkspace() {
     return () => {
       cancelled = true;
     };
-  }, [isVercel]);
+  }, []);
 
   const downloadBlob = useCallback((blob: Blob, response: Response, fallbackName: string) => {
     const disposition = response.headers.get("Content-Disposition") ?? "";
@@ -312,14 +308,12 @@ export function BackupWorkspace() {
       event.preventDefault();
       setIsDragging(false);
 
-      if (isVercel) return;
-
       const file = event.dataTransfer.files[0];
       if (file) {
         handleFileSelected(file);
       }
     },
-    [handleFileSelected, isVercel],
+    [handleFileSelected],
   );
 
   const isPartialBackup = validatedBackup?.manifest.exportMode === "partial";
@@ -342,13 +336,15 @@ export function BackupWorkspace() {
         </p>
       </div>
 
-      {isVercel ? (
+      {isEphemeralDeploy ? (
         <Card className="border-amber-500/40 bg-amber-500/5">
           <CardContent className="flex items-start gap-3 p-4 text-sm">
             <AlertTriangleIcon className="mt-0.5 size-4 shrink-0 text-amber-600" />
             <p>
-              La copia de seguridad solo está disponible en entorno local. En
-              Vercel los datos son efímeros y esta función está deshabilitada.
+              Estás en el deploy en la nube. Exportá con frecuencia: sin un
+              volumen persistente configurado, el estado del servidor puede
+              reiniciarse entre sesiones. La importación y exportación siguen
+              operativas dentro de esta instancia.
             </p>
           </CardContent>
         </Card>
@@ -371,7 +367,7 @@ export function BackupWorkspace() {
           <Button
             type="button"
             onClick={() => void handleExport()}
-            disabled={isExporting || isPartialExporting || isVercel}
+            disabled={isExporting || isPartialExporting}
           >
             {isExporting ? (
               <Loader2Icon className="animate-spin" />
@@ -392,7 +388,7 @@ export function BackupWorkspace() {
                 stats={previewStats}
                 selected={selectedExportDomains}
                 onChange={setSelectedExportDomains}
-                disabled={isVercel || isExporting || isPartialExporting}
+                disabled={isExporting || isPartialExporting}
               />
 
               <p className="text-xs text-muted-foreground">
@@ -408,7 +404,6 @@ export function BackupWorkspace() {
                 disabled={
                   isExporting ||
                   isPartialExporting ||
-                  isVercel ||
                   selectedExportDomains.length === 0
                 }
               >
@@ -440,28 +435,26 @@ export function BackupWorkspace() {
 
           <div
             role="button"
-            tabIndex={isVercel ? -1 : 0}
+            tabIndex={0}
             onKeyDown={(event) => {
-              if (isVercel) return;
               if (event.key === "Enter" || event.key === " ") {
                 inputRef.current?.click();
               }
             }}
             onDragOver={(event) => {
               event.preventDefault();
-              if (!isVercel) setIsDragging(true);
+              setIsDragging(true);
             }}
             onDragLeave={() => setIsDragging(false)}
             onDrop={handleDrop}
             onClick={() => {
-              if (!isVercel) inputRef.current?.click();
+              inputRef.current?.click();
             }}
             className={cn(
               "flex cursor-pointer flex-col items-center justify-center gap-3 rounded-xl border border-dashed p-8 transition-colors",
               isDragging
                 ? "border-primary bg-primary/5"
                 : "border-border bg-muted/30 hover:bg-muted/50",
-              isVercel && "cursor-not-allowed opacity-50",
             )}
           >
             <input
@@ -469,7 +462,6 @@ export function BackupWorkspace() {
               type="file"
               accept=".zip,.deprocast-backup.zip,application/zip"
               className="hidden"
-              disabled={isVercel}
               onChange={(event) => {
                 const file = event.target.files?.[0];
                 if (file) handleFileSelected(file);

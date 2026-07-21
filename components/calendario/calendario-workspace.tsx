@@ -1,227 +1,332 @@
 "use client";
 
-import { MiniCalendar } from "@/components/diario/mini-calendar";
-import { DayNavigator } from "@/components/grid/day-navigator";
 import { useBabel } from "@/components/babel/babel-context";
-import type { DayOffset } from "@/lib/pendientes/types";
-import type { TemporalBlock } from "@/lib/temporal/types";
-import { useTemporalData } from "@/hooks/use-temporal-data";
-import { cn } from "@/lib/utils";
+import { useCalendarioKeyboard } from "@/components/calendario/calendario-keyboard";
+import { DayTrinchera } from "@/components/temporal/day-trinchera";
+import { MonthBoard } from "@/components/temporal/month-board";
+import { SuggestionDeck } from "@/components/temporal/suggestion-deck";
 import {
-  ActivityIcon,
-  AppleIcon,
-  CalendarIcon,
-  Loader2Icon,
-  MoonIcon,
-  ZapIcon,
-} from "lucide-react";
+  ViewModeSwitch,
+  type CalendarViewMode,
+} from "@/components/temporal/view-mode-switch";
+import { WeekGrid } from "@/components/temporal/week-grid";
+import { useTemporalData } from "@/hooks/use-temporal-data";
+import type { EcosystemArea } from "@/lib/calendario/constants";
+import type { MissionCardDto } from "@/lib/calendario/types";
+import type { TemporalBlock } from "@/lib/temporal/types";
+import {
+  addDays,
+  monthRange,
+  toIsoDayKey,
+  weekRangeForDate,
+} from "@/lib/temporal/ranges";
+import { CalendarIcon, Loader2Icon } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { toast } from "sonner";
 
-const HEALTH_PILLARS = new Set([
-  "rendimiento",
-  "combustible",
-  "recuperacion",
-  "estado_base",
-]);
-
-function dayOffsetToDate(offset: DayOffset): Date {
-  const date = new Date();
-  date.setHours(0, 0, 0, 0);
-  if (offset === "yesterday") date.setDate(date.getDate() - 1);
-  if (offset === "tomorrow") date.setDate(date.getDate() + 1);
-  return date;
-}
-
-function formatEventTime(iso: string): string {
-  return new Date(iso).toLocaleTimeString("es-AR", {
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-  });
-}
-
-function resolveHealthLabel(event: TemporalBlock): string | null {
-  const pillar = event.pillar;
-  if (!pillar || !HEALTH_PILLARS.has(pillar)) return null;
-
-  const metrics =
-    event.structuredData?.metrics &&
-    typeof event.structuredData.metrics === "object"
-      ? (event.structuredData.metrics as Record<string, unknown>)
-      : null;
-
-  if (pillar === "combustible") {
-    return metrics?.kind === "comida" ? "Ingesta" : "Combustible";
-  }
-  if (pillar === "rendimiento") {
-    return "Actividad";
-  }
-  return "Salud";
-}
-
-function PillarBadge({ pillar }: { pillar: string }) {
-  if (pillar === "combustible") {
-    return (
-      <span className="inline-flex items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-[10px] text-emerald-300">
-        <AppleIcon className="size-3" />
-        Combustible
-      </span>
-    );
-  }
-  if (pillar === "rendimiento") {
-    return (
-      <span className="inline-flex items-center gap-1 rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-[10px] text-amber-300">
-        <ActivityIcon className="size-3" />
-        Rendimiento
-      </span>
-    );
-  }
-  if (pillar === "recuperacion") {
-    return (
-      <span className="inline-flex items-center gap-1 rounded-full border border-violet-500/30 bg-violet-500/10 px-2 py-0.5 text-[10px] text-violet-300">
-        <MoonIcon className="size-3" />
-        Recuperación
-      </span>
-    );
-  }
-  if (pillar === "estado_base") {
-    return (
-      <span className="inline-flex items-center gap-1 rounded-full border border-cyan-500/30 bg-cyan-500/10 px-2 py-0.5 text-[10px] text-cyan-300">
-        <ZapIcon className="size-3" />
-        Estado base
-      </span>
-    );
-  }
-  return (
-    <span className="rounded-full border border-border px-2 py-0.5 font-mono text-[10px] text-muted-foreground">
-      {pillar}
-    </span>
-  );
+function setTimeOnDay(day: Date, hours: number, minutes = 0): Date {
+  const next = new Date(day);
+  next.setHours(hours, minutes, 0, 0);
+  return next;
 }
 
 export function CalendarioWorkspace() {
-  const { selectedDay, setSelectedDay } = useBabel();
-  const [year, setYear] = useState(() => new Date().getFullYear());
-  const [month, setMonth] = useState(() => new Date().getMonth() + 1);
-  const [calendarDay, setCalendarDay] = useState<number | null>(
-    () => new Date().getDate(),
-  );
+  const { universeFetch, bumpTemporal, temporalVersion } = useBabel();
+  const [viewMode, setViewMode] = useState<CalendarViewMode>("week");
+  const [weekAnchor, setWeekAnchor] = useState(() => new Date());
+  const [monthAnchor, setMonthAnchor] = useState(() => ({
+    year: new Date().getFullYear(),
+    month: new Date().getMonth() + 1,
+  }));
+  const [areaFilter, setAreaFilter] = useState<EcosystemArea | null>(null);
+  const [deckCards, setDeckCards] = useState<MissionCardDto[]>([]);
+  const [deckLoading, setDeckLoading] = useState(true);
+  const [selectedCard, setSelectedCard] = useState<MissionCardDto | null>(null);
+  const [selectedBlock, setSelectedBlock] = useState<TemporalBlock | null>(null);
+  const [activeSlotDay, setActiveSlotDay] = useState<string | null>(null);
+  const [coagulating, setCoagulating] = useState(false);
 
-  const { events, isLoading } = useTemporalData({
-    mode: "day",
-    day: selectedDay,
+  const weekRange = weekRangeForDate(weekAnchor);
+  const month = monthRange(monthAnchor.year, monthAnchor.month);
+
+  const rangeFrom =
+    viewMode === "month"
+      ? month.from
+      : viewMode === "week"
+        ? weekRange.from
+        : addDays(new Date(), -1);
+  const rangeTo =
+    viewMode === "month"
+      ? month.to
+      : viewMode === "week"
+        ? weekRange.to
+        : addDays(new Date(), 2);
+
+  const { blocks, isLoading, refresh } = useTemporalData({
+    mode: "range",
+    fromIso: rangeFrom.toISOString(),
+    toIso: rangeTo.toISOString(),
   });
 
-  const selectedDate = useMemo(
-    () => dayOffsetToDate(selectedDay),
-    [selectedDay],
+  const filteredBlocks = useMemo(() => {
+    if (!areaFilter) return blocks;
+    return blocks.filter((b) => b.ecosystemArea === areaFilter);
+  }, [blocks, areaFilter]);
+
+  const weekDays = useMemo(
+    () => Array.from({ length: 7 }, (_, i) => addDays(weekRange.from, i)),
+    [weekRange.from],
   );
 
+  const todayKey = toIsoDayKey(new Date());
+  const yesterdayKey = toIsoDayKey(addDays(new Date(), -1));
+  const tomorrowKey = toIsoDayKey(addDays(new Date(), 1));
+
+  const dayBlocks = useMemo(
+    () => ({
+      yesterday: filteredBlocks.filter((b) => b.start.slice(0, 10) === yesterdayKey),
+      today: filteredBlocks.filter((b) => b.start.slice(0, 10) === todayKey),
+      tomorrow: filteredBlocks.filter((b) => b.start.slice(0, 10) === tomorrowKey),
+    }),
+    [filteredBlocks, yesterdayKey, todayKey, tomorrowKey],
+  );
+
+  const refreshDeck = useCallback(async () => {
+    setDeckLoading(true);
+    try {
+      const params = new URLSearchParams();
+      if (areaFilter) params.set("area", areaFilter);
+      const response = await universeFetch(
+        `/api/calendario/deck?${params.toString()}`,
+        { cache: "no-store" },
+      );
+      if (!response.ok) throw new Error("No se pudo cargar el mazo.");
+      const data = (await response.json()) as { cards?: MissionCardDto[] };
+      setDeckCards(data.cards ?? []);
+    } catch {
+      setDeckCards([]);
+    } finally {
+      setDeckLoading(false);
+    }
+  }, [universeFetch, areaFilter, temporalVersion]);
+
   useEffect(() => {
-    setYear(selectedDate.getFullYear());
-    setMonth(selectedDate.getMonth() + 1);
-    setCalendarDay(selectedDate.getDate());
-  }, [selectedDate]);
+    void refreshDeck();
+  }, [refreshDeck]);
+
+  const handleCoagulate = useCallback(
+    async (slotDay?: Date) => {
+      if (!selectedCard) {
+        toast.message("Seleccioná una carta del mazo primero.");
+        return;
+      }
+      const day =
+        slotDay ??
+        (activeSlotDay ? new Date(`${activeSlotDay}T10:00:00`) : setTimeOnDay(new Date(), 10));
+      setCoagulating(true);
+      try {
+        const response = await universeFetch("/api/calendario/coagulate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            cardSource: selectedCard.source,
+            cardId: selectedCard.sourceId,
+            occurredAt: day.toISOString(),
+            durationMin: selectedCard.durationMin,
+            ecosystemArea: selectedCard.ecosystemArea ?? undefined,
+          }),
+        });
+        const data = (await response.json()) as {
+          error?: string;
+          result?: { signalPreview: number };
+        };
+        if (!response.ok) throw new Error(data.error ?? "Coagulación fallida.");
+        bumpTemporal();
+        await Promise.all([refresh(), refreshDeck()]);
+        setSelectedCard(null);
+        toast.success(
+          `Misión coagulada · +${data.result?.signalPreview ?? "?"} Señal (preview)`,
+        );
+      } catch (error) {
+        toast.error(
+          error instanceof Error ? error.message : "No se pudo coagular.",
+        );
+      } finally {
+        setCoagulating(false);
+      }
+    },
+    [selectedCard, activeSlotDay, universeFetch, bumpTemporal, refresh, refreshDeck],
+  );
+
+  const patchExecution = useCallback(
+    async (block: TemporalBlock, executionStatus: string) => {
+      if (block.kind !== "event") return;
+      try {
+        const response = await universeFetch(
+          `/api/calendario/blocks/${block.id}`,
+          {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ executionStatus }),
+          },
+        );
+        if (!response.ok) {
+          const data = (await response.json()) as { error?: string };
+          throw new Error(data.error ?? "No se pudo actualizar.");
+        }
+        bumpTemporal();
+        await refresh();
+      } catch (error) {
+        toast.error(
+          error instanceof Error ? error.message : "Error al actualizar rutina.",
+        );
+      }
+    },
+    [universeFetch, bumpTemporal, refresh],
+  );
+
+  const handleRescheduleTask = async (taskId: string, day: Date) => {
+    try {
+      const response = await universeFetch(`/api/pendientes/${taskId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "reschedule",
+          targetDay: day.toISOString(),
+        }),
+      });
+      if (!response.ok) throw new Error("No se pudo reprogramar.");
+      bumpTemporal();
+      await refresh();
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Error de reprogramación.",
+      );
+    }
+  };
+
+  const handleRescheduleEvent = async (
+    eventId: string,
+    day: Date,
+    originalStartIso: string,
+  ) => {
+    try {
+      const original = new Date(originalStartIso);
+      const next = new Date(day);
+      next.setHours(original.getHours(), original.getMinutes(), 0, 0);
+      const response = await universeFetch(`/api/events/${eventId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ occurredAt: next.toISOString() }),
+      });
+      if (!response.ok) throw new Error("No se pudo reprogramar.");
+      bumpTemporal();
+      await refresh();
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Error de reprogramación.",
+      );
+    }
+  };
+
+  useCalendarioKeyboard({
+    viewMode,
+    onViewModeChange: setViewMode,
+    selectedCard,
+    selectedBlock,
+    onCoagulate: () => void handleCoagulate(),
+    onSkipRoutine: () => {
+      if (selectedBlock) void patchExecution(selectedBlock, "skipped");
+    },
+    onConfirmRoutine: () => {
+      if (selectedBlock) void patchExecution(selectedBlock, "confirmed_day");
+    },
+    areaFilter,
+    onAreaFilterChange: setAreaFilter,
+  });
 
   return (
-    <div className="flex h-full min-h-0 flex-col overflow-hidden">
-      <header className="shrink-0 border-b border-border px-4 py-3">
-        <div className="flex items-center gap-2">
-          <CalendarIcon className="size-5 text-cyan-500/80" />
-          <div>
-            <p className="font-mono text-[10px] uppercase tracking-[0.24em] text-muted-foreground">
-              Tiempo
-            </p>
-            <h1 className="text-lg font-semibold">Calendario</h1>
+    <div className="calendario-noir-root flex h-full min-h-0 flex-col overflow-hidden">
+      <header className="shrink-0 border-b border-white/8 px-4 py-3">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <CalendarIcon className="size-5 text-cyan-400/80" />
+            <div>
+              <p className="font-mono text-[10px] uppercase tracking-[0.24em] text-cyan-400/60">
+                Simulador de turnos
+              </p>
+              <h1 className="text-lg font-semibold text-zinc-50">Calendario</h1>
+            </div>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <ViewModeSwitch mode={viewMode} onChange={setViewMode} skin="noir" />
+            <Link
+              href="/ludus/campamento"
+              className="font-mono text-[10px] uppercase tracking-wider text-zinc-500 hover:text-cyan-300"
+            >
+              Campamento →
+            </Link>
           </div>
         </div>
+        <p className="mt-2 font-mono text-[9px] text-zinc-600">
+          1·2·3 vistas · Enter coagular · C confirmar rutina · S saltear · Shift+área filtrar
+        </p>
       </header>
 
-      <DayNavigator selectedDay={selectedDay} onDayChange={setSelectedDay} />
-
-      <div className="grid min-h-0 flex-1 grid-rows-[auto_1fr] gap-3 overflow-hidden p-4 md:grid-cols-2 md:grid-rows-1">
-        <MiniCalendar
-          year={year}
-          month={month}
-          selectedDay={calendarDay}
-          daysWithEntries={calendarDay ? [calendarDay] : []}
-          onMonthChange={(y, m) => {
-            setYear(y);
-            setMonth(m);
-          }}
-          onDaySelect={setCalendarDay}
-        />
-
-        <section className="min-h-0 overflow-hidden rounded-lg border border-border bg-muted/10 p-3">
-          <h2 className="mb-2 font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
-            Eventos del día
-          </h2>
+      <div className="flex min-h-0 flex-1 gap-3 overflow-hidden p-3">
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-3">
           {isLoading ? (
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <div className="flex flex-1 items-center justify-center gap-2 text-sm text-zinc-500">
               <Loader2Icon className="size-4 animate-spin" />
-              Cargando…
+              Cargando tablero…
             </div>
-          ) : events.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              Sin eventos registrados.{" "}
-              <Link href="/salud" className="underline">
-                Registrá en Salud
-              </Link>{" "}
-              o{" "}
-              <Link href="/diario" className="underline">
-                escribí en el diario
-              </Link>
-              .
-            </p>
+          ) : viewMode === "month" ? (
+            <MonthBoard
+              year={monthAnchor.year}
+              month={monthAnchor.month}
+              blocks={filteredBlocks}
+              skin="noir"
+              onMonthChange={(y, m) => setMonthAnchor({ year: y, month: m })}
+            />
+          ) : viewMode === "week" ? (
+            <WeekGrid
+              weekDays={weekDays}
+              blocks={filteredBlocks}
+              skin="noir"
+              selectedBlockId={selectedBlock?.id}
+              onSelectBlock={setSelectedBlock}
+              onRescheduleTask={handleRescheduleTask}
+              onRescheduleEvent={handleRescheduleEvent}
+              activeSlotDay={activeSlotDay}
+              onSlotClick={(day) => {
+                setActiveSlotDay(toIsoDayKey(day));
+                if (selectedCard) void handleCoagulate(day);
+              }}
+            />
           ) : (
-            <ul className="space-y-2 overflow-y-auto">
-              {events.map((event) => {
-                const healthLabel = resolveHealthLabel(event);
-                const isHealth = event.pillar ? HEALTH_PILLARS.has(event.pillar) : false;
-
-                return (
-                  <li
-                    key={event.id}
-                    className={cn(
-                      "rounded-md border border-border bg-card px-3 py-2",
-                      isHealth && "border-emerald-500/20",
-                    )}
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0 flex-1">
-                        <div className="mb-1.5 flex flex-wrap items-center gap-1.5">
-                          {event.pillar ? <PillarBadge pillar={event.pillar} /> : null}
-                          {healthLabel ? (
-                            <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
-                              {healthLabel}
-                            </span>
-                          ) : null}
-                        </div>
-                        <p className="text-sm">{event.title}</p>
-                        {isHealth ? (
-                          <Link
-                            href="/salud"
-                            className="mt-1 inline-flex text-xs text-emerald-400/80 hover:text-emerald-300 hover:underline"
-                          >
-                            Ver en Salud →
-                          </Link>
-                        ) : (
-                          <p className="mt-1 font-mono text-[10px] text-muted-foreground">
-                              {event.status}
-                          </p>
-                        )}
-                      </div>
-                      <time className="shrink-0 font-mono text-xs tabular-nums text-muted-foreground">
-                        {formatEventTime(event.start)}
-                      </time>
-                    </div>
-                  </li>
-                );
-              })}
-            </ul>
+            <DayTrinchera
+              yesterday={dayBlocks.yesterday}
+              today={dayBlocks.today}
+              tomorrow={dayBlocks.tomorrow}
+              skin="noir"
+              selectedBlockId={selectedBlock?.id}
+              onSelectBlock={setSelectedBlock}
+              onConfirmRoutine={(b) => void patchExecution(b, "confirmed_day")}
+              onSkipRoutine={(b) => void patchExecution(b, "skipped")}
+            />
           )}
-        </section>
+        </div>
+
+        <SuggestionDeck
+          cards={deckCards}
+          isLoading={deckLoading || coagulating}
+          selectedCardId={selectedCard?.id ?? null}
+          areaFilter={areaFilter}
+          onAreaFilterChange={setAreaFilter}
+          onSelectCard={setSelectedCard}
+          skin="noir"
+        />
       </div>
     </div>
   );

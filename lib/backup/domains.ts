@@ -19,6 +19,7 @@ export const EXPORT_DOMAIN_IDS = [
   "molecular",
   "preferences",
   "historial",
+  "finanzas",
 ] as const;
 
 export const exportDomainIdSchema = z.enum(EXPORT_DOMAIN_IDS);
@@ -259,6 +260,17 @@ export const EXPORT_DOMAINS: ExportDomain[] = [
     group: "Herramientas",
     dataPaths: [],
     tables: [{ table: "ActivityLog", deleteOrder: 15 }],
+  },
+  {
+    id: "finanzas",
+    label: "Finanzas",
+    description: "Ledger financiero, capital económico y transacciones HITL.",
+    group: "Herramientas",
+    dataPaths: [],
+    tables: [
+      { table: "FinancialTransaction", deleteOrder: 10 },
+      { table: "FinancialCapital", deleteOrder: 20 },
+    ],
   },
 ];
 

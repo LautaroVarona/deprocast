@@ -30,6 +30,7 @@ import {
   getDataRoot,
   getDatabaseFilePath,
   getUploadDir,
+  isVercelRuntime,
 } from "@/lib/runtime-paths";
 import { ensureRuntimeReady } from "@/lib/runtime-setup";
 import { logBackupExportedActivity } from "@/lib/historial/domain-log";
@@ -68,7 +69,7 @@ function buildManifest(params: {
     appVersion: packageJson.version,
     schemaMigration: CURRENT_SCHEMA_MIGRATION,
     createdAt: new Date().toISOString(),
-    platform: "local",
+    platform: isVercelRuntime() ? "vercel" : "local",
     exportMode: params.exportMode,
     includedDomains: params.includedDomains,
     stats: {

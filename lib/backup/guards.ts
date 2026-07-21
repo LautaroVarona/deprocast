@@ -1,4 +1,3 @@
-import { isVercelRuntime } from "@/lib/runtime-paths";
 import { processingQueue } from "@/lib/processing-queue";
 
 export class BackupGuardError extends Error {
@@ -11,13 +10,10 @@ export class BackupGuardError extends Error {
   }
 }
 
+/** Backup is supported wherever the Node runtime can read/write SQLite + data dirs. */
 export function assertLocalBackupAllowed(): void {
-  if (isVercelRuntime()) {
-    throw new BackupGuardError(
-      "La copia de seguridad solo está disponible en entorno local.",
-      403,
-    );
-  }
+  // Intentionally empty: deployed instances (Vercel, DEPROCAST_DATA_ROOT, etc.)
+  // use writable paths from lib/runtime-paths and must support import/export.
 }
 
 export async function assertNoActiveProcessing(): Promise<void> {

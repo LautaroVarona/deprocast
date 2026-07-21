@@ -9,6 +9,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
 export const runtime = "nodejs";
+export const maxDuration = 120;
 
 const partialExportBodySchema = z.object({
   domains: z.array(z.string()).min(1),

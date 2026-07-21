@@ -27,7 +27,7 @@ export const backupManifestSchema = z.object({
     .string()
     .regex(/^\d{14}_[a-z0-9_]+$/, "schemaMigration debe ser un nombre de migración Prisma"),
   createdAt: z.string().datetime(),
-  platform: z.literal("local"),
+  platform: z.enum(["local", "vercel"]),
   exportMode: backupExportModeSchema.default("full"),
   includedDomains: z.array(exportDomainIdSchema).optional(),
   stats: backupManifestStatsSchema,

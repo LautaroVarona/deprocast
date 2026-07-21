@@ -69,6 +69,12 @@ function eventToBlock(
     source: string;
     pillar?: string;
     structuredData?: unknown;
+    blockKind?: string;
+    actionCost?: number | null;
+    executionStatus?: string;
+    ecosystemArea?: string | null;
+    endsAt?: Date | null;
+    durationMin?: number | null;
   },
   location: GeoPayload | null,
 ): TemporalBlock {
@@ -78,14 +84,19 @@ function eventToBlock(
     id: event.id,
     title: event.content,
     start: event.occurredAt.toISOString(),
-    end: null,
+    end: event.endsAt?.toISOString() ?? null,
     status: event.status,
     projectId: null,
-    weight: null,
+    weight: event.actionCost,
     source: event.source,
     pillar: event.pillar,
     structuredData,
     location,
+    blockKind: event.blockKind as TemporalBlock["blockKind"],
+    actionCost: event.actionCost,
+    executionStatus: event.executionStatus as TemporalBlock["executionStatus"],
+    ecosystemArea: event.ecosystemArea as TemporalBlock["ecosystemArea"],
+    durationMin: event.durationMin,
   };
 }
 

@@ -34,10 +34,16 @@ export function useTemporalData(input: UseTemporalDataInput) {
             id: string;
             content: string;
             occurredAt: string;
+            endsAt?: string | null;
             status: string;
             source: string;
             pillar?: string;
             structuredData?: Record<string, unknown>;
+            blockKind?: TemporalBlock["blockKind"];
+            actionCost?: number | null;
+            executionStatus?: TemporalBlock["executionStatus"];
+            ecosystemArea?: TemporalBlock["ecosystemArea"];
+            durationMin?: number | null;
           }>;
         };
         const dayEvents: TemporalBlock[] = (data.events ?? []).map((event) => ({
@@ -45,13 +51,18 @@ export function useTemporalData(input: UseTemporalDataInput) {
           id: event.id,
           title: event.content,
           start: event.occurredAt,
-          end: null,
+          end: event.endsAt ?? null,
           status: event.status,
           projectId: null,
-          weight: null,
+          weight: event.actionCost,
           source: event.source,
           pillar: event.pillar,
           structuredData: event.structuredData,
+          blockKind: event.blockKind,
+          actionCost: event.actionCost,
+          executionStatus: event.executionStatus,
+          ecosystemArea: event.ecosystemArea,
+          durationMin: event.durationMin,
         }));
         setEvents(dayEvents);
         setTasks([]);

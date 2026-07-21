@@ -20,7 +20,7 @@ Con la ingesta molecular (jul 2026), cada captura porta **OriginAttribution** (l
 
 | Bucket | Cantidad |
 |--------|----------|
-| Operativos | 35 (incluye Quantador) |
+| Operativos | 39 (incluye Quantador, Financial Broker, Eco-Pulse, Reclutador, Coagulador) |
 | Magos | 5 |
 | Diseño (incubación) | 2 |
 | Subprocesadores Purifier | 3 |
@@ -30,7 +30,7 @@ Con la ingesta molecular (jul 2026), cada captura porta **OriginAttribution** (l
 
 ---
 
-## 1. Agentes operativos (35)
+## 1. Agentes operativos (39)
 
 ### Conversación y memoria
 
@@ -107,7 +107,16 @@ Con la ingesta molecular (jul 2026), cada captura porta **OriginAttribution** (l
 | `nutrimetron` | Nutrimetron | Combustible / macros | Ítems+macros HITL, foto/voz |
 | `kinetometro` | Kinetómetro | Rendimiento físico | Duración/intensidad, historial carga |
 | `cronista` | Cronista | Salud → timeline | ContextEvent, Historial, backfill |
-| `orquestador-temporal` | Orquestador Temporal | SSOT temporal | PendingTask+ContextEvent, reschedule |
+| `orquestador-temporal` | Orquestador Temporal | SSOT temporal | PendingTask+ContextEvent, reschedule, components/temporal compartidos |
+| `reclutador-misiones` | Reclutador de Misiones | Mazo de cartas | PendingTask+microtareas+proposed, filtro ecosystemArea |
+| `coagulador-jornada` | Coagulador de Jornada | Draft HITL | Coagulación, preview Señal, executionStatus rutinas |
+
+### Finanzas (Eco)
+
+| id | Nombre | Qué hace | Funciones principales |
+|----|--------|----------|----------------------|
+| `financial-broker` | Financial Broker | Ingesta financiera HITL | Texto/audio/imagen → borrador pending; clasificación ingreso/egreso |
+| `eco-pulse` | Eco-Pulse | Métricas determinísticas | Runway vital, burn rate, semáforo SaaS |
 
 ### Calibración y utilidades
 

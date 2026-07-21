@@ -14,6 +14,7 @@ import type {
   HealthRecordDto,
   HealthPillar,
 } from "@/lib/events/types";
+import type { BlockKind, EcosystemArea, ExecutionStatus } from "@/lib/calendario/constants";
 
 export function mapContextEventLink(
   link: ContextEventLink,
@@ -41,6 +42,12 @@ export function mapContextEvent(
     pillar: event.pillar as EventPillar,
     status: event.status as EventStatus,
     correlationId: event.correlationId,
+    blockKind: (event.blockKind ?? "ROUTINE") as BlockKind,
+    actionCost: event.actionCost,
+    executionStatus: (event.executionStatus ?? "scheduled") as ExecutionStatus,
+    ecosystemArea: event.ecosystemArea as EcosystemArea | null,
+    endsAt: event.endsAt?.toISOString() ?? null,
+    durationMin: event.durationMin,
     createdAt: event.createdAt.toISOString(),
     links: (event.links ?? []).map(mapContextEventLink),
   };

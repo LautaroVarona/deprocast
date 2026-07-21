@@ -151,6 +151,8 @@ export async function createProposedEvents(
           structuredData: structuredData as Prisma.InputJsonValue,
           pillar: item.pillar,
           status: "proposed",
+          blockKind: "SUGGESTION",
+          executionStatus: "scheduled",
           correlationId,
           links: {
             create: item.links.map((link: EventLinkInput) => ({

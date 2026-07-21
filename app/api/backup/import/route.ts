@@ -4,6 +4,7 @@ import { restoreBackupFromZip } from "@/lib/backup/import";
 import { NextRequest, NextResponse } from "next/server";
 
 export const runtime = "nodejs";
+export const maxDuration = 120;
 
 const CONFIRM_FULL = "RESTORE";
 const CONFIRM_PARTIAL = "RESTORE_PARTIAL";

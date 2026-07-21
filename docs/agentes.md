@@ -402,6 +402,39 @@ Agente frontend de modulación cognitiva. El cerebro percibe la diferencia entre
 
 ---
 
+### 💸 Financial Broker
+
+**Funciones:**
+- Procesar ingesta rápida desde texto, audio o captura de ticket en `/finanzas`.
+- Extraer tipo (ingreso/egreso), monto, moneda, concepto, categoría y proyecto.
+- Generar borradores `pending` sin confirmación directa (HITL obligatorio).
+- Clasificar ingresos (sueldo, inversiones, pasivos, ventas) y egresos por tier.
+
+**Ubicación:**
+- Motor: `lib/finanzas/broker.ts`, `lib/finanzas/broker-multimodal.ts`, `lib/finanzas/service.ts`
+- API: `app/api/finanzas/ingest/route.ts`
+- UI: `components/finanzas/ingest-box.tsx`, `components/finanzas/pending-approvals.tsx`
+
+**Tecnologías/Dependencias:** Cohere Command (JSON), Deepgram STT, Cohere Vision, Prisma (`FinancialTransaction`).
+
+---
+
+### 📊 Eco-Pulse
+
+**Funciones:**
+- Calcular Runway Vital (capital ÷ burn necesarios+primarios del mes).
+- Comparar gasto mínimo vital vs operativo total del mes.
+- Listar suscripciones SaaS activas del tier terciario.
+
+**Ubicación:**
+- Motor: `lib/finanzas/metrics.ts`
+- API: `app/api/finanzas/metrics/route.ts`
+- UI: `components/finanzas/runway-vital.tsx`, `components/finanzas/burn-pulse.tsx`, `components/finanzas/saas-semaphore.tsx`
+
+**Tecnologías/Dependencias:** Prisma (`FinancialTransaction`, `FinancialCapital`).
+
+---
+
 ### 📜 Cronista
 
 **Funciones:**
@@ -416,6 +449,39 @@ Agente frontend de modulación cognitiva. El cerebro percibe la diferencia entre
 - UI: `/calendario`, `/historial`
 
 **Tecnologías/Dependencias:** Prisma (`ContextEvent`, `ActivityLog`, `HealthRecord`).
+
+---
+
+### 🃏 Reclutador de Misiones
+
+**Funciones:**
+- Armar el mazo lateral desde `PendingTask`, `LudusMicrotask` y eventos `proposed`.
+- Filtrar cartas por `ecosystemArea` (Legal, Salud, Finanzas, Tecnología, Arte, Meta).
+- Priorizar microtareas ≤15 min con gravedad 1–12.
+
+**Ubicación:**
+- Motor: `lib/calendario/deck.ts`
+- API: `app/api/calendario/deck/route.ts`
+- UI: `components/temporal/suggestion-deck.tsx`
+
+**Tecnologías/Dependencias:** Prisma (`PendingTask`, `LudusMicrotask`, `ContextEvent`).
+
+---
+
+### ⚗️ Coagulador de Jornada
+
+**Funciones:**
+- Materializar cartas del mazo en slots temporales (coagulación HITL).
+- Preview de Puntos de Señal anticipados (sin acreditar hasta Trinchera/asalto).
+- Actualizar `executionStatus` de rutinas: confirmar, saltear, ejecutado.
+- Invalidar Calendario y Campamento vía `bumpTemporal()`.
+
+**Ubicación:**
+- Motor: `lib/calendario/coagulate.ts`
+- APIs: `app/api/calendario/coagulate/route.ts`, `app/api/calendario/blocks/[id]/route.ts`
+- UI: `components/calendario/calendario-workspace.tsx`
+
+**Tecnologías/Dependencias:** Prisma (`ContextEvent`), BabelProvider.
 
 ---
 
