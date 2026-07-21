@@ -51,10 +51,10 @@ export function PendingApprovals({
   if (transactions.length === 0) {
     return (
       <div className="finanzas-noir-panel rounded-xl px-4 py-6 text-center">
-        <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-zinc-500">
+        <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
           Sin pendientes
         </p>
-        <p className="mt-1 text-sm text-zinc-400">
+        <p className="mt-1 text-sm text-muted-foreground">
           Las transacciones analizadas aparecerán aquí para aprobación.
         </p>
       </div>
@@ -64,7 +64,7 @@ export function PendingApprovals({
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between gap-2">
-        <h2 className="font-mono text-[10px] uppercase tracking-[0.2em] text-zinc-500">
+        <h2 className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
           Pendientes de aprobación ({transactions.length})
         </h2>
         <button
@@ -90,7 +90,7 @@ export function PendingApprovals({
                   <div className="flex flex-wrap items-center gap-2">
                     <span
                       className={cn(
-                        "rounded px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-wider",
+                        "rounded px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-wider",
                         tx.type === "ingreso"
                           ? "bg-emerald-500/15 text-emerald-400"
                           : "bg-red-500/15 text-red-400",
@@ -98,11 +98,11 @@ export function PendingApprovals({
                     >
                       {tx.type}
                     </span>
-                    <span className="font-mono text-[9px] uppercase tracking-wider text-zinc-500">
+                    <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
                       {categoryLabel(tx)}
                     </span>
                     {tx.projectLabel ? (
-                      <span className="font-mono text-[9px] text-zinc-400">
+                      <span className="font-mono text-[10px] text-muted-foreground">
                         · {tx.projectLabel}
                       </span>
                     ) : null}
@@ -113,23 +113,23 @@ export function PendingApprovals({
                       <input
                         value={draftConcept}
                         onChange={(e) => setDraftConcept(e.target.value)}
-                        className="w-full rounded-lg border border-white/10 bg-black/40 px-2 py-1 text-sm text-zinc-100 outline-none"
+                        className="w-full rounded-lg border border-border bg-card/80 px-2 py-1 text-sm text-foreground outline-none"
                       />
                       <input
                         value={draftAmount}
                         onChange={(e) => setDraftAmount(e.target.value)}
                         type="number"
                         step="0.01"
-                        className="w-32 rounded-lg border border-white/10 bg-black/40 px-2 py-1 text-sm text-zinc-100 outline-none"
+                        className="w-32 rounded-lg border border-border bg-card/80 px-2 py-1 text-sm text-foreground outline-none"
                       />
                     </div>
                   ) : (
                     <>
-                      <p className="mt-1 truncate text-sm font-medium text-zinc-100">
+                      <p className="mt-1 truncate text-sm font-medium text-foreground">
                         {tx.concept}
                       </p>
                       {tx.vendor ? (
-                        <p className="text-xs text-zinc-500">{tx.vendor}</p>
+                        <p className="text-xs text-muted-foreground">{tx.vendor}</p>
                       ) : null}
                     </>
                   )}
@@ -168,7 +168,7 @@ export function PendingApprovals({
                           setDraftConcept(tx.concept);
                           setDraftAmount(String(tx.amount));
                         }}
-                        className="flex size-7 items-center justify-center rounded-lg text-zinc-500 hover:bg-white/5 hover:text-zinc-300"
+                        className="flex size-7 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted/50 hover:text-foreground/80"
                       >
                         <PencilIcon className="size-3.5" />
                       </button>
@@ -177,7 +177,7 @@ export function PendingApprovals({
                       type="button"
                       disabled={isBusy}
                       onClick={() => onReject(tx.id)}
-                      className="flex size-7 items-center justify-center rounded-lg text-zinc-500 hover:bg-red-500/10 hover:text-red-400"
+                      className="flex size-7 items-center justify-center rounded-lg text-muted-foreground hover:bg-red-500/10 hover:text-red-400"
                     >
                       <XIcon className="size-3.5" />
                     </button>

@@ -347,21 +347,21 @@ export function MetaMeteadorModal({
     >
       <button
         type="button"
-        className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+        className="absolute inset-0 bg-foreground/40 backdrop-blur-sm"
         onClick={handleClose}
         aria-label="Cerrar"
       />
 
-      <div className="relative z-10 flex max-h-[90vh] w-full max-w-5xl flex-col overflow-hidden rounded-2xl border border-violet-500/30 bg-slate-950 shadow-2xl shadow-violet-950/40">
-        <header className="flex flex-wrap items-center justify-between gap-3 border-b border-zinc-800 px-5 py-4">
+      <div className="relative z-10 flex max-h-[90vh] w-full max-w-5xl flex-col overflow-hidden rounded-2xl border border-primary/30 bg-background shadow-2xl shadow-foreground/20">
+        <header className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-5 py-4">
           <div>
-            <p className="text-xs font-medium uppercase tracking-wider text-violet-300/80">
+            <p className="text-xs font-medium uppercase tracking-wider text-primary/80">
               Meta-Meteador
             </p>
-            <h2 className="text-lg font-semibold text-zinc-50">
+            <h2 className="text-lg font-semibold text-foreground">
               Indexación en vivo
             </h2>
-            <p className="mt-1 text-xs text-zinc-500">
+            <p className="mt-1 text-xs text-muted-foreground">
               Solo archivos sin ID Meta-Meteador
               {startInfo
                 ? ` · ${startInfo.pending} pendientes · ${startInfo.skipped} omitidos`
@@ -398,8 +398,8 @@ export function MetaMeteadorModal({
           </div>
         </header>
 
-        <div className="border-b border-zinc-800 px-5 py-3">
-          <div className="mb-2 flex items-center justify-between text-xs text-zinc-500">
+        <div className="border-b border-border px-5 py-3">
+          <div className="mb-2 flex items-center justify-between text-xs text-muted-foreground">
             <span>
               {running
                 ? processing
@@ -411,9 +411,9 @@ export function MetaMeteadorModal({
               {processedCount}/{totalToProcess || "—"}
             </span>
           </div>
-          <div className="h-1.5 overflow-hidden rounded-full bg-zinc-800">
+          <div className="h-1.5 overflow-hidden rounded-full bg-muted">
             <div
-              className="h-full rounded-full bg-violet-500 transition-all duration-500"
+              className="h-full rounded-full bg-primary/20 transition-all duration-500"
               style={{ width: `${progressPct}%` }}
             />
           </div>
@@ -421,7 +421,7 @@ export function MetaMeteadorModal({
 
         <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">
           {rows.length === 0 && streamErrors.length === 0 && !running ? (
-            <p className="py-10 text-center text-sm text-zinc-500">
+            <p className="py-10 text-center text-sm text-muted-foreground">
               No hay documentos pendientes de indexación.
             </p>
           ) : null}
@@ -430,12 +430,12 @@ export function MetaMeteadorModal({
             {rows.map((row) => (
               <article
                 key={sessionRowKey(row)}
-                className="rounded-xl border border-zinc-800 bg-zinc-900/40"
+                className="rounded-xl border border-border bg-muted/40"
               >
                 <div className="flex flex-wrap items-start gap-3 p-3">
                   <button
                     type="button"
-                    className="mt-1 text-zinc-500 hover:text-zinc-300"
+                    className="mt-1 text-muted-foreground hover:text-foreground/80"
                     onClick={() =>
                       setRows((current) =>
                         current.map((entry) =>
@@ -470,26 +470,26 @@ export function MetaMeteadorModal({
                     }
                   >
                     <div className="flex flex-wrap items-center gap-2">
-                      <code className="rounded bg-violet-500/10 px-2 py-0.5 text-[11px] text-violet-300">
+                      <code className="rounded bg-primary/10 px-2 py-0.5 text-[11px] text-primary">
                         {shortId(row.documentId)}
                       </code>
                       {row.tituloLocked ? (
-                        <span className="text-[10px] uppercase tracking-wider text-zinc-500">
+                        <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
                           título manual
                         </span>
                       ) : null}
                       {row.accepted ? (
-                        <span className="text-[10px] uppercase tracking-wider text-emerald-400">
+                        <span className="text-[10px] uppercase tracking-wider text-primary">
                           título aplicado
                         </span>
                       ) : null}
                     </div>
 
                     <div className="grid gap-2 text-sm sm:grid-cols-[1fr_auto_1fr] sm:items-center">
-                      <p className="truncate text-zinc-400" title={row.oldFilename}>
+                      <p className="truncate text-muted-foreground" title={row.oldFilename}>
                         {row.oldFilename}
                       </p>
-                      <span className="hidden text-zinc-600 sm:inline">→</span>
+                      <span className="hidden text-muted-foreground sm:inline">→</span>
                       {row.isEditing ? (
                         <input
                           value={row.editedTitle}
@@ -503,15 +503,15 @@ export function MetaMeteadorModal({
                               ),
                             )
                           }
-                          className="w-full rounded-md border border-zinc-700 bg-zinc-950 px-2 py-1 text-zinc-100 outline-none focus:border-violet-500"
+                          className="w-full rounded-md border border-border bg-background px-2 py-1 text-foreground outline-none focus:border-primary/40"
                         />
                       ) : (
                         <p
                           className={cn(
                             "truncate font-medium",
                             row.canRename && !row.accepted
-                              ? "text-violet-200"
-                              : "text-zinc-200",
+                              ? "text-primary"
+                              : "text-foreground",
                           )}
                           title={row.editedTitle}
                         >
@@ -521,7 +521,7 @@ export function MetaMeteadorModal({
                     </div>
 
                     {row.error ? (
-                      <p className="text-xs text-red-400">{row.error}</p>
+                      <p className="text-xs text-destructive">{row.error}</p>
                     ) : null}
                   </button>
 
@@ -569,37 +569,37 @@ export function MetaMeteadorModal({
                 </div>
 
                 {row.expandedMeta ? (
-                  <div className="border-t border-zinc-800 px-4 py-3">
-                    <p className="mb-3 text-xs font-medium uppercase tracking-wider text-zinc-500">
+                  <div className="border-t border-border px-4 py-3">
+                    <p className="mb-3 text-xs font-medium uppercase tracking-wider text-muted-foreground">
                       Matriz cuántica
                     </p>
                     <dl className="grid gap-2 sm:grid-cols-2">
                       {metadataRows(row).map(([label, value]) => (
                         <div
                           key={label}
-                          className="rounded-lg border border-zinc-800/80 bg-zinc-950/60 px-3 py-2"
+                          className="rounded-lg border border-border bg-background/60 px-3 py-2"
                         >
-                          <dt className="text-[10px] uppercase tracking-wider text-zinc-500">
+                          <dt className="text-[10px] uppercase tracking-wider text-muted-foreground">
                             {label}
                           </dt>
-                          <dd className="mt-1 text-sm text-zinc-200">{value}</dd>
+                          <dd className="mt-1 text-sm text-foreground">{value}</dd>
                         </div>
                       ))}
                     </dl>
 
-                    <p className="mb-2 mt-4 text-xs font-medium uppercase tracking-wider text-zinc-500">
+                    <p className="mb-2 mt-4 text-xs font-medium uppercase tracking-wider text-muted-foreground">
                       Relevancia por área
                     </p>
                     <div className="grid gap-2 sm:grid-cols-3">
                       {META_AREAS.map((area) => (
                         <div
                           key={area}
-                          className="rounded-lg border border-zinc-800/80 bg-zinc-950/60 px-3 py-2"
+                          className="rounded-lg border border-border bg-background/60 px-3 py-2"
                         >
-                          <p className="text-xs text-zinc-400">{area}</p>
-                          <p className="text-sm font-medium text-zinc-100">
+                          <p className="text-xs text-muted-foreground">{area}</p>
+                          <p className="text-sm font-medium text-foreground">
                             {row.areas[area].score_1_12}/12
-                            <span className="ml-2 text-xs text-zinc-500">
+                            <span className="ml-2 text-xs text-muted-foreground">
                               ({row.areas[area].porcentaje}%)
                             </span>
                           </p>
@@ -609,7 +609,7 @@ export function MetaMeteadorModal({
 
                     <button
                       type="button"
-                      className="mt-4 flex w-full items-center gap-2 rounded-lg border border-zinc-800 px-3 py-2 text-left text-xs text-zinc-400 hover:bg-zinc-900/60"
+                      className="mt-4 flex w-full items-center gap-2 rounded-lg border border-border px-3 py-2 text-left text-xs text-muted-foreground hover:bg-muted/40"
                       onClick={() =>
                         setRows((current) =>
                           current.map((entry) =>
@@ -632,12 +632,12 @@ export function MetaMeteadorModal({
                     </button>
 
                     {row.expandedProcess ? (
-                      <div className="mt-3 space-y-3 rounded-lg border border-zinc-800 bg-zinc-950/80 p-3">
+                      <div className="mt-3 space-y-3 rounded-lg border border-border bg-background/80 p-3">
                         <div>
-                          <p className="text-[10px] uppercase tracking-wider text-zinc-500">
+                          <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
                             Modelo
                           </p>
-                          <p className="mt-1 text-xs text-zinc-300">
+                          <p className="mt-1 text-xs text-foreground/80">
                             {row.processTrace.modelUsed}
                             {row.processTrace.tituloEsManual
                               ? " · título conservado (manual)"
@@ -645,18 +645,18 @@ export function MetaMeteadorModal({
                           </p>
                         </div>
                         <div>
-                          <p className="text-[10px] uppercase tracking-wider text-zinc-500">
+                          <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
                             Prompt enviado
                           </p>
-                          <pre className="mt-1 max-h-48 overflow-auto whitespace-pre-wrap rounded-md bg-black/40 p-3 text-[11px] leading-relaxed text-zinc-400">
+                          <pre className="mt-1 max-h-48 overflow-auto whitespace-pre-wrap rounded-md bg-card/80 p-3 text-[11px] leading-relaxed text-muted-foreground">
                             {row.processTrace.userPrompt}
                           </pre>
                         </div>
                         <div>
-                          <p className="text-[10px] uppercase tracking-wider text-zinc-500">
+                          <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
                             Respuesta cruda de la IA
                           </p>
-                          <pre className="mt-1 max-h-48 overflow-auto whitespace-pre-wrap rounded-md bg-black/40 p-3 text-[11px] leading-relaxed text-zinc-400">
+                          <pre className="mt-1 max-h-48 overflow-auto whitespace-pre-wrap rounded-md bg-card/80 p-3 text-[11px] leading-relaxed text-muted-foreground">
                             {row.processTrace.rawResponse}
                           </pre>
                         </div>
@@ -670,25 +670,25 @@ export function MetaMeteadorModal({
             {streamErrors.map((entry) => (
               <article
                 key={`error-${sessionRowKey(entry)}`}
-                className="rounded-xl border border-red-500/30 bg-red-500/5 p-3"
+                className="rounded-xl border border-destructive/30 bg-destructive/5 p-3"
               >
                 <div className="flex items-center gap-2">
-                  <code className="rounded bg-red-500/10 px-2 py-0.5 text-[11px] text-red-300">
+                  <code className="rounded bg-destructive/10 px-2 py-0.5 text-[11px] text-destructive">
                     {shortId(entry.documentId)}
                   </code>
-                  <span className="truncate text-sm text-zinc-400">
+                  <span className="truncate text-sm text-muted-foreground">
                     {entry.oldFilename}
                   </span>
                 </div>
-                <p className="mt-2 text-xs text-red-300">{entry.error}</p>
+                <p className="mt-2 text-xs text-destructive">{entry.error}</p>
               </article>
             ))}
 
             {processing ? (
-              <article className="rounded-xl border border-dashed border-violet-500/40 bg-violet-500/5 p-3">
-                <div className="flex items-center gap-2 text-sm text-violet-200">
+              <article className="rounded-xl border border-dashed border-primary/40 bg-primary/5 p-3">
+                <div className="flex items-center gap-2 text-sm text-primary">
                   <Loader2Icon className="size-4 animate-spin" />
-                  <code className="text-[11px] text-violet-300">
+                  <code className="text-[11px] text-primary">
                     {shortId(processing.documentId)}
                   </code>
                   <span className="truncate">{processing.oldFilename}</span>

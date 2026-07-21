@@ -60,12 +60,12 @@ export function DeduplicatePanel() {
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="space-y-1">
           <div className="flex items-center gap-2">
-            <CopyIcon className="size-4 text-amber-400/80" />
-            <h2 className="font-mono text-sm font-medium text-white/90">
+            <CopyIcon className="size-4 text-accent" />
+            <h2 className="font-mono text-sm font-medium text-muted-foreground">
               Desduplicar
             </h2>
           </div>
-          <p className="max-w-xl font-mono text-[10px] leading-relaxed text-white/45">
+          <p className="max-w-xl font-mono text-[10px] leading-relaxed text-muted-foreground">
             Escanea nombres repetidos, sufijos (1)/(2)/copia y secuencias
             numéricas compartidas. Después elegís eliminar copias o procesarlas
             igual.
@@ -79,8 +79,8 @@ export function DeduplicatePanel() {
           className={cn(
             "inline-flex items-center gap-2 rounded border px-3 py-1.5 font-mono text-[10px] uppercase tracking-wider transition-all",
             isBusy
-              ? "cursor-wait border-white/8 text-white/30"
-              : "border-amber-500/35 bg-amber-500/10 text-amber-200 hover:bg-amber-500/15",
+              ? "cursor-wait border-border text-muted-foreground"
+              : "border-accent/35 bg-accent/10 text-accent hover:bg-accent/15",
           )}
         >
           {phase === "scanning" ? (
@@ -93,17 +93,17 @@ export function DeduplicatePanel() {
       </div>
 
       {!scan ? (
-        <p className="rounded border border-dashed border-white/10 py-6 text-center font-mono text-[10px] text-white/35">
+        <p className="rounded border border-dashed border-border py-6 text-center font-mono text-[10px] text-muted-foreground">
           Ejecutá el escaneo para detectar copias en la biblioteca.
         </p>
       ) : scan.groups.length === 0 ? (
-        <p className="rounded border border-emerald-500/20 bg-emerald-500/5 py-6 text-center font-mono text-[10px] text-emerald-300/80">
+        <p className="rounded border border-primary/20 bg-primary/5 py-6 text-center font-mono text-[10px] text-primary/80">
           Sin duplicados detectados · {scan.totalAssets} archivos únicos
         </p>
       ) : (
         <>
-          <div className="flex flex-wrap items-center gap-2 rounded border border-amber-500/20 bg-amber-500/5 px-3 py-2">
-            <span className="font-mono text-[10px] text-amber-200/90">
+          <div className="flex flex-wrap items-center gap-2 rounded border border-accent/20 bg-accent/5 px-3 py-2">
+            <span className="font-mono text-[10px] text-accent/90">
               {scan.duplicateCount} copia{scan.duplicateCount === 1 ? "" : "s"} en{" "}
               {scan.groups.length} grupo{scan.groups.length === 1 ? "" : "s"}
             </span>
@@ -112,7 +112,7 @@ export function DeduplicatePanel() {
                 type="button"
                 disabled={isBusy || allDuplicateIds.length === 0}
                 onClick={() => void handleDeleteAll()}
-                className="inline-flex items-center gap-1.5 rounded border border-red-500/30 bg-red-500/10 px-2.5 py-1 font-mono text-[10px] uppercase tracking-wider text-red-200 transition-colors hover:bg-red-500/15 disabled:opacity-40"
+                className="inline-flex items-center gap-1.5 rounded border border-destructive/30 bg-destructive/10 px-2.5 py-1 font-mono text-[10px] uppercase tracking-wider text-destructive transition-colors hover:bg-destructive/15 disabled:opacity-40"
               >
                 <Trash2Icon className="size-3" />
                 Eliminar copias
@@ -121,7 +121,7 @@ export function DeduplicatePanel() {
                 type="button"
                 disabled={isBusy}
                 onClick={handleProcessAnyway}
-                className="inline-flex items-center gap-1.5 rounded border border-white/15 px-2.5 py-1 font-mono text-[10px] uppercase tracking-wider text-white/70 transition-colors hover:border-sky-500/30 hover:text-sky-200"
+                className="inline-flex items-center gap-1.5 rounded border border-border px-2.5 py-1 font-mono text-[10px] uppercase tracking-wider text-muted-foreground transition-colors hover:border-primary/30 hover:text-primary"
               >
                 Procesar igual
               </button>
@@ -132,13 +132,13 @@ export function DeduplicatePanel() {
             {scan.groups.map((group) => (
               <li
                 key={group.id}
-                className="rounded border border-white/8 bg-black/25 p-3"
+                className="rounded border border-border bg-card/80 p-3"
               >
                 <div className="mb-2 flex flex-wrap items-center gap-2">
-                  <span className="rounded bg-white/8 px-2 py-0.5 font-mono text-[9px] uppercase tracking-wider text-white/55">
+                  <span className="rounded bg-muted/40 px-2 py-0.5 font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
                     {REASON_LABELS[group.reason]}
                   </span>
-                  <span className="font-mono text-[9px] text-white/30">
+                  <span className="font-mono text-[10px] text-muted-foreground">
                     clave: {group.normalizedKey}
                   </span>
                 </div>
@@ -153,12 +153,12 @@ export function DeduplicatePanel() {
                         className={cn(
                           "flex items-center justify-between gap-2 rounded px-2 py-1.5 font-mono text-[10px]",
                           isKeep
-                            ? "border border-emerald-500/25 bg-emerald-500/8 text-emerald-100/90"
-                            : "border border-white/6 text-white/55",
+                            ? "border border-primary/25 bg-primary/8 text-primary/90"
+                            : "border border-border/6 text-muted-foreground",
                         )}
                       >
                         <span className="min-w-0 truncate">{member.filename}</span>
-                        <span className="shrink-0 text-[9px] uppercase tracking-wider">
+                        <span className="shrink-0 text-[10px] uppercase tracking-wider">
                           {isKeep ? "conservar" : "copia"}
                         </span>
                       </li>

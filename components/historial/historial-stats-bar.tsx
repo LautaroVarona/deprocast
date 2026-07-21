@@ -25,38 +25,38 @@ export function HistorialStatsBar({ entries, agentCount }: HistorialStatsBarProp
 
   return (
     <div className="grid gap-3 sm:grid-cols-3">
-      <div className="rounded-lg border border-zinc-800/80 bg-zinc-900/40 p-3">
-        <div className="flex items-center gap-2 text-zinc-500">
+      <div className="rounded-lg border border-border bg-muted/40 p-3">
+        <div className="flex items-center gap-2 text-muted-foreground">
           <LayersIcon className="size-3.5" />
           <span className="font-mono text-[10px] uppercase tracking-wider">
             Eventos
           </span>
         </div>
-        <p className="mt-1 text-2xl font-semibold tabular-nums text-zinc-100">
+        <p className="mt-1 text-2xl font-semibold tabular-nums text-foreground">
           {entries.length}
         </p>
       </div>
 
-      <div className="rounded-lg border border-emerald-800/40 bg-emerald-950/20 p-3">
-        <div className="flex items-center gap-2 text-emerald-500/80">
+      <div className="rounded-lg border border-primary/40 bg-primary/20 p-3">
+        <div className="flex items-center gap-2 text-primary">
           <BotIcon className="size-3.5" />
           <span className="font-mono text-[10px] uppercase tracking-wider">
             Agentes activos
           </span>
         </div>
-        <p className="mt-1 text-2xl font-semibold tabular-nums text-emerald-100">
+        <p className="mt-1 text-2xl font-semibold tabular-nums text-primary">
           {agentCount}
         </p>
       </div>
 
-      <div className="rounded-lg border border-cyan-800/40 bg-cyan-950/20 p-3">
-        <div className="flex items-center gap-2 text-cyan-500/80">
+      <div className="rounded-lg border border-primary/40 bg-primary/20 p-3">
+        <div className="flex items-center gap-2 text-primary/80">
           <SparklesIcon className="size-3.5" />
           <span className="font-mono text-[10px] uppercase tracking-wider">
             Modelos IA
           </span>
         </div>
-        <p className="mt-1 text-2xl font-semibold tabular-nums text-cyan-100">
+        <p className="mt-1 text-2xl font-semibold tabular-nums text-primary">
           {models.size}
         </p>
       </div>
@@ -66,7 +66,7 @@ export function HistorialStatsBar({ entries, agentCount }: HistorialStatsBarProp
           {topCategories.map(([label, count]) => (
             <span
               key={label}
-              className="rounded-full border border-zinc-700/80 bg-zinc-950 px-2.5 py-1 font-mono text-[10px] text-zinc-400"
+              className="rounded-full border border-border bg-background px-2.5 py-1 font-mono text-[10px] text-muted-foreground"
             >
               {count} {label}
             </span>

@@ -111,9 +111,9 @@ export function CampoMultiSelect({
     (slug) => campos.find((c) => c.slug === slug) ?? getDefaultCampo(),
   );
 
-  const badgeClass = compact ? "h-5 text-[9px] px-1" : undefined;
+  const badgeClass = compact ? "h-5 text-[10px] px-1" : undefined;
   const controlClass = compact
-    ? "h-6 rounded border border-input bg-background px-1.5 font-mono text-[9px]"
+    ? "h-6 rounded border border-input bg-background px-1.5 font-mono text-[10px]"
     : "h-8 rounded-md border border-input bg-background px-2 font-mono text-[10px]";
 
   return (
@@ -160,7 +160,7 @@ export function CampoMultiSelect({
               onClick={() => setIsCreating((v) => !v)}
               className={cn(
                 "inline-flex shrink-0 items-center gap-0.5 rounded border border-border text-muted-foreground hover:bg-muted/60",
-                compact ? "h-6 px-1.5 text-[9px]" : "h-8 px-2 text-[10px]",
+                compact ? "h-6 px-1.5 text-[10px]" : "h-8 px-2 text-[10px]",
               )}
             >
               <PlusIcon className={compact ? "size-2.5" : "size-3"} />
@@ -170,7 +170,7 @@ export function CampoMultiSelect({
         )}
 
         {selected.length === 0 && disabled && (
-          <span className="font-mono text-[9px] text-muted-foreground">—</span>
+          <span className="font-mono text-[10px] text-muted-foreground">—</span>
         )}
       </div>
 
@@ -192,7 +192,7 @@ export function CampoMultiSelect({
             onClick={() => void handleCreate()}
             className={cn(
               "inline-flex shrink-0 items-center rounded bg-primary font-medium text-primary-foreground disabled:opacity-50",
-              compact ? "h-6 px-2 text-[9px]" : "h-8 px-2.5 text-[10px]",
+              compact ? "h-6 px-2 text-[10px]" : "h-8 px-2.5 text-[10px]",
             )}
           >
             {isSaving ? <Loader2Icon className="size-2.5 animate-spin" /> : "OK"}

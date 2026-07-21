@@ -46,10 +46,10 @@ export function ActividadesResumen({ selectedDay }: ActividadesResumenProps) {
   if (events.length === 0) return null;
 
   return (
-    <section className="shrink-0 border-t border-white/10 px-3 py-2">
+    <section className="shrink-0 border-t border-border px-3 py-2">
       <div className="mb-1.5 flex items-center gap-1.5">
-        <CalendarIcon className="size-3.5 text-cyan-300/70" />
-        <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-white/40">
+        <CalendarIcon className="size-3.5 text-primary/70" />
+        <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
           Actividades
         </p>
       </div>
@@ -58,7 +58,7 @@ export function ActividadesResumen({ selectedDay }: ActividadesResumenProps) {
           <li
             key={event.id}
             className={cn(
-              "truncate rounded-md bg-white/5 px-2 py-1 font-mono text-[11px] text-white/60",
+              "truncate rounded-md bg-muted/40 px-2 py-1 font-mono text-[11px] text-muted-foreground",
             )}
           >
             {event.content}

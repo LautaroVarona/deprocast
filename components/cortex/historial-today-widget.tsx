@@ -43,13 +43,13 @@ function CortexActivityItem({ entry }: { entry: ActivityEntry }) {
       <p className="mt-1 text-sm font-medium">{entry.title}</p>
       <div className="mt-1.5 flex flex-wrap gap-1.5">
         {entry.agentName ? (
-          <span className="inline-flex items-center gap-1 rounded-full border border-emerald-500/25 bg-emerald-500/10 px-2 py-0.5 text-[10px] text-emerald-700 dark:text-emerald-300">
+          <span className="inline-flex items-center gap-1 rounded-full border border-primary/25 bg-primary/10 px-2 py-0.5 text-[10px] text-primary dark:text-primary">
             <BotIcon className="size-3" />
             {entry.agentName}
           </span>
         ) : null}
         {entry.modelUsed ? (
-          <span className="inline-flex items-center gap-1 rounded-full border border-cyan-500/25 bg-cyan-500/10 px-2 py-0.5 text-[10px] text-cyan-700 dark:text-cyan-300">
+          <span className="inline-flex items-center gap-1 rounded-full border border-primary/25 bg-primary/10 px-2 py-0.5 text-[10px] text-primary dark:text-primary">
             <CpuIcon className="size-3" />
             {entry.modelUsed}
           </span>
@@ -106,7 +106,7 @@ export function HistorialTodayWidget() {
     >
       <div className="mb-4 flex items-center justify-between gap-3">
         <div className="flex items-center gap-2">
-          <HistoryIcon className="size-4 text-cyan-500" />
+          <HistoryIcon className="size-4 text-primary" />
           <div>
             <h2 className="text-sm font-medium tracking-wide text-foreground uppercase">
               Actividad de hoy

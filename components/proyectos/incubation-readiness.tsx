@@ -18,7 +18,7 @@ export function IncubationReadinessPanel({
   return (
     <div className="space-y-3">
       <div className="space-y-1.5">
-        <p className="font-mono text-[9px] tracking-[0.15em] text-muted-foreground uppercase">
+        <p className="font-mono text-[10px] tracking-[0.15em] text-muted-foreground uppercase">
           Completitud
         </p>
         <ul className="space-y-1 text-[11px]">

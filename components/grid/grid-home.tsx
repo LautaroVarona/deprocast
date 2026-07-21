@@ -11,7 +11,7 @@ export function GridHome() {
   const [selectedDay, setSelectedDay] = useState<DayOffset>("today");
 
   return (
-    <div className="grid-noir-root flex h-[calc(100dvh-3.5rem)] flex-col overflow-hidden bg-[#050506] text-white">
+    <div className="grid-noir-root flex h-[calc(100dvh-3.5rem)] flex-col overflow-hidden bg-background text-foreground">
       <DayNavigator selectedDay={selectedDay} onDayChange={setSelectedDay} />
       <TrincheraPanel selectedDay={selectedDay} />
       <ActividadesResumen selectedDay={selectedDay} />

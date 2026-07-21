@@ -38,20 +38,20 @@ export function TrincheraPanel({ selectedDay }: TrincheraPanelProps) {
   return (
     <section className="flex min-h-0 flex-1 flex-col overflow-hidden px-3 py-2">
       <header className="mb-2 flex shrink-0 items-center gap-2">
-        <ShieldIcon className="size-4 text-rose-300/80" />
+        <ShieldIcon className="size-4 text-destructive/80" />
         <div>
-          <p className="font-mono text-[10px] uppercase tracking-[0.24em] text-white/40">
+          <p className="font-mono text-[10px] uppercase tracking-[0.24em] text-muted-foreground">
             Trinchera
           </p>
-          <h2 className="text-sm font-medium text-white">Asaltos del día</h2>
+          <h2 className="text-sm font-medium text-foreground">Asaltos del día</h2>
         </div>
       </header>
 
       <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-hidden">
         {isLoading ? (
-          <p className="font-mono text-xs text-white/30">Cargando asaltos…</p>
+          <p className="font-mono text-xs text-muted-foreground">Cargando asaltos…</p>
         ) : asaltos.length === 0 ? (
-          <p className="rounded-lg border border-dashed border-white/10 px-3 py-4 text-center font-mono text-xs text-white/35">
+          <p className="rounded-lg border border-dashed border-border px-3 py-4 text-center font-mono text-xs text-muted-foreground">
             Sin asaltos para este día. Reconocé y calibrá tareas en Pendientes.
           </p>
         ) : (

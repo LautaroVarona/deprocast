@@ -84,11 +84,11 @@ function AssetListSection({
 
   return (
     <section className="space-y-1.5">
-      <p className="px-0.5 font-mono text-[9px] tracking-wide text-muted-foreground uppercase">
+      <p className="px-0.5 font-mono text-[10px] tracking-wide text-muted-foreground uppercase">
         {title} · {assets.length}
       </p>
       {assets.length === 0 ? (
-        <p className="py-2 text-center font-mono text-[9px] text-muted-foreground/70">
+        <p className="py-2 text-center font-mono text-[10px] text-muted-foreground/70">
           {emptyLabel}
         </p>
       ) : (
@@ -114,7 +114,7 @@ function AssetPreview({ asset }: { asset: AssetRow }) {
         {asset.filename}
       </p>
       {asset.transcript?.preview && (
-        <p className="mt-1 line-clamp-2 font-mono text-[9px] leading-relaxed text-muted-foreground">
+        <p className="mt-1 line-clamp-2 font-mono text-[10px] leading-relaxed text-muted-foreground">
           {asset.transcript.preview}
         </p>
       )}
@@ -300,11 +300,11 @@ export function AudioChannel() {
         <div className="flex items-center gap-2">
           <Link
             href="/audio"
-            className="font-mono text-[9px] text-primary underline-offset-2 hover:underline"
+            className="font-mono text-[10px] text-primary underline-offset-2 hover:underline"
           >
             Estación Audio →
           </Link>
-          <Badge variant="outline" className="font-mono text-[9px]">
+          <Badge variant="outline" className="font-mono text-[10px]">
             {queueLabel}
           </Badge>
         </div>
@@ -321,7 +321,7 @@ export function AudioChannel() {
 
         <div className="flex min-h-0 flex-col overflow-hidden rounded border border-border bg-muted/20">
           <div className="flex shrink-0 items-center justify-between gap-2 border-b border-border px-2 py-1.5">
-            <p className="font-mono text-[9px] tracking-wide text-muted-foreground uppercase">
+            <p className="font-mono text-[10px] tracking-wide text-muted-foreground uppercase">
               Transcripciones · {transcribedCount}
               {ingested.length > 0 && (
                 <span className="normal-case text-foreground/50">
@@ -338,7 +338,7 @@ export function AudioChannel() {
                   variant="secondary"
                   disabled={isAnyPurifying}
                   onClick={() => void handleIngestAll()}
-                  className="h-6 gap-1 font-mono text-[9px]"
+                  className="h-6 gap-1 font-mono text-[10px]"
                 >
                   {purifyingAll ? (
                     <>
@@ -355,7 +355,7 @@ export function AudioChannel() {
               )}
               <Link
                 href="/validar"
-                className="font-mono text-[9px] text-primary underline-offset-2 hover:underline"
+                className="font-mono text-[10px] text-primary underline-offset-2 hover:underline"
               >
                 Validar →
               </Link>
@@ -390,7 +390,7 @@ export function AudioChannel() {
                           disabled={isPurifying || isAnyPurifying}
                           onClick={() => handleIngest(asset)}
                           className={cn(
-                            "shrink-0 gap-1 font-mono text-[9px]",
+                            "shrink-0 gap-1 font-mono text-[10px]",
                             isPurifying && "opacity-80",
                           )}
                         >
@@ -421,13 +421,13 @@ export function AudioChannel() {
                         {reviewId ? (
                           <Link
                             href={`/validar?id=${reviewId}`}
-                            className="flex shrink-0 items-center gap-1 font-mono text-[9px] text-primary underline-offset-2 hover:underline"
+                            className="flex shrink-0 items-center gap-1 font-mono text-[10px] text-primary underline-offset-2 hover:underline"
                           >
                             <CheckCircle2Icon className="size-3" />
                             En validación →
                           </Link>
                         ) : (
-                          <span className="flex shrink-0 items-center gap-1 font-mono text-[9px] text-muted-foreground">
+                          <span className="flex shrink-0 items-center gap-1 font-mono text-[10px] text-muted-foreground">
                             <CheckCircle2Icon className="size-3" />
                             En validación
                           </span>
@@ -443,7 +443,7 @@ export function AudioChannel() {
                       <AssetPreview asset={asset} />
                       <Link
                         href={`/audio/${asset.id}`}
-                        className="shrink-0 font-mono text-[9px] text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+                        className="shrink-0 font-mono text-[10px] text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
                       >
                         Ver detalle →
                       </Link>

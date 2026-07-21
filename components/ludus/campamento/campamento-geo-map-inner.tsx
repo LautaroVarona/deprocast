@@ -69,7 +69,7 @@ export function CampamentoGeoMapInner({
     <MapContainer
       center={[39.503, -0.44]}
       zoom={12}
-      className="h-full w-full !bg-[#0a0a0c]"
+      className="h-full w-full !bg-background"
       scrollWheelZoom
     >
       <TileLayer
@@ -153,7 +153,7 @@ export function CampamentoGeoMapInner({
                   type="button"
                   disabled={busyId === item.blockId}
                   onClick={() => onComplete(item.blockKind, item.blockId)}
-                  className="inline-flex w-full items-center justify-center gap-1.5 rounded-md bg-emerald-600 px-2 py-1.5 text-xs font-medium text-white hover:bg-emerald-500 disabled:opacity-50"
+                  className="inline-flex w-full items-center justify-center gap-1.5 rounded-md bg-primary px-2 py-1.5 text-xs font-medium text-foreground hover:bg-primary disabled:opacity-50"
                 >
                   {busyId === item.blockId ? (
                     <Loader2Icon className="size-3 animate-spin" />

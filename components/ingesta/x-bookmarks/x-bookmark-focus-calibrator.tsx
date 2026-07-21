@@ -153,35 +153,35 @@ export function XBookmarkFocusCalibrator({
 
   return createPortal(
     <div
-      className="x-bookmark-noir-root fixed inset-0 z-[60] flex h-dvh max-h-dvh flex-col overflow-hidden text-white"
+      className="x-bookmark-noir-root fixed inset-0 z-[60] flex h-dvh max-h-dvh flex-col overflow-hidden text-foreground"
       role="dialog"
       aria-modal="true"
       aria-label="Calibración X-Bookmark en modo foco"
     >
-      <header className="shrink-0 border-b border-white/10 px-4 py-3 sm:px-6">
+      <header className="shrink-0 border-b border-border px-4 py-3 sm:px-6">
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0 flex-1">
-            <p className="font-mono text-[10px] tracking-[0.28em] text-white/40 uppercase">
+            <p className="font-mono text-[10px] tracking-[0.28em] text-muted-foreground uppercase">
               Noir · Vibe Calibrator
             </p>
             <div className="mt-1 flex flex-wrap items-baseline gap-x-3 gap-y-1">
-              <p className="font-mono text-sm text-white/80">
-                <span className="font-semibold text-white">{remaining}</span> restante
+              <p className="font-mono text-sm text-muted-foreground">
+                <span className="font-semibold text-foreground">{remaining}</span> restante
                 {remaining === 1 ? "" : "s"}
               </p>
-              <p className="font-mono text-xs text-white/40">
+              <p className="font-mono text-xs text-muted-foreground">
                 {completed} de {sessionTotalRef.current} · {progress}%
               </p>
             </div>
             <div
-              className="mt-2.5 h-1 overflow-hidden rounded-full bg-white/10"
+              className="mt-2.5 h-1 overflow-hidden rounded-full bg-muted/40"
               role="progressbar"
               aria-valuenow={progress}
               aria-valuemin={0}
               aria-valuemax={100}
             >
               <div
-                className="h-full rounded-full bg-gradient-to-r from-white/35 to-white/85 transition-[width] duration-300"
+                className="h-full rounded-full bg-gradient-to-r from-foreground/35 to-foreground/85 transition-[width] duration-300"
                 style={{ width: `${Math.max(progress, remaining > 0 ? 2 : 0)}%` }}
               />
             </div>
@@ -189,7 +189,7 @@ export function XBookmarkFocusCalibrator({
           <button
             type="button"
             onClick={onClose}
-            className="rounded-md border border-white/10 px-2.5 py-1.5 font-mono text-[10px] text-white/55 transition-colors hover:border-white/20 hover:bg-white/[0.04] hover:text-white"
+            className="rounded-md border border-border px-2.5 py-1.5 font-mono text-[10px] text-muted-foreground transition-colors hover:border-border hover:bg-foreground/[0.04] hover:text-foreground"
           >
             Salir · Esc
           </button>
@@ -217,7 +217,7 @@ export function XBookmarkFocusCalibrator({
             />
           </>
         ) : (
-          <p className="font-mono text-sm text-white/60">Cola vacía</p>
+          <p className="font-mono text-sm text-muted-foreground">Cola vacía</p>
         )}
       </main>
     </div>,

@@ -23,16 +23,16 @@ export function CastilloGridTabs() {
   };
 
   return (
-    <div className="shrink-0 border-b border-white/10 p-3">
+    <div className="shrink-0 border-b border-border p-3">
       <div className="mb-2 flex items-center justify-between">
-        <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-white/40">
+        <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
           Grids
         </p>
         <Button
           type="button"
           variant="ghost"
           size="icon-sm"
-          className="size-6 text-white/50 hover:bg-white/5 hover:text-white"
+          className="size-6 text-muted-foreground hover:bg-muted/50 hover:text-foreground"
           onClick={() => setIsAdding((value) => !value)}
           aria-label="Nuevo grid"
         >
@@ -50,12 +50,12 @@ export function CastilloGridTabs() {
             className={cn(
               "rounded-lg px-2.5 py-1.5 text-left text-xs transition-colors",
               grid.id === activeGridId
-                ? "bg-white/10 text-white"
-                : "text-white/50 hover:bg-white/5 hover:text-white/80",
+                ? "bg-muted/40 text-foreground"
+                : "text-muted-foreground hover:bg-muted/50 hover:text-muted-foreground",
             )}
           >
             <span className="font-medium">{grid.name}</span>
-            <span className="ml-2 font-mono text-[10px] text-white/30">
+            <span className="ml-2 font-mono text-[10px] text-muted-foreground">
               {grid.cardCount}
             </span>
           </button>
@@ -68,7 +68,7 @@ export function CastilloGridTabs() {
             value={newName}
             onChange={(event) => setNewName(event.target.value)}
             placeholder="Nombre del grid"
-            className="min-w-0 flex-1 rounded-md border border-white/10 bg-black/40 px-2 py-1 text-xs text-white placeholder:text-white/30"
+            className="min-w-0 flex-1 rounded-md border border-border bg-card/80 px-2 py-1 text-xs text-foreground placeholder:text-muted-foreground"
             onKeyDown={(event) => {
               if (event.key === "Enter") void handleCreate();
             }}

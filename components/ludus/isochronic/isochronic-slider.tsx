@@ -39,27 +39,27 @@ export function IsochronicSlider({
           <p
             className={cn(
               "font-mono text-[10px] font-semibold uppercase tracking-[0.2em]",
-              active ? "text-rose-200" : "text-white/75",
+              active ? "text-destructive" : "text-muted-foreground",
             )}
           >
             {label}
           </p>
           {sublabel ? (
-            <p className="font-mono text-[9px] text-white/45">{sublabel}</p>
+            <p className="font-mono text-[10px] text-muted-foreground">{sublabel}</p>
           ) : null}
         </div>
         <span
           className={cn(
             "font-mono text-lg font-semibold tabular-nums",
-            active ? "text-white" : "text-white/85",
+            active ? "text-foreground" : "text-muted-foreground",
           )}
         >
           {displayValue}
-          <span className="ml-0.5 text-xs text-white/35">{unit}</span>
+          <span className="ml-0.5 text-xs text-muted-foreground">{unit}</span>
         </span>
       </div>
 
-      <div className="flex justify-between px-0.5 font-mono text-[9px] text-white/50">
+      <div className="flex justify-between px-0.5 font-mono text-[10px] text-muted-foreground">
         <span>
           {min}
           {unit}

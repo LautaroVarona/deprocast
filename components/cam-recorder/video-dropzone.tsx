@@ -41,12 +41,12 @@ export function VideoDropzone() {
     return (
       <div className="cam-recorder-noir-panel flex items-center justify-between gap-4 px-4 py-3">
         <div className="flex min-w-0 items-center gap-3">
-          <FilmIcon className="size-4 shrink-0 text-emerald-400/70" />
+          <FilmIcon className="size-4 shrink-0 text-primary/70" />
           <div className="min-w-0">
-            <p className="truncate font-mono text-xs text-white/80">
+            <p className="truncate font-mono text-xs text-muted-foreground">
               {videoFile.name}
             </p>
-            <p className="font-mono text-[10px] text-white/35">
+            <p className="font-mono text-[10px] text-muted-foreground">
               {(videoFile.size / (1024 * 1024)).toFixed(1)} MB · listo para
               análisis
             </p>
@@ -55,7 +55,7 @@ export function VideoDropzone() {
         <button
           type="button"
           onClick={clearVideo}
-          className="shrink-0 rounded border border-white/10 px-2.5 py-1 font-mono text-[10px] uppercase tracking-wider text-white/45 transition-colors hover:border-white/20 hover:text-white/70"
+          className="shrink-0 rounded border border-border px-2.5 py-1 font-mono text-[10px] uppercase tracking-wider text-muted-foreground transition-colors hover:border-border hover:text-muted-foreground"
         >
           Reemplazar
         </button>
@@ -84,21 +84,21 @@ export function VideoDropzone() {
         className={cn(
           "cam-recorder-noir-panel group flex w-full flex-col items-center justify-center gap-3 border-dashed px-6 py-14 transition-all duration-300",
           isDragging
-            ? "border-emerald-500/40 bg-emerald-500/5"
-            : "border-white/10 hover:border-white/20 hover:bg-white/[0.02]",
+            ? "border-primary/40 bg-primary/5"
+            : "border-border hover:border-border hover:bg-foreground/[0.02]",
         )}
       >
         <UploadCloudIcon
           className={cn(
             "size-8 transition-colors",
-            isDragging ? "text-emerald-400" : "text-white/25 group-hover:text-white/40",
+            isDragging ? "text-primary" : "text-muted-foreground group-hover:text-muted-foreground",
           )}
         />
         <div className="space-y-1 text-center">
-          <p className="font-mono text-xs text-white/60">
+          <p className="font-mono text-xs text-muted-foreground">
             Arrastrá una grabación de pantalla
           </p>
-          <p className="font-mono text-[10px] text-white/30">
+          <p className="font-mono text-[10px] text-muted-foreground">
             .mp4 · .m4v · .mov · .webm · .mkv
           </p>
         </div>
@@ -117,7 +117,7 @@ export function VideoDropzone() {
       />
 
       {localError ? (
-        <p className="font-mono text-[10px] text-rose-400/80">{localError}</p>
+        <p className="font-mono text-[10px] text-destructive/80">{localError}</p>
       ) : null}
     </div>
   );

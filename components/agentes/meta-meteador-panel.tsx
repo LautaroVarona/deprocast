@@ -43,7 +43,7 @@ export function MetaMeteadorPanel() {
 
   return (
     <>
-      <section className="rounded-xl border border-violet-500/30 bg-violet-500/5 p-5">
+      <section className="rounded-xl border border-primary/30 bg-primary/5 p-5">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="space-y-2">
             <div className="flex items-center gap-2">
@@ -51,15 +51,15 @@ export function MetaMeteadorPanel() {
                 🏷️
               </span>
               <div>
-                <h2 className="text-sm font-semibold text-zinc-50">
+                <h2 className="text-sm font-semibold text-foreground">
                   Meta-Meteador
                 </h2>
-                <p className="text-xs text-zinc-500">
+                <p className="text-xs text-muted-foreground">
                   Indexación de metadatos desacoplados para documentos validados
                 </p>
               </div>
             </div>
-            <p className="max-w-2xl text-xs leading-relaxed text-zinc-400">
+            <p className="max-w-2xl text-xs leading-relaxed text-muted-foreground">
               Asigna título (3–7 palabras si no es manual), matriz cuántica y
               relevancia 1–12 para 6 áreas. Solo procesa archivos sin ID
               Meta-Meteador. Los títulos nuevos se aplican cuando vos los
@@ -84,7 +84,7 @@ export function MetaMeteadorPanel() {
         </div>
 
         <div className="mt-4 space-y-2">
-          <div className="flex items-center justify-between text-xs text-zinc-500">
+          <div className="flex items-center justify-between text-xs text-muted-foreground">
             <span>Cobertura de metadatos</span>
             {loadingCoverage ? (
               <span>cargando…</span>
@@ -97,9 +97,9 @@ export function MetaMeteadorPanel() {
               <span>—</span>
             )}
           </div>
-          <div className="h-2 overflow-hidden rounded-full bg-zinc-800">
+          <div className="h-2 overflow-hidden rounded-full bg-muted">
             <div
-              className="h-full rounded-full bg-violet-500 transition-all duration-500"
+              className="h-full rounded-full bg-primary/20 transition-all duration-500"
               style={{ width: `${pct}%` }}
             />
           </div>

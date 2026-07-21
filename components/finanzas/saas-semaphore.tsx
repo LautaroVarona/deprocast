@@ -22,10 +22,10 @@ export function SaasSemaphore({ metrics }: SaasSemaphoreProps) {
     <div className="finanzas-noir-panel rounded-xl p-4">
       <div className="flex items-start justify-between gap-2">
         <div>
-          <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-zinc-500">
+          <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
             Semáforo SaaS
           </p>
-          <p className="mt-0.5 text-xs text-zinc-500">Tier terciario · suscripciones activas</p>
+          <p className="mt-0.5 text-xs text-muted-foreground">Tier terciario · suscripciones activas</p>
         </div>
         <span className="font-mono text-[10px] text-violet-400">
           {formatter.format(monthlyTotal)}/mes
@@ -33,17 +33,17 @@ export function SaasSemaphore({ metrics }: SaasSemaphoreProps) {
       </div>
 
       {subscriptions.length === 0 ? (
-        <p className="mt-4 text-sm text-zinc-500">Sin suscripciones activas registradas.</p>
+        <p className="mt-4 text-sm text-muted-foreground">Sin suscripciones activas registradas.</p>
       ) : (
         <ul className="mt-4 space-y-2">
           {subscriptions.map((sub) => (
             <li
               key={sub.id}
-              className="flex items-center justify-between gap-3 rounded-lg border border-white/5 bg-black/20 px-3 py-2"
+              className="flex items-center justify-between gap-3 rounded-lg border border-border bg-muted/40 px-3 py-2"
             >
               <div className="min-w-0">
-                <p className="truncate text-sm text-zinc-100">{sub.vendor}</p>
-                <p className="truncate text-xs text-zinc-500">
+                <p className="truncate text-sm text-foreground">{sub.vendor}</p>
+                <p className="truncate text-xs text-muted-foreground">
                   {sub.projectLabel ?? "Sin proyecto"}
                   {sub.isRecurring ? " · recurrente" : ""}
                 </p>

@@ -58,11 +58,11 @@ export function LudusWorldPage() {
         <section className="mx-auto w-full max-w-5xl px-4 sm:px-6">
           <div className="castillo-card space-y-4 p-5">
             <div className="flex items-center gap-2">
-              <TrophyIcon className="size-4 text-amber-300" />
-              <h2 className="font-medium text-white">
+              <TrophyIcon className="size-4 text-accent" />
+              <h2 className="font-medium text-foreground">
                 Estatuas del Castillo
               </h2>
-              <span className="ml-auto font-mono text-[10px] text-amber-300/70">
+              <span className="ml-auto font-mono text-[10px] text-accent">
                 {stats.signalPoints} PS disponibles
               </span>
             </div>
@@ -76,20 +76,20 @@ export function LudusWorldPage() {
                     className={cn(
                       "rounded-xl border p-4",
                       unlocked
-                        ? "border-amber-500/40 bg-amber-500/10"
-                        : "border-white/8 bg-black/25",
+                        ? "border-accent/40 bg-accent/10"
+                        : "border-border bg-card/80",
                     )}
                   >
-                    <p className="font-medium text-white">{statue.name}</p>
-                    <p className="mt-1 text-xs text-white/45">
+                    <p className="font-medium text-foreground">{statue.name}</p>
+                    <p className="mt-1 text-xs text-muted-foreground">
                       {statue.description}
                     </p>
                     <div className="mt-3 flex items-center justify-between">
-                      <span className="font-mono text-[10px] text-amber-200/80">
+                      <span className="font-mono text-[10px] text-accent/80">
                         {statue.cost} PS
                       </span>
                       {unlocked ? (
-                        <span className="font-mono text-[10px] text-emerald-300">
+                        <span className="font-mono text-[10px] text-primary">
                           Desbloqueada
                         </span>
                       ) : (
@@ -98,7 +98,7 @@ export function LudusWorldPage() {
                           size="sm"
                           variant="outline"
                           disabled={!canAfford || unlockingId === statue.id}
-                          className="h-7 border-amber-500/30 text-xs text-amber-200"
+                          className="h-7 border-accent/30 text-xs text-accent"
                           onClick={() => void unlock(statue.id)}
                         >
                           {unlockingId === statue.id ? (

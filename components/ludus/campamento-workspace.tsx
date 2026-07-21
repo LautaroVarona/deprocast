@@ -86,15 +86,15 @@ export function CampamentoWorkspace() {
             <ArrowLeftIcon className="size-3.5" />
             Campamento
           </Link>
-          <TentIcon className="size-5 text-emerald-400/80" />
+          <TentIcon className="size-5 text-primary/80" />
           <div>
-            <p className="font-mono text-[10px] uppercase tracking-[0.28em] text-emerald-400/60">
+            <p className="font-mono text-[10px] uppercase tracking-[0.28em] text-primary/60">
               Beta · Organización meso
             </p>
-            <h1 className="text-2xl font-semibold text-white">Campamento</h1>
+            <h1 className="text-2xl font-semibold text-foreground">Campamento</h1>
           </div>
         </div>
-        <p className="max-w-2xl text-sm text-white/50">
+        <p className="max-w-2xl text-sm text-muted-foreground">
           Traducí la estrategia del Castillo en táctica semanal. La barra de
           energía cruza telemetría de Salud con tu capacidad de asignar
           Prioridades Doradas.
@@ -102,7 +102,7 @@ export function CampamentoWorkspace() {
       </header>
 
       {isLoading ? (
-        <div className="flex justify-center py-20 text-white/40">
+        <div className="flex justify-center py-20 text-muted-foreground">
           <Loader2Icon className="size-6 animate-spin" />
         </div>
       ) : energy ? (
@@ -110,20 +110,20 @@ export function CampamentoWorkspace() {
           <section className="castillo-card space-y-4 p-5">
             <div className="flex items-center justify-between gap-4">
               <div className="flex items-center gap-2">
-                <BatteryMediumIcon className="size-4 text-emerald-300" />
-                <h2 className="font-medium text-white">Abastecimiento</h2>
+                <BatteryMediumIcon className="size-4 text-primary" />
+                <h2 className="font-medium text-foreground">Abastecimiento</h2>
               </div>
-              <span className="font-mono text-[10px] text-white/35">
+              <span className="font-mono text-[10px] text-muted-foreground">
                 Semana desde {energy.weekLabel}
               </span>
             </div>
 
             <div className="flex items-end justify-between">
-              <p className="text-3xl font-semibold tabular-nums text-white">
+              <p className="text-3xl font-semibold tabular-nums text-foreground">
                 {energy.energyPercent}
-                <span className="text-lg text-white/50">%</span>
+                <span className="text-lg text-muted-foreground">%</span>
               </p>
-              <div className="text-right font-mono text-[11px] text-white/40">
+              <div className="text-right font-mono text-[11px] text-muted-foreground">
                 {energy.avgSleepHours !== null ? (
                   <p>Sueño prom: {energy.avgSleepHours}h</p>
                 ) : (
@@ -135,26 +135,26 @@ export function CampamentoWorkspace() {
               </div>
             </div>
 
-            <div className="relative h-3 overflow-hidden rounded-full bg-white/5 ring-1 ring-white/10">
+            <div className="relative h-3 overflow-hidden rounded-full bg-muted/40 ring-1 ring-border">
               <div
                 className={cn(
                   "absolute inset-y-0 left-0 rounded-full bg-gradient-to-r transition-all",
                   energy.lowTelemetry
-                    ? "from-rose-600/80 to-rose-400/60"
-                    : "from-emerald-600/80 via-emerald-400/70 to-emerald-200/80",
+                    ? "from-destructive/80 to-destructive/60"
+                    : "from-primary/80 via-primary/70 to-primary/80",
                 )}
                 style={{ width: `${energy.energyPercent}%` }}
               />
             </div>
 
             {energy.lowTelemetry ? (
-              <p className="flex items-center gap-2 font-mono text-[11px] text-rose-300/80">
+              <p className="flex items-center gap-2 font-mono text-[11px] text-destructive/80">
                 <FlameIcon className="size-3.5" />
                 Telemetría base baja — máximo{" "}
                 {energy.maxGoldenPrioritiesPerDay} Prioridad Dorada por día
               </p>
             ) : (
-              <p className="font-mono text-[11px] text-white/40">
+              <p className="font-mono text-[11px] text-muted-foreground">
                 Hasta {energy.maxGoldenPrioritiesPerDay} Prioridades Doradas hoy ·{" "}
                 {energy.goldenPrioritiesAssigned} asignadas
               </p>
@@ -163,19 +163,19 @@ export function CampamentoWorkspace() {
 
           <section className="castillo-card space-y-4 p-5">
             <div className="flex items-center gap-2">
-              <HammerIcon className="size-4 text-amber-300" />
-              <h2 className="font-medium text-white">Forjado de Tareas</h2>
+              <HammerIcon className="size-4 text-accent" />
+              <h2 className="font-medium text-foreground">Forjado de Tareas</h2>
             </div>
 
             <div className="grid gap-3 sm:grid-cols-2">
               <label className="space-y-1">
-                <span className="font-mono text-[10px] uppercase text-white/40">
+                <span className="font-mono text-[10px] uppercase text-muted-foreground">
                   Proyecto
                 </span>
                 <select
                   value={projectId}
                   onChange={(event) => setProjectId(event.target.value)}
-                  className="w-full rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-sm text-white"
+                  className="w-full rounded-lg border border-border bg-card/80 px-3 py-2 text-sm text-foreground"
                 >
                   {snapshot?.projects.map((project) => (
                     <option key={project.id} value={project.id}>
@@ -186,14 +186,14 @@ export function CampamentoWorkspace() {
               </label>
 
               <label className="space-y-1 sm:col-span-2">
-                <span className="font-mono text-[10px] uppercase text-white/40">
+                <span className="font-mono text-[10px] uppercase text-muted-foreground">
                   Micro-paso (≤15 min)
                 </span>
                 <input
                   value={title}
                   onChange={(event) => setTitle(event.target.value)}
                   placeholder="Ej: Revisar borrador del capítulo 3"
-                  className="w-full rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-sm text-white placeholder:text-white/25"
+                  className="w-full rounded-lg border border-border bg-card/80 px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground"
                 />
               </label>
             </div>
@@ -206,8 +206,8 @@ export function CampamentoWorkspace() {
                 className={cn(
                   "inline-flex items-center gap-2 rounded-full border px-3 py-1.5 font-mono text-[11px] transition-colors",
                   isGolden
-                    ? "border-amber-400/50 bg-amber-500/20 text-amber-200"
-                    : "border-white/10 bg-white/5 text-white/50 hover:bg-white/10",
+                    ? "border-accent/50 bg-accent/20 text-accent"
+                    : "border-border bg-muted/40 text-muted-foreground hover:bg-muted/50",
                   !energy.canAssignMoreGolden &&
                     !isGolden &&
                     "cursor-not-allowed opacity-40",
@@ -221,7 +221,7 @@ export function CampamentoWorkspace() {
                 type="button"
                 size="sm"
                 disabled={isForging || !title.trim()}
-                className="bg-emerald-600/80 text-white hover:bg-emerald-500"
+                className="bg-primary/80 text-foreground hover:bg-primary"
                 onClick={() => void handleForge()}
               >
                 {isForging ? (
@@ -236,7 +236,7 @@ export function CampamentoWorkspace() {
                 href="/ludus/trinchera"
                 className={cn(
                   buttonVariants({ variant: "outline", size: "sm" }),
-                  "ml-auto border-rose-500/30 text-rose-200 hover:bg-rose-500/10",
+                  "ml-auto border-destructive/30 text-destructive hover:bg-destructive/10",
                 )}
               >
                 Ir a la Trinchera →
@@ -245,11 +245,11 @@ export function CampamentoWorkspace() {
           </section>
 
           <section className="space-y-3">
-            <h2 className="font-mono text-[10px] uppercase tracking-[0.22em] text-white/40">
+            <h2 className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
               Cola forjada ({snapshot?.microtasks.length ?? 0})
             </h2>
             {snapshot?.microtasks.length === 0 ? (
-              <p className="text-sm text-white/35">
+              <p className="text-sm text-muted-foreground">
                 Forjá microtareas para enviarlas al búnker.
               </p>
             ) : (
@@ -257,17 +257,17 @@ export function CampamentoWorkspace() {
                 {snapshot?.microtasks.map((task) => (
                   <li
                     key={task.id}
-                    className="flex items-center justify-between gap-3 rounded-xl border border-white/8 bg-black/30 px-4 py-3"
+                    className="flex items-center justify-between gap-3 rounded-xl border border-border bg-muted/40 px-4 py-3"
                   >
                     <div>
-                      <p className="text-sm text-white">{task.title}</p>
-                      <p className="font-mono text-[10px] text-white/35">
+                      <p className="text-sm text-foreground">{task.title}</p>
+                      <p className="font-mono text-[10px] text-muted-foreground">
                         {task.projectTitle} · {task.estimatedMin} min · peso{" "}
                         {task.baseWeight}
                         {task.baseWeight >= 8 ? " ★" : ""}
                       </p>
                     </div>
-                    <span className="font-mono text-[10px] text-white/30">
+                    <span className="font-mono text-[10px] text-muted-foreground">
                       {task.status}
                     </span>
                   </li>

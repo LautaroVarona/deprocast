@@ -43,12 +43,12 @@ function formatStationNumber(station: number): string {
 
 function StatusIcon({ status }: { status: StageStatus }) {
   if (status === "failed") {
-    return <XCircleIcon className="size-3.5 shrink-0 text-red-400" />;
+    return <XCircleIcon className="size-3.5 shrink-0 text-destructive" />;
   }
   if (status === "completed") {
-    return <CheckCircle2Icon className="size-3.5 shrink-0 text-sky-400/80" />;
+    return <CheckCircle2Icon className="size-3.5 shrink-0 text-primary/80" />;
   }
-  return <CircleDashedIcon className="size-3.5 shrink-0 text-zinc-500" />;
+  return <CircleDashedIcon className="size-3.5 shrink-0 text-muted-foreground" />;
 }
 
 function StageDiffPanel({
@@ -67,19 +67,19 @@ function StageDiffPanel({
 
   if (jsonStage) {
     return (
-      <div className="mt-2 space-y-2 rounded border border-border/50 bg-zinc-950/40 p-2">
-        <p className="font-mono text-[9px] tracking-wide text-muted-foreground uppercase">
+      <div className="mt-2 space-y-2 rounded border border-border/50 bg-background/40 p-2">
+        <p className="font-mono text-[10px] tracking-wide text-muted-foreground uppercase">
           Salida estructurada
         </p>
-        <pre className="max-h-48 overflow-y-auto font-mono text-[10px] leading-relaxed whitespace-pre-wrap text-zinc-400">
+        <pre className="max-h-48 overflow-y-auto font-mono text-[10px] leading-relaxed whitespace-pre-wrap text-muted-foreground">
           {formatJsonOutput(snapshot.output)}
         </pre>
         {input && (
           <>
-            <p className="font-mono text-[9px] tracking-wide text-muted-foreground uppercase">
+            <p className="font-mono text-[10px] tracking-wide text-muted-foreground uppercase">
               Entrada ({input.length.toLocaleString()} chars)
             </p>
-            <pre className="max-h-24 overflow-y-auto font-mono text-[10px] leading-relaxed whitespace-pre-wrap text-zinc-500/70">
+            <pre className="max-h-24 overflow-y-auto font-mono text-[10px] leading-relaxed whitespace-pre-wrap text-muted-foreground/70">
               {input.length > 2000 ? `${input.slice(0, 2000)}…` : input}
             </pre>
           </>
@@ -89,9 +89,9 @@ function StageDiffPanel({
   }
 
   return (
-    <div className="mt-2 rounded border border-border/50 bg-zinc-950/40 p-2">
+    <div className="mt-2 rounded border border-border/50 bg-background/40 p-2">
       {truncated && (
-        <p className="mb-1.5 font-mono text-[9px] text-amber-400/90">
+        <p className="mb-1.5 font-mono text-[10px] text-accent/90">
           diff parcial — texto truncado por tamaño
         </p>
       )}
@@ -109,9 +109,9 @@ function DiffLineRow({ line }: { line: DiffLine }) {
     <div
       className={cn(
         "whitespace-pre-wrap break-words px-1",
-        line.type === "same" && "text-zinc-500/70",
-        line.type === "removed" && "bg-red-950/30 text-red-300/90",
-        line.type === "added" && "bg-emerald-950/30 text-emerald-300/90",
+        line.type === "same" && "text-muted-foreground/70",
+        line.type === "removed" && "bg-destructive/30 text-destructive/90",
+        line.type === "added" && "bg-primary/30 text-primary/90",
       )}
     >
       <span className="mr-1 select-none opacity-60">
@@ -146,10 +146,10 @@ function AuditStep({
       <span
         className={cn(
           "absolute top-1.5 left-0 size-2 rounded-full border",
-          status === "completed" && !hasDuda && "border-sky-500/50 bg-sky-500/20",
-          status === "completed" && hasDuda && "border-amber-500/60 bg-amber-500/30",
-          status === "failed" && "border-red-500/50 bg-red-500/20",
-          status === "pending" && "border-zinc-600 bg-zinc-800",
+          status === "completed" && !hasDuda && "border-primary/50 bg-primary/20",
+          status === "completed" && hasDuda && "border-accent/60 bg-accent/30",
+          status === "failed" && "border-destructive/50 bg-destructive/20",
+          status === "pending" && "border-border bg-muted",
         )}
         aria-hidden
       />
@@ -158,23 +158,23 @@ function AuditStep({
         className={cn(
           "rounded border px-2.5 py-2",
           hasDuda
-            ? "border-amber-500/40 bg-amber-500/10"
+            ? "border-accent/40 bg-accent/10"
             : status === "failed"
-              ? "border-red-500/40 bg-red-950/20"
+              ? "border-destructive/40 bg-destructive/20"
               : "border-border/60 bg-muted/5",
         )}
       >
         <div className="flex flex-wrap items-start justify-between gap-2">
           <div className="min-w-0 flex-1 space-y-1">
             <div className="flex flex-wrap items-center gap-1.5">
-              <span className="font-mono text-[9px] text-zinc-500">
+              <span className="font-mono text-[10px] text-muted-foreground">
                 {formatStationNumber(snapshot.station)}
               </span>
               <span className="font-mono text-[10px] font-medium text-foreground/90">
                 {snapshot.name}
               </span>
               {hasDuda && (
-                <span className="inline-flex items-center gap-0.5 rounded border border-amber-500/40 bg-amber-500/15 px-1.5 py-0.5 font-mono text-[8px] text-amber-200/90 uppercase">
+                <span className="inline-flex items-center gap-0.5 rounded border border-accent/40 bg-accent/15 px-1.5 py-0.5 font-mono text-[8px] text-accent/90 uppercase">
                   <AlertTriangleIcon className="size-2.5" />
                   Duda
                 </span>
@@ -183,7 +183,7 @@ function AuditStep({
 
             <div className="flex items-center gap-1.5">
               <StatusIcon status={status} />
-              <span className="font-mono text-[9px] text-muted-foreground">
+              <span className="font-mono text-[10px] text-muted-foreground">
                 {STATUS_LABELS[status]}
               </span>
             </div>
@@ -193,7 +193,7 @@ function AuditStep({
                 {metaLabels.map((label) => (
                   <span
                     key={label}
-                    className="rounded border border-border/50 bg-zinc-900/50 px-1.5 py-0.5 font-mono text-[8px] text-zinc-400"
+                    className="rounded border border-border/50 bg-muted/40 px-1.5 py-0.5 font-mono text-[8px] text-muted-foreground"
                   >
                     {label}
                   </span>
@@ -205,7 +205,7 @@ function AuditStep({
           <button
             type="button"
             onClick={() => setShowDiff((current) => !current)}
-            className="inline-flex shrink-0 items-center gap-0.5 rounded border border-border/60 px-1.5 py-0.5 font-mono text-[9px] text-muted-foreground transition-colors hover:border-zinc-500 hover:text-foreground"
+            className="inline-flex shrink-0 items-center gap-0.5 rounded border border-border/60 px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground transition-colors hover:border-border hover:text-foreground"
           >
             {showDiff ? (
               <ChevronDownIcon className="size-3" />
@@ -255,14 +255,14 @@ export function PurificationAuditStepper({
           ) : (
             <ChevronRightIcon className="size-3.5 text-muted-foreground" />
           )}
-          <p className="font-mono text-[9px] tracking-wide text-muted-foreground uppercase">
+          <p className="font-mono text-[10px] tracking-wide text-muted-foreground uppercase">
             Auditoría de Procesamiento
           </p>
         </div>
-        <span className="font-mono text-[9px] text-zinc-500">
+        <span className="font-mono text-[10px] text-muted-foreground">
           {sortedStages.length} estaciones
           {dudaStageCount > 0 && (
-            <span className="ml-2 text-amber-400/90">
+            <span className="ml-2 text-accent/90">
               · {dudaStageCount} con duda
             </span>
           )}
@@ -271,7 +271,7 @@ export function PurificationAuditStepper({
 
       {expanded && (
         <div className="max-h-64 overflow-y-auto border-t border-border/40 px-4 py-3">
-          <ol className="space-y-3 border-l border-zinc-700/40">
+          <ol className="space-y-3 border-l border-border/40">
             {sortedStages.map((snapshot) => {
               const originalIndex = snapshots.findIndex(
                 (s) => s.station === snapshot.station && s.name === snapshot.name,

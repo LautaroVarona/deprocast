@@ -21,15 +21,15 @@ function EnciclopediaPanels() {
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="space-y-2">
             <div className="flex items-center gap-2">
-              <BookOpenIcon className="size-5 text-amber-400/70" />
-              <p className="font-mono text-[10px] uppercase tracking-[0.28em] text-white/40">
+              <BookOpenIcon className="size-5 text-accent/70" />
+              <p className="font-mono text-[10px] uppercase tracking-[0.28em] text-muted-foreground">
                 Enciclopediador
               </p>
             </div>
-            <h1 className="bg-gradient-to-r from-amber-100 via-amber-50/90 to-white/50 bg-clip-text font-mono text-2xl font-semibold tracking-tight text-transparent sm:text-3xl">
+            <h1 className="bg-gradient-to-r from-accent/20 via-accent/90 to-foreground/50 bg-clip-text font-mono text-2xl font-semibold tracking-tight text-transparent sm:text-3xl">
               Explora el conocimiento, un concepto a la vez
             </h1>
-            <p className="max-w-2xl text-sm leading-relaxed text-white/45">
+            <p className="max-w-2xl text-sm leading-relaxed text-muted-foreground">
               Pedia es una enciclopedia generativa que crece con cada pregunta.
               Subrayá una palabra, descubrí su significado y seguí el hilo del
               conocimiento.
@@ -38,7 +38,7 @@ function EnciclopediaPanels() {
 
           <div className="flex items-center gap-2">
             {isBusy ? (
-              <span className="flex items-center gap-2 rounded-full border border-amber-500/25 bg-amber-500/10 px-3 py-1 font-mono text-[10px] uppercase tracking-wider text-amber-200/80">
+              <span className="flex items-center gap-2 rounded-full border border-accent/25 bg-accent/10 px-3 py-1 font-mono text-[10px] uppercase tracking-wider text-accent/80">
                 <Loader2Icon className="size-3 animate-spin" />
                 Generando…
               </span>
@@ -49,7 +49,7 @@ function EnciclopediaPanels() {
                 variant="outline"
                 size="sm"
                 onClick={resetSession}
-                className="border-white/15 bg-transparent font-mono text-[10px] uppercase tracking-wider text-white/50"
+                className="border-border bg-transparent font-mono text-[10px] uppercase tracking-wider text-muted-foreground"
               >
                 <RotateCcwIcon className="size-3.5" />
                 Nueva sesión
@@ -62,8 +62,8 @@ function EnciclopediaPanels() {
       {error ? (
         <div
           className={cn(
-            "rounded-lg border border-rose-500/30 bg-rose-500/10 px-4 py-3",
-            "font-mono text-xs text-rose-200/90",
+            "rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3",
+            "font-mono text-xs text-destructive/90",
           )}
         >
           {error}

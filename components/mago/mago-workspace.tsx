@@ -63,12 +63,12 @@ export function MagoWorkspace({ lensId = "mago-22" }: MagoWorkspaceProps) {
 
   return (
     <div className="flex h-[calc(100dvh-3.5rem)] flex-col overflow-hidden">
-      <header className="flex shrink-0 flex-wrap items-center gap-3 border-b border-white/10 px-4 py-3 sm:px-5">
+      <header className="flex shrink-0 flex-wrap items-center gap-3 border-b border-border px-4 py-3 sm:px-5">
         <Link
           href="/ludus/castillo"
           className={cn(
             buttonVariants({ variant: "ghost", size: "sm" }),
-            "text-white/60 hover:bg-white/5 hover:text-white",
+            "text-muted-foreground hover:bg-muted/50 hover:text-foreground",
           )}
         >
           <ArrowLeftIcon className="size-3.5" />
@@ -76,10 +76,10 @@ export function MagoWorkspace({ lensId = "mago-22" }: MagoWorkspaceProps) {
         </Link>
 
         <div className="flex items-center gap-2">
-          <SparklesIcon className="size-4 text-amber-300/80" aria-hidden />
+          <SparklesIcon className="size-4 text-accent" aria-hidden />
           <div>
-            <h1 className="text-sm font-semibold text-white">{lens.label}</h1>
-            <p className="font-mono text-[10px] text-white/35">{lens.subtitle}</p>
+            <h1 className="text-sm font-semibold text-foreground">{lens.label}</h1>
+            <p className="font-mono text-[10px] text-muted-foreground">{lens.subtitle}</p>
           </div>
         </div>
 
@@ -93,7 +93,7 @@ export function MagoWorkspace({ lensId = "mago-22" }: MagoWorkspaceProps) {
           type="button"
           className={cn(
             buttonVariants({ variant: "ghost", size: "icon-sm" }),
-            "ml-auto text-white/50 hover:bg-white/5 hover:text-white",
+            "ml-auto text-muted-foreground hover:bg-muted/50 hover:text-foreground",
           )}
           onClick={() => void refresh()}
           disabled={isLoading}
@@ -104,7 +104,7 @@ export function MagoWorkspace({ lensId = "mago-22" }: MagoWorkspaceProps) {
       </header>
 
       {error ? (
-        <p className="shrink-0 border-b border-rose-500/20 bg-rose-500/10 px-4 py-2 text-xs text-rose-200">
+        <p className="shrink-0 border-b border-destructive/20 bg-destructive/10 px-4 py-2 text-xs text-destructive">
           {error}
         </p>
       ) : null}
@@ -112,7 +112,7 @@ export function MagoWorkspace({ lensId = "mago-22" }: MagoWorkspaceProps) {
       <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
         <main className="min-h-0 flex-1 overflow-y-auto p-4 sm:p-5">
           {isLoading && pages.length === 0 ? (
-            <p className="font-mono text-xs text-white/40">Cargando matriz…</p>
+            <p className="font-mono text-xs text-muted-foreground">Cargando matriz…</p>
           ) : (
             <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
               {visiblePages.map((page) => (

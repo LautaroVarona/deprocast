@@ -41,7 +41,7 @@ function PipelineIndicator() {
               <span
                 className={cn(
                   "h-px w-6 transition-colors",
-                  isDone ? "bg-emerald-500/50" : "bg-white/10",
+                  isDone ? "bg-primary/50" : "bg-muted/40",
                 )}
               />
             ) : null}
@@ -49,10 +49,10 @@ function PipelineIndicator() {
               className={cn(
                 "rounded-full border px-2.5 py-1 transition-all duration-300",
                 isActive
-                  ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-300"
+                  ? "border-primary/40 bg-primary/10 text-primary"
                   : isDone
-                    ? "border-white/15 text-white/50"
-                    : "border-white/8 text-white/25",
+                    ? "border-border text-muted-foreground"
+                    : "border-border text-muted-foreground",
               )}
             >
               {step.label}
@@ -74,15 +74,15 @@ function MolecularPanels() {
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="space-y-2">
             <div className="flex items-center gap-2">
-              <HexagonIcon className="size-5 text-emerald-400/70" />
-              <p className="font-mono text-[10px] uppercase tracking-[0.28em] text-white/40">
+              <HexagonIcon className="size-5 text-primary/70" />
+              <p className="font-mono text-[10px] uppercase tracking-[0.28em] text-muted-foreground">
                 Motor Molecular
               </p>
             </div>
-            <h1 className="bg-gradient-to-r from-white via-white/85 to-white/50 bg-clip-text font-mono text-2xl font-semibold tracking-tight text-transparent sm:text-3xl">
+            <h1 className="bg-gradient-to-r from-foreground via-foreground/85 to-foreground/50 bg-clip-text font-mono text-2xl font-semibold tracking-tight text-transparent sm:text-3xl">
               Chunkeador → Calibrador → Validación
             </h1>
-            <p className="max-w-2xl text-sm text-white/45">
+            <p className="max-w-2xl text-sm text-muted-foreground">
               Pipeline en cadena: desintegración semántica, calibración de ejes
               X/Y/Z y validación humana con Currency Potencial.
             </p>
@@ -94,12 +94,12 @@ function MolecularPanels() {
               size="sm"
               disabled={isBusy}
               onClick={() => void startBatchCalibration()}
-              className="border-violet-500/30 bg-violet-500/10 font-mono text-[10px] uppercase tracking-wider text-violet-200 hover:bg-violet-500/15"
+              className="border-primary/30 bg-primary/10 font-mono text-[10px] uppercase tracking-wider text-primary hover:bg-primary/15"
             >
               Calibrar todo
             </Button>
           ) : (
-            <span className="rounded-full border border-violet-500/30 bg-violet-500/10 px-3 py-1 font-mono text-[10px] text-violet-200/90">
+            <span className="rounded-full border border-primary/30 bg-primary/10 px-3 py-1 font-mono text-[10px] text-primary/90">
               {batchIndex + 1}/{batchQueue.length}
             </span>
           )}
@@ -111,7 +111,7 @@ function MolecularPanels() {
         <CalibratorPanel />
       </div>
 
-      <footer className="font-mono text-[10px] text-white/20">
+      <footer className="font-mono text-[10px] text-muted-foreground">
         Fórmula: Currency Potencial = Eje Y (Valor) ÷ Eje Z (Fricción) · Eje X
         mapea 6 bloques de prioridad
       </footer>

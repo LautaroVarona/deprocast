@@ -10,12 +10,12 @@ export function PostprocessRoadmap() {
     <section className="audio-noir-panel space-y-4 p-4">
       <div className="space-y-1">
         <div className="flex items-center gap-2">
-          <GitBranchIcon className="size-4 text-violet-400/80" />
-          <h2 className="font-mono text-sm font-medium text-white/90">
+          <GitBranchIcon className="size-4 text-primary" />
+          <h2 className="font-mono text-sm font-medium text-muted-foreground">
             Post-procesamiento downstream
           </h2>
         </div>
-        <p className="max-w-2xl font-mono text-[10px] leading-relaxed text-white/45">
+        <p className="max-w-2xl font-mono text-[10px] leading-relaxed text-muted-foreground">
           La data extraída del STT alimenta segmentación, clasificación,
           organización molecular y el grafo. Cada etapa es un agente distinto en
           el ecosistema Deprocast.
@@ -31,17 +31,17 @@ export function PostprocessRoadmap() {
             <li key={stage.id} className="relative flex gap-4 pb-6 last:pb-0">
               {!isLast ? (
                 <span
-                  className="absolute top-6 left-[11px] h-[calc(100%-12px)] w-px bg-gradient-to-b from-white/20 to-white/5"
+                  className="absolute top-6 left-[11px] h-[calc(100%-12px)] w-px bg-gradient-to-b from-foreground/20 to-foreground/5"
                   aria-hidden
                 />
               ) : null}
 
               <span
                 className={cn(
-                  "relative z-10 mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full border font-mono text-[9px]",
+                  "relative z-10 mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full border font-mono text-[10px]",
                   isFirst
-                    ? "border-emerald-500/40 bg-emerald-500/15 text-emerald-300"
-                    : "border-white/15 bg-black/40 text-white/45",
+                    ? "border-primary/40 bg-primary/15 text-primary"
+                    : "border-border bg-card/80 text-muted-foreground",
                 )}
               >
                 {index + 1}
@@ -49,19 +49,19 @@ export function PostprocessRoadmap() {
 
               <div className="min-w-0 flex-1 space-y-1">
                 <div className="flex flex-wrap items-center gap-2">
-                  <p className="font-mono text-[11px] text-white/85">
+                  <p className="font-mono text-[11px] text-muted-foreground">
                     {stage.label}
                   </p>
                   {stage.route ? (
                     <Link
                       href={stage.route}
-                      className="font-mono text-[9px] text-sky-400/80 underline-offset-2 hover:underline"
+                      className="font-mono text-[10px] text-primary/80 underline-offset-2 hover:underline"
                     >
                       abrir →
                     </Link>
                   ) : null}
                 </div>
-                <p className="font-mono text-[9px] leading-relaxed text-white/40">
+                <p className="font-mono text-[10px] leading-relaxed text-muted-foreground">
                   {stage.description}
                 </p>
               </div>

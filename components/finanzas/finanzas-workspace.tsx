@@ -213,11 +213,11 @@ export function FinanzasWorkspace() {
 
   return (
     <div className="finanzas-noir-root flex h-[calc(100dvh-3.5rem)] flex-col overflow-hidden">
-      <header className="shrink-0 border-b border-white/5 px-4 py-4 md:px-6">
-        <p className="font-mono text-[10px] uppercase tracking-[0.25em] text-emerald-500/80">
+      <header className="shrink-0 border-b border-border px-4 py-4 md:px-6">
+        <p className="font-mono text-[10px] uppercase tracking-[0.25em] text-primary">
           Eco · Finanzas
         </p>
-        <h1 className="mt-1 text-lg font-semibold tracking-tight text-zinc-50">
+        <h1 className="mt-1 text-lg font-semibold tracking-tight text-foreground">
           Ledger financiero
         </h1>
       </header>

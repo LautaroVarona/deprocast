@@ -53,17 +53,17 @@ export function TrincheraSidePanel({ snapshot }: TrincheraSidePanelProps) {
         />
       ) : null}
 
-      <div className="flex h-full min-h-0 flex-col overflow-hidden bg-[#050506]">
-        <div className="shrink-0 border-b border-white/10 p-3">
-          <div className="flex rounded-lg border border-white/15 bg-black/50 p-1">
+      <div className="flex h-full min-h-0 flex-col overflow-hidden bg-background">
+        <div className="shrink-0 border-b border-border p-3">
+          <div className="flex rounded-lg border border-border bg-card/80 p-1">
             <button
               type="button"
               onClick={() => setPanelTab("notas")}
               className={cn(
                 "flex flex-1 items-center justify-center gap-1.5 rounded-md px-2 py-2 font-mono text-[10px] font-semibold uppercase tracking-[0.12em] transition-colors",
                 panelTab === "notas"
-                  ? "bg-white/12 text-white"
-                  : "text-white/50 hover:text-white/75",
+                  ? "bg-foreground/12 text-foreground"
+                  : "text-muted-foreground hover:text-muted-foreground",
               )}
             >
               <NotebookPenIcon className="size-3.5" />
@@ -75,8 +75,8 @@ export function TrincheraSidePanel({ snapshot }: TrincheraSidePanelProps) {
               className={cn(
                 "flex flex-1 items-center justify-center gap-1.5 rounded-md px-2 py-2 font-mono text-[10px] font-semibold uppercase tracking-[0.12em] transition-colors",
                 panelTab === "historial"
-                  ? "bg-white/12 text-white"
-                  : "text-white/50 hover:text-white/75",
+                  ? "bg-foreground/12 text-foreground"
+                  : "text-muted-foreground hover:text-muted-foreground",
               )}
             >
               <HistoryIcon className="size-3.5" />
@@ -88,10 +88,10 @@ export function TrincheraSidePanel({ snapshot }: TrincheraSidePanelProps) {
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden p-3">
           {panelTab === "notas" ? (
             <section className="flex min-h-0 flex-1 flex-col gap-2">
-              <p className="shrink-0 font-mono text-[10px] font-semibold uppercase tracking-[0.18em] text-white/70">
+              <p className="shrink-0 font-mono text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
                 Bloc de notas
               </p>
-              <p className="shrink-0 text-[11px] leading-relaxed text-white/45">
+              <p className="shrink-0 text-[11px] leading-relaxed text-muted-foreground">
                 Volcá ideas, contexto y dumping durante el asalto. Se guarda
                 localmente en este navegador.
               </p>
@@ -99,12 +99,12 @@ export function TrincheraSidePanel({ snapshot }: TrincheraSidePanelProps) {
                 value={assaultNotes}
                 onChange={(e) => setAssaultNotes(e.target.value)}
                 placeholder="Escribí libremente..."
-                className="min-h-0 flex-1 resize-none rounded-lg border border-white/15 bg-black/45 px-3 py-3 font-mono text-[12px] leading-relaxed text-white/85 placeholder:text-white/30 focus:border-white/30 focus:outline-none"
+                className="min-h-0 flex-1 resize-none rounded-lg border border-border bg-background/45 px-3 py-3 font-mono text-[12px] leading-relaxed text-muted-foreground placeholder:text-muted-foreground focus:border-border focus:outline-none"
               />
             </section>
           ) : (
             <section className="flex min-h-0 flex-1 flex-col overflow-hidden">
-              <p className="mb-2 shrink-0 font-mono text-[10px] font-semibold uppercase tracking-[0.18em] text-white/70">
+              <p className="mb-2 shrink-0 font-mono text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
                 Asaltos recientes
               </p>
 
@@ -113,12 +113,12 @@ export function TrincheraSidePanel({ snapshot }: TrincheraSidePanelProps) {
                   {snapshot.recentAssaults.map((assault) => (
                     <li
                       key={assault.id}
-                      className="rounded-lg border border-white/10 bg-black/35 px-3 py-2.5"
+                      className="rounded-lg border border-border bg-background/35 px-3 py-2.5"
                     >
-                      <p className="line-clamp-2 text-xs font-medium leading-snug text-white/80">
+                      <p className="line-clamp-2 text-xs font-medium leading-snug text-muted-foreground">
                         {assault.title}
                       </p>
-                      <p className="mt-1 font-mono text-[10px] text-white/45">
+                      <p className="mt-1 font-mono text-[10px] text-muted-foreground">
                         {assault.completed
                           ? `+${assault.signalPoints} PS`
                           : "abortado"}
@@ -128,7 +128,7 @@ export function TrincheraSidePanel({ snapshot }: TrincheraSidePanelProps) {
                 </ul>
               ) : (
                 <div className="flex flex-1 items-center justify-center px-4 text-center">
-                  <p className="font-mono text-[11px] text-white/40">
+                  <p className="font-mono text-[11px] text-muted-foreground">
                     Sin asaltos registrados aún.
                   </p>
                 </div>

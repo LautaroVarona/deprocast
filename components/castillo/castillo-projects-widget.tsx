@@ -34,9 +34,9 @@ export function CastilloProjectsWidget() {
   if (isLoading || consolidated.length === 0) return null;
 
   return (
-    <div className="border-b border-white/10 p-3">
-      <p className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.2em] text-white/40">
-        <SparklesIcon className="size-3.5 text-emerald-300/80" />
+    <div className="border-b border-border p-3">
+      <p className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+        <SparklesIcon className="size-3.5 text-primary/80" />
         Proyectos consolidados
       </p>
 
@@ -44,10 +44,10 @@ export function CastilloProjectsWidget() {
         {consolidated.map((project) => (
           <li key={project.id} className="flex items-start justify-between gap-2">
             <div className="min-w-0">
-              <p className="line-clamp-2 text-xs font-medium text-white">
+              <p className="line-clamp-2 text-xs font-medium text-foreground">
                 {project.title}
               </p>
-              <p className="mt-0.5 font-mono text-[10px] text-white/35">
+              <p className="mt-0.5 font-mono text-[10px] text-muted-foreground">
                 {project.estado}
               </p>
             </div>
@@ -56,7 +56,7 @@ export function CastilloProjectsWidget() {
               size="icon-sm"
               variant="ghost"
               className={cn(
-                "size-8 shrink-0 text-white/50 hover:bg-white/10 hover:text-white",
+                "size-8 shrink-0 text-muted-foreground hover:bg-muted/50 hover:text-foreground",
                 (!activeGridId || isBusy) && "opacity-50",
               )}
               disabled={!activeGridId || isBusy}

@@ -105,12 +105,12 @@ export function MetabolismView() {
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="space-y-1">
             <div className="flex items-center gap-2">
-              <WavesIcon className="size-4 text-sky-400/80" />
-              <h2 className="font-mono text-sm font-medium text-white/90">
+              <WavesIcon className="size-4 text-primary/80" />
+              <h2 className="font-mono text-sm font-medium text-muted-foreground">
                 Dashboard de metabolización
               </h2>
             </div>
-            <p className="max-w-2xl font-mono text-[10px] leading-relaxed text-white/45">
+            <p className="max-w-2xl font-mono text-[10px] leading-relaxed text-muted-foreground">
               Subís un audio y el motor arranca solo: transcripción, purificación
               y validación HITL. Sin clicks intermedios.
             </p>
@@ -134,10 +134,10 @@ export function MetabolismView() {
               type="button"
               onClick={() => setFilter(item.id)}
               className={cn(
-                "rounded-full border px-3 py-1 font-mono text-[9px] uppercase tracking-wider transition",
+                "rounded-full border px-3 py-1 font-mono text-[10px] uppercase tracking-wider transition",
                 filter === item.id
-                  ? "border-sky-500/40 bg-sky-500/10 text-sky-200"
-                  : "border-white/10 text-white/40 hover:border-white/20",
+                  ? "border-primary/40 bg-primary/10 text-primary"
+                  : "border-border text-muted-foreground hover:border-border",
               )}
             >
               {item.label}
@@ -148,17 +148,17 @@ export function MetabolismView() {
               type="button"
               onClick={() => setShowDedup((value) => !value)}
               className={cn(
-                "rounded-full border px-3 py-1 font-mono text-[9px] uppercase tracking-wider",
+                "rounded-full border px-3 py-1 font-mono text-[10px] uppercase tracking-wider",
                 showDedup
-                  ? "border-amber-500/40 bg-amber-500/10 text-amber-200"
-                  : "border-amber-500/25 text-amber-200/80",
+                  ? "border-accent/40 bg-accent/10 text-accent"
+                  : "border-accent/25 text-accent/80",
               )}
             >
               Duplicados ({dedupBadge})
             </button>
           ) : null}
           {isLoadingMetabolism ? (
-            <span className="ml-auto flex items-center gap-1 font-mono text-[9px] text-white/30">
+            <span className="ml-auto flex items-center gap-1 font-mono text-[10px] text-muted-foreground">
               <Loader2Icon className="size-3 animate-spin" />
               Sincronizando conocimiento…
             </span>
@@ -174,7 +174,7 @@ export function MetabolismView() {
 
       {filteredAssets.length === 0 ? (
         <div className="audio-noir-panel py-16 text-center">
-          <p className="font-mono text-[11px] text-white/40">
+          <p className="font-mono text-[11px] text-muted-foreground">
             {assets.length === 0
               ? "Arrastrá audios para iniciar la metabolización activa."
               : "No hay audios en este filtro."}
@@ -182,7 +182,7 @@ export function MetabolismView() {
           {assets.length === 0 ? (
             <Link
               href="/ingesta"
-              className="mt-3 inline-block font-mono text-[10px] text-sky-400/80 hover:underline"
+              className="mt-3 inline-block font-mono text-[10px] text-primary/80 hover:underline"
             >
               Ingesta con metadatos →
             </Link>

@@ -25,7 +25,7 @@ export function HistorialDayStrip({
   return (
     <div className="flex flex-col gap-2">
       <div className="flex items-center justify-between gap-2">
-        <span className="font-mono text-[10px] uppercase tracking-wider text-zinc-600">
+        <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
           Por día
         </span>
         <button
@@ -34,8 +34,8 @@ export function HistorialDayStrip({
           className={cn(
             "rounded-full border px-2.5 py-0.5 font-mono text-[10px] uppercase tracking-wider transition",
             !selectedDay
-              ? "border-cyan-500/40 bg-cyan-500/10 text-cyan-200"
-              : "border-zinc-700 text-zinc-500 hover:border-zinc-600",
+              ? "border-primary/40 bg-primary/10 text-primary"
+              : "border-border text-muted-foreground hover:border-border",
           )}
         >
           Todos
@@ -56,19 +56,19 @@ export function HistorialDayStrip({
               className={cn(
                 "flex min-w-[4.5rem] shrink-0 flex-col items-center gap-0.5 rounded-lg border px-2 py-2 transition",
                 isSelected
-                  ? "border-cyan-500/50 bg-cyan-500/15 text-cyan-100"
+                  ? "border-primary/50 bg-primary/15 text-primary"
                   : hasActivity
-                    ? "border-zinc-700 bg-zinc-900/50 text-zinc-300 hover:border-zinc-600"
-                    : "border-zinc-800/60 bg-zinc-950/40 text-zinc-600",
+                    ? "border-border bg-muted/40 text-foreground/80 hover:border-border"
+                    : "border-border bg-background/40 text-muted-foreground",
               )}
             >
-              <span className="font-mono text-[9px] uppercase tracking-wide opacity-70">
+              <span className="font-mono text-[10px] uppercase tracking-wide opacity-70">
                 {day.dayLabel.split(" ")[0]?.slice(0, 3)}
               </span>
               <span className="font-mono text-sm font-semibold tabular-nums">
                 {day.count}
               </span>
-              <span className="font-mono text-[9px] text-zinc-500">
+              <span className="font-mono text-[10px] text-muted-foreground">
                 {day.dayKey.slice(8)}
                 {isToday ? " · hoy" : ""}
               </span>

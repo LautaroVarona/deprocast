@@ -48,7 +48,7 @@ export function XBookmarkEnrichedPanel({
                 <p className="truncate text-xs font-semibold">
                   {bookmark.titleEs ?? bookmark.text.slice(0, 80)}
                 </p>
-                <p className="mt-0.5 font-mono text-[9px] text-muted-foreground">
+                <p className="mt-0.5 font-mono text-[10px] text-muted-foreground">
                   {bookmark.handle} · peso {bookmark.weight}
                 </p>
               </div>
@@ -66,7 +66,7 @@ export function XBookmarkEnrichedPanel({
               )}
             </div>
             {bookmark.metaTags && bookmark.metaTags.length > 0 && (
-              <p className="mt-2 font-mono text-[9px] text-muted-foreground">
+              <p className="mt-2 font-mono text-[10px] text-muted-foreground">
                 {bookmark.metaTags.join(" · ")}
               </p>
             )}

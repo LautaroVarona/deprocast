@@ -106,7 +106,7 @@ export function XBookmarkConfigPanel({
       </div>
 
       <div className="rounded border border-dashed border-border px-3 py-2">
-        <p className="font-mono text-[9px] tracking-wide text-muted-foreground uppercase">
+        <p className="font-mono text-[10px] tracking-wide text-muted-foreground uppercase">
           Atajos en modo foco
         </p>
         <p className="mt-1 font-mono text-[10px] text-muted-foreground">

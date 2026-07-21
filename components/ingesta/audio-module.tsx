@@ -40,7 +40,7 @@ export function AudioModule() {
   return (
     <section aria-label="Ingesta de audio" className="space-y-3">
       <div className="flex flex-wrap items-center gap-2">
-        <span className="flex size-8 items-center justify-center rounded-lg bg-sky-500/15 text-sky-600 dark:text-sky-400">
+        <span className="flex size-8 items-center justify-center rounded-lg bg-primary/15 text-primary dark:text-primary">
           <AudioLinesIcon className="size-4" aria-hidden />
         </span>
         <div className="min-w-0 flex-1">
@@ -53,7 +53,7 @@ export function AudioModule() {
           variant="outline"
           className={
             queueStatus?.active
-              ? "border-sky-500/50 bg-sky-500/10 text-sky-700 dark:text-sky-300"
+              ? "border-primary/50 bg-primary/10 text-primary dark:text-primary"
               : undefined
           }
         >

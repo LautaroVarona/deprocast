@@ -159,7 +159,7 @@ export function CamposWorkspace({ onRefresh, refreshKey = 0 }: CamposWorkspacePr
               <FolderKanbanIcon className="size-3.5 shrink-0 text-muted-foreground" />
               <div className="min-w-0 flex-1">
                 <p className="truncate font-mono text-[11px] font-medium">{campo.label}</p>
-                <p className="font-mono text-[9px] text-muted-foreground">
+                <p className="font-mono text-[10px] text-muted-foreground">
                   {campo.count} proyecto{campo.count === 1 ? "" : "s"}
                 </p>
               </div>
@@ -229,7 +229,7 @@ export function CamposWorkspace({ onRefresh, refreshKey = 0 }: CamposWorkspacePr
                     >
                       <div className="min-w-0">
                         <p className="truncate text-xs font-medium">{project.title}</p>
-                        <p className="font-mono text-[9px] text-muted-foreground">
+                        <p className="font-mono text-[10px] text-muted-foreground">
                           {project.estado} · {project.avancePorcentaje}%
                         </p>
                       </div>

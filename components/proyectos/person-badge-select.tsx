@@ -217,7 +217,7 @@ export function PersonBadgeSelect({
             key={person.id}
             label={person.label}
             entityType="persona"
-            className={compact ? "h-5 text-[9px] px-1" : undefined}
+            className={compact ? "h-5 text-[10px] px-1" : undefined}
             onRemove={disabled ? undefined : () => removePerson(person.id)}
           />
         ))}
@@ -236,7 +236,7 @@ export function PersonBadgeSelect({
           placeholder={selected.length === 0 ? (compact ? "Persona…" : "Escribí un nombre…") : ""}
           className={cn(
             "min-w-[4rem] flex-1 bg-transparent font-mono outline-none placeholder:text-muted-foreground",
-            compact ? "text-[9px] py-0" : "text-[11px]",
+            compact ? "text-[10px] py-0" : "text-[11px]",
           )}
         />
       </div>

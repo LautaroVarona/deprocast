@@ -22,7 +22,7 @@ import type { ReactNode } from "react";
 
 function SectionLabel({ children }: { children: ReactNode }) {
   return (
-    <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.2em] text-white/80">
+    <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
       {children}
     </p>
   );
@@ -61,7 +61,7 @@ function ColorPaletteEditor({
           type="button"
           onClick={addColor}
           disabled={colors.length >= MAX_PALETTE_COLORS}
-          className="rounded-md border border-white/20 bg-white/5 p-1 text-white/70 hover:bg-white/10 disabled:opacity-30"
+          className="rounded-md border border-border bg-muted/40 p-1 text-muted-foreground hover:bg-muted/50 disabled:opacity-30"
           aria-label={`Agregar color a ${label}`}
         >
           <PlusIcon className="size-3.5" />
@@ -70,7 +70,7 @@ function ColorPaletteEditor({
       <div className="flex flex-wrap gap-2">
         {colors.map((color, index) => (
           <div key={`${label}-${index}`} className="flex items-center gap-1">
-            <label className="relative block size-8 cursor-pointer overflow-hidden rounded-md border-2 border-white/25 shadow-sm">
+            <label className="relative block size-8 cursor-pointer overflow-hidden rounded-md border-2 border-border shadow-sm">
               <input
                 type="color"
                 value={color}
@@ -86,7 +86,7 @@ function ColorPaletteEditor({
               <button
                 type="button"
                 onClick={() => removeColor(index)}
-                className="rounded p-0.5 text-white/50 hover:bg-white/10 hover:text-white"
+                className="rounded p-0.5 text-muted-foreground hover:bg-muted/50 hover:text-foreground"
                 aria-label="Quitar color"
               >
                 <MinusIcon className="size-3.5" />
@@ -125,8 +125,8 @@ export function VisualControls({
               className={cn(
                 "rounded-md border px-2.5 py-1.5 font-mono text-[10px] font-medium transition-colors",
                 visual.shape === shape
-                  ? "border-white/40 bg-white/15 text-white shadow-sm"
-                  : "border-white/15 bg-black/30 text-white/65 hover:border-white/25 hover:text-white",
+                  ? "border-border bg-muted/40 text-foreground shadow-sm"
+                  : "border-border bg-muted/40 text-muted-foreground hover:border-border hover:text-foreground",
               )}
             >
               {FOCAL_SHAPE_LABELS[shape]}
@@ -146,8 +146,8 @@ export function VisualControls({
               className={cn(
                 "flex-1 rounded-md border py-2 font-mono text-[10px] font-medium uppercase tracking-[0.1em] transition-colors",
                 visual.motionMode === mode
-                  ? "border-white/40 bg-white/15 text-white"
-                  : "border-white/15 bg-black/30 text-white/65 hover:border-white/25",
+                  ? "border-border bg-muted/40 text-foreground"
+                  : "border-border bg-muted/40 text-muted-foreground hover:border-border",
               )}
             >
               {mode === "fixed" ? "Fija" : "Flotante"}

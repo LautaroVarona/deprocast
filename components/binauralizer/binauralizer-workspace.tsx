@@ -58,15 +58,15 @@ export function BinauralizerWorkspace() {
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="space-y-2">
             <div className="flex items-center gap-2">
-              <WavesIcon className="size-5 text-amber-400/70" />
-              <p className="font-mono text-[10px] uppercase tracking-[0.28em] text-white/40">
+              <WavesIcon className="size-5 text-accent/70" />
+              <p className="font-mono text-[10px] uppercase tracking-[0.28em] text-muted-foreground">
                 Binauralizer
               </p>
             </div>
-            <h1 className="bg-gradient-to-r from-amber-100 via-amber-50/90 to-emerald-100/60 bg-clip-text font-mono text-2xl font-semibold tracking-tight text-transparent sm:text-3xl">
+            <h1 className="bg-gradient-to-r from-accent/20 via-accent/90 to-primary/60 bg-clip-text font-mono text-2xl font-semibold tracking-tight text-transparent sm:text-3xl">
               Sintonía cognitiva en tiempo real
             </h1>
-            <p className="max-w-2xl text-sm leading-relaxed text-white/45">
+            <p className="max-w-2xl text-sm leading-relaxed text-muted-foreground">
               Generador local de tonos binaurales para modular tu estado mental.
               Elegí un preset cognitivo o ajustá portadora y frecuencia de
               destino con precisión quirúrgica.
@@ -74,12 +74,12 @@ export function BinauralizerWorkspace() {
           </div>
 
           {isPlaying ? (
-            <span className="flex items-center gap-2 rounded-full border border-emerald-500/25 bg-emerald-500/10 px-3 py-1 font-mono text-[10px] uppercase tracking-wider text-emerald-200/80">
-              <span className="size-1.5 animate-pulse rounded-full bg-emerald-400" />
+            <span className="flex items-center gap-2 rounded-full border border-primary/25 bg-primary/10 px-3 py-1 font-mono text-[10px] uppercase tracking-wider text-primary/80">
+              <span className="size-1.5 animate-pulse rounded-full bg-primary/20" />
               Sesión activa
             </span>
           ) : (
-            <span className="rounded-full border border-amber-500/25 bg-amber-500/10 px-3 py-1 font-mono text-[10px] uppercase tracking-wider text-amber-200/80">
+            <span className="rounded-full border border-accent/25 bg-accent/10 px-3 py-1 font-mono text-[10px] uppercase tracking-wider text-accent/80">
               Listo para iniciar
             </span>
           )}
@@ -90,13 +90,13 @@ export function BinauralizerWorkspace() {
         <div className="flex flex-col gap-4">
           <section className="binauralizer-noir-panel space-y-4 p-5">
             <div>
-              <p className="font-mono text-[10px] uppercase tracking-[0.24em] text-amber-400/60">
+              <p className="font-mono text-[10px] uppercase tracking-[0.24em] text-accent/60">
                 01 · Presets cognitivos
               </p>
-              <h2 className="mt-1 font-mono text-sm font-medium text-white/90">
+              <h2 className="mt-1 font-mono text-sm font-medium text-muted-foreground">
                 Estados mentales prefabricados
               </h2>
-              <p className="mt-1 text-xs text-white/45">
+              <p className="mt-1 text-xs text-muted-foreground">
                 Un clic activa portadora y frecuencia binaural optimizadas.
               </p>
             </div>
@@ -108,13 +108,13 @@ export function BinauralizerWorkspace() {
 
           <section className="binauralizer-noir-panel space-y-4 p-5">
             <div>
-              <p className="font-mono text-[10px] uppercase tracking-[0.24em] text-amber-400/60">
+              <p className="font-mono text-[10px] uppercase tracking-[0.24em] text-accent/60">
                 02 · Ajuste manual
               </p>
-              <h2 className="mt-1 font-mono text-sm font-medium text-white/90">
+              <h2 className="mt-1 font-mono text-sm font-medium text-muted-foreground">
                 Herramientas custom
               </h2>
-              <p className="mt-1 text-xs text-white/45">
+              <p className="mt-1 text-xs text-muted-foreground">
                 Personalizá portadora, beat y volumen. Los cambios se aplican en
                 vivo si la sesión está activa.
               </p>
@@ -134,10 +134,10 @@ export function BinauralizerWorkspace() {
 
         <section className="binauralizer-noir-panel space-y-4 p-5">
           <div>
-            <p className="font-mono text-[10px] uppercase tracking-[0.24em] text-amber-400/60">
+            <p className="font-mono text-[10px] uppercase tracking-[0.24em] text-accent/60">
               03 · Ciencia
             </p>
-            <h2 className="mt-1 font-mono text-sm font-medium text-white/90">
+            <h2 className="mt-1 font-mono text-sm font-medium text-muted-foreground">
               Cómo funcionan los tonos binaurales
             </h2>
           </div>

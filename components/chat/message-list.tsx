@@ -94,7 +94,7 @@ export function MessageList({
                 <MessageContent message={message} />
                 <time
                   dateTime={message.createdAt}
-                  className="mt-2 block font-mono text-[9px] text-muted-foreground"
+                  className="mt-2 block font-mono text-[10px] text-muted-foreground"
                 >
                   {new Date(message.createdAt).toLocaleString("es-AR", {
                     hour: "2-digit",

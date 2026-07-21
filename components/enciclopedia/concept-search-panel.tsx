@@ -19,13 +19,13 @@ export function ConceptSearchPanel() {
   return (
     <section className="enciclopedia-noir-panel space-y-4 p-5">
       <div className="space-y-1">
-        <p className="font-mono text-[10px] uppercase tracking-[0.24em] text-amber-400/60">
+        <p className="font-mono text-[10px] uppercase tracking-[0.24em] text-accent/60">
           01 · Pregunta
         </p>
-        <h2 className="font-mono text-sm font-medium text-white/90">
+        <h2 className="font-mono text-sm font-medium text-muted-foreground">
           ¿Qué querés entender?
         </h2>
-        <p className="text-xs leading-relaxed text-white/45">
+        <p className="text-xs leading-relaxed text-muted-foreground">
           Escribí una palabra, una idea o una pregunta. La IA generará una
           explicación clara con ejemplos y contexto.
         </p>
@@ -43,15 +43,15 @@ export function ConceptSearchPanel() {
           }
           disabled={isBusy}
           className={cn(
-            "min-w-0 flex-1 rounded-lg border border-white/10 bg-black/40 px-3 py-2.5",
-            "font-mono text-sm text-white/90 placeholder:text-white/25",
-            "outline-none transition focus:border-amber-500/40 focus:ring-1 focus:ring-amber-500/20",
+            "min-w-0 flex-1 rounded-lg border border-border bg-card/80 px-3 py-2.5",
+            "font-mono text-sm text-muted-foreground placeholder:text-muted-foreground",
+            "outline-none transition focus:border-accent/40 focus:ring-1 focus:ring-accent/20",
           )}
         />
         <Button
           type="submit"
           disabled={isBusy || !concept.trim()}
-          className="bg-amber-500/90 font-mono text-xs uppercase tracking-wider text-black hover:bg-amber-400"
+          className="bg-accent/90 font-mono text-xs uppercase tracking-wider text-black hover:bg-accent/20"
         >
           {isBusy ? (
             <Loader2Icon className="size-4 animate-spin" />

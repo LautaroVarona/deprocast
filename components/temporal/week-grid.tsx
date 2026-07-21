@@ -42,8 +42,8 @@ export function WeekGrid({
 
   const panelClass =
     skin === "noir"
-      ? "border-white/8 bg-black/40 calendario-noir-panel"
-      : "border-white/10 bg-black/25";
+      ? "border-border bg-card/80 calendario-noir-panel"
+      : "border-border bg-muted/40";
 
   return (
     <div className="grid min-h-0 flex-1 grid-cols-1 gap-3 overflow-y-auto lg:grid-cols-7">
@@ -70,18 +70,18 @@ export function WeekGrid({
           className={cn(
             "min-h-[11rem] rounded-xl border p-2 transition-colors",
             panelClass,
-            activeSlotDay === day.key && "ring-1 ring-cyan-400/50",
+            activeSlotDay === day.key && "ring-1 ring-primary/50",
           )}
         >
-          <header className="mb-2 border-b border-white/10 pb-1.5">
-            <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-white/50">
+          <header className="mb-2 border-b border-border pb-1.5">
+            <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
               {DAY_LABELS[index]}
             </p>
-            <p className="text-sm text-white">{day.date.getDate()}</p>
+            <p className="text-sm text-foreground">{day.date.getDate()}</p>
           </header>
           <div className="space-y-2">
             {day.blocks.length === 0 ? (
-              <p className="text-[11px] text-white/40">Hueco libre</p>
+              <p className="text-[11px] text-muted-foreground">Hueco libre</p>
             ) : (
               day.blocks.map((block) => (
                 <div

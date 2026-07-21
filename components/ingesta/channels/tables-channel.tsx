@@ -122,7 +122,7 @@ export function TablesChannel() {
           <p className="text-sm font-medium">
             {fileName ?? "Arrastrá .xlsx o .csv"}
           </p>
-          <p className="font-mono text-[9px] text-muted-foreground">
+          <p className="font-mono text-[10px] text-muted-foreground">
             La tabla se convierte en prima materia y pasa por el purificador
           </p>
         </div>
@@ -165,7 +165,7 @@ export function TablesChannel() {
       )}
 
       {lastReviewId && status === "done" && (
-        <p className="shrink-0 font-mono text-[9px] text-muted-foreground">
+        <p className="shrink-0 font-mono text-[10px] text-muted-foreground">
           En cola de validación ·{" "}
           <Link
             href={`/validar?id=${lastReviewId}`}

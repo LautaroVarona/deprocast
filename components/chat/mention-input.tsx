@@ -230,7 +230,7 @@ export function MentionInput({
             <SendIcon className="size-4" />
           </Button>
         </div>
-        <p className="mt-2 font-mono text-[9px] text-muted-foreground">
+        <p className="mt-2 font-mono text-[10px] text-muted-foreground">
           Enter para enviar · Shift+Enter nueva línea · @ para contexto
         </p>
       </div>

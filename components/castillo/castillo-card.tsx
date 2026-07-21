@@ -37,16 +37,16 @@ export function CastilloCardSurface({ card }: CastilloCardProps) {
   return (
     <div
       className={cn(
-        "castillo-card flex h-full flex-col overflow-hidden rounded-xl border border-white/10 bg-[#141418]/90",
+        "castillo-card flex h-full flex-col overflow-hidden rounded-xl border border-border bg-card",
         accentClass,
       )}
     >
-      <div className="flex items-start justify-between gap-2 border-b border-white/8 px-3 py-2">
+      <div className="flex items-start justify-between gap-2 border-b border-border px-3 py-2">
         <div className="min-w-0 flex-1">
-          <p className="line-clamp-2 text-xs font-semibold text-white">
+          <p className="line-clamp-2 text-xs font-semibold text-foreground">
             {card.title}
           </p>
-          <p className="font-mono text-[9px] text-white/35">
+          <p className="font-mono text-[10px] text-muted-foreground">
             {SOURCE_TYPE_LABELS[card.sourceType]}
           </p>
         </div>
@@ -57,7 +57,7 @@ export function CastilloCardSurface({ card }: CastilloCardProps) {
               target="_blank"
               className={cn(
                 buttonVariants({ variant: "ghost", size: "icon-sm" }),
-                "size-6 text-white/40 hover:bg-white/10 hover:text-white",
+                "size-6 text-muted-foreground hover:bg-muted/50 hover:text-foreground",
               )}
             >
               <ExternalLinkIcon className="size-3" />
@@ -67,7 +67,7 @@ export function CastilloCardSurface({ card }: CastilloCardProps) {
             type="button"
             variant="ghost"
             size="icon-sm"
-            className="size-6 text-white/40 hover:bg-rose-500/20 hover:text-rose-300"
+            className="size-6 text-muted-foreground hover:bg-destructive/20 hover:text-destructive"
             disabled={isBusy}
             onClick={() => void removeCard(card.id)}
             aria-label="Quitar del canvas"
@@ -79,7 +79,7 @@ export function CastilloCardSurface({ card }: CastilloCardProps) {
 
       {imageUrl ? (
         // El tablero de visión usa imágenes opcionales en tarjetas especiales.
-        <div className="border-b border-white/8 bg-black/30 px-2 py-2">
+        <div className="border-b border-border bg-muted/40 px-2 py-2">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={imageUrl}
@@ -91,11 +91,11 @@ export function CastilloCardSurface({ card }: CastilloCardProps) {
 
       <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto p-3">
         {card.subtitle ? (
-          <p className="line-clamp-3 text-[11px] leading-relaxed text-white/50">
+          <p className="line-clamp-3 text-[11px] leading-relaxed text-muted-foreground">
             {card.subtitle}
           </p>
         ) : (
-          <p className="text-[11px] text-white/30 italic">
+          <p className="text-[11px] text-muted-foreground italic">
             Sin preview — clasificá libremente.
           </p>
         )}
@@ -105,12 +105,12 @@ export function CastilloCardSurface({ card }: CastilloCardProps) {
             {card.tags.map((tag) => (
               <span
                 key={tag}
-                className="inline-flex items-center gap-0.5 rounded-md border border-white/10 bg-white/5 px-1.5 py-0.5 font-mono text-[9px] text-white/70"
+                className="inline-flex items-center gap-0.5 rounded-md border border-border bg-muted/40 px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground"
               >
                 {tag}
                 <button
                   type="button"
-                  className="text-white/40 hover:text-white"
+                  className="text-muted-foreground hover:text-foreground"
                   onClick={() => removeTag(tag)}
                   aria-label={`Quitar tag ${tag}`}
                 >
@@ -124,7 +124,7 @@ export function CastilloCardSurface({ card }: CastilloCardProps) {
               value={tagInput}
               onChange={(event) => setTagInput(event.target.value)}
               placeholder="Tag…"
-              className="min-w-0 flex-1 rounded-md border border-white/10 bg-black/30 px-2 py-1 text-[10px] text-white placeholder:text-white/25"
+              className="min-w-0 flex-1 rounded-md border border-border bg-muted/40 px-2 py-1 text-[10px] text-foreground placeholder:text-muted-foreground"
               onKeyDown={(event) => {
                 if (event.key === "Enter") addTag();
               }}
@@ -133,7 +133,7 @@ export function CastilloCardSurface({ card }: CastilloCardProps) {
               type="button"
               size="sm"
               variant="outline"
-              className="h-6 border-white/10 px-2 text-[10px] text-white/70"
+              className="h-6 border-border px-2 text-[10px] text-muted-foreground"
               onClick={addTag}
             >
               +

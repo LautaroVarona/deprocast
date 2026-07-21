@@ -35,7 +35,7 @@ export function JournalEntryPreview({
                 </span>
                 <Badge
                   className={cn(
-                    "h-4 px-1.5 text-[9px] font-medium",
+                    "h-4 px-1.5 text-[10px] font-medium",
                     ONDA_BADGE_STYLES[entry.onda],
                   )}
                 >

@@ -40,19 +40,19 @@ export function AxisSlider({
           <p
             className={cn(
               "font-mono text-[10px] uppercase tracking-[0.2em]",
-              active ? "text-emerald-400/90" : "text-white/40",
+              active ? "text-primary/90" : "text-muted-foreground",
             )}
           >
             {label}
           </p>
           {sublabel ? (
-            <p className="font-mono text-[9px] text-white/25">{sublabel}</p>
+            <p className="font-mono text-[10px] text-muted-foreground">{sublabel}</p>
           ) : null}
         </div>
         <span
           className={cn(
             "font-mono text-lg tabular-nums transition-colors",
-            active ? "text-emerald-300" : "text-white/70",
+            active ? "text-primary" : "text-muted-foreground",
           )}
         >
           {value}
@@ -60,7 +60,7 @@ export function AxisSlider({
       </div>
 
       {tickLabels && tickLabels.length === span ? (
-        <div className="flex justify-between px-0.5 font-mono text-[8px] text-white/30">
+        <div className="flex justify-between px-0.5 font-mono text-[8px] text-muted-foreground">
           {tickLabels.map((tick) => (
             <span key={tick} className="w-4 truncate text-center">
               {tick.slice(0, 4)}
@@ -68,7 +68,7 @@ export function AxisSlider({
           ))}
         </div>
       ) : (
-        <div className="flex justify-between px-0.5 font-mono text-[9px] text-white/30">
+        <div className="flex justify-between px-0.5 font-mono text-[10px] text-muted-foreground">
           <span>{min}</span>
           <span>{max}</span>
         </div>

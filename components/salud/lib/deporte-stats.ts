@@ -44,7 +44,7 @@ export function classifyExercise(description: string): ExerciseTag {
 
   return {
     label: "#Actividad",
-    className: "border-zinc-600/50 bg-zinc-800/50 text-zinc-300",
+    className: "border-border bg-muted text-foreground/80",
   };
 }
 

@@ -117,7 +117,7 @@ export function UniverseSelect({
         className={cn(
           "inline-flex max-w-[min(100%,14rem)] items-center gap-1.5 rounded-full border transition-colors",
           size === "sm"
-            ? "px-2.5 py-1 font-mono text-[9px] uppercase tracking-[0.14em]"
+            ? "px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.14em]"
             : "px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.16em]",
           isFiltered
             ? "border-primary/25 bg-primary/10 text-foreground hover:bg-primary/15"

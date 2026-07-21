@@ -114,7 +114,7 @@ export function VisionChannel() {
         }}
       >
         {isBusy ? (
-          <Loader2Icon className="size-7 animate-spin text-violet-400" />
+          <Loader2Icon className="size-7 animate-spin text-primary" />
         ) : (
           <UploadCloudIcon className="size-7 text-muted-foreground" />
         )}
@@ -122,7 +122,7 @@ export function VisionChannel() {
           <p className="text-sm font-medium">
             {fileName ?? (isBusy ? "Extrayendo y purificando…" : "Imágenes")}
           </p>
-          <p className="font-mono text-[9px] text-muted-foreground">
+          <p className="font-mono text-[10px] text-muted-foreground">
             Original en data/tacho/ · análisis visual → prima materia
           </p>
         </div>
@@ -165,7 +165,7 @@ export function VisionChannel() {
       )}
 
       {lastReviewId && status === "done" && (
-        <p className="shrink-0 font-mono text-[9px] text-muted-foreground">
+        <p className="shrink-0 font-mono text-[10px] text-muted-foreground">
           En cola de validación ·{" "}
           <Link
             href={`/validar?id=${lastReviewId}`}

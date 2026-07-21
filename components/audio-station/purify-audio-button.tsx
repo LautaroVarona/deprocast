@@ -70,7 +70,7 @@ export function PurifyAudioButton({
 
   const sizeClasses =
     size === "sm"
-      ? "h-6 gap-1 px-2 font-mono text-[9px]"
+      ? "h-6 gap-1 px-2 font-mono text-[10px]"
       : "gap-2 px-3 text-xs";
 
   return (
@@ -79,7 +79,7 @@ export function PurifyAudioButton({
       disabled={disabled || isPurifying}
       onClick={() => void handlePurify()}
       className={cn(
-        "inline-flex shrink-0 items-center rounded border border-violet-500/35 bg-violet-500/15 text-violet-200 transition-colors hover:bg-violet-500/25 disabled:opacity-50",
+        "inline-flex shrink-0 items-center rounded border border-primary/35 bg-primary/15 text-primary transition-colors hover:bg-primary/25 disabled:opacity-50",
         sizeClasses,
         className,
       )}

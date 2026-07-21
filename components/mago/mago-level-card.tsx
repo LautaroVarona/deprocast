@@ -10,9 +10,9 @@ const TIPO_LABEL: Record<TipoLetraHebrea, string> = {
 };
 
 const TIPO_TONE: Record<TipoLetraHebrea, string> = {
-  madre: "border-rose-500/30 bg-rose-500/10 text-rose-200",
-  doble: "border-amber-500/30 bg-amber-500/10 text-amber-200",
-  simple: "border-white/15 bg-white/5 text-white/70",
+  madre: "border-destructive/30 bg-destructive/10 text-destructive",
+  doble: "border-accent/30 bg-accent/10 text-accent",
+  simple: "border-border bg-muted/40 text-muted-foreground",
 };
 
 type MagoLevelCardProps = {
@@ -37,17 +37,17 @@ export function MagoLevelCard({
       className={cn(
         "castillo-card flex w-full flex-col gap-3 border p-4 text-left transition-colors",
         selected
-          ? "border-amber-500/40 bg-amber-500/5"
-          : "border-white/10 hover:border-white/20",
+          ? "border-accent/40 bg-accent/5"
+          : "border-border hover:border-border",
       )}
     >
       <header className="flex items-start justify-between gap-3">
         <div>
-          <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-white/35">
+          <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
             Nivel {core.id}
           </p>
-          <h3 className="mt-1 text-sm font-semibold text-white">{core.letra}</h3>
-          <p className="mt-0.5 text-xs text-white/50">{core.significado}</p>
+          <h3 className="mt-1 text-sm font-semibold text-foreground">{core.letra}</h3>
+          <p className="mt-0.5 text-xs text-muted-foreground">{core.significado}</p>
         </div>
         <span
           className={cn(
@@ -59,7 +59,7 @@ export function MagoLevelCard({
         </span>
       </header>
 
-      <p className="font-mono text-[11px] text-amber-200/80">
+      <p className="font-mono text-[11px] text-accent/80">
         Tarot · {core.tarot}
       </p>
 
@@ -67,7 +67,7 @@ export function MagoLevelCard({
         <TradicionBlock tradicion={page.tradicion} />
       ) : null}
 
-      <div className="space-y-1.5 border-t border-white/10 pt-3">
+      <div className="space-y-1.5 border-t border-border pt-3">
         {page.proyectoAsociado ? (
           <DimRow
             label="Proyecto"
@@ -98,7 +98,7 @@ export function MagoLevelCard({
         !page.libroRojo &&
         !page.capituloLibro &&
         page.otrasDimensiones.length === 0 ? (
-          <p className="font-mono text-[10px] text-white/25">Sin dimensiones</p>
+          <p className="font-mono text-[10px] text-muted-foreground">Sin dimensiones</p>
         ) : null}
       </div>
     </button>
@@ -109,8 +109,8 @@ function TradicionBlock({ tradicion }: { tradicion: ArcanaTradicion }) {
   if (tradicion.tipo === "madre") {
     const { madre } = tradicion;
     return (
-      <div className="space-y-1 rounded-md border border-rose-500/15 bg-rose-500/5 p-2.5">
-        <p className="font-mono text-[9px] uppercase tracking-wider text-rose-300/60">
+      <div className="space-y-1 rounded-md border border-destructive/15 bg-destructive/5 p-2.5">
+        <p className="font-mono text-[10px] uppercase tracking-wider text-destructive/60">
           Alquimia · 3 Madres
         </p>
         <DimRow label="Principio" value={madre.alquimia} />
@@ -124,8 +124,8 @@ function TradicionBlock({ tradicion }: { tradicion: ArcanaTradicion }) {
   if (tradicion.tipo === "doble") {
     const { doble } = tradicion;
     return (
-      <div className="space-y-1 rounded-md border border-amber-500/15 bg-amber-500/5 p-2.5">
-        <p className="font-mono text-[9px] uppercase tracking-wider text-amber-300/60">
+      <div className="space-y-1 rounded-md border border-accent/15 bg-accent/5 p-2.5">
+        <p className="font-mono text-[10px] uppercase tracking-wider text-accent/60">
           V.I.T.R.I.O.L. · 7 Dobles
         </p>
         <DimRow label="Sephirot" value={doble.sephirot} />
@@ -143,8 +143,8 @@ function TradicionBlock({ tradicion }: { tradicion: ArcanaTradicion }) {
 
   const { simple } = tradicion;
   return (
-    <div className="space-y-1 rounded-md border border-white/10 bg-white/5 p-2.5">
-      <p className="font-mono text-[9px] uppercase tracking-wider text-white/40">
+    <div className="space-y-1 rounded-md border border-border bg-muted/40 p-2.5">
+      <p className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
         Gran Obra · 12 Simples
       </p>
       <DimRow label="Astrología" value={simple.astrologia} />
@@ -161,10 +161,10 @@ function TradicionBlock({ tradicion }: { tradicion: ArcanaTradicion }) {
 function DimRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex flex-col gap-0.5">
-      <span className="font-mono text-[9px] uppercase tracking-wider text-white/30">
+      <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
         {label}
       </span>
-      <span className="text-xs text-white/75">{value}</span>
+      <span className="text-xs text-muted-foreground">{value}</span>
     </div>
   );
 }

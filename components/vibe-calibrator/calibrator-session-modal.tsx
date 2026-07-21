@@ -46,7 +46,7 @@ export function CalibratorSessionModal() {
     >
       <button
         type="button"
-        className="absolute inset-0 bg-black/60 backdrop-blur-md"
+        className="absolute inset-0 bg-foreground/40 backdrop-blur-md"
         onClick={() => void handleClose()}
         aria-label="Cerrar sesión"
       />
@@ -57,7 +57,7 @@ export function CalibratorSessionModal() {
           variant="ghost"
           size="icon-sm"
           className={cn(
-            "absolute -top-10 right-0 text-primary-foreground/70 hover:bg-white/10 hover:text-primary-foreground",
+            "absolute -top-10 right-0 text-primary-foreground/70 hover:bg-muted/50 hover:text-primary-foreground",
             state.status === "completed" && "top-0 right-0 text-foreground",
           )}
           onClick={() => void handleClose()}

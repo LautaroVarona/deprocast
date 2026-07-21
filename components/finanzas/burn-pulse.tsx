@@ -23,21 +23,21 @@ export function BurnPulse({ metrics }: BurnPulseProps) {
 
   return (
     <div className="finanzas-noir-panel rounded-xl p-4">
-      <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-zinc-500">
+      <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
         Pulso de burn rate
       </p>
-      <p className="mt-0.5 text-xs text-zinc-500">
+      <p className="mt-0.5 text-xs text-muted-foreground">
         Gasto mínimo vital vs operativo total del mes
       </p>
 
       <div className="mt-4 flex h-3 overflow-hidden rounded-full">
         <div
-          className="bg-amber-500/80 transition-all duration-500"
+          className="bg-accent/80 transition-all duration-500"
           style={{ width: `${vitalPercent}%` }}
           title={`Vital: ${formatter.format(vital)}`}
         />
         <div
-          className="bg-zinc-600/60 transition-all duration-500"
+          className="bg-muted transition-all duration-500"
           style={{ width: `${discretionaryPercent}%` }}
           title={`Discrecional: ${formatter.format(operational - vital)}`}
         />
@@ -45,24 +45,24 @@ export function BurnPulse({ metrics }: BurnPulseProps) {
 
       <div className="mt-4 grid grid-cols-2 gap-3">
         <div>
-          <p className="font-mono text-[9px] uppercase tracking-wider text-amber-400/80">
+          <p className="font-mono text-[10px] uppercase tracking-wider text-accent">
             Vital
           </p>
-          <p className="text-lg font-semibold tabular-nums text-zinc-100">
+          <p className="text-lg font-semibold tabular-nums text-foreground">
             {formatter.format(vital)}
           </p>
         </div>
         <div>
-          <p className="font-mono text-[9px] uppercase tracking-wider text-zinc-500">
+          <p className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
             Operativo
           </p>
-          <p className="text-lg font-semibold tabular-nums text-zinc-100">
+          <p className="text-lg font-semibold tabular-nums text-foreground">
             {formatter.format(operational)}
           </p>
         </div>
       </div>
 
-      <p className="mt-3 font-mono text-[9px] text-zinc-500">
+      <p className="mt-3 font-mono text-[10px] text-muted-foreground">
         Ratio vital/operativo: {(ratio * 100).toFixed(0)}%
       </p>
     </div>

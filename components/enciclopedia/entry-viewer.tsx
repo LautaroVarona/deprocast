@@ -67,7 +67,7 @@ function renderInlineMarkdown(
 
       if (isBold) {
         nodes.push(
-          <strong key={key} className="font-semibold text-white/95">
+          <strong key={key} className="font-semibold text-foreground/95">
             {segment.text}
           </strong>,
         );
@@ -99,7 +99,7 @@ function renderBody(
       return (
         <h3
           key={index}
-          className="mb-2 mt-4 font-mono text-sm font-semibold text-amber-200/90"
+          className="mb-2 mt-4 font-mono text-sm font-semibold text-accent/90"
         >
           {trimmed.slice(3)}
         </h3>
@@ -110,7 +110,7 @@ function renderBody(
       return (
         <h4
           key={index}
-          className="mb-1 mt-3 font-mono text-xs font-medium uppercase tracking-wider text-white/70"
+          className="mb-1 mt-3 font-mono text-xs font-medium uppercase tracking-wider text-muted-foreground"
         >
           {trimmed.slice(4)}
         </h4>
@@ -119,15 +119,15 @@ function renderBody(
 
     if (trimmed.startsWith("- ")) {
       return (
-        <p key={index} className="mb-1 pl-4 text-sm leading-relaxed text-white/75">
-          <span className="mr-2 text-amber-400/60">·</span>
+        <p key={index} className="mb-1 pl-4 text-sm leading-relaxed text-muted-foreground">
+          <span className="mr-2 text-accent/60">·</span>
           {renderInlineMarkdown(trimmed.slice(2), terms, onExplore)}
         </p>
       );
     }
 
     return (
-      <p key={index} className="mb-2 text-sm leading-relaxed text-white/75">
+      <p key={index} className="mb-2 text-sm leading-relaxed text-muted-foreground">
         {renderInlineMarkdown(trimmed, terms, onExplore)}
       </p>
     );
@@ -199,10 +199,10 @@ export function EntryViewer() {
     return (
       <section className="enciclopedia-noir-panel flex min-h-[320px] items-center justify-center p-8">
         <div className="max-w-sm space-y-2 text-center">
-          <p className="font-mono text-[10px] uppercase tracking-[0.24em] text-amber-400/50">
+          <p className="font-mono text-[10px] uppercase tracking-[0.24em] text-accent/50">
             02 · Descubre
           </p>
-          <p className="text-sm text-white/40">
+          <p className="text-sm text-muted-foreground">
             Tu primera explicación aparecerá acá. Subrayá términos sugeridos o
             seleccioná cualquier palabra para seguir el hilo.
           </p>
@@ -215,26 +215,26 @@ export function EntryViewer() {
     <section className="enciclopedia-noir-panel relative space-y-4 p-5">
       <div className="space-y-2">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <p className="font-mono text-[10px] uppercase tracking-[0.24em] text-amber-400/60">
+          <p className="font-mono text-[10px] uppercase tracking-[0.24em] text-accent/60">
             02 · Descubre · 03 · Explora
           </p>
           {currentEntry.fromCache ? (
-            <span className="rounded-full border border-white/10 px-2 py-0.5 font-mono text-[10px] text-white/35">
+            <span className="rounded-full border border-border px-2 py-0.5 font-mono text-[10px] text-muted-foreground">
               desde caché
             </span>
           ) : null}
         </div>
 
         {breadcrumb.length > 1 ? (
-          <div className="flex flex-wrap items-center gap-1 text-xs text-white/40">
+          <div className="flex flex-wrap items-center gap-1 text-xs text-muted-foreground">
             {breadcrumb.map((title, index) => (
               <span key={`${title}-${index}`} className="flex items-center gap-1">
-                {index > 0 ? <span className="text-white/20">→</span> : null}
+                {index > 0 ? <span className="text-muted-foreground">→</span> : null}
                 <span
                   className={cn(
                     index === breadcrumb.length - 1
-                      ? "text-amber-200/80"
-                      : "text-white/45",
+                      ? "text-accent/80"
+                      : "text-muted-foreground",
                   )}
                 >
                   {title}
@@ -244,14 +244,14 @@ export function EntryViewer() {
             <button
               type="button"
               onClick={goBack}
-              className="ml-2 font-mono text-[10px] uppercase tracking-wider text-amber-400/70 hover:text-amber-300"
+              className="ml-2 font-mono text-[10px] uppercase tracking-wider text-accent/70 hover:text-accent"
             >
               Volver
             </button>
           </div>
         ) : null}
 
-        <h2 className="font-mono text-xl font-semibold text-white/95">
+        <h2 className="font-mono text-xl font-semibold text-foreground/95">
           {currentEntry.title}
         </h2>
       </div>
@@ -279,9 +279,9 @@ export function EntryViewer() {
             onClick={() => void handleExploreTerm(selectionHint.text)}
             className={cn(
               "absolute z-10 -translate-x-1/2 -translate-y-full",
-              "rounded-md border border-amber-500/40 bg-amber-500/90 px-2.5 py-1",
+              "rounded-md border border-accent/40 bg-accent/90 px-2.5 py-1",
               "font-mono text-[10px] uppercase tracking-wider text-black shadow-lg",
-              "hover:bg-amber-400",
+              "hover:bg-accent/20",
             )}
           >
             Explorar «{selectionHint.text.slice(0, 32)}
@@ -291,8 +291,8 @@ export function EntryViewer() {
       </div>
 
       {currentEntry.explorableTerms.length > 0 ? (
-        <div className="border-t border-white/8 pt-3">
-          <p className="mb-2 font-mono text-[10px] uppercase tracking-wider text-white/35">
+        <div className="border-t border-border pt-3">
+          <p className="mb-2 font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
             Términos sugeridos
           </p>
           <div className="flex flex-wrap gap-2">

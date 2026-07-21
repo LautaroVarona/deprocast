@@ -23,18 +23,18 @@ const BLOCKS = Array.from(
 
 function intensityClass(level: number, active: boolean): string {
   if (!active) {
-    return "border-white/10 bg-white/[0.03]";
+    return "border-border bg-foreground/[0.03]";
   }
   if (level >= 10) {
-    return "border-amber-300/70 bg-amber-400 shadow-[0_0_10px_rgba(251,191,36,0.55)]";
+    return "border-accent/70 bg-accent/20 shadow-[0_0_10px_rgba(251,191,36,0.55)]";
   }
   if (level >= 7) {
-    return "border-amber-400/60 bg-amber-500/90 shadow-[0_0_8px_rgba(245,158,11,0.4)]";
+    return "border-accent/60 bg-accent/90 shadow-[0_0_8px_rgba(245,158,11,0.4)]";
   }
   if (level >= 4) {
-    return "border-amber-500/50 bg-amber-600/80";
+    return "border-accent/50 bg-accent/80";
   }
-  return "border-amber-700/40 bg-amber-800/70";
+  return "border-accent/40 bg-accent/70";
 }
 
 export function HermeticScale({
@@ -53,12 +53,12 @@ export function HermeticScale({
   return (
     <div className={cn("space-y-2", className)}>
       <div className="flex items-center justify-between gap-2">
-        <span className="font-mono text-[9px] tracking-[0.2em] text-amber-500/70 uppercase">
+        <span className="font-mono text-[10px] tracking-[0.2em] text-accent uppercase">
           Escala hermética
         </span>
         <span
           className={cn(
-            "font-mono tabular-nums text-amber-300",
+            "font-mono tabular-nums text-accent",
             size === "sm" ? "text-sm" : "text-lg",
           )}
         >
@@ -76,7 +76,7 @@ export function HermeticScale({
         aria-disabled={disabled}
         tabIndex={disabled ? -1 : 0}
         className={cn(
-          "flex gap-1 outline-none focus-visible:ring-1 focus-visible:ring-amber-500/50",
+          "flex gap-1 outline-none focus-visible:ring-1 focus-visible:ring-accent/50",
           disabled && "pointer-events-none opacity-50",
         )}
         onKeyDown={(event) => {

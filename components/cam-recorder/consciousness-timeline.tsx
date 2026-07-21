@@ -13,7 +13,7 @@ function FocusBar({ nivel }: { nivel: number }) {
           key={index}
           className={cn(
             "h-1 w-1 rounded-full",
-            index < nivel ? "bg-emerald-400/80" : "bg-white/10",
+            index < nivel ? "bg-primary/80" : "bg-muted/40",
           )}
         />
       ))}
@@ -46,13 +46,13 @@ function LogEntry({
         <span className="cam-recorder-timestamp font-mono text-xs tabular-nums">
           [{note.timestamp}]
         </span>
-        <span className="font-mono text-[10px] uppercase tracking-wider text-white/30">
+        <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
           {note.appActiva}
         </span>
         <FocusBar nivel={note.nivelDeFoco} />
       </div>
-      <p className="mt-1.5 font-mono text-[11px] leading-relaxed text-white/55">
-        <span className="text-white/25">— </span>
+      <p className="mt-1.5 font-mono text-[11px] leading-relaxed text-muted-foreground">
+        <span className="text-muted-foreground">— </span>
         {note.descripcionDetallada}
       </p>
     </button>
@@ -78,21 +78,21 @@ export function ConsciousnessTimeline() {
 
   return (
     <div className="cam-recorder-noir-panel flex h-full min-h-[420px] flex-col">
-      <header className="flex items-center justify-between border-b border-white/8 px-4 py-3">
+      <header className="flex items-center justify-between border-b border-border px-4 py-3">
         <div>
-          <p className="font-mono text-[10px] uppercase tracking-[0.24em] text-white/35">
+          <p className="font-mono text-[10px] uppercase tracking-[0.24em] text-muted-foreground">
             Línea de Tiempo
           </p>
-          <h2 className="font-mono text-sm text-white/80">
+          <h2 className="font-mono text-sm text-muted-foreground">
             Logs de Conciencia
           </h2>
         </div>
         <div className="text-right">
-          <p className="font-mono text-[10px] text-white/30">
+          <p className="font-mono text-[10px] text-muted-foreground">
             {notas.length} nota{notas.length === 1 ? "" : "s"}
           </p>
           {phase === "analyzing" ? (
-            <p className="cam-recorder-status-live font-mono text-[10px] text-emerald-400/90">
+            <p className="cam-recorder-status-live font-mono text-[10px] text-primary/90">
               ● procesando
             </p>
           ) : null}
@@ -107,13 +107,13 @@ export function ConsciousnessTimeline() {
           <div className="flex h-full min-h-[280px] flex-col items-center justify-center gap-2 px-4 text-center">
             {isBusy ? (
               <>
-                <span className="cam-recorder-scanline h-px w-24 bg-emerald-500/40" />
-                <p className="font-mono text-[10px] uppercase tracking-wider text-emerald-400/70">
+                <span className="cam-recorder-scanline h-px w-24 bg-primary/40" />
+                <p className="font-mono text-[10px] uppercase tracking-wider text-primary/70">
                   El watcher está indexando el plano visual…
                 </p>
               </>
             ) : (
-              <p className="font-mono text-[10px] text-white/25">
+              <p className="font-mono text-[10px] text-muted-foreground">
                 Las notas cronológicas aparecerán aquí durante el análisis.
               </p>
             )}

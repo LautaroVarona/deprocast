@@ -56,7 +56,7 @@ export function MentionDropdown({
       ) : (
         Object.entries(grouped).map(([category, items]) => (
           <div key={category}>
-            <div className="border-b border-border px-3 py-1 font-mono text-[9px] tracking-wide text-muted-foreground uppercase">
+            <div className="border-b border-border px-3 py-1 font-mono text-[10px] tracking-wide text-muted-foreground uppercase">
               {category}
             </div>
             <ul>
@@ -81,7 +81,7 @@ export function MentionDropdown({
                         @{suggestion.label}
                       </span>
                       {suggestion.subtitle ? (
-                        <span className="shrink-0 font-mono text-[9px] text-muted-foreground">
+                        <span className="shrink-0 font-mono text-[10px] text-muted-foreground">
                           {suggestion.subtitle}
                         </span>
                       ) : null}

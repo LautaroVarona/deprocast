@@ -30,8 +30,8 @@ export function SuggestionDeck({
 }: SuggestionDeckProps) {
   const panelClass =
     skin === "noir"
-      ? "calendario-noir-panel border-white/8"
-      : "border-white/10 bg-black/25";
+      ? "calendario-noir-panel border-border"
+      : "border-border bg-card/80";
 
   return (
     <aside
@@ -40,23 +40,23 @@ export function SuggestionDeck({
         panelClass,
       )}
     >
-      <header className="border-b border-white/10 px-3 py-2">
-        <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-violet-400/80">
+      <header className="border-b border-border px-3 py-2">
+        <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-primary/80">
           Mazo de misiones
         </p>
-        <p className="text-[11px] text-zinc-500">Fase de reclutamiento</p>
+        <p className="text-[11px] text-muted-foreground">Fase de reclutamiento</p>
       </header>
 
       {onAreaFilterChange ? (
-        <div className="flex flex-wrap gap-1 border-b border-white/10 p-2">
+        <div className="flex flex-wrap gap-1 border-b border-border p-2">
           <button
             type="button"
             onClick={() => onAreaFilterChange(null)}
             className={cn(
-              "rounded px-1.5 py-0.5 font-mono text-[9px] uppercase",
+              "rounded px-1.5 py-0.5 font-mono text-[10px] uppercase",
               !areaFilter
-                ? "bg-cyan-500/20 text-cyan-200"
-                : "text-zinc-500 hover:text-zinc-300",
+                ? "bg-primary/20 text-primary"
+                : "text-muted-foreground hover:text-foreground",
             )}
           >
             Todas
@@ -67,10 +67,10 @@ export function SuggestionDeck({
               type="button"
               onClick={() => onAreaFilterChange(area)}
               className={cn(
-                "rounded px-1.5 py-0.5 font-mono text-[9px] uppercase",
+                "rounded px-1.5 py-0.5 font-mono text-[10px] uppercase",
                 areaFilter === area
-                  ? "bg-cyan-500/20 text-cyan-200"
-                  : "text-zinc-500 hover:text-zinc-300",
+                  ? "bg-primary/20 text-primary"
+                  : "text-muted-foreground hover:text-foreground",
               )}
             >
               {ECOSYSTEM_AREA_LABELS[area].slice(0, 4)}
@@ -81,12 +81,12 @@ export function SuggestionDeck({
 
       <div className="min-h-0 flex-1 space-y-2 overflow-y-auto p-2">
         {isLoading ? (
-          <div className="flex items-center gap-2 p-2 text-xs text-zinc-500">
+          <div className="flex items-center gap-2 p-2 text-xs text-muted-foreground">
             <Loader2Icon className="size-3 animate-spin" />
             Barajando…
           </div>
         ) : cards.length === 0 ? (
-          <p className="p-2 text-xs text-zinc-500">Mazo vacío. Revisá Pendientes o Diario.</p>
+          <p className="p-2 text-xs text-muted-foreground">Mazo vacío. Revisá Pendientes o Diario.</p>
         ) : (
           cards.map((card) => (
             <button
@@ -101,12 +101,12 @@ export function SuggestionDeck({
               }}
               onClick={() => onSelectCard?.(card)}
               className={cn(
-                "w-full rounded-md border border-violet-500/30 bg-violet-950/25 px-2.5 py-2 text-left text-xs text-violet-100 transition-all hover:border-violet-400/50",
-                selectedCardId === card.id && "ring-2 ring-violet-400/60",
+                "w-full rounded-md border border-primary/30 bg-primary/10 px-2.5 py-2 text-left text-xs text-foreground transition-all hover:border-primary/50",
+                selectedCardId === card.id && "ring-2 ring-primary/60",
               )}
             >
               <p className="line-clamp-2">{card.title}</p>
-              <p className="mt-1 font-mono text-[9px] uppercase tracking-wider text-violet-300/60">
+              <p className="mt-1 font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
                 G{card.actionCost} · {card.durationMin}m
                 {card.ecosystemArea
                   ? ` · ${ECOSYSTEM_AREA_LABELS[card.ecosystemArea]}`

@@ -147,22 +147,22 @@ export function ArchivoWorkspace() {
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="space-y-2">
             <div className="flex items-center gap-2">
-              <ArchiveIcon className="size-5 text-sky-400/70" />
-              <p className="font-mono text-[10px] uppercase tracking-[0.28em] text-white/40">
+              <ArchiveIcon className="size-5 text-primary/70" />
+              <p className="font-mono text-[10px] uppercase tracking-[0.28em] text-muted-foreground">
                 Archivo · Materia Prima
               </p>
             </div>
-            <h1 className="bg-gradient-to-r from-sky-100 via-white/90 to-white/50 bg-clip-text font-mono text-2xl font-semibold tracking-tight text-transparent sm:text-3xl">
+            <h1 className="bg-gradient-to-r from-primary/20 via-foreground/90 to-foreground/50 bg-clip-text font-mono text-2xl font-semibold tracking-tight text-transparent sm:text-3xl">
               Todo lo que subiste, en bruto
             </h1>
-            <p className="max-w-2xl text-sm text-white/45">
+            <p className="max-w-2xl text-sm text-muted-foreground">
               Textos, cuadernos, transcripciones de audio, diarios, proyectos y
               cola del Purifier — unificado con fechas, tag dominante y búsqueda
               semántica heurística.
             </p>
           </div>
 
-          <div className="flex items-center gap-2 font-mono text-[10px] text-white/35">
+          <div className="flex items-center gap-2 font-mono text-[10px] text-muted-foreground">
             {isLoading ? (
               <Loader2Icon className="size-3.5 animate-spin" />
             ) : (
@@ -175,20 +175,20 @@ export function ArchivoWorkspace() {
       <div className="archivo-noir-panel flex flex-col gap-4 p-4 sm:p-5">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
           <div className="relative flex-1">
-            <SearchIcon className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-white/30" />
+            <SearchIcon className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
             <input
               type="search"
               value={searchQuery}
               onChange={(event) => setSearchQuery(event.target.value)}
               placeholder="Búsqueda semántica — conceptos, proyectos, fragmentos…"
-              className="w-full rounded-md border border-white/10 bg-black/60 py-2.5 pl-10 pr-4 font-mono text-xs text-white/80 outline-none transition focus:border-sky-500/40 focus:ring-1 focus:ring-sky-500/20"
+              className="w-full rounded-md border border-border bg-foreground/40 py-2.5 pl-10 pr-4 font-mono text-xs text-muted-foreground outline-none transition focus:border-primary/40 focus:ring-1 focus:ring-primary/20"
             />
             {isSearching ? (
-              <Loader2Icon className="absolute right-3 top-1/2 size-4 -translate-y-1/2 animate-spin text-sky-400/70" />
+              <Loader2Icon className="absolute right-3 top-1/2 size-4 -translate-y-1/2 animate-spin text-primary/70" />
             ) : null}
           </div>
 
-          <div className="flex items-center gap-1 rounded-md border border-white/10 p-0.5">
+          <div className="flex items-center gap-1 rounded-md border border-border p-0.5">
             <Button
               type="button"
               size="sm"
@@ -197,8 +197,8 @@ export function ArchivoWorkspace() {
               className={cn(
                 "h-8 gap-1.5 font-mono text-[10px] uppercase tracking-wider",
                 viewMode === "cards"
-                  ? "bg-white/10 text-white"
-                  : "text-white/40 hover:text-white/70",
+                  ? "bg-muted/40 text-foreground"
+                  : "text-muted-foreground hover:text-muted-foreground",
               )}
             >
               <LayoutGridIcon className="size-3.5" />
@@ -212,8 +212,8 @@ export function ArchivoWorkspace() {
               className={cn(
                 "h-8 gap-1.5 font-mono text-[10px] uppercase tracking-wider",
                 viewMode === "list"
-                  ? "bg-white/10 text-white"
-                  : "text-white/40 hover:text-white/70",
+                  ? "bg-muted/40 text-foreground"
+                  : "text-muted-foreground hover:text-muted-foreground",
               )}
             >
               <ListIcon className="size-3.5" />
@@ -229,8 +229,8 @@ export function ArchivoWorkspace() {
             className={cn(
               "rounded-full border px-2.5 py-1 font-mono text-[10px] uppercase tracking-wider transition",
               kindFilter === ALL_KINDS
-                ? "border-sky-500/40 bg-sky-500/10 text-sky-200"
-                : "border-white/10 text-white/35 hover:border-white/20 hover:text-white/60",
+                ? "border-primary/40 bg-primary/10 text-primary"
+                : "border-border text-muted-foreground hover:border-border hover:text-muted-foreground",
             )}
           >
             Todos ({totalCount})
@@ -246,8 +246,8 @@ export function ArchivoWorkspace() {
                 className={cn(
                   "rounded-full border px-2.5 py-1 font-mono text-[10px] uppercase tracking-wider transition",
                   kindFilter === kind
-                    ? "border-sky-500/40 bg-sky-500/10 text-sky-200"
-                    : "border-white/10 text-white/35 hover:border-white/20 hover:text-white/60",
+                    ? "border-primary/40 bg-primary/10 text-primary"
+                    : "border-border text-muted-foreground hover:border-border hover:text-muted-foreground",
                 )}
               >
                 {ARCHIVO_KIND_LABELS[kind]} ({count})
@@ -258,7 +258,7 @@ export function ArchivoWorkspace() {
       </div>
 
       {error ? (
-        <p className="rounded border border-red-500/30 bg-red-500/10 px-3 py-2 font-mono text-xs text-red-300/90">
+        <p className="rounded border border-destructive/30 bg-destructive/10 px-3 py-2 font-mono text-xs text-destructive/90">
           {error}
         </p>
       ) : null}
@@ -266,12 +266,12 @@ export function ArchivoWorkspace() {
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
         <section className="archivo-noir-panel min-h-[24rem] p-4 sm:p-5">
           {isLoading ? (
-            <div className="flex h-48 items-center justify-center gap-2 font-mono text-xs text-white/35">
+            <div className="flex h-48 items-center justify-center gap-2 font-mono text-xs text-muted-foreground">
               <Loader2Icon className="size-4 animate-spin" />
               Indexando archivo…
             </div>
           ) : visibleItems.length === 0 ? (
-            <div className="flex h-48 items-center justify-center font-mono text-xs text-white/30">
+            <div className="flex h-48 items-center justify-center font-mono text-xs text-muted-foreground">
               {searchQuery.trim()
                 ? "Sin coincidencias para esta búsqueda."
                 : "No hay documentos en el archivo todavía."}
@@ -294,42 +294,42 @@ export function ArchivoWorkspace() {
               ))}
             </div>
           ) : (
-            <div className="divide-y divide-white/8">
+            <div className="divide-y divide-border">
               {visibleItems.map((item) => (
                 <button
                   key={item.id}
                   type="button"
                   onClick={() => void loadDetail(item.id)}
                   className={cn(
-                    "flex w-full flex-col gap-1 px-2 py-3 text-left transition hover:bg-white/[0.03]",
-                    selectedId === item.id && "bg-sky-500/5",
+                    "flex w-full flex-col gap-1 px-2 py-3 text-left transition hover:bg-foreground/[0.03]",
+                    selectedId === item.id && "bg-primary/5",
                   )}
                 >
                   <div className="flex flex-wrap items-center justify-between gap-2">
-                    <span className="font-mono text-sm text-white/85">
+                    <span className="font-mono text-sm text-muted-foreground">
                       {item.title}
                     </span>
-                    <span className="font-mono text-[10px] text-white/30">
+                    <span className="font-mono text-[10px] text-muted-foreground">
                       {formatDate(item.createdAt)}
                     </span>
                   </div>
-                  <div className="flex flex-wrap items-center gap-2 font-mono text-[10px] text-white/40">
-                    <span className="rounded border border-white/10 px-1.5 py-0.5">
+                  <div className="flex flex-wrap items-center gap-2 font-mono text-[10px] text-muted-foreground">
+                    <span className="rounded border border-border px-1.5 py-0.5">
                       {ARCHIVO_KIND_LABELS[item.kind]}
                     </span>
                     {item.strongestTag ? (
-                      <span className="text-amber-300/80">
+                      <span className="text-accent">
                         #{item.strongestTag.label}{" "}
-                        <span className="text-white/25">
+                        <span className="text-muted-foreground">
                           ({item.strongestTag.weight})
                         </span>
                       </span>
                     ) : null}
-                    <span className="text-white/25">
+                    <span className="text-muted-foreground">
                       {item.charCount.toLocaleString("es-AR")} chars
                     </span>
                   </div>
-                  <p className="line-clamp-2 text-xs text-white/35">
+                  <p className="line-clamp-2 text-xs text-muted-foreground">
                     {"snippet" in item
                       ? (item as ArchivoSearchHit).snippet
                       : item.preview}

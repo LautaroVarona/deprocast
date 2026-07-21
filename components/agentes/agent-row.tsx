@@ -7,12 +7,12 @@ import { ExternalLinkIcon } from "lucide-react";
 import Link from "next/link";
 
 const BADGE_TONE: Record<OperationalAgent["badgeTone"], string> = {
-  cyan: "border-cyan-500/40 bg-cyan-500/10 text-cyan-300",
-  emerald: "border-emerald-500/40 bg-emerald-500/10 text-emerald-300",
-  violet: "border-violet-500/40 bg-violet-500/10 text-violet-300",
-  amber: "border-amber-500/40 bg-amber-500/10 text-amber-300",
-  zinc: "border-zinc-500/40 bg-zinc-500/10 text-zinc-300",
-  rose: "border-rose-500/40 bg-rose-500/10 text-rose-300",
+  cyan: "border-primary/40 bg-primary/10 text-primary",
+  emerald: "border-primary/40 bg-primary/10 text-primary",
+  violet: "border-primary/40 bg-primary/10 text-primary",
+  amber: "border-accent/40 bg-accent/10 text-accent",
+  zinc: "border-border/40 bg-muted-foreground/10 text-foreground/80",
+  rose: "border-destructive/40 bg-destructive/10 text-destructive",
 };
 
 type AgentRowProps = {
@@ -24,7 +24,7 @@ export function AgentRow({ agent, isActiveToday }: AgentRowProps) {
   const functionsPreview = agent.functions.slice(0, 2).join(" · ");
 
   return (
-    <tr className="border-b border-zinc-800/60 transition hover:bg-zinc-900/40">
+    <tr className="border-b border-border transition hover:bg-muted/40">
       <td className="px-3 py-3">
         <span className="text-lg" aria-hidden>
           {agent.emoji}
@@ -32,8 +32,8 @@ export function AgentRow({ agent, isActiveToday }: AgentRowProps) {
       </td>
       <td className="px-3 py-3">
         <div className="min-w-0">
-          <p className="truncate text-sm font-medium text-zinc-100">{agent.name}</p>
-          <p className="mt-0.5 truncate font-mono text-[10px] text-zinc-600">
+          <p className="truncate text-sm font-medium text-foreground">{agent.name}</p>
+          <p className="mt-0.5 truncate font-mono text-[10px] text-muted-foreground">
             {agent.locations[0]}
           </p>
         </div>
@@ -49,15 +49,15 @@ export function AgentRow({ agent, isActiveToday }: AgentRowProps) {
         </span>
       </td>
       <td className="hidden px-3 py-3 lg:table-cell">
-        <p className="line-clamp-2 text-xs text-zinc-500">{functionsPreview}</p>
+        <p className="line-clamp-2 text-xs text-muted-foreground">{functionsPreview}</p>
       </td>
       <td className="px-3 py-3">
         <div className="flex flex-wrap gap-1">
-          <span className="inline-flex items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-[10px] text-emerald-300">
+          <span className="inline-flex items-center gap-1 rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5 text-[10px] text-primary">
             Operativo
           </span>
           {isActiveToday ? (
-            <span className="inline-flex items-center gap-1 rounded-full border border-cyan-500/30 bg-cyan-500/10 px-2 py-0.5 text-[10px] text-cyan-300">
+            <span className="inline-flex items-center gap-1 rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5 text-[10px] text-primary">
               Activo hoy
             </span>
           ) : null}
@@ -71,13 +71,13 @@ export function AgentRow({ agent, isActiveToday }: AgentRowProps) {
           {agent.uiRoute && !agent.uiRoute.includes("[") ? (
             <Link
               href={agent.uiRoute}
-              className="inline-flex items-center gap-1 text-[10px] text-cyan-400/80 hover:text-cyan-300"
+              className="inline-flex items-center gap-1 text-[10px] text-primary hover:text-primary"
             >
               UI
               <ExternalLinkIcon className="size-3" />
             </Link>
           ) : (
-            <span className="text-[10px] text-zinc-700">—</span>
+            <span className="text-[10px] text-muted-foreground">—</span>
           )}
         </div>
       </td>

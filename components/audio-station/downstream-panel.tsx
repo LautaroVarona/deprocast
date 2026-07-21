@@ -94,14 +94,14 @@ export function DownstreamPanel() {
     <section className="audio-noir-panel space-y-4 p-4">
       <div className="space-y-1">
         <div className="flex items-center gap-2">
-          <GitBranchIcon className="size-4 text-violet-400/80" />
-          <h2 className="font-mono text-sm font-medium text-white/90">
+          <GitBranchIcon className="size-4 text-primary" />
+          <h2 className="font-mono text-sm font-medium text-muted-foreground">
             Downstream · hacia Validar
           </h2>
         </div>
-        <p className="max-w-2xl font-mono text-[10px] leading-relaxed text-white/45">
+        <p className="max-w-2xl font-mono text-[10px] leading-relaxed text-muted-foreground">
           Tras el STT, el audio pasa por Purifier y aparece en{" "}
-          <Link href="/validar" className="text-sky-400/80 hover:underline">
+          <Link href="/validar" className="text-primary/80 hover:underline">
             /validar
           </Link>
           . Los audios nuevos se purifican automáticamente al terminar la
@@ -110,8 +110,8 @@ export function DownstreamPanel() {
       </div>
 
       {buckets.pendingPurify.length > 0 ? (
-        <div className="flex flex-wrap items-center justify-between gap-2 rounded border border-violet-500/25 bg-violet-500/8 px-3 py-2.5">
-          <p className="font-mono text-[10px] text-violet-200/90">
+        <div className="flex flex-wrap items-center justify-between gap-2 rounded border border-primary/25 bg-primary/8 px-3 py-2.5">
+          <p className="font-mono text-[10px] text-primary/90">
             {buckets.pendingPurify.length} audio
             {buckets.pendingPurify.length === 1 ? "" : "s"} transcrito
             {buckets.pendingPurify.length === 1 ? "" : "s"} sin enviar a Validar.
@@ -120,7 +120,7 @@ export function DownstreamPanel() {
             type="button"
             disabled={isPurifyingAll}
             onClick={() => void handlePurifyAll()}
-            className="inline-flex items-center gap-1.5 rounded border border-violet-400/30 bg-violet-500/20 px-2.5 py-1 font-mono text-[9px] text-violet-100 hover:bg-violet-500/30 disabled:opacity-50"
+            className="inline-flex items-center gap-1.5 rounded border border-primary/30 bg-primary/20 px-2.5 py-1 font-mono text-[10px] text-foreground hover:bg-primary/30 disabled:opacity-50"
           >
             {isPurifyingAll ? (
               <Loader2Icon className="size-3 animate-spin" />
@@ -131,8 +131,8 @@ export function DownstreamPanel() {
           </button>
         </div>
       ) : buckets.inValidation.length > 0 ? (
-        <div className="rounded border border-emerald-500/20 bg-emerald-500/8 px-3 py-2.5">
-          <p className="font-mono text-[10px] text-emerald-200/90">
+        <div className="rounded border border-primary/20 bg-primary/8 px-3 py-2.5">
+          <p className="font-mono text-[10px] text-primary/90">
             {buckets.inValidation.length} en cola de Validar.{" "}
             <Link href="/validar" className="underline underline-offset-2">
               Ir a Validar →
@@ -143,12 +143,12 @@ export function DownstreamPanel() {
 
       <div className="grid gap-4 lg:grid-cols-2">
         <div className="space-y-2">
-          <p className="font-mono text-[9px] tracking-wide text-white/40 uppercase">
+          <p className="font-mono text-[10px] tracking-wide text-muted-foreground uppercase">
             Pendientes de purificar · {buckets.pendingPurify.length}
           </p>
-          <div className="max-h-48 overflow-y-auto rounded border border-white/8 bg-black/30">
+          <div className="max-h-48 overflow-y-auto rounded border border-border bg-muted/40">
             {buckets.pendingPurify.length === 0 ? (
-              <p className="py-6 text-center font-mono text-[10px] text-white/35">
+              <p className="py-6 text-center font-mono text-[10px] text-muted-foreground">
                 Nada pendiente — el STT auto-envía a Validar.
               </p>
             ) : (
@@ -159,7 +159,7 @@ export function DownstreamPanel() {
                     className="flex items-center justify-between gap-2 px-3 py-2"
                   >
                     <div className="min-w-0">
-                      <p className="truncate font-mono text-[10px] text-white/80">
+                      <p className="truncate font-mono text-[10px] text-muted-foreground">
                         {asset.filename}
                       </p>
                     </div>
@@ -176,12 +176,12 @@ export function DownstreamPanel() {
         </div>
 
         <div className="space-y-2">
-          <p className="font-mono text-[9px] tracking-wide text-white/40 uppercase">
+          <p className="font-mono text-[10px] tracking-wide text-muted-foreground uppercase">
             En Validar · {buckets.inValidation.length}
           </p>
-          <div className="max-h-48 overflow-y-auto rounded border border-white/8 bg-black/30">
+          <div className="max-h-48 overflow-y-auto rounded border border-border bg-muted/40">
             {buckets.inValidation.length === 0 ? (
-              <p className="py-6 text-center font-mono text-[10px] text-white/35">
+              <p className="py-6 text-center font-mono text-[10px] text-muted-foreground">
                 Sin revisiones activas desde audio.
               </p>
             ) : (
@@ -191,12 +191,12 @@ export function DownstreamPanel() {
                     key={asset.id}
                     className="flex items-center justify-between gap-2 px-3 py-2"
                   >
-                    <p className="min-w-0 truncate font-mono text-[10px] text-white/80">
+                    <p className="min-w-0 truncate font-mono text-[10px] text-muted-foreground">
                       {asset.filename}
                     </p>
                     <Link
                       href={`/validar?id=${reviewId}`}
-                      className="inline-flex shrink-0 items-center gap-1 font-mono text-[9px] text-emerald-300/90 underline-offset-2 hover:underline"
+                      className="inline-flex shrink-0 items-center gap-1 font-mono text-[10px] text-primary/90 underline-offset-2 hover:underline"
                     >
                       <ShieldCheckIcon className="size-3" />
                       Validar →
@@ -209,27 +209,27 @@ export function DownstreamPanel() {
         </div>
       </div>
 
-      <details className="group rounded border border-white/8 bg-black/20">
-        <summary className="cursor-pointer list-none px-3 py-2 font-mono text-[9px] tracking-wide text-white/40 uppercase marker:content-none [&::-webkit-details-marker]:hidden">
+      <details className="group rounded border border-border bg-muted/40">
+        <summary className="cursor-pointer list-none px-3 py-2 font-mono text-[10px] tracking-wide text-muted-foreground uppercase marker:content-none [&::-webkit-details-marker]:hidden">
           Mapa de etapas downstream
         </summary>
-        <ol className="space-y-3 border-t border-white/6 px-3 py-3">
+        <ol className="space-y-3 border-t border-border/6 px-3 py-3">
           {POSTPROCESS_PIPELINE.map((stage, index) => (
             <li key={stage.id} className="flex gap-3">
-              <span className="font-mono text-[9px] text-white/30">{index + 1}</span>
+              <span className="font-mono text-[10px] text-muted-foreground">{index + 1}</span>
               <div>
-                <p className="font-mono text-[10px] text-white/70">
+                <p className="font-mono text-[10px] text-muted-foreground">
                   {stage.label}
                   {stage.route ? (
                     <Link
                       href={stage.route}
-                      className="ml-2 text-sky-400/70 hover:underline"
+                      className="ml-2 text-primary/70 hover:underline"
                     >
                       abrir →
                     </Link>
                   ) : null}
                 </p>
-                <p className="font-mono text-[9px] text-white/35">{stage.description}</p>
+                <p className="font-mono text-[10px] text-muted-foreground">{stage.description}</p>
               </div>
             </li>
           ))}

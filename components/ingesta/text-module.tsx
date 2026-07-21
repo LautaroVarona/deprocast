@@ -5,7 +5,7 @@ export function TextModule() {
   return (
     <section aria-label="Ingesta de texto" className="space-y-3">
       <div className="flex items-center gap-2">
-        <span className="flex size-8 items-center justify-center rounded-lg bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">
+        <span className="flex size-8 items-center justify-center rounded-lg bg-primary/15 text-primary dark:text-primary">
           <TypeIcon className="size-4" aria-hidden />
         </span>
         <div>

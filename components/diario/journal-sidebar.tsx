@@ -108,7 +108,7 @@ export function JournalSidebar({
                     )}
                   >
                     <div className="mb-1 flex items-center justify-between gap-2">
-                      <span className="font-mono text-[9px] text-muted-foreground">
+                      <span className="font-mono text-[10px] text-muted-foreground">
                         {entry.fechaRegistro.slice(0, 16)}
                       </span>
                       <Badge

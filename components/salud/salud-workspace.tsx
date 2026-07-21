@@ -157,20 +157,20 @@ export function SaludWorkspace() {
   }, [confirmDraft, draftState]);
 
   return (
-    <div className="relative flex h-full min-h-0 flex-col overflow-hidden bg-zinc-950">
-      <header className="flex shrink-0 items-center justify-between border-b border-zinc-800 px-3 py-2">
-        <h1 className="text-sm font-semibold text-zinc-100">Salud</h1>
-        <div className="flex gap-1 rounded-lg border border-zinc-800 p-1">
+    <div className="relative flex h-full min-h-0 flex-col overflow-hidden bg-background">
+      <header className="flex shrink-0 items-center justify-between border-b border-border px-3 py-2">
+        <h1 className="text-sm font-semibold text-foreground">Salud</h1>
+        <div className="flex gap-1 rounded-lg border border-border p-1">
           <button
             type="button"
-            className={`rounded-md px-2 py-1 text-xs ${activeTab === "alimentacion" ? "bg-zinc-700 text-zinc-100" : "text-zinc-400"}`}
+            className={`rounded-md px-2 py-1 text-xs ${activeTab === "alimentacion" ? "bg-muted text-foreground" : "text-muted-foreground"}`}
             onClick={() => setActiveTab("alimentacion")}
           >
             Alimentación
           </button>
           <button
             type="button"
-            className={`rounded-md px-2 py-1 text-xs ${activeTab === "entrenamiento" ? "bg-zinc-700 text-zinc-100" : "text-zinc-400"}`}
+            className={`rounded-md px-2 py-1 text-xs ${activeTab === "entrenamiento" ? "bg-muted text-foreground" : "text-muted-foreground"}`}
             onClick={() => setActiveTab("entrenamiento")}
           >
             Entrenamiento
@@ -178,27 +178,27 @@ export function SaludWorkspace() {
         </div>
       </header>
 
-      <div className="grid min-h-0 flex-1 gap-2 overflow-hidden p-2 lg:grid-cols-[1.05fr_0.95fr]">
-        <section className="flex min-h-0 flex-col gap-2 rounded-xl border border-zinc-800 bg-zinc-900/40 p-2">
+      <div className="grid min-h-0 flex-1 gap-2 overflow-auto p-2 lg:grid-cols-[1.05fr_0.95fr]">
+        <section className="flex min-h-0 flex-col gap-2 rounded-xl border border-border bg-muted/40 p-2">
           <div className="flex items-center justify-between">
-            <div className="flex gap-1 rounded-lg border border-zinc-800 p-1">
+            <div className="flex gap-1 rounded-lg border border-border p-1">
               <button
                 type="button"
-                className={`rounded px-2 py-1 text-[11px] ${ingestMode === "libre" ? "bg-zinc-700 text-zinc-100" : "text-zinc-500"}`}
+                className={`rounded px-2 py-1 text-[11px] ${ingestMode === "libre" ? "bg-muted text-foreground" : "text-muted-foreground"}`}
                 onClick={() => setIngestMode("libre")}
               >
                 Texto
               </button>
               <button
                 type="button"
-                className={`rounded px-2 py-1 text-[11px] ${ingestMode === "tabla" ? "bg-zinc-700 text-zinc-100" : "text-zinc-500"}`}
+                className={`rounded px-2 py-1 text-[11px] ${ingestMode === "tabla" ? "bg-muted text-foreground" : "text-muted-foreground"}`}
                 onClick={() => setIngestMode("tabla")}
               >
                 Tabla rápida
               </button>
             </div>
             <div className="flex items-center gap-1">
-              <label className="cursor-pointer rounded border border-zinc-800 p-1 text-zinc-400 hover:text-zinc-200">
+              <label className="cursor-pointer rounded border border-border p-1 text-muted-foreground hover:text-foreground">
                 <CameraIcon className="size-4" />
                 <input
                   type="file"
@@ -207,7 +207,7 @@ export function SaludWorkspace() {
                   onChange={(e) => setImageFile(e.target.files?.[0] ?? null)}
                 />
               </label>
-              <label className="cursor-pointer rounded border border-zinc-800 p-1 text-zinc-400 hover:text-zinc-200">
+              <label className="cursor-pointer rounded border border-border p-1 text-muted-foreground hover:text-foreground">
                 <MicIcon className="size-4" />
                 <input
                   type="file"
@@ -224,7 +224,7 @@ export function SaludWorkspace() {
               value={text}
               onChange={(e) => setText(e.target.value)}
               placeholder={activeTab === "alimentacion" ? "Comí 250g de pechuga, 100g arroz..." : "Hice 4 series de press banca con 80kg..."}
-              className="min-h-[110px] resize-none rounded-lg border border-zinc-800 bg-zinc-950/60 px-3 py-2 text-sm text-zinc-100 outline-none"
+              className="min-h-[110px] resize-none rounded-lg border border-border bg-background/60 px-3 py-2 text-sm text-foreground outline-none"
             />
           ) : (
             <HealthQuickTable
@@ -240,37 +240,37 @@ export function SaludWorkspace() {
             type="button"
             onClick={() => void submitDraft()}
             disabled={!canSubmit}
-            className="inline-flex w-fit items-center gap-1 rounded-md bg-zinc-100 px-3 py-1.5 text-xs font-semibold text-zinc-900 disabled:opacity-40"
+            className="inline-flex w-fit items-center gap-1 rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground disabled:opacity-40"
           >
             <PlusIcon className="size-3.5" /> Procesar con health-broker
           </button>
         </section>
 
         <section className="grid min-h-0 grid-rows-[auto_1fr] gap-2 overflow-hidden">
-          <div className="grid grid-cols-2 gap-2 rounded-xl border border-zinc-800 bg-zinc-900/40 p-2 text-xs text-zinc-300">
+          <div className="grid grid-cols-2 gap-2 rounded-xl border border-border bg-muted/40 p-2 text-xs text-foreground/80">
             <div>
-              <p className="font-mono uppercase tracking-wide text-zinc-500">Alimentación hoy</p>
+              <p className="font-mono uppercase tracking-wide text-muted-foreground">Alimentación hoy</p>
               <p>{Math.round(data?.nutritionTotals.calories ?? 0)} kcal</p>
               <p>
                 P {Math.round(data?.nutritionTotals.protein ?? 0)} / C {Math.round(data?.nutritionTotals.carbs ?? 0)} / G {Math.round(data?.nutritionTotals.fat ?? 0)}
               </p>
             </div>
             <div>
-              <p className="font-mono uppercase tracking-wide text-zinc-500">Entrenamiento hoy</p>
+              <p className="font-mono uppercase tracking-wide text-muted-foreground">Entrenamiento hoy</p>
               <p>{Math.round(data?.trainingTotals.durationMin ?? 0)} min</p>
               <p>{Math.round(data?.trainingTotals.volumeKg ?? 0)} kg volumen</p>
             </div>
           </div>
 
-          <div className="min-h-0 overflow-auto rounded-xl border border-zinc-800 bg-zinc-900/40 p-2">
+          <div className="min-h-0 overflow-auto rounded-xl border border-border bg-muted/40 p-2">
             {isLoading ? (
-              <p className="text-sm text-zinc-500">Cargando...</p>
+              <p className="text-sm text-muted-foreground">Cargando...</p>
             ) : activeTab === "alimentacion" ? (
               <div className="space-y-2">
                 {data?.nutritionEntries.map((entry) => (
-                  <div key={entry.id} className="rounded-lg border border-zinc-800 px-2 py-1.5 text-xs text-zinc-200">
+                  <div key={entry.id} className="rounded-lg border border-border px-2 py-1.5 text-xs text-foreground">
                     <p>{entry.summary}</p>
-                    <p className="text-zinc-500">
+                    <p className="text-muted-foreground">
                       {new Date(entry.occurredAt).toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" })}
                     </p>
                   </div>
@@ -279,9 +279,9 @@ export function SaludWorkspace() {
             ) : (
               <div className="space-y-2">
                 {data?.trainingSessions.map((session) => (
-                  <div key={session.id} className="rounded-lg border border-zinc-800 px-2 py-1.5 text-xs text-zinc-200">
+                  <div key={session.id} className="rounded-lg border border-border px-2 py-1.5 text-xs text-foreground">
                     <p>{session.summary}</p>
-                    <p className="text-zinc-500">
+                    <p className="text-muted-foreground">
                       {session.durationMin ?? 0} min · {Math.round(session.totalVolumeKg ?? 0)} kg
                     </p>
                   </div>
@@ -293,8 +293,8 @@ export function SaludWorkspace() {
       </div>
 
       {draftState ? (
-        <div className="pointer-events-none absolute inset-x-0 bottom-3 flex justify-center px-3">
-          <div className="pointer-events-auto w-full max-w-2xl">
+        <div className="shrink-0 border-t border-border bg-background/95 backdrop-blur px-3 py-2">
+          <div className="mx-auto w-full max-w-2xl">
             <HealthDraftCard
               draft={draftState.draft}
               isSaving={isSaving}

@@ -36,7 +36,7 @@ type GridBottomNavProps = {
 
 export function GridBottomNav({ onPlusOpen, ludusMode = false }: GridBottomNavProps) {
   const cellClass =
-    "flex min-h-11 flex-col items-center justify-center gap-0.5 rounded-lg px-2 py-2 font-mono text-[9px] uppercase tracking-[0.14em] text-muted-foreground transition-colors hover:bg-muted hover:text-foreground";
+    "flex min-h-11 flex-col items-center justify-center gap-0.5 rounded-lg px-2 py-2 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground transition-colors hover:bg-muted hover:text-foreground";
 
   return (
     <nav

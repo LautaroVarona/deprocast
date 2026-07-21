@@ -49,7 +49,7 @@ export function FutureChannelCard({
           </span>
           <Badge
             variant="outline"
-            className="border-amber-500/50 bg-amber-500/10 text-amber-700 dark:text-amber-300"
+            className="border-accent/50 bg-accent/10 text-accent dark:text-accent"
           >
             Preparando Atanor
           </Badge>

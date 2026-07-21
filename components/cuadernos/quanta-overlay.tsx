@@ -17,8 +17,8 @@ export function QuantaOverlay({ quanta, visible }: QuantaOverlayProps) {
         <div
           key={quanto.id}
           className={cn(
-            "absolute overflow-hidden rounded-sm border border-cyan-400/40",
-            "bg-cyan-400/10 backdrop-blur-[1px]",
+            "absolute overflow-hidden rounded-sm border border-primary/40",
+            "bg-primary/10 backdrop-blur-[1px]",
           )}
           style={{
             left: `${quanto.bbox.x * 100}%`,
@@ -28,7 +28,7 @@ export function QuantaOverlay({ quanta, visible }: QuantaOverlayProps) {
           }}
         >
           <span
-            className="block px-1 py-0.5 font-mono text-[9px] leading-tight text-cyan-100/90"
+            className="block px-1 py-0.5 font-mono text-[10px] leading-tight text-primary/90"
             style={{ fontSize: "clamp(7px, 1.2vw, 11px)" }}
           >
             {quanto.text}

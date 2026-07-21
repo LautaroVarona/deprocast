@@ -22,17 +22,17 @@ function AxisBar({
 }) {
   return (
     <div className="space-y-1">
-      <div className="flex justify-between font-mono text-[10px] uppercase tracking-wider text-white/40">
+      <div className="flex justify-between font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
         <span>{label}</span>
-        <span className="tabular-nums text-white/70">{value}/12</span>
+        <span className="tabular-nums text-muted-foreground">{value}/12</span>
       </div>
-      <div className="h-1.5 overflow-hidden rounded-full bg-white/10">
+      <div className="h-1.5 overflow-hidden rounded-full bg-muted/40">
         <div
           className={cn(
             "h-full rounded-full transition-all duration-500",
             tone === "valor"
-              ? "bg-gradient-to-r from-amber-500/70 to-amber-200"
-              : "bg-gradient-to-r from-rose-500/70 to-orange-200",
+              ? "bg-gradient-to-r from-accent/70 to-accent/20"
+              : "bg-gradient-to-r from-destructive/70 to-accent/20",
           )}
           style={{ width: `${(value / 12) * 100}%` }}
         />
@@ -49,15 +49,15 @@ export function TaskBacklog() {
       className="jornada-noir-panel relative overflow-hidden"
       aria-label="Prioridades doradas"
     >
-      <div className="jornada-noir-glow pointer-events-none absolute -bottom-16 -left-16 size-48 rounded-full bg-amber-500/10 blur-3xl" />
+      <div className="jornada-noir-glow pointer-events-none absolute -bottom-16 -left-16 size-48 rounded-full bg-accent/10 blur-3xl" />
 
-      <header className="relative flex items-center gap-2 border-b border-white/10 px-4 py-3">
-        <SparklesIcon className="size-4 text-amber-300/90" />
+      <header className="relative flex items-center gap-2 border-b border-border px-4 py-3">
+        <SparklesIcon className="size-4 text-accent/90" />
         <div>
-          <p className="font-mono text-[10px] uppercase tracking-[0.24em] text-white/45">
+          <p className="font-mono text-[10px] uppercase tracking-[0.24em] text-muted-foreground">
             La Acción / Partícula
           </p>
-          <h2 className="text-sm font-medium text-white">
+          <h2 className="text-sm font-medium text-foreground">
             3 Prioridades Doradas
           </h2>
         </div>
@@ -65,7 +65,7 @@ export function TaskBacklog() {
 
       <div className="relative space-y-3 p-4">
         {goldenTasks.length === 0 ? (
-          <p className="font-mono text-sm text-white/50">
+          <p className="font-mono text-sm text-muted-foreground">
             [Sistema] Todas las prioridades doradas completadas. Jornada sellada.
           </p>
         ) : (
@@ -78,10 +78,10 @@ export function TaskBacklog() {
               <article
                 key={task.id}
                 className={cn(
-                  "jornada-task-card group relative overflow-hidden rounded-xl border border-white/10 bg-black/40 p-4 transition-all duration-300",
-                  isAligned && !isDone && `ring-1 ring-white/20 ${BLOQUE_GLOW[task.ejeX]}`,
+                  "jornada-task-card group relative overflow-hidden rounded-xl border border-border bg-card/80 p-4 transition-all duration-300",
+                  isAligned && !isDone && `ring-1 ring-border ${BLOQUE_GLOW[task.ejeX]}`,
                   isDone && "opacity-50",
-                  !isDone && "hover:-translate-y-0.5 hover:border-white/20",
+                  !isDone && "hover:-translate-y-0.5 hover:border-border",
                 )}
               >
                 <div className="jornada-idle-shimmer pointer-events-none absolute inset-0 opacity-0 transition-opacity group-hover:opacity-100" />
@@ -89,27 +89,27 @@ export function TaskBacklog() {
                 <div className="relative flex items-start justify-between gap-3">
                   <div className="min-w-0 flex-1 space-y-2">
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="font-mono text-[10px] text-white/35">
+                      <span className="font-mono text-[10px] text-muted-foreground">
                         #{index + 1}
                       </span>
                       <Badge
                         variant="outline"
                         className={cn(
-                          "border-white/15 bg-white/5 font-mono text-[10px]",
+                          "border-border bg-muted/40 font-mono text-[10px]",
                           BLOQUE_COLORS[task.ejeX],
                         )}
                       >
                         Eje X · {task.ejeX}
                       </Badge>
                       {isAligned && !isDone && (
-                        <Badge className="border-emerald-400/30 bg-emerald-500/15 font-mono text-[10px] text-emerald-200">
+                        <Badge className="border-primary/30 bg-primary/15 font-mono text-[10px] text-primary">
                           Sincronizado
                         </Badge>
                       )}
                     </div>
                     <h3
                       className={cn(
-                        "text-sm font-medium text-white",
+                        "text-sm font-medium text-foreground",
                         isDone && "line-through",
                       )}
                     >
@@ -118,10 +118,10 @@ export function TaskBacklog() {
                   </div>
 
                   <div className="shrink-0 text-right">
-                    <p className="font-mono text-[10px] uppercase tracking-wider text-white/40">
+                    <p className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
                       Yield
                     </p>
-                    <p className="font-mono text-lg tabular-nums text-amber-200">
+                    <p className="font-mono text-lg tabular-nums text-accent">
                       {currency}
                     </p>
                   </div>
@@ -140,8 +140,8 @@ export function TaskBacklog() {
                     className={cn(
                       "font-mono text-xs",
                       isDone
-                        ? "bg-white/10 text-white/50"
-                        : "bg-emerald-500/20 text-emerald-100 hover:bg-emerald-500/30",
+                        ? "bg-muted/40 text-muted-foreground"
+                        : "bg-primary/20 text-primary hover:bg-primary/30",
                     )}
                     onClick={() => {
                       touch();
@@ -166,7 +166,7 @@ export function TaskBacklog() {
           })
         )}
 
-        <p className="font-mono text-[10px] text-white/30">
+        <p className="font-mono text-[10px] text-muted-foreground">
           Backlog total: {state.tasks.filter((t) => !t.completada).length} tareas
           en espera · solo 3 visibles por diseño
         </p>

@@ -57,15 +57,15 @@ export function QuantomoEnergyCard({
         className={cn(
           "flex min-h-[9.5rem] flex-col items-center justify-center rounded-lg px-4 py-6 text-center animate-in fade-in duration-300",
           outcome === "crystallized"
-            ? "border border-emerald-500/30 bg-emerald-500/5"
-            : "border border-white/10 bg-white/[0.03]",
+            ? "border border-primary/30 bg-primary/5"
+            : "border border-border bg-foreground/[0.03]",
         )}
         role="status"
       >
         <p
           className={cn(
             "font-mono text-[11px] tracking-wide",
-            outcome === "crystallized" ? "text-emerald-400" : "text-white/45",
+            outcome === "crystallized" ? "text-primary" : "text-muted-foreground",
           )}
         >
           {outcome === "crystallized"
@@ -79,7 +79,7 @@ export function QuantomoEnergyCard({
   return (
     <article
       className={cn(
-        "flex flex-col rounded-lg border border-amber-500/20 bg-[#0a0a0c] p-3 shadow-[inset_0_1px_0_rgba(251,191,36,0.06)] transition-all duration-300 ease-out",
+        "flex flex-col rounded-lg border border-accent/20 bg-background p-3 shadow-[inset_0_1px_0_rgba(251,191,36,0.06)] transition-all duration-300 ease-out",
         phase === "leaving" && "scale-95 opacity-0",
       )}
     >
@@ -87,7 +87,7 @@ export function QuantomoEnergyCard({
         <h3 className="text-sm font-medium leading-snug text-foreground">
           {task.title}
         </h3>
-        <span className="shrink-0 rounded border border-amber-500/25 bg-amber-500/5 px-1.5 py-0.5 font-mono text-[9px] tracking-wider text-amber-400/80 uppercase">
+        <span className="shrink-0 rounded border border-accent/25 bg-accent/5 px-1.5 py-0.5 font-mono text-[10px] tracking-wider text-accent uppercase">
           {task.source}
         </span>
       </div>
@@ -98,7 +98,7 @@ export function QuantomoEnergyCard({
         </p>
       ) : null}
 
-      <p className="mt-1 font-mono text-[10px] text-white/35">
+      <p className="mt-1 font-mono text-[10px] text-muted-foreground">
         {task.universeSlug ?? "babel"}
         {task.listadorConfidence !== null
           ? ` · conf ${Math.round(task.listadorConfidence * 100)}%`
@@ -117,7 +117,7 @@ export function QuantomoEnergyCard({
       <div className="mt-auto flex flex-wrap gap-2 pt-3">
         <Button
           size="sm"
-          className="flex-1 gap-1.5 bg-amber-600 text-black hover:bg-amber-500"
+          className="flex-1 gap-1.5 bg-accent text-black hover:bg-accent/90"
           disabled={busy}
           onClick={() => void handleCrystallize()}
         >
@@ -131,7 +131,7 @@ export function QuantomoEnergyCard({
         <Button
           size="sm"
           variant="outline"
-          className="border-white/15"
+          className="border-border"
           disabled={busy}
           onClick={() => void handleReject()}
         >

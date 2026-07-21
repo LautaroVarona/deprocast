@@ -57,7 +57,7 @@ function renderPurifiedSegment(segment: string, key: number) {
     return (
       <span
         key={key}
-        className="rounded-sm bg-amber-500/15 px-1 text-amber-800 line-through decoration-amber-700/70 dark:text-amber-200"
+        className="rounded-sm bg-accent/15 px-1 text-accent line-through decoration-amber-700/70 dark:text-accent"
       >
         [Tachado: {annotationMatch[1]}]
       </span>
@@ -246,7 +246,7 @@ export function VisionModule() {
   return (
     <section aria-label="Portal de visión" className="space-y-3">
       <div className="flex flex-wrap items-center gap-2">
-        <span className="flex size-8 items-center justify-center rounded-lg bg-violet-500/15 text-violet-600 dark:text-violet-400">
+        <span className="flex size-8 items-center justify-center rounded-lg bg-primary/15 text-primary dark:text-primary">
           <ScanEyeIcon className="size-4" aria-hidden />
         </span>
         <div className="min-w-0 flex-1">
@@ -322,7 +322,7 @@ export function VisionModule() {
       <Card
         className={cn(
           "border-dashed transition-colors",
-          isDragging && canUpload && "border-violet-500 bg-violet-500/5",
+          isDragging && canUpload && "border-primary/40 bg-primary/5",
           !canUpload && "opacity-80",
         )}
         onDragOver={(event) => {
@@ -337,8 +337,8 @@ export function VisionModule() {
         }}
       >
         <CardContent className="flex flex-col items-center gap-4 py-8 text-center">
-          <div className="flex size-14 items-center justify-center rounded-full bg-violet-500/10">
-            <UploadCloudIcon className="size-7 text-violet-600" />
+          <div className="flex size-14 items-center justify-center rounded-full bg-primary/10">
+            <UploadCloudIcon className="size-7 text-primary" />
           </div>
           <div className="space-y-1">
             <p className="text-base font-medium">
@@ -373,10 +373,10 @@ export function VisionModule() {
           {fileName && (
             <div className="flex w-full max-w-md items-center gap-2 rounded-md border px-3 py-2 text-left text-sm">
               {status === "extracting" && (
-                <Loader2Icon className="size-4 shrink-0 animate-spin text-violet-600" />
+                <Loader2Icon className="size-4 shrink-0 animate-spin text-primary" />
               )}
               {status === "done" && (
-                <CheckCircle2Icon className="size-4 shrink-0 text-emerald-600" />
+                <CheckCircle2Icon className="size-4 shrink-0 text-primary" />
               )}
               {status === "error" && (
                 <XCircleIcon className="size-4 shrink-0 text-destructive" />
@@ -418,8 +418,8 @@ export function VisionModule() {
                   </Button>
                 </div>
               ) : (
-                <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/5 px-4 py-3 text-sm">
-                  <p className="font-medium text-emerald-800 dark:text-emerald-300">
+                <div className="rounded-lg border border-primary/30 bg-primary/5 px-4 py-3 text-sm">
+                  <p className="font-medium text-primary dark:text-primary">
                     Contexto confirmado en el Atanor local
                   </p>
                   {confirmedPath && (

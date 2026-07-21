@@ -66,7 +66,7 @@ export function CustomControls({
               size="sm"
               variant="outline"
               onClick={onStop}
-              className="border-white/15 bg-transparent font-mono text-[10px] uppercase tracking-wider text-white/60 hover:border-rose-500/30 hover:text-rose-300"
+              className="border-border bg-transparent font-mono text-[10px] uppercase tracking-wider text-muted-foreground hover:border-destructive/30 hover:text-destructive"
             >
               <PauseIcon className="size-3.5" />
               Detener
@@ -76,15 +76,15 @@ export function CustomControls({
               type="button"
               size="sm"
               onClick={onPlay}
-              className="bg-amber-500/90 font-mono text-[10px] uppercase tracking-wider text-black hover:bg-amber-400"
+              className="bg-accent/90 font-mono text-[10px] uppercase tracking-wider text-black hover:bg-accent/20"
             >
               <PlayIcon className="size-3.5" />
               Reproducir
             </Button>
           )}
           {isPlaying ? (
-            <span className="flex items-center gap-1.5 rounded-full border border-emerald-500/25 bg-emerald-500/10 px-2.5 py-1 font-mono text-[10px] uppercase tracking-wider text-emerald-200/80">
-              <span className="size-1.5 animate-pulse rounded-full bg-emerald-400" />
+            <span className="flex items-center gap-1.5 rounded-full border border-primary/25 bg-primary/10 px-2.5 py-1 font-mono text-[10px] uppercase tracking-wider text-primary/80">
+              <span className="size-1.5 animate-pulse rounded-full bg-primary/20" />
               Activo
             </span>
           ) : null}
@@ -125,12 +125,12 @@ export function CustomControls({
         active={isPlaying}
       />
 
-      <div className="rounded-lg border border-white/8 bg-black/40 px-4 py-3 font-mono text-xs tabular-nums text-white/60">
-        <span className="text-white/35">L:</span> {leftHz.toFixed(1)} Hz
-        <span className="mx-2 text-white/20">·</span>
-        <span className="text-white/35">R:</span> {rightHz.toFixed(1)} Hz
-        <span className="mx-2 text-white/20">·</span>
-        <span className="text-white/35">Δ:</span> {params.beatHz.toFixed(1)} Hz
+      <div className="rounded-lg border border-border bg-card/80 px-4 py-3 font-mono text-xs tabular-nums text-muted-foreground">
+        <span className="text-muted-foreground">L:</span> {leftHz.toFixed(1)} Hz
+        <span className="mx-2 text-muted-foreground">·</span>
+        <span className="text-muted-foreground">R:</span> {rightHz.toFixed(1)} Hz
+        <span className="mx-2 text-muted-foreground">·</span>
+        <span className="text-muted-foreground">Δ:</span> {params.beatHz.toFixed(1)} Hz
       </div>
     </div>
   );

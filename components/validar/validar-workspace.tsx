@@ -87,7 +87,7 @@ function FieldLabel({ children }: { children: React.ReactNode }) {
 
   return (
 
-    <label className="text-[9px] font-medium tracking-wide text-muted-foreground uppercase">
+    <label className="text-[10px] font-medium tracking-wide text-muted-foreground uppercase">
 
       {children}
 
@@ -659,7 +659,7 @@ export function ValidarWorkspace() {
 
           <div>
 
-            <p className="font-mono text-[9px] tracking-[0.2em] text-muted-foreground uppercase">
+            <p className="font-mono text-[10px] tracking-[0.2em] text-muted-foreground uppercase">
 
               Aduana Humana · HITL
 
@@ -735,7 +735,7 @@ export function ValidarWorkspace() {
 
               <div className="shrink-0 border-b border-border px-3 py-2">
 
-                <p className="font-mono text-[9px] tracking-wide text-muted-foreground uppercase">
+                <p className="font-mono text-[10px] tracking-wide text-muted-foreground uppercase">
 
                   Materia Prima Cruda
 
@@ -769,7 +769,7 @@ export function ValidarWorkspace() {
 
               <div className="shrink-0 border-b border-border px-4 py-2">
 
-                <p className="font-mono text-[9px] tracking-wide text-muted-foreground uppercase">
+                <p className="font-mono text-[10px] tracking-wide text-muted-foreground uppercase">
 
                   Cuerpo Purificado
 
@@ -779,7 +779,7 @@ export function ValidarWorkspace() {
 
                   Revisá y editá lo que la IA estructuró. Las líneas con{" "}
 
-                  <span className="rounded bg-yellow-300/80 px-1 font-mono text-yellow-950">
+                  <span className="rounded bg-accent/80 px-1 font-mono text-accent">
 
                     ==DUDA:==
 
@@ -805,7 +805,7 @@ export function ValidarWorkspace() {
 
                     "h-full min-h-[280px] w-full resize-none rounded border border-input bg-background p-3 font-mono text-[11px] leading-relaxed outline-none focus:border-ring focus:ring-1 focus:ring-ring",
 
-                    dudaCount > 0 && "focus:ring-yellow-400/40",
+                    dudaCount > 0 && "focus:ring-accent/40",
 
                   )}
 
@@ -821,7 +821,7 @@ export function ValidarWorkspace() {
 
               <div className="shrink-0 border-b border-border px-3 py-2">
 
-                <p className="font-mono text-[9px] tracking-wide text-muted-foreground uppercase">
+                <p className="font-mono text-[10px] tracking-wide text-muted-foreground uppercase">
 
                   Metadatos y Relaciones
 
@@ -915,7 +915,7 @@ export function ValidarWorkspace() {
 
                 <Accordion className="rounded border border-border">
                   <AccordionItem value="avanzado">
-                    <AccordionTrigger className="px-2 py-1.5 font-mono text-[9px] tracking-wide text-muted-foreground uppercase hover:no-underline">
+                    <AccordionTrigger className="px-2 py-1.5 font-mono text-[10px] tracking-wide text-muted-foreground uppercase hover:no-underline">
                       Avanzado
                     </AccordionTrigger>
                     <AccordionContent className="px-2">
@@ -980,7 +980,7 @@ export function ValidarWorkspace() {
 
           <footer className="flex shrink-0 items-center justify-between border-t border-border bg-card px-4 py-2">
 
-            <p className="font-mono text-[9px] text-muted-foreground">
+            <p className="font-mono text-[10px] text-muted-foreground">
 
               {dudaCount > 0
 

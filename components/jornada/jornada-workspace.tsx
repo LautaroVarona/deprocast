@@ -16,15 +16,15 @@ function JornadaPanels() {
     <div className="jornada-noir-root mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-8 sm:px-6">
       <header className="space-y-2">
         <div className="flex items-center gap-2">
-          <OrbitIcon className="size-5 text-cyan-300/80" />
-          <p className="font-mono text-[10px] uppercase tracking-[0.28em] text-white/40">
+          <OrbitIcon className="size-5 text-primary/80" />
+          <p className="font-mono text-[10px] uppercase tracking-[0.28em] text-muted-foreground">
             Motor de Jornada
           </p>
         </div>
-        <h1 className="bg-gradient-to-r from-white via-white/80 to-white/50 bg-clip-text text-3xl font-semibold tracking-tight text-transparent">
+        <h1 className="bg-gradient-to-r from-foreground via-foreground/80 to-foreground/50 bg-clip-text text-3xl font-semibold tracking-tight text-transparent">
           Tiempo-Espacio × Partícula
         </h1>
-        <p className="max-w-2xl text-sm text-white/50">
+        <p className="max-w-2xl text-sm text-muted-foreground">
           Dos agentes acoplados: el listador temporal ejecuta el reloj vivo; el
           listador de tareas aplica la Ley del Mínimo Esfuerzo sobre tres
           prioridades doradas.
@@ -42,7 +42,7 @@ function JornadaPanels() {
         <TaskBacklog />
       </div>
 
-      <footer className="flex items-center gap-2 font-mono text-[10px] text-white/25">
+      <footer className="flex items-center gap-2 font-mono text-[10px] text-muted-foreground">
         <Clock3Icon className="size-3" />
         <span>
           Estado compartido vía JornadaContext · reloj {activeBloque ?? "—"} ·{" "}

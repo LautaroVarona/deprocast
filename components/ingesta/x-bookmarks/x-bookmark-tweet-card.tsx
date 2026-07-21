@@ -31,7 +31,7 @@ export function XBookmarkTweetCard({
           className={cn(
             "flex size-9 shrink-0 items-center justify-center rounded-full border font-mono text-sm font-semibold",
             noir
-              ? "border-white/10 bg-white/[0.06] text-white/80"
+              ? "border-border bg-foreground/[0.06] text-muted-foreground"
               : "border-border bg-muted text-foreground",
           )}
           aria-hidden
@@ -39,13 +39,13 @@ export function XBookmarkTweetCard({
           {authorInitial}
         </div>
         <div className="min-w-0">
-          <p className={cn("truncate text-sm font-semibold", noir && "text-white")}>
+          <p className={cn("truncate text-sm font-semibold", noir && "text-foreground")}>
             {bookmark.author}
           </p>
           <div
             className={cn(
               "mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 font-mono text-[10px]",
-              noir ? "text-white/45" : "text-muted-foreground",
+              noir ? "text-muted-foreground" : "text-muted-foreground",
             )}
           >
             <span>{bookmark.handle}</span>
@@ -54,7 +54,7 @@ export function XBookmarkTweetCard({
                 dateTime={bookmark.bookmarkedAt}
                 className={cn(
                   "rounded-full px-2 py-0.5",
-                  noir ? "bg-white/[0.06] text-white/55" : "bg-muted text-muted-foreground",
+                  noir ? "bg-foreground/[0.06] text-muted-foreground" : "bg-muted text-muted-foreground",
                 )}
               >
                 {dateLabel}
@@ -71,7 +71,7 @@ export function XBookmarkTweetCard({
           className={cn(
             "inline-flex shrink-0 items-center gap-1.5 rounded-md border px-2.5 py-1 font-mono text-[10px] transition-colors",
             noir
-              ? "border-white/10 text-white/55 hover:border-white/20 hover:bg-white/[0.04] hover:text-white"
+              ? "border-border text-muted-foreground hover:border-border hover:bg-foreground/[0.04] hover:text-foreground"
               : "border-border text-muted-foreground hover:bg-muted hover:text-foreground",
           )}
         >
@@ -86,7 +86,7 @@ export function XBookmarkTweetCard({
     <p
       className={cn(
         "whitespace-pre-wrap leading-relaxed",
-        noir ? "text-white/88" : "text-foreground",
+        noir ? "text-foreground/88" : "text-foreground",
         fitViewport
           ? cn(
               "text-[15px]",
@@ -131,7 +131,7 @@ export function XBookmarkTweetCard({
       className={cn(
         "rounded-xl border p-5",
         noir
-          ? "border-white/10 bg-white/[0.03] text-white shadow-2xl shadow-black/50"
+          ? "border-border bg-foreground/[0.03] text-foreground shadow-2xl shadow-foreground/20"
           : "border-border bg-card text-foreground",
         className,
       )}

@@ -251,7 +251,7 @@ export function IngestModal({ open, onClose, onIngested }: IngestModalProps) {
       <button
         type="button"
         aria-label="Cerrar modal"
-        className="absolute inset-0 bg-black/50 backdrop-blur-sm dark:bg-black/70"
+        className="absolute inset-0 bg-card/80 backdrop-blur-sm dark:bg-foreground/40"
         onClick={onClose}
       />
       <div
@@ -400,7 +400,7 @@ export function IngestModal({ open, onClose, onIngested }: IngestModalProps) {
                     <Loader2Icon className="size-3.5 shrink-0 animate-spin text-primary" />
                   )}
                   {item.status === "done" && (
-                    <CheckCircle2Icon className="size-3.5 shrink-0 text-emerald-500" />
+                    <CheckCircle2Icon className="size-3.5 shrink-0 text-primary" />
                   )}
                   {item.status === "error" && (
                     <XCircleIcon className="size-3.5 shrink-0 text-destructive" />

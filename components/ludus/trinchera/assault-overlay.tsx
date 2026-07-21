@@ -50,22 +50,22 @@ export function AssaultOverlay({
   };
 
   return createPortal(
-    <div className="fixed inset-0 z-[250] flex items-center justify-center bg-black/75 p-4 backdrop-blur-[2px]">
+    <div className="fixed inset-0 z-[250] flex items-center justify-center bg-background/75 p-4 backdrop-blur-[2px]">
       <div
-        className="relative flex h-[80%] w-[80%] flex-col overflow-hidden rounded-2xl border border-white/10 shadow-2xl"
+        className="relative flex h-[80%] w-[80%] flex-col overflow-hidden rounded-2xl border border-border shadow-2xl"
         style={bgStyle}
       >
         <div className="pointer-events-none absolute inset-0 opacity-[0.05] [background-image:repeating-linear-gradient(0deg,transparent,transparent_2px,rgba(255,255,255,0.2)_2px,rgba(255,255,255,0.2)_3px)]" />
 
-        <header className="relative shrink-0 space-y-1 border-b border-white/10 px-6 py-4 text-center">
-          <p className="font-mono text-[10px] uppercase tracking-[0.28em] text-white/40">
+        <header className="relative shrink-0 space-y-1 border-b border-border px-6 py-4 text-center">
+          <p className="font-mono text-[10px] uppercase tracking-[0.28em] text-muted-foreground">
             Sesión en curso
           </p>
-          <h2 className="text-lg font-medium text-white/95 sm:text-xl">{title}</h2>
-          <p className="font-mono text-5xl font-light tabular-nums tracking-tight text-white sm:text-6xl">
+          <h2 className="text-lg font-medium text-foreground/95 sm:text-xl">{title}</h2>
+          <p className="font-mono text-5xl font-light tabular-nums tracking-tight text-foreground sm:text-6xl">
             {formatTime(remainingSec)}
           </p>
-          <div className="mx-auto mt-3 h-1 max-w-md overflow-hidden rounded-full bg-white/10">
+          <div className="mx-auto mt-3 h-1 max-w-md overflow-hidden rounded-full bg-muted/40">
             <div
               className="h-full rounded-full transition-all duration-1000"
               style={{
@@ -93,20 +93,20 @@ export function AssaultOverlay({
           />
         </div>
 
-        <footer className="relative shrink-0 space-y-3 border-t border-white/10 px-6 py-4">
+        <footer className="relative shrink-0 space-y-3 border-t border-border px-6 py-4">
           <div className="flex flex-wrap items-center justify-center gap-3 font-mono text-[10px]">
             <span
               className={cn(
                 "inline-flex items-center gap-1.5 rounded-full border px-3 py-1",
                 isPlaying
-                  ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-200"
-                  : "border-white/10 text-white/40",
+                  ? "border-primary/40 bg-primary/10 text-primary"
+                  : "border-border text-muted-foreground",
               )}
             >
               <HeadphonesIcon className="size-3" />
               {modeLabel} {isPlaying ? "activo" : "—"}
             </span>
-            <span className={tabVisible ? "text-white/35" : "text-rose-300/80"}>
+            <span className={tabVisible ? "text-muted-foreground" : "text-destructive/80"}>
               {tabVisible
                 ? "Mantené la pestaña abierta"
                 : "⚠ Pestaña oculta — sin recompensa"}
@@ -118,7 +118,7 @@ export function AssaultOverlay({
               type="button"
               variant="outline"
               disabled={isCompleting}
-              className="border-white/15 text-white/70"
+              className="border-border text-muted-foreground"
               onClick={onAbort}
             >
               <XIcon className="size-4" />
@@ -127,7 +127,7 @@ export function AssaultOverlay({
             <Button
               type="button"
               disabled={isCompleting}
-              className="bg-emerald-600/90 hover:bg-emerald-500"
+              className="bg-primary/90 hover:bg-primary"
               onClick={onComplete}
             >
               {isCompleting ? (

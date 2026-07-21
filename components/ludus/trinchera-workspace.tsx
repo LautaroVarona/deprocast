@@ -48,8 +48,8 @@ export function TrincheraWorkspace() {
         void load();
       }}
     >
-      <div className="flex h-full min-h-0 flex-col overflow-hidden bg-[#030304]">
-        <header className="flex shrink-0 items-center justify-between gap-4 border-b border-white/[0.06] px-4 py-2.5 sm:px-5">
+      <div className="flex h-full min-h-0 flex-col overflow-hidden bg-background">
+        <header className="flex shrink-0 items-center justify-between gap-4 border-b border-border/[0.06] px-4 py-2.5 sm:px-5">
           <div className="flex min-w-0 items-center gap-3">
             <Link
               href="/ludus/campamento"
@@ -61,8 +61,8 @@ export function TrincheraWorkspace() {
               <ArrowLeftIcon className="size-3.5" />
               Campamento
             </Link>
-            <ShieldIcon className="size-4 shrink-0 text-rose-400/80" />
-            <h1 className="truncate text-base font-semibold text-white sm:text-lg">
+            <ShieldIcon className="size-4 shrink-0 text-destructive/80" />
+            <h1 className="truncate text-base font-semibold text-foreground sm:text-lg">
               Trinchera
             </h1>
           </div>
@@ -70,23 +70,23 @@ export function TrincheraWorkspace() {
           {snapshot ? (
             <div className="flex shrink-0 items-center gap-4">
               <div className="flex items-center gap-2">
-                <SignalIcon className="size-3.5 text-amber-300" />
+                <SignalIcon className="size-3.5 text-accent" />
                 <div className="text-right">
-                  <p className="font-mono text-[8px] uppercase tracking-[0.12em] text-white/35">
+                  <p className="font-mono text-[8px] uppercase tracking-[0.12em] text-muted-foreground">
                     Señal
                   </p>
-                  <p className="font-mono text-sm font-semibold tabular-nums text-amber-200">
+                  <p className="font-mono text-sm font-semibold tabular-nums text-accent">
                     {snapshot.signalPoints}
                   </p>
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                <ShieldIcon className="size-3.5 text-rose-300" />
+                <ShieldIcon className="size-3.5 text-destructive" />
                 <div className="text-right">
-                  <p className="font-mono text-[8px] uppercase tracking-[0.12em] text-white/35">
+                  <p className="font-mono text-[8px] uppercase tracking-[0.12em] text-muted-foreground">
                     Racha
                   </p>
-                  <p className="font-mono text-sm font-semibold tabular-nums text-white">
+                  <p className="font-mono text-sm font-semibold tabular-nums text-foreground">
                     {snapshot.assaultStreakToday}
                   </p>
                 </div>
@@ -102,7 +102,7 @@ export function TrincheraWorkspace() {
             onRefreshSnapshot={() => void load()}
           />
           {isLoading ? (
-            <div className="flex flex-1 items-center justify-center text-white/30">
+            <div className="flex flex-1 items-center justify-center text-muted-foreground">
               <Loader2Icon className="size-5 animate-spin" />
             </div>
           ) : snapshot ? (

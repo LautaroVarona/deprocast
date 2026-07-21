@@ -25,7 +25,7 @@ export function FastingStrip({ records, className }: FastingStripProps) {
   return (
     <div
       className={cn(
-        "border-b border-zinc-800/80 bg-zinc-900/40 px-4 py-2.5",
+        "border-b border-border bg-muted/40 px-4 py-2.5",
         className,
       )}
     >
@@ -40,11 +40,11 @@ export function FastingStrip({ records, className }: FastingStripProps) {
             >
               {hasFast ? formatElapsedCompact(elapsedMs) : "0m"}
             </span>
-            <span className="truncate text-xs text-zinc-500">
+            <span className="truncate text-xs text-muted-foreground">
               {hasFast ? "de ayuno" : "Sin ayuno activo"}
             </span>
           </div>
-          <div className="mt-1.5 h-1 overflow-hidden rounded-full bg-zinc-800/80">
+          <div className="mt-1.5 h-1 overflow-hidden rounded-full bg-muted">
             <div
               className={cn(
                 "h-full rounded-full transition-all duration-1000",
@@ -54,7 +54,7 @@ export function FastingStrip({ records, className }: FastingStripProps) {
             />
           </div>
         </div>
-        <span className="shrink-0 font-mono text-[10px] text-zinc-600">
+        <span className="shrink-0 font-mono text-[10px] text-muted-foreground">
           {FASTING_GOAL_HOURS}h
         </span>
       </div>

@@ -63,7 +63,7 @@ export function IngestBox({
       />
 
       {imagePreviewUrl ? (
-        <div className="relative h-20 shrink-0 overflow-hidden border-b border-white/5">
+        <div className="relative h-20 shrink-0 overflow-hidden border-b border-border">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={imagePreviewUrl}
@@ -84,17 +84,17 @@ export function IngestBox({
           }
         }}
         placeholder="Gasté 45€ en Cursor para Deprocast… (⌘↵ para enviar)"
-        className="min-h-[88px] w-full resize-none bg-transparent px-4 py-3 text-sm leading-snug text-zinc-100 placeholder:text-zinc-500 outline-none"
+        className="min-h-[88px] w-full resize-none bg-transparent px-4 py-3 text-sm leading-snug text-foreground placeholder:text-muted-foreground outline-none"
       />
 
-      <div className="flex items-center justify-between gap-2 border-t border-white/5 px-3 py-2">
+      <div className="flex items-center justify-between gap-2 border-t border-border px-3 py-2">
         <div className="flex items-center gap-1">
           <button
             type="button"
             disabled={disabled || isProcessing || isRecording}
             onClick={() => fileInputRef.current?.click()}
             className={cn(
-              "flex size-8 items-center justify-center rounded-lg text-zinc-400 transition-colors hover:bg-white/5 hover:text-zinc-200",
+              "flex size-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground",
               modality === "image" && "text-emerald-400",
             )}
             aria-label="Subir captura"
@@ -109,7 +109,7 @@ export function IngestBox({
               "flex size-8 items-center justify-center rounded-lg transition-colors",
               isRecording
                 ? "bg-red-500/20 text-red-400"
-                : "text-zinc-400 hover:bg-white/5 hover:text-zinc-200",
+                : "text-muted-foreground hover:bg-muted/50 hover:text-foreground",
               modality === "audio" && !isRecording && "text-emerald-400",
             )}
             aria-label={isRecording ? "Detener grabación" : "Dictar"}

@@ -9,6 +9,7 @@ import {
   findRouteByHotkey,
 } from "@/lib/navigation/routes";
 import { UniverseSelect } from "@/components/babel/universe-select";
+import { Kbd } from "@/components/ui/kbd";
 import { cn } from "@/lib/utils";
 import {
   Loader2Icon,
@@ -266,7 +267,7 @@ export function CommandMenu({ open, onOpenChange }: CommandMenuProps) {
       <button
         type="button"
         aria-label="Cerrar menú"
-        className="absolute inset-0 bg-black/55 backdrop-blur-sm animate-in fade-in duration-150"
+        className="absolute inset-0 bg-foreground/40 backdrop-blur-sm animate-in fade-in duration-150"
         onClick={close}
       />
 
@@ -275,22 +276,20 @@ export function CommandMenu({ open, onOpenChange }: CommandMenuProps) {
         aria-modal="true"
         aria-label="Menú de navegación"
         className={cn(
-          "relative flex w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-amber-500/20",
-          "bg-background/95 shadow-2xl shadow-amber-500/10 backdrop-blur-md",
+          "relative flex w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-accent/20",
+          "bg-background/95 shadow-2xl shadow-accent/10 backdrop-blur-md",
           "animate-in fade-in zoom-in-95 duration-200",
         )}
       >
-        <div className="border-b border-border/80 bg-gradient-to-r from-amber-500/10 via-transparent to-violet-500/10 px-4 py-3">
+        <div className="border-b border-border/80 bg-gradient-to-r from-accent/10 via-transparent to-primary/10 px-4 py-3">
           <div className="flex items-center gap-2">
-            <SparklesIcon className="size-4 shrink-0 text-amber-500" aria-hidden />
+            <SparklesIcon className="size-4 shrink-0 text-accent" aria-hidden />
             <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
               Portal de navegación
             </p>
             <div className="ml-auto flex items-center gap-2">
               <UniverseSelect size="md" />
-              <span className="rounded border border-border px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">
-                ESC
-              </span>
+              <Kbd>ESC</Kbd>
             </div>
           </div>
 
@@ -304,7 +303,7 @@ export function CommandMenu({ open, onOpenChange }: CommandMenuProps) {
               placeholder="Buscar en todo el corpus… (semántica + archivo + grafo)"
               className={cn(
                 "h-11 w-full rounded-xl border border-input bg-background/80 pr-24 pl-10 text-sm",
-                "outline-none ring-amber-500/30 focus:border-amber-500/40 focus:ring-2",
+                "outline-none ring-accent/30 focus:border-accent/40 focus:ring-2",
               )}
               autoComplete="off"
               spellCheck={false}
@@ -313,9 +312,7 @@ export function CommandMenu({ open, onOpenChange }: CommandMenuProps) {
               {isSearching ? (
                 <Loader2Icon className="size-3.5 animate-spin text-muted-foreground" />
               ) : (
-                <span className="rounded border border-border px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">
-                  ⌘K
-                </span>
+                <Kbd>⌘K</Kbd>
               )}
             </div>
           </div>
@@ -411,11 +408,7 @@ export function CommandMenu({ open, onOpenChange }: CommandMenuProps) {
 }
 
 function HotkeyBadge({ label }: { label: string }) {
-  return (
-    <span className="inline-flex min-w-5 items-center justify-center rounded border border-border bg-muted/60 px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">
-      {label}
-    </span>
-  );
+  return <Kbd>{label}</Kbd>;
 }
 
 function MenuRouteRow({
@@ -444,14 +437,14 @@ function MenuRouteRow({
         className={cn(
           "flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-colors",
           active
-            ? "bg-amber-500/15 text-foreground ring-1 ring-amber-500/25"
+            ? "bg-accent/15 text-foreground ring-1 ring-accent/25"
             : "hover:bg-muted/70",
         )}
       >
         <span
           className={cn(
             "flex size-8 shrink-0 items-center justify-center rounded-lg",
-            active ? "bg-amber-500/20 text-amber-700 dark:text-amber-200" : "bg-muted text-muted-foreground",
+            active ? "bg-accent/20 text-accent" : "bg-muted text-muted-foreground",
           )}
         >
           <Icon className="size-4" aria-hidden />
@@ -496,17 +489,17 @@ function MenuSearchRow({
         className={cn(
           "flex w-full items-start gap-3 rounded-xl px-3 py-2.5 text-left transition-colors",
           active
-            ? "bg-violet-500/15 text-foreground ring-1 ring-violet-500/25"
+            ? "bg-primary/15 text-foreground ring-1 ring-primary/25"
             : "hover:bg-muted/70",
         )}
       >
-        <span className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg bg-violet-500/15 text-violet-700 dark:text-violet-200">
+        <span className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/15 text-primary">
           <SearchIcon className="size-4" aria-hidden />
         </span>
         <span className="min-w-0 flex-1">
           <span className="flex items-center gap-2">
             <span className="truncate text-sm font-medium">{result.title}</span>
-            <span className="shrink-0 rounded-full bg-violet-500/15 px-2 py-0.5 font-mono text-[9px] uppercase tracking-wide text-violet-700 dark:text-violet-200">
+            <span className="shrink-0 rounded-full bg-primary/15 px-2 py-0.5 font-mono text-[10px] uppercase tracking-wide text-primary">
               {result.badge}
             </span>
           </span>

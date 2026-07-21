@@ -244,19 +244,19 @@ export function NotebookViewer({ notebookId }: NotebookViewerProps) {
 
   if (isLoading) {
     return (
-      <div className="flex h-full items-center justify-center bg-[#050505]">
-        <Loader2Icon className="size-6 animate-spin text-zinc-600" />
+      <div className="flex h-full items-center justify-center bg-background">
+        <Loader2Icon className="size-6 animate-spin text-muted-foreground" />
       </div>
     );
   }
 
   if (!notebook) {
     return (
-      <div className="flex h-full flex-col items-center justify-center gap-3 bg-[#050505] text-zinc-500">
+      <div className="flex h-full flex-col items-center justify-center gap-3 bg-background text-muted-foreground">
         <p>Cuaderno no encontrado.</p>
         <Link
           href="/ingesta/cuadernos"
-          className="font-mono text-[10px] text-zinc-400 underline"
+          className="font-mono text-[10px] text-muted-foreground underline"
         >
           Volver al panal
         </Link>
@@ -265,18 +265,18 @@ export function NotebookViewer({ notebookId }: NotebookViewerProps) {
   }
 
   return (
-    <div className="flex h-full min-h-0 flex-col bg-[#050505] text-zinc-100">
-      <header className="flex shrink-0 items-center justify-between gap-3 border-b border-zinc-900 px-4 py-2">
+    <div className="flex h-full min-h-0 flex-col bg-background text-foreground">
+      <header className="flex shrink-0 items-center justify-between gap-3 border-b border-border px-4 py-2">
         <div className="flex min-w-0 items-center gap-3">
           <Link
             href="/ingesta/cuadernos"
-            className="inline-flex items-center gap-1 font-mono text-[10px] tracking-widest text-zinc-500 uppercase hover:text-zinc-300"
+            className="inline-flex items-center gap-1 font-mono text-[10px] tracking-widest text-muted-foreground uppercase hover:text-foreground/80"
           >
             <ArrowLeftIcon className="size-3.5" />
             Panal
           </Link>
-          <div className="min-w-0 border-l border-zinc-800 pl-3">
-            <p className="font-mono text-[9px] tracking-[0.25em] text-zinc-600 uppercase">
+          <div className="min-w-0 border-l border-border pl-3">
+            <p className="font-mono text-[10px] tracking-[0.25em] text-muted-foreground uppercase">
               Espejo · Split Pane
             </p>
             <h1 className="truncate text-sm font-medium">{notebook.title}</h1>
@@ -298,7 +298,7 @@ export function NotebookViewer({ notebookId }: NotebookViewerProps) {
             size="sm"
             disabled={isUploading}
             onClick={() => fileInputRef.current?.click()}
-            className="border-zinc-800 bg-zinc-950 text-zinc-300 hover:bg-zinc-900"
+            className="border-border bg-background text-foreground/80 hover:bg-card"
           >
             {isUploading ? (
               <Loader2Icon className="size-3.5 animate-spin" />
@@ -314,25 +314,25 @@ export function NotebookViewer({ notebookId }: NotebookViewerProps) {
         {activePage ? (
           <>
             {/* Izquierda: imagen + paginación */}
-            <section className="flex min-w-0 flex-1 flex-col border-r border-zinc-900 lg:w-1/2 lg:flex-none">
-              <div className="flex shrink-0 items-center justify-between gap-2 border-b border-zinc-900 px-3 py-2">
+            <section className="flex min-w-0 flex-1 flex-col border-r border-border lg:w-1/2 lg:flex-none">
+              <div className="flex shrink-0 items-center justify-between gap-2 border-b border-border px-3 py-2">
                 <div className="flex items-center gap-2">
                   <button
                     type="button"
                     disabled={activeIndex === 0}
                     onClick={() => setActiveIndex((i) => i - 1)}
-                    className="rounded px-2 py-1 font-mono text-[10px] text-zinc-400 hover:bg-zinc-900 hover:text-zinc-200 disabled:opacity-30"
+                    className="rounded px-2 py-1 font-mono text-[10px] text-muted-foreground hover:bg-card hover:text-foreground disabled:opacity-30"
                   >
                     ◀ Anterior
                   </button>
-                  <span className="font-mono text-[10px] text-zinc-400">
+                  <span className="font-mono text-[10px] text-muted-foreground">
                     Página {activeIndex + 1} / {notebook.pages.length}
                   </span>
                   <button
                     type="button"
                     disabled={activeIndex >= notebook.pages.length - 1}
                     onClick={() => setActiveIndex((i) => i + 1)}
-                    className="rounded px-2 py-1 font-mono text-[10px] text-zinc-400 hover:bg-zinc-900 hover:text-zinc-200 disabled:opacity-30"
+                    className="rounded px-2 py-1 font-mono text-[10px] text-muted-foreground hover:bg-card hover:text-foreground disabled:opacity-30"
                   >
                     Siguiente ▶
                   </button>
@@ -350,7 +350,7 @@ export function NotebookViewer({ notebookId }: NotebookViewerProps) {
                     size="sm"
                     disabled={isProcessing || activePage.status === "PROCESSING"}
                     onClick={() => void handleProcess()}
-                    className="bg-zinc-100 text-zinc-950 hover:bg-white"
+                    className="bg-primary text-primary-foreground hover:bg-foreground"
                   >
                     {isProcessing ? (
                       <Loader2Icon className="size-3.5 animate-spin" />
@@ -362,9 +362,9 @@ export function NotebookViewer({ notebookId }: NotebookViewerProps) {
                 </div>
               </div>
 
-              <div className="relative min-h-0 flex-1 overflow-auto bg-[#030303] p-4">
+              <div className="relative min-h-0 flex-1 overflow-auto bg-background p-4">
                 <div className="relative mx-auto max-w-3xl">
-                  <div className="relative overflow-hidden rounded border border-zinc-800 shadow-2xl">
+                  <div className="relative overflow-hidden rounded border border-border shadow-2xl">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={activePage.imageUrl}
@@ -379,12 +379,12 @@ export function NotebookViewer({ notebookId }: NotebookViewerProps) {
                 </div>
               </div>
 
-              <footer className="shrink-0 border-t border-zinc-900 px-4 py-2 font-mono text-[9px] tracking-wider text-zinc-500 uppercase">
+              <footer className="shrink-0 border-t border-border px-4 py-2 font-mono text-[10px] tracking-wider text-muted-foreground uppercase">
                 <span
                   className={cn(
-                    activePage.status === "COMPLETED" && "text-emerald-500",
-                    activePage.status === "ERROR" && "text-red-400",
-                    activePage.status === "PROCESSING" && "text-amber-400",
+                    activePage.status === "COMPLETED" && "text-primary",
+                    activePage.status === "ERROR" && "text-destructive",
+                    activePage.status === "PROCESSING" && "text-accent",
                   )}
                 >
                   {STATUS_LABEL[activePage.status] ?? activePage.status}
@@ -394,8 +394,8 @@ export function NotebookViewer({ notebookId }: NotebookViewerProps) {
 
             {/* Derecha: formulario HITL */}
             <aside className="flex min-h-0 w-full flex-col overflow-y-auto lg:w-1/2">
-              <div className="flex items-center justify-between border-b border-zinc-900 px-4 py-2">
-                <p className="font-mono text-[9px] tracking-widest text-zinc-600 uppercase">
+              <div className="flex items-center justify-between border-b border-border px-4 py-2">
+                <p className="font-mono text-[10px] tracking-widest text-muted-foreground uppercase">
                   Átomo editable
                 </p>
                 <Button
@@ -403,7 +403,7 @@ export function NotebookViewer({ notebookId }: NotebookViewerProps) {
                   size="sm"
                   disabled={isSaving}
                   onClick={() => void handleSaveAnalysis()}
-                  className="bg-emerald-600 text-white hover:bg-emerald-500"
+                  className="bg-primary text-foreground hover:bg-primary"
                 >
                   {isSaving ? (
                     <Loader2Icon className="size-3.5 animate-spin" />
@@ -416,7 +416,7 @@ export function NotebookViewer({ notebookId }: NotebookViewerProps) {
 
               <div className="space-y-4 px-4 py-4">
                 <label className="block space-y-1">
-                  <span className="font-mono text-[9px] tracking-widest text-zinc-500 uppercase">
+                  <span className="font-mono text-[10px] tracking-widest text-muted-foreground uppercase">
                     Título sugerido
                   </span>
                   <input
@@ -427,12 +427,12 @@ export function NotebookViewer({ notebookId }: NotebookViewerProps) {
                         suggestedTitle: e.target.value,
                       }))
                     }
-                    className="w-full rounded border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 outline-none focus:border-zinc-600"
+                    className="w-full rounded border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-border"
                   />
                 </label>
 
                 <label className="block space-y-1">
-                  <span className="font-mono text-[9px] tracking-widest text-zinc-500 uppercase">
+                  <span className="font-mono text-[10px] tracking-widest text-muted-foreground uppercase">
                     Explicación
                   </span>
                   <textarea
@@ -444,12 +444,12 @@ export function NotebookViewer({ notebookId }: NotebookViewerProps) {
                       }))
                     }
                     rows={3}
-                    className="w-full rounded border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 outline-none focus:border-zinc-600"
+                    className="w-full rounded border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-border"
                   />
                 </label>
 
                 <label className="block space-y-1">
-                  <span className="font-mono text-[9px] tracking-widest text-zinc-500 uppercase">
+                  <span className="font-mono text-[10px] tracking-widest text-muted-foreground uppercase">
                     Descripción del contenido escrito
                   </span>
                   <textarea
@@ -461,19 +461,19 @@ export function NotebookViewer({ notebookId }: NotebookViewerProps) {
                       }))
                     }
                     rows={4}
-                    className="w-full rounded border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 outline-none focus:border-zinc-600"
+                    className="w-full rounded border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-border"
                   />
                 </label>
 
                 <div className="space-y-2">
-                  <span className="font-mono text-[9px] tracking-widest text-zinc-500 uppercase">
+                  <span className="font-mono text-[10px] tracking-widest text-muted-foreground uppercase">
                     Tags semánticos
                   </span>
                   <div className="flex flex-wrap gap-1.5">
                     {form.semanticTags.map((tag) => (
                       <span
                         key={tag}
-                        className="inline-flex items-center gap-1 rounded border border-zinc-700 bg-zinc-900 px-2 py-0.5 font-mono text-[10px] text-zinc-300"
+                        className="inline-flex items-center gap-1 rounded border border-border bg-card px-2 py-0.5 font-mono text-[10px] text-foreground/80"
                       >
                         {tag}
                         <button
@@ -487,7 +487,7 @@ export function NotebookViewer({ notebookId }: NotebookViewerProps) {
                               ),
                             }))
                           }
-                          className="text-zinc-500 hover:text-zinc-200"
+                          className="text-muted-foreground hover:text-foreground"
                         >
                           <XIcon className="size-3" />
                         </button>
@@ -505,14 +505,14 @@ export function NotebookViewer({ notebookId }: NotebookViewerProps) {
                         }
                       }}
                       placeholder="Nuevo tag"
-                      className="min-w-0 flex-1 rounded border border-zinc-800 bg-zinc-950 px-3 py-1.5 text-sm outline-none focus:border-zinc-600"
+                      className="min-w-0 flex-1 rounded border border-border bg-background px-3 py-1.5 text-sm outline-none focus:border-border"
                     />
                     <Button
                       type="button"
                       variant="outline"
                       size="sm"
                       onClick={addTag}
-                      className="border-zinc-800"
+                      className="border-border"
                     >
                       +
                     </Button>
@@ -520,19 +520,19 @@ export function NotebookViewer({ notebookId }: NotebookViewerProps) {
                 </div>
 
                 <div className="space-y-3">
-                  <span className="font-mono text-[9px] tracking-widest text-zinc-500 uppercase">
+                  <span className="font-mono text-[10px] tracking-widest text-muted-foreground uppercase">
                     Entidades NER
                   </span>
                   {NER_KEYS.map((kind) => (
                     <div key={kind} className="space-y-1.5">
-                      <p className="font-mono text-[10px] text-zinc-500">
+                      <p className="font-mono text-[10px] text-muted-foreground">
                         {NER_LABEL[kind]}
                       </p>
                       <div className="flex flex-wrap gap-1.5">
                         {form.ner[kind].map((entity) => (
                           <span
                             key={`${kind}-${entity}`}
-                            className="inline-flex items-center gap-1 rounded-full border border-zinc-700 bg-zinc-900/80 px-2.5 py-0.5 text-[11px] text-zinc-200"
+                            className="inline-flex items-center gap-1 rounded-full border border-border bg-card/80 px-2.5 py-0.5 text-[11px] text-foreground"
                           >
                             {entity}
                             <button
@@ -549,7 +549,7 @@ export function NotebookViewer({ notebookId }: NotebookViewerProps) {
                                   },
                                 }))
                               }
-                              className="text-zinc-500 hover:text-zinc-200"
+                              className="text-muted-foreground hover:text-foreground"
                             >
                               <XIcon className="size-3" />
                             </button>
@@ -572,14 +572,14 @@ export function NotebookViewer({ notebookId }: NotebookViewerProps) {
                             }
                           }}
                           placeholder={`Añadir ${NER_LABEL[kind].toLowerCase()}`}
-                          className="min-w-0 flex-1 rounded border border-zinc-800 bg-zinc-950 px-3 py-1.5 text-sm outline-none focus:border-zinc-600"
+                          className="min-w-0 flex-1 rounded border border-border bg-background px-3 py-1.5 text-sm outline-none focus:border-border"
                         />
                         <Button
                           type="button"
                           variant="outline"
                           size="sm"
                           onClick={() => addNer(kind)}
-                          className="border-zinc-800"
+                          className="border-border"
                         >
                           +
                         </Button>
@@ -589,7 +589,7 @@ export function NotebookViewer({ notebookId }: NotebookViewerProps) {
                 </div>
 
                 {/* Mini índice de páginas en móvil */}
-                <div className="border-t border-zinc-900 pt-3 lg:hidden">
+                <div className="border-t border-border pt-3 lg:hidden">
                   <div className="flex flex-wrap gap-1">
                     {notebook.pages.map((page, index) => (
                       <button
@@ -599,8 +599,8 @@ export function NotebookViewer({ notebookId }: NotebookViewerProps) {
                         className={cn(
                           "rounded px-2 py-1 font-mono text-[10px]",
                           index === activeIndex
-                            ? "bg-zinc-800 text-zinc-100"
-                            : "text-zinc-500 hover:bg-zinc-900",
+                            ? "bg-muted text-foreground"
+                            : "text-muted-foreground hover:bg-card",
                         )}
                       >
                         p.{page.pageNumber}
@@ -612,7 +612,7 @@ export function NotebookViewer({ notebookId }: NotebookViewerProps) {
             </aside>
           </>
         ) : (
-          <div className="flex flex-1 flex-col items-center justify-center gap-4 text-zinc-600">
+          <div className="flex flex-1 flex-col items-center justify-center gap-4 text-muted-foreground">
             <p className="font-mono text-[10px] tracking-widest uppercase">
               Cuaderno sin páginas
             </p>
@@ -620,7 +620,7 @@ export function NotebookViewer({ notebookId }: NotebookViewerProps) {
               type="button"
               variant="outline"
               onClick={() => fileInputRef.current?.click()}
-              className="border-zinc-800 bg-zinc-950"
+              className="border-border bg-background"
             >
               <UploadIcon className="size-4" />
               Subir primera página
@@ -632,7 +632,7 @@ export function NotebookViewer({ notebookId }: NotebookViewerProps) {
       {/* Índice lateral desktop */}
       {notebook.pages.length > 0 ? (
         <div className="pointer-events-none absolute bottom-4 left-4 hidden md:block">
-          <div className="pointer-events-auto max-h-40 overflow-y-auto rounded border border-zinc-800 bg-zinc-950/90 p-2 shadow-xl backdrop-blur">
+          <div className="pointer-events-auto max-h-40 overflow-y-auto rounded border border-border bg-background/90 p-2 shadow-xl backdrop-blur">
             <div className="flex flex-col gap-0.5">
               {notebook.pages.map((page, index) => (
                 <button
@@ -642,19 +642,19 @@ export function NotebookViewer({ notebookId }: NotebookViewerProps) {
                   className={cn(
                     "flex items-center justify-between gap-3 rounded px-2 py-1 font-mono text-[10px]",
                     index === activeIndex
-                      ? "bg-zinc-800 text-zinc-100"
-                      : "text-zinc-500 hover:bg-zinc-900 hover:text-zinc-300",
+                      ? "bg-muted text-foreground"
+                      : "text-muted-foreground hover:bg-card hover:text-foreground/80",
                   )}
                 >
                   <span>p.{page.pageNumber}</span>
                   <span
                     className={cn(
                       "size-1.5 rounded-full",
-                      page.status === "COMPLETED" && "bg-emerald-500",
-                      page.status === "PENDING" && "bg-zinc-600",
+                      page.status === "COMPLETED" && "bg-primary",
+                      page.status === "PENDING" && "bg-muted",
                       page.status === "PROCESSING" &&
-                        "animate-pulse bg-amber-400",
-                      page.status === "ERROR" && "bg-red-500",
+                        "animate-pulse bg-accent/20",
+                      page.status === "ERROR" && "bg-destructive/20",
                     )}
                   />
                 </button>

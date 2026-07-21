@@ -66,26 +66,26 @@ export function SemanticChunkerPanel() {
     <section className="molecular-noir-panel flex flex-col gap-4 p-5">
       <header className="space-y-1">
         <div className="flex items-center gap-2">
-          <ZapIcon className="size-4 text-cyan-400/80" />
-          <p className="font-mono text-[10px] uppercase tracking-[0.24em] text-white/40">
+          <ZapIcon className="size-4 text-primary" />
+          <p className="font-mono text-[10px] uppercase tracking-[0.24em] text-muted-foreground">
             Agente 01 · Chunkeador Semántico
           </p>
         </div>
-        <h2 className="font-mono text-lg text-white/90">
+        <h2 className="font-mono text-lg text-muted-foreground">
           Acelerador de Partículas
         </h2>
-        <p className="text-xs text-white/45">
+        <p className="text-xs text-muted-foreground">
           Inyectá materia densa manualmente o elegí un documento del archivo del
           sistema.
         </p>
       </header>
 
       {batchMode ? (
-        <div className="rounded-lg border border-violet-500/25 bg-violet-500/5 px-3 py-2">
-          <p className="font-mono text-[10px] uppercase tracking-wider text-violet-200/70">
+        <div className="rounded-lg border border-primary/25 bg-primary/5 px-3 py-2">
+          <p className="font-mono text-[10px] uppercase tracking-wider text-primary/70">
             Calibración secuencial
           </p>
-          <p className="font-mono text-xs text-violet-100/85">
+          <p className="font-mono text-xs text-foreground/85">
             Documento {batchIndex + 1}/{batchQueue.length}:{" "}
             {batchQueue[batchIndex]?.title ?? "—"}
           </p>
@@ -94,14 +94,14 @@ export function SemanticChunkerPanel() {
             variant="outline"
             size="sm"
             onClick={stopBatchCalibration}
-            className="mt-2 border-white/15 bg-transparent font-mono text-[10px] uppercase tracking-wider text-white/50"
+            className="mt-2 border-border bg-transparent font-mono text-[10px] uppercase tracking-wider text-muted-foreground"
           >
             Detener calibración total
           </Button>
         </div>
       ) : null}
 
-      <div className="flex gap-1 rounded-md border border-white/10 p-0.5">
+      <div className="flex gap-1 rounded-md border border-border p-0.5">
         <button
           type="button"
           disabled={isLocked}
@@ -112,8 +112,8 @@ export function SemanticChunkerPanel() {
           className={cn(
             "flex flex-1 items-center justify-center gap-1.5 rounded px-2 py-1.5 font-mono text-[10px] uppercase tracking-wider transition",
             inputMode === "manual"
-              ? "bg-white/10 text-white"
-              : "text-white/40 hover:text-white/70",
+              ? "bg-muted/40 text-foreground"
+              : "text-muted-foreground hover:text-muted-foreground",
             isLocked && "opacity-50",
           )}
         >
@@ -127,8 +127,8 @@ export function SemanticChunkerPanel() {
           className={cn(
             "flex flex-1 items-center justify-center gap-1.5 rounded px-2 py-1.5 font-mono text-[10px] uppercase tracking-wider transition",
             inputMode === "archivo"
-              ? "bg-white/10 text-white"
-              : "text-white/40 hover:text-white/70",
+              ? "bg-muted/40 text-foreground"
+              : "text-muted-foreground hover:text-muted-foreground",
             isLocked && "opacity-50",
           )}
         >
@@ -140,7 +140,7 @@ export function SemanticChunkerPanel() {
       {inputMode === "archivo" ? (
         <div className="space-y-3">
           <label className="block space-y-1.5">
-            <span className="font-mono text-[10px] uppercase tracking-wider text-white/35">
+            <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
               Documento del sistema
             </span>
             <select
@@ -154,7 +154,7 @@ export function SemanticChunkerPanel() {
                 }
                 void loadSourceContent(value);
               }}
-              className="w-full rounded-md border border-white/10 bg-black/60 px-3 py-2 font-mono text-xs text-white/80 outline-none transition focus:border-emerald-500/40 focus:ring-1 focus:ring-emerald-500/20 disabled:opacity-50"
+              className="w-full rounded-md border border-border bg-foreground/40 px-3 py-2 font-mono text-xs text-muted-foreground outline-none transition focus:border-primary/40 focus:ring-1 focus:ring-primary/20 disabled:opacity-50"
             >
               <option value="">
                 {isLoadingSources
@@ -172,10 +172,10 @@ export function SemanticChunkerPanel() {
           </label>
 
           {selectedSource ? (
-            <div className="rounded-md border border-white/8 bg-black/40 px-3 py-2 font-mono text-[10px] text-white/40">
-              <span className="text-white/55">{selectedSource.title}</span>
+            <div className="rounded-md border border-border bg-card/80 px-3 py-2 font-mono text-[10px] text-muted-foreground">
+              <span className="text-muted-foreground">{selectedSource.title}</span>
               {selectedSource.strongestTag ? (
-                <span className="ml-2 text-amber-300/70">
+                <span className="ml-2 text-accent">
                   #{selectedSource.strongestTag.label}
                 </span>
               ) : null}
@@ -185,7 +185,7 @@ export function SemanticChunkerPanel() {
       ) : (
         <div className="space-y-3">
           <label className="block space-y-1.5">
-            <span className="font-mono text-[10px] uppercase tracking-wider text-white/35">
+            <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
               Fuente de origen
             </span>
             <input
@@ -194,14 +194,14 @@ export function SemanticChunkerPanel() {
               onChange={(event) => setFuenteOrigen(event.target.value)}
               disabled={isLocked}
               placeholder="gemini-resumen · pdf-transcript · ingesta-manual"
-              className="w-full rounded-md border border-white/10 bg-black/60 px-3 py-2 font-mono text-xs text-white/80 outline-none transition focus:border-emerald-500/40 focus:ring-1 focus:ring-emerald-500/20 disabled:opacity-50"
+              className="w-full rounded-md border border-border bg-foreground/40 px-3 py-2 font-mono text-xs text-muted-foreground outline-none transition focus:border-primary/40 focus:ring-1 focus:ring-primary/20 disabled:opacity-50"
             />
           </label>
         </div>
       )}
 
       <label className="block space-y-1.5">
-        <span className="font-mono text-[10px] uppercase tracking-wider text-white/35">
+        <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
           Bloque denso
         </span>
         <textarea
@@ -215,7 +215,7 @@ export function SemanticChunkerPanel() {
               : "Pegá transcripciones, resúmenes de Gemini, PDFs convertidos a texto…"
           }
           className={cn(
-            "w-full resize-y rounded-md border border-white/10 bg-black/60 px-3 py-3 font-mono text-xs leading-relaxed text-white/80 outline-none transition placeholder:text-white/20 focus:border-emerald-500/40 focus:ring-1 focus:ring-emerald-500/20 disabled:opacity-50",
+            "w-full resize-y rounded-md border border-border bg-foreground/40 px-3 py-3 font-mono text-xs leading-relaxed text-muted-foreground outline-none transition placeholder:text-muted-foreground focus:border-primary/40 focus:ring-1 focus:ring-primary/20 disabled:opacity-50",
             isChunking && "molecular-text-pulse",
           )}
         />
@@ -226,7 +226,7 @@ export function SemanticChunkerPanel() {
           type="button"
           onClick={() => void runChunker()}
           disabled={isBusy || isLocked || !textoOriginal.trim()}
-          className="bg-emerald-600/90 font-mono text-xs uppercase tracking-wider text-white hover:bg-emerald-500/90"
+          className="bg-primary/90 font-mono text-xs uppercase tracking-wider text-foreground hover:bg-primary/90"
         >
           {isChunking ? (
             <>
@@ -244,7 +244,7 @@ export function SemanticChunkerPanel() {
             variant="outline"
             disabled={isBusy}
             onClick={() => void startBatchCalibration()}
-            className="border-violet-500/30 bg-violet-500/5 font-mono text-xs uppercase tracking-wider text-violet-200/90 hover:bg-violet-500/10"
+            className="border-primary/30 bg-primary/5 font-mono text-xs uppercase tracking-wider text-primary/90 hover:bg-primary/10"
           >
             Calibrar todo
           </Button>
@@ -255,32 +255,32 @@ export function SemanticChunkerPanel() {
             type="button"
             variant="outline"
             onClick={resetPipeline}
-            className="border-white/15 bg-transparent font-mono text-xs text-white/60 hover:bg-white/5 hover:text-white/80"
+            className="border-border bg-transparent font-mono text-xs text-muted-foreground hover:bg-muted/50 hover:text-muted-foreground"
           >
             Reiniciar pipeline
           </Button>
         ) : null}
 
         {textoOriginal.length > 0 && (
-          <span className="ml-auto font-mono text-[10px] tabular-nums text-white/30">
+          <span className="ml-auto font-mono text-[10px] tabular-nums text-muted-foreground">
             {textoOriginal.length.toLocaleString("es-AR")} chars
           </span>
         )}
       </div>
 
       {error ? (
-        <p className="rounded border border-red-500/30 bg-red-500/10 px-3 py-2 font-mono text-xs text-red-300/90">
+        <p className="rounded border border-destructive/30 bg-destructive/10 px-3 py-2 font-mono text-xs text-destructive/90">
           {error}
         </p>
       ) : null}
 
       {showParticles ? (
-        <div className="space-y-3 border-t border-white/8 pt-4">
+        <div className="space-y-3 border-t border-border pt-4">
           <div className="flex items-center justify-between">
-            <p className="font-mono text-[10px] uppercase tracking-wider text-white/35">
+            <p className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
               Partículas emitidas
             </p>
-            <span className="font-mono text-xs tabular-nums text-emerald-400/80">
+            <span className="font-mono text-xs tabular-nums text-primary/80">
               {particulas.length}
             </span>
           </div>

@@ -74,7 +74,7 @@ export function SessionSidebar({
                     className="min-w-0 flex-1 px-3 py-2 text-left"
                   >
                     <p className="truncate text-xs font-medium">{session.title}</p>
-                    <p className="mt-1 font-mono text-[9px] text-muted-foreground">
+                    <p className="mt-1 font-mono text-[10px] text-muted-foreground">
                       {session.messageCount} mensajes ·{" "}
                       {new Date(session.updatedAt).toLocaleDateString("es-AR")}
                     </p>

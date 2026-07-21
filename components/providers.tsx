@@ -7,8 +7,10 @@ export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <ThemeProvider
       attribute="class"
-      defaultTheme="system"
-      enableSystem
+      defaultTheme="dark"
+      enableSystem={false}
+      themes={["light", "dark", "legion"]}
+      value={{ light: "light", dark: "dark", legion: "theme-legion" }}
       storageKey="deprocast-theme"
       disableTransitionOnChange
     >

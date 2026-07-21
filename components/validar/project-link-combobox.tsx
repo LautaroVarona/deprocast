@@ -84,7 +84,7 @@ export function ProjectLinkCombobox({
                   <span className="min-w-0 truncate font-mono text-[10px]">
                     {project.title}
                   </span>
-                  <span className="shrink-0 font-mono text-[9px] text-muted-foreground">
+                  <span className="shrink-0 font-mono text-[10px] text-muted-foreground">
                     {project.campo}
                   </span>
                 </button>
@@ -94,7 +94,7 @@ export function ProjectLinkCombobox({
         )}
 
         {open && query.trim() && filteredProjects.length === 0 && (
-          <div className="absolute z-20 mt-1 w-full rounded border border-border bg-popover px-2 py-1.5 font-mono text-[9px] text-muted-foreground shadow-md">
+          <div className="absolute z-20 mt-1 w-full rounded border border-border bg-popover px-2 py-1.5 font-mono text-[10px] text-muted-foreground shadow-md">
             Sin coincidencias. Solo podés enlazar proyectos ya existentes.
           </div>
         )}
@@ -116,19 +116,19 @@ export function ProjectLinkCombobox({
           ))}
         </div>
       ) : (
-        <p className="font-mono text-[9px] text-muted-foreground">
+        <p className="font-mono text-[10px] text-muted-foreground">
           Sin conexiones. Buscá un proyecto del Atanor para vincular este nodo.
         </p>
       )}
 
       {projects.length === 0 && (
-        <p className="font-mono text-[9px] text-muted-foreground">
+        <p className="font-mono text-[10px] text-muted-foreground">
           No hay proyectos en el Atanor. Creálos desde la vista Proyectos.
         </p>
       )}
 
       {selectedIds.length > 0 && (
-        <p className="inline-flex items-center gap-1 font-mono text-[9px] text-muted-foreground">
+        <p className="inline-flex items-center gap-1 font-mono text-[10px] text-muted-foreground">
           <CheckIcon className="size-3 text-primary" />
           {selectedIds.length} proyecto{selectedIds.length === 1 ? "" : "s"} enlazado
           {selectedIds.length === 1 ? "" : "s"}

@@ -3,13 +3,14 @@
 @import "shadcn/tailwind.css";
 
 @custom-variant dark (&:is(.dark *));
+@custom-variant legion (&:is(.theme-legion *));
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-sans);
+  --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-  --font-heading: var(--font-sans);
+  --font-heading: var(--font-heading);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -48,9 +49,10 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
-/* Modo diurno: fondo cálido, contraste suave pero legible (WCAG AA) */
+/* Diurno — claridad máxima */
 :root {
   color-scheme: light;
+  --font-heading: var(--font-geist-sans);
   --background: oklch(0.985 0.004 85);
   --foreground: oklch(0.21 0.02 265);
   --card: oklch(1 0.002 85);
@@ -85,40 +87,79 @@
   --sidebar-ring: oklch(0.55 0.04 265);
 }
 
-/* Modo oscuro: gris profundo con tinte frío, sin negro puro */
+/* Noir — ciberpunk / táctico */
 .dark {
   color-scheme: dark;
-  --background: oklch(0.17 0.015 265);
-  --foreground: oklch(0.93 0.01 85);
-  --card: oklch(0.21 0.018 265);
-  --card-foreground: oklch(0.93 0.01 85);
-  --popover: oklch(0.21 0.018 265);
-  --popover-foreground: oklch(0.93 0.01 85);
-  --primary: oklch(0.91 0.01 85);
-  --primary-foreground: oklch(0.17 0.015 265);
-  --secondary: oklch(0.26 0.018 265);
-  --secondary-foreground: oklch(0.93 0.01 85);
-  --muted: oklch(0.26 0.018 265);
+  --font-heading: var(--font-geist-sans);
+  --background: oklch(0.12 0.01 265);
+  --foreground: oklch(0.94 0.01 85);
+  --card: oklch(0.16 0.014 265);
+  --card-foreground: oklch(0.94 0.01 85);
+  --popover: oklch(0.16 0.014 265);
+  --popover-foreground: oklch(0.94 0.01 85);
+  --primary: oklch(0.82 0.12 195);
+  --primary-foreground: oklch(0.12 0.01 265);
+  --secondary: oklch(0.22 0.016 265);
+  --secondary-foreground: oklch(0.94 0.01 85);
+  --muted: oklch(0.2 0.014 265);
   --muted-foreground: oklch(0.68 0.02 265);
-  --accent: oklch(0.28 0.02 265);
-  --accent-foreground: oklch(0.93 0.01 85);
+  --accent: oklch(0.78 0.14 85);
+  --accent-foreground: oklch(0.14 0.02 85);
   --destructive: oklch(0.68 0.17 25);
-  --border: oklch(0.34 0.02 265 / 55%);
-  --input: oklch(0.28 0.02 265 / 80%);
-  --ring: oklch(0.58 0.04 265);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --sidebar: oklch(0.21 0.018 265);
-  --sidebar-foreground: oklch(0.93 0.01 85);
-  --sidebar-primary: oklch(0.65 0.15 265);
-  --sidebar-primary-foreground: oklch(0.99 0.002 85);
-  --sidebar-accent: oklch(0.26 0.018 265);
-  --sidebar-accent-foreground: oklch(0.93 0.01 85);
-  --sidebar-border: oklch(0.34 0.02 265 / 55%);
-  --sidebar-ring: oklch(0.58 0.04 265);
+  --border: oklch(0.32 0.02 265 / 45%);
+  --input: oklch(0.24 0.016 265 / 80%);
+  --ring: oklch(0.72 0.12 195);
+  --chart-1: oklch(0.82 0.12 195);
+  --chart-2: oklch(0.78 0.14 85);
+  --chart-3: oklch(0.72 0.15 155);
+  --chart-4: oklch(0.65 0.14 290);
+  --chart-5: oklch(0.7 0.16 25);
+  --sidebar: oklch(0.14 0.012 265);
+  --sidebar-foreground: oklch(0.94 0.01 85);
+  --sidebar-primary: oklch(0.72 0.12 195);
+  --sidebar-primary-foreground: oklch(0.12 0.01 265);
+  --sidebar-accent: oklch(0.2 0.014 265);
+  --sidebar-accent-foreground: oklch(0.94 0.01 85);
+  --sidebar-border: oklch(0.32 0.02 265 / 45%);
+  --sidebar-ring: oklch(0.72 0.12 195);
+}
+
+/* Legión — gloria imperial SPQR */
+.theme-legion {
+  color-scheme: dark;
+  --font-heading: var(--font-legion), ui-serif, Georgia, serif;
+  --background: oklch(0.17 0.035 35);
+  --foreground: oklch(0.92 0.02 85);
+  --card: oklch(0.21 0.038 35);
+  --card-foreground: oklch(0.92 0.02 85);
+  --popover: oklch(0.2 0.036 35);
+  --popover-foreground: oklch(0.92 0.02 85);
+  --primary: oklch(0.78 0.14 85);
+  --primary-foreground: oklch(0.18 0.04 40);
+  --secondary: oklch(0.26 0.04 35);
+  --secondary-foreground: oklch(0.9 0.03 85);
+  --muted: oklch(0.24 0.03 35);
+  --muted-foreground: oklch(0.72 0.04 75);
+  --accent: oklch(0.45 0.17 25);
+  --accent-foreground: oklch(0.95 0.02 85);
+  --destructive: oklch(0.55 0.2 25);
+  --border: oklch(0.55 0.1 75 / 45%);
+  --input: oklch(0.28 0.04 40 / 75%);
+  --ring: oklch(0.72 0.12 80);
+  --chart-1: oklch(0.78 0.14 85);
+  --chart-2: oklch(0.5 0.16 25);
+  --chart-3: oklch(0.62 0.1 70);
+  --chart-4: oklch(0.4 0.08 40);
+  --chart-5: oklch(0.7 0.08 90);
+  --radius: 0.5rem;
+  --sidebar: oklch(0.15 0.032 35);
+  --sidebar-foreground: oklch(0.92 0.02 85);
+  --sidebar-primary: oklch(0.78 0.14 85);
+  --sidebar-primary-foreground: oklch(0.18 0.04 40);
+  --sidebar-accent: oklch(0.24 0.035 35);
+  --sidebar-accent-foreground: oklch(0.92 0.02 85);
+  --sidebar-border: oklch(0.55 0.1 75 / 40%);
+  --sidebar-ring: oklch(0.72 0.12 80);
 }
 
 @layer base {
@@ -130,6 +171,11 @@
   }
   html {
     @apply font-sans;
+  }
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-heading);
   }
 }
 
@@ -162,20 +208,21 @@
 /* X-Bookmark-Calibrator — modo foco noir */
 .x-bookmark-noir-root {
   background:
-    radial-gradient(ellipse 70% 45% at 12% 0%, rgba(255, 255, 255, 0.05), transparent),
-    radial-gradient(ellipse 55% 40% at 88% 100%, rgba(120, 180, 255, 0.06), transparent),
-    #050505;
+    radial-gradient(ellipse 70% 45% at 12% 0%, color-mix(in oklch, var(--foreground) 5%, transparent), transparent),
+    radial-gradient(ellipse 55% 40% at 88% 100%, color-mix(in oklch, var(--primary) 8%, transparent), transparent),
+    var(--background);
+  color: var(--foreground);
 }
 
 .x-bookmark-noir-panel {
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid var(--border);
+  background: color-mix(in oklch, var(--card) 85%, transparent);
   border-radius: 0.875rem;
 }
 
 .x-bookmark-noir-dock {
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(8, 8, 8, 0.92);
+  border-top: 1px solid var(--border);
+  background: color-mix(in oklch, var(--background) 92%, transparent);
   backdrop-filter: blur(10px);
 }
 
@@ -215,23 +262,24 @@
 /* Jornada — Tiempo-Espacio × Partícula (noir) */
 .jornada-noir-root {
   background:
-    radial-gradient(ellipse 80% 50% at 50% -20%, rgba(34, 211, 238, 0.08), transparent),
-    radial-gradient(ellipse 60% 40% at 100% 100%, rgba(251, 191, 36, 0.06), transparent),
-    oklch(0.12 0.02 265);
+    radial-gradient(ellipse 80% 50% at 50% -20%, color-mix(in oklch, var(--primary) 10%, transparent), transparent),
+    radial-gradient(ellipse 60% 40% at 100% 100%, color-mix(in oklch, var(--accent) 8%, transparent), transparent),
+    var(--background);
+  color: var(--foreground);
   min-height: calc(100vh - 3.5rem);
 }
 
 .jornada-noir-panel {
   border-radius: 1rem;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--border);
   background: linear-gradient(
     145deg,
-    rgba(255, 255, 255, 0.04) 0%,
-    rgba(0, 0, 0, 0.35) 100%
+    color-mix(in oklch, var(--card) 90%, transparent) 0%,
+    color-mix(in oklch, var(--muted) 70%, transparent) 100%
   );
   box-shadow:
-    0 0 0 1px rgba(255, 255, 255, 0.03) inset,
-    0 20px 50px -20px rgba(0, 0, 0, 0.6);
+    0 0 0 1px color-mix(in oklch, var(--foreground) 3%, transparent) inset,
+    0 20px 50px -20px color-mix(in oklch, var(--foreground) 12%, transparent);
 }
 
 .jornada-scanlines {
@@ -363,23 +411,24 @@
 /* Motor Molecular — noir laboratory */
 .molecular-noir-root {
   background:
-    radial-gradient(ellipse 70% 45% at 20% 0%, rgba(52, 211, 153, 0.07), transparent),
-    radial-gradient(ellipse 50% 35% at 90% 80%, rgba(167, 139, 250, 0.06), transparent),
-    #000000;
+    radial-gradient(ellipse 70% 45% at 20% 0%, color-mix(in oklch, var(--chart-3) 10%, transparent), transparent),
+    radial-gradient(ellipse 50% 35% at 90% 80%, color-mix(in oklch, var(--chart-4) 8%, transparent), transparent),
+    var(--background);
+  color: var(--foreground);
   min-height: calc(100dvh - 3.5rem);
 }
 
 .molecular-noir-panel {
   border-radius: 0.875rem;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--border);
   background: linear-gradient(
     155deg,
-    rgba(255, 255, 255, 0.035) 0%,
-    rgba(0, 0, 0, 0.55) 100%
+    color-mix(in oklch, var(--card) 92%, transparent) 0%,
+    color-mix(in oklch, var(--muted) 75%, transparent) 100%
   );
   box-shadow:
-    0 0 0 1px rgba(255, 255, 255, 0.03) inset,
-    0 24px 60px -28px rgba(0, 0, 0, 0.85);
+    0 0 0 1px color-mix(in oklch, var(--foreground) 3%, transparent) inset,
+    0 24px 60px -28px color-mix(in oklch, var(--foreground) 14%, transparent);
 }
 
 .molecular-particle--visible {
@@ -491,194 +540,201 @@
 /* Estación de Audio — noir broadcast */
 .audio-noir-root {
   background:
-    radial-gradient(ellipse 65% 40% at 15% 0%, rgba(56, 189, 248, 0.08), transparent),
-    radial-gradient(ellipse 45% 35% at 85% 90%, rgba(52, 211, 153, 0.06), transparent),
-    #000000;
+    radial-gradient(ellipse 65% 40% at 15% 0%, color-mix(in oklch, var(--primary) 10%, transparent), transparent),
+    radial-gradient(ellipse 45% 35% at 85% 90%, color-mix(in oklch, var(--chart-3) 8%, transparent), transparent),
+    var(--background);
+  color: var(--foreground);
   min-height: calc(100dvh - 3.5rem);
 }
 
 .audio-noir-panel {
   border-radius: 0.875rem;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--border);
   background: linear-gradient(
     155deg,
-    rgba(255, 255, 255, 0.035) 0%,
-    rgba(0, 0, 0, 0.55) 100%
+    color-mix(in oklch, var(--card) 92%, transparent) 0%,
+    color-mix(in oklch, var(--muted) 75%, transparent) 100%
   );
   box-shadow:
-    0 0 0 1px rgba(255, 255, 255, 0.03) inset,
-    0 24px 60px -28px rgba(0, 0, 0, 0.85);
+    0 0 0 1px color-mix(in oklch, var(--foreground) 3%, transparent) inset,
+    0 24px 60px -28px color-mix(in oklch, var(--foreground) 14%, transparent);
 }
 
 /* Archivo — noir archivo */
 .archivo-noir-root {
   background:
-    radial-gradient(ellipse 70% 45% at 10% 0%, rgba(56, 189, 248, 0.07), transparent),
-    radial-gradient(ellipse 50% 35% at 90% 85%, rgba(14, 165, 233, 0.05), transparent),
-    #000000;
+    radial-gradient(ellipse 70% 45% at 10% 0%, color-mix(in oklch, var(--primary) 9%, transparent), transparent),
+    radial-gradient(ellipse 50% 35% at 90% 85%, color-mix(in oklch, var(--ring) 7%, transparent), transparent),
+    var(--background);
+  color: var(--foreground);
   min-height: calc(100dvh - 3.5rem);
 }
 
 .archivo-noir-panel {
   border-radius: 0.875rem;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--border);
   background: linear-gradient(
     155deg,
-    rgba(255, 255, 255, 0.035) 0%,
-    rgba(0, 0, 0, 0.55) 100%
+    color-mix(in oklch, var(--card) 92%, transparent) 0%,
+    color-mix(in oklch, var(--muted) 75%, transparent) 100%
   );
   box-shadow:
-    0 0 0 1px rgba(255, 255, 255, 0.03) inset,
-    0 24px 60px -28px rgba(0, 0, 0, 0.85);
+    0 0 0 1px color-mix(in oklch, var(--foreground) 3%, transparent) inset,
+    0 24px 60px -28px color-mix(in oklch, var(--foreground) 14%, transparent);
 }
 
 .archivo-noir-card {
-  box-shadow: 0 12px 32px -20px rgba(0, 0, 0, 0.75);
+  box-shadow: 0 12px 32px -20px color-mix(in oklch, var(--foreground) 18%, transparent);
 }
 
 /* Finanzas / Eco — Noir esmeralda */
 .finanzas-noir-root {
   position: relative;
   background:
-    radial-gradient(ellipse 70% 45% at 20% -10%, rgba(16, 185, 129, 0.1), transparent),
-    radial-gradient(ellipse 50% 35% at 95% 90%, rgba(139, 92, 246, 0.06), transparent),
-    #000000;
+    radial-gradient(ellipse 70% 45% at 20% -10%, color-mix(in oklch, var(--chart-3) 12%, transparent), transparent),
+    radial-gradient(ellipse 50% 35% at 95% 90%, color-mix(in oklch, var(--chart-4) 8%, transparent), transparent),
+    var(--background);
+  color: var(--foreground);
   min-height: calc(100dvh - 3.5rem);
 }
 
 .finanzas-noir-panel {
-  border: 1px solid rgba(16, 185, 129, 0.18);
+  border: 1px solid color-mix(in oklch, var(--chart-3) 28%, var(--border));
   background: linear-gradient(
     155deg,
-    rgba(16, 185, 129, 0.03) 0%,
-    rgba(0, 0, 0, 0.75) 50%,
-    rgba(0, 0, 0, 0.92) 100%
+    color-mix(in oklch, var(--chart-3) 6%, var(--card)) 0%,
+    var(--card) 50%,
+    color-mix(in oklch, var(--muted) 80%, var(--card)) 100%
   );
   box-shadow:
-    0 0 0 1px rgba(255, 255, 255, 0.02) inset,
-    0 20px 48px -28px rgba(0, 0, 0, 0.9);
+    0 0 0 1px color-mix(in oklch, var(--foreground) 2%, transparent) inset,
+    0 20px 48px -28px color-mix(in oklch, var(--foreground) 14%, transparent);
 }
 
 /* Centro de Mando /yo — Terminal Ámbar */
 .yo-noir-root {
   position: relative;
   background:
-    radial-gradient(ellipse 65% 40% at 15% -5%, rgba(255, 176, 0, 0.12), transparent),
-    radial-gradient(ellipse 45% 35% at 90% 85%, rgba(255, 176, 0, 0.05), transparent),
-    #000000;
+    radial-gradient(ellipse 65% 40% at 15% -5%, color-mix(in oklch, var(--accent) 14%, transparent), transparent),
+    radial-gradient(ellipse 45% 35% at 90% 85%, color-mix(in oklch, var(--accent) 6%, transparent), transparent),
+    var(--background);
+  color: var(--foreground);
   min-height: calc(100dvh - 3.5rem);
 }
 
 .yo-noir-panel {
-  border: 1px solid rgba(255, 176, 0, 0.28);
+  border: 1px solid color-mix(in oklch, var(--accent) 32%, var(--border));
   background: linear-gradient(
     160deg,
-    rgba(255, 176, 0, 0.04) 0%,
-    rgba(0, 0, 0, 0.72) 55%,
-    rgba(0, 0, 0, 0.9) 100%
+    color-mix(in oklch, var(--accent) 8%, var(--card)) 0%,
+    var(--card) 55%,
+    color-mix(in oklch, var(--muted) 85%, var(--card)) 100%
   );
   box-shadow:
-    0 0 0 1px rgba(255, 255, 255, 0.02) inset,
-    0 20px 48px -28px rgba(0, 0, 0, 0.9);
+    0 0 0 1px color-mix(in oklch, var(--foreground) 2%, transparent) inset,
+    0 20px 48px -28px color-mix(in oklch, var(--foreground) 14%, transparent);
 }
 
 /* Calendario — Simulador de Turnos Noir */
 .calendario-noir-root {
   position: relative;
   background:
-    radial-gradient(ellipse 70% 45% at 15% -10%, rgba(34, 211, 238, 0.08), transparent),
-    radial-gradient(ellipse 50% 35% at 95% 90%, rgba(139, 92, 246, 0.06), transparent),
-    #000000;
+    radial-gradient(ellipse 70% 45% at 15% -10%, color-mix(in oklch, var(--primary) 10%, transparent), transparent),
+    radial-gradient(ellipse 50% 35% at 95% 90%, color-mix(in oklch, var(--chart-4) 8%, transparent), transparent),
+    var(--background);
+  color: var(--foreground);
   min-height: calc(100dvh - 3.5rem);
 }
 
 .calendario-noir-panel {
-  border: 1px solid rgba(34, 211, 238, 0.14);
+  border: 1px solid color-mix(in oklch, var(--primary) 22%, var(--border));
   background: linear-gradient(
     155deg,
-    rgba(34, 211, 238, 0.03) 0%,
-    rgba(0, 0, 0, 0.78) 50%,
-    rgba(0, 0, 0, 0.94) 100%
+    color-mix(in oklch, var(--primary) 6%, var(--card)) 0%,
+    var(--card) 50%,
+    color-mix(in oklch, var(--muted) 85%, var(--card)) 100%
   );
   box-shadow:
-    0 0 0 1px rgba(255, 255, 255, 0.02) inset,
-    0 20px 48px -28px rgba(0, 0, 0, 0.9);
+    0 0 0 1px color-mix(in oklch, var(--foreground) 2%, transparent) inset,
+    0 20px 48px -28px color-mix(in oklch, var(--foreground) 14%, transparent);
 }
 
 /* HUD Táctico — home noir/ámbar */
 .hud-noir-root {
   position: relative;
   background:
-    radial-gradient(ellipse 70% 45% at 20% -10%, rgba(251, 191, 36, 0.1), transparent),
-    radial-gradient(ellipse 50% 40% at 100% 80%, rgba(245, 158, 11, 0.05), transparent),
-    #050506;
+    radial-gradient(ellipse 70% 45% at 20% -10%, color-mix(in oklch, var(--accent) 12%, transparent), transparent),
+    radial-gradient(ellipse 50% 40% at 100% 80%, color-mix(in oklch, var(--accent) 6%, transparent), transparent),
+    var(--background);
+  color: var(--foreground);
   min-height: calc(100dvh - 3.5rem);
 }
 
 .hud-noir-panel {
   border-radius: 0.875rem;
-  border: 1px solid rgba(251, 191, 36, 0.14);
+  border: 1px solid color-mix(in oklch, var(--accent) 22%, var(--border));
   background: linear-gradient(
     155deg,
-    rgba(255, 255, 255, 0.04) 0%,
-    rgba(0, 0, 0, 0.55) 100%
+    color-mix(in oklch, var(--card) 92%, transparent) 0%,
+    color-mix(in oklch, var(--muted) 75%, transparent) 100%
   );
   box-shadow:
-    0 0 0 1px rgba(255, 255, 255, 0.03) inset,
-    0 24px 60px -28px rgba(0, 0, 0, 0.85);
+    0 0 0 1px color-mix(in oklch, var(--foreground) 3%, transparent) inset,
+    0 24px 60px -28px color-mix(in oklch, var(--foreground) 14%, transparent);
 }
 
 /* Enciclopedia — noir ámbar */
 .enciclopedia-noir-root {
   background:
-    radial-gradient(ellipse 70% 45% at 15% 0%, rgba(251, 191, 36, 0.08), transparent),
-    radial-gradient(ellipse 50% 35% at 85% 90%, rgba(245, 158, 11, 0.06), transparent),
-    #000000;
+    radial-gradient(ellipse 70% 45% at 15% 0%, color-mix(in oklch, var(--accent) 10%, transparent), transparent),
+    radial-gradient(ellipse 50% 35% at 85% 90%, color-mix(in oklch, var(--accent) 7%, transparent), transparent),
+    var(--background);
+  color: var(--foreground);
   min-height: calc(100dvh - 3.5rem);
 }
 
 .enciclopedia-noir-panel {
   border-radius: 0.875rem;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--border);
   background: linear-gradient(
     155deg,
-    rgba(255, 255, 255, 0.035) 0%,
-    rgba(0, 0, 0, 0.55) 100%
+    color-mix(in oklch, var(--card) 92%, transparent) 0%,
+    color-mix(in oklch, var(--muted) 75%, transparent) 100%
   );
   box-shadow:
-    0 0 0 1px rgba(255, 255, 255, 0.03) inset,
-    0 24px 60px -28px rgba(0, 0, 0, 0.85);
+    0 0 0 1px color-mix(in oklch, var(--foreground) 3%, transparent) inset,
+    0 24px 60px -28px color-mix(in oklch, var(--foreground) 14%, transparent);
 }
 
 .enciclopedia-term {
   text-decoration: underline;
-  text-decoration-color: rgba(251, 191, 36, 0.55);
+  text-decoration-color: color-mix(in oklch, var(--accent) 55%, transparent);
   text-underline-offset: 3px;
-  color: rgba(253, 230, 138, 0.95);
+  color: color-mix(in oklch, var(--accent) 85%, var(--foreground));
   transition: color 0.15s ease, text-decoration-color 0.15s ease;
 }
 
 .enciclopedia-term:hover {
-  color: #fde68a;
-  text-decoration-color: rgba(251, 191, 36, 0.9);
+  color: var(--accent);
+  text-decoration-color: color-mix(in oklch, var(--accent) 90%, transparent);
 }
 
 .enciclopedia-term-chip {
   border-radius: 9999px;
-  border: 1px solid rgba(251, 191, 36, 0.25);
-  background: rgba(251, 191, 36, 0.08);
+  border: 1px solid color-mix(in oklch, var(--accent) 30%, var(--border));
+  background: color-mix(in oklch, var(--accent) 10%, transparent);
   padding: 0.25rem 0.625rem;
-  font-family: ui-monospace, monospace;
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
   font-size: 10px;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  color: rgba(253, 230, 138, 0.85);
+  color: color-mix(in oklch, var(--accent) 80%, var(--foreground));
   transition: border-color 0.15s ease, background 0.15s ease;
 }
 
 .enciclopedia-term-chip:hover {
-  border-color: rgba(251, 191, 36, 0.45);
-  background: rgba(251, 191, 36, 0.15);
+  border-color: color-mix(in oklch, var(--accent) 50%, var(--border));
+  background: color-mix(in oklch, var(--accent) 16%, transparent);
 }
 
 .enciclopedia-term-chip:disabled {
@@ -689,23 +745,24 @@
 /* Binauralizer — noir ámbar + esmeralda */
 .binauralizer-noir-root {
   background:
-    radial-gradient(ellipse 70% 45% at 15% 0%, rgba(251, 191, 36, 0.08), transparent),
-    radial-gradient(ellipse 50% 35% at 85% 90%, rgba(52, 211, 153, 0.06), transparent),
-    #000000;
+    radial-gradient(ellipse 70% 45% at 15% 0%, color-mix(in oklch, var(--accent) 10%, transparent), transparent),
+    radial-gradient(ellipse 50% 35% at 85% 90%, color-mix(in oklch, var(--chart-3) 8%, transparent), transparent),
+    var(--background);
+  color: var(--foreground);
   min-height: calc(100dvh - 3.5rem);
 }
 
 .binauralizer-noir-panel {
   border-radius: 0.875rem;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--border);
   background: linear-gradient(
     155deg,
-    rgba(255, 255, 255, 0.035) 0%,
-    rgba(0, 0, 0, 0.55) 100%
+    color-mix(in oklch, var(--card) 92%, transparent) 0%,
+    color-mix(in oklch, var(--muted) 75%, transparent) 100%
   );
   box-shadow:
-    0 0 0 1px rgba(255, 255, 255, 0.03) inset,
-    0 24px 60px -28px rgba(0, 0, 0, 0.85);
+    0 0 0 1px color-mix(in oklch, var(--foreground) 3%, transparent) inset,
+    0 24px 60px -28px color-mix(in oklch, var(--foreground) 14%, transparent);
 }
 
 .binaural-axis-slider {
@@ -760,30 +817,31 @@
 /* Trinchera — laboratorio isocrónico noir */
 .isochronic-noir-root {
   background:
-    radial-gradient(ellipse 55% 40% at 50% 0%, rgba(244, 63, 94, 0.07), transparent),
-    linear-gradient(180deg, #070708 0%, #030304 100%);
+    radial-gradient(ellipse 55% 40% at 50% 0%, color-mix(in oklch, var(--destructive) 10%, transparent), transparent),
+    var(--background);
+  color: var(--foreground);
 }
 
 .isochronic-hex-frame {
   clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
-  border: 1px solid rgba(244, 63, 94, 0.45);
+  border: 1px solid color-mix(in oklch, var(--destructive) 45%, var(--border));
   background: linear-gradient(
     155deg,
-    rgba(255, 255, 255, 0.06) 0%,
-    rgba(244, 63, 94, 0.08) 45%,
-    rgba(0, 0, 0, 0.55) 100%
+    color-mix(in oklch, var(--card) 90%, transparent) 0%,
+    color-mix(in oklch, var(--destructive) 10%, var(--card)) 45%,
+    color-mix(in oklch, var(--muted) 80%, transparent) 100%
   );
   box-shadow:
-    0 0 32px rgba(244, 63, 94, 0.18),
-    0 0 0 1px rgba(255, 255, 255, 0.04) inset;
+    0 0 32px color-mix(in oklch, var(--destructive) 18%, transparent),
+    0 0 0 1px color-mix(in oklch, var(--foreground) 4%, transparent) inset;
 }
 
 .isochronic-hex-inner {
   clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
   background: radial-gradient(
     circle at 50% 42%,
-    rgba(255, 255, 255, 0.07),
-    rgba(0, 0, 0, 0.65) 72%
+    color-mix(in oklch, var(--foreground) 7%, transparent),
+    color-mix(in oklch, var(--background) 80%, transparent) 72%
   );
 }
 
@@ -856,28 +914,29 @@
 }
 
 .lab-control-surface {
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  background: rgba(0, 0, 0, 0.45);
+  border: 1px solid var(--border);
+  background: color-mix(in oklch, var(--card) 85%, transparent);
   backdrop-filter: blur(4px);
 }
 
 /* Cam-Recorder-Watcher — noir terminal absoluto */
 .cam-recorder-noir-root {
-  background: #000000;
+  background: var(--background);
+  color: var(--foreground);
   min-height: calc(100dvh - 3.5rem);
 }
 
 .cam-recorder-noir-panel {
   border-radius: 0.75rem;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--border);
   background: linear-gradient(
     160deg,
-    rgba(255, 255, 255, 0.025) 0%,
-    rgba(0, 0, 0, 0.65) 100%
+    color-mix(in oklch, var(--card) 95%, transparent) 0%,
+    color-mix(in oklch, var(--muted) 80%, transparent) 100%
   );
   box-shadow:
-    0 0 0 1px rgba(255, 255, 255, 0.02) inset,
-    0 20px 50px -24px rgba(0, 0, 0, 0.9);
+    0 0 0 1px color-mix(in oklch, var(--foreground) 2%, transparent) inset,
+    0 20px 50px -24px color-mix(in oklch, var(--foreground) 14%, transparent);
 }
 
 .cam-recorder-timeline-scroll {
@@ -982,34 +1041,24 @@
 /* Universos de Babel — viewport único (tema claro / oscuro) */
 .babel-noir-root {
   background:
-    radial-gradient(ellipse 80% 45% at 50% -5%, rgba(139, 92, 246, 0.08), transparent),
-    radial-gradient(ellipse 45% 35% at 0% 100%, rgba(244, 63, 94, 0.04), transparent),
+    radial-gradient(ellipse 80% 45% at 50% -5%, color-mix(in oklch, var(--chart-4) 10%, transparent), transparent),
+    radial-gradient(ellipse 45% 35% at 0% 100%, color-mix(in oklch, var(--destructive) 6%, transparent), transparent),
     var(--background);
   color: var(--foreground);
 }
 
-.dark .babel-noir-root {
-  background:
-    radial-gradient(ellipse 80% 45% at 50% -5%, rgba(139, 92, 246, 0.09), transparent),
-    radial-gradient(ellipse 45% 35% at 0% 100%, rgba(244, 63, 94, 0.05), transparent),
-    #050506;
-}
+/* babel uses global tokens; no forced dark override */
 
 /* Ludus / Castillo — modo videojuego */
 .ludus-noir-root {
   background:
-    radial-gradient(ellipse 70% 50% at 50% -10%, rgba(251, 191, 36, 0.06), transparent),
-    radial-gradient(ellipse 50% 40% at 100% 100%, rgba(139, 92, 246, 0.04), transparent),
+    radial-gradient(ellipse 70% 50% at 50% -10%, color-mix(in oklch, var(--accent) 8%, transparent), transparent),
+    radial-gradient(ellipse 50% 40% at 100% 100%, color-mix(in oklch, var(--chart-4) 6%, transparent), transparent),
     var(--background);
   color: var(--foreground);
 }
 
-.dark .ludus-noir-root {
-  background:
-    radial-gradient(ellipse 70% 50% at 50% -10%, rgba(251, 191, 36, 0.07), transparent),
-    radial-gradient(ellipse 50% 40% at 100% 100%, rgba(139, 92, 246, 0.06), transparent),
-    #0a0a0c;
-}
+/* ludus uses global tokens; no forced dark override */
 
 .castillo-dot-grid {
   background-color: var(--background);
@@ -1021,26 +1070,19 @@
   background-size: 20px 20px;
 }
 
-.dark .castillo-dot-grid {
-  background-color: #0a0a0c;
-  background-image: radial-gradient(
-    circle at center,
-    rgba(255, 255, 255, 0.14) 1px,
-    transparent 1px
-  );
-}
+/* castillo-dot-grid uses tokens on all themes */
 
 .castillo-card {
   border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--border);
   background: linear-gradient(
     145deg,
-    rgba(255, 255, 255, 0.04) 0%,
-    rgba(0, 0, 0, 0.35) 100%
+    color-mix(in oklch, var(--card) 95%, transparent) 0%,
+    color-mix(in oklch, var(--muted) 80%, transparent) 100%
   );
   box-shadow:
-    0 0 0 1px rgba(255, 255, 255, 0.03) inset,
-    0 16px 40px -20px rgba(0, 0, 0, 0.65);
+    0 0 0 1px color-mix(in oklch, var(--foreground) 3%, transparent) inset,
+    0 16px 40px -20px color-mix(in oklch, var(--foreground) 12%, transparent);
 }
 
 .castillo-accent-orange {
@@ -1096,9 +1138,9 @@
 
 .ludus-fog-overlay {
   background:
-    radial-gradient(ellipse at 30% 20%, rgba(139, 92, 246, 0.18), transparent 55%),
-    radial-gradient(ellipse at 80% 70%, rgba(100, 116, 139, 0.22), transparent 50%),
-    linear-gradient(180deg, rgba(15, 15, 20, 0.55), rgba(10, 10, 12, 0.75));
+    radial-gradient(ellipse at 30% 20%, color-mix(in oklch, var(--chart-4) 18%, transparent), transparent 55%),
+    radial-gradient(ellipse at 80% 70%, color-mix(in oklch, var(--muted-foreground) 18%, transparent), transparent 50%),
+    linear-gradient(180deg, color-mix(in oklch, var(--background) 55%, transparent), color-mix(in oklch, var(--background) 75%, transparent));
   animation: ludus-fog-drift 8s ease-in-out infinite alternate;
 }
 
@@ -1123,28 +1165,28 @@
 }
 
 .ludus-geo-map .leaflet-container {
-  background: #0a0a0c;
+  background: var(--background);
   font-family: inherit;
 }
 
 .ludus-geo-map .leaflet-popup-content-wrapper {
-  background: rgba(10, 10, 14, 0.95);
-  color: #e4e4e7;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: color-mix(in oklch, var(--popover) 95%, transparent);
+  color: var(--popover-foreground);
+  border: 1px solid var(--border);
   border-radius: 12px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
+  box-shadow: 0 8px 32px color-mix(in oklch, var(--foreground) 18%, transparent);
 }
 
 .ludus-geo-map .leaflet-popup-tip {
-  background: rgba(10, 10, 14, 0.95);
+  background: var(--popover);
 }
 
 .ludus-geo-map .leaflet-control-attribution {
-  background: rgba(0, 0, 0, 0.55) !important;
-  color: rgba(255, 255, 255, 0.35) !important;
-  font-size: 9px;
+  background: color-mix(in oklch, var(--background) 80%, transparent) !important;
+  color: color-mix(in oklch, var(--muted-foreground) 80%, transparent) !important;
+  font-size: 10px;
 }
 
 .ludus-geo-map .leaflet-control-attribution a {
-  color: rgba(52, 211, 153, 0.7) !important;
+  color: color-mix(in oklch, var(--primary) 80%, transparent) !important;
 }

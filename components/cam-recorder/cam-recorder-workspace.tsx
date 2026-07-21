@@ -81,8 +81,8 @@ function WatcherControls() {
           className={cn(
             "inline-flex items-center gap-2 rounded border px-4 py-2 font-mono text-[11px] uppercase tracking-wider transition-all",
             canAnalyze
-              ? "border-emerald-500/35 bg-emerald-500/10 text-emerald-300 hover:bg-emerald-500/15"
-              : "cursor-not-allowed border-white/8 text-white/25",
+              ? "border-primary/35 bg-primary/10 text-primary hover:bg-primary/15"
+              : "cursor-not-allowed border-border text-muted-foreground",
           )}
         >
           {phase === "analyzing" ? (
@@ -100,8 +100,8 @@ function WatcherControls() {
           className={cn(
             "inline-flex items-center gap-2 rounded border px-4 py-2 font-mono text-[11px] uppercase tracking-wider transition-all",
             canInject
-              ? "border-white/20 bg-white/5 text-white/80 hover:border-emerald-500/30 hover:text-emerald-200"
-              : "cursor-not-allowed border-white/8 text-white/25",
+              ? "border-border bg-muted/40 text-muted-foreground hover:border-primary/30 hover:text-primary"
+              : "cursor-not-allowed border-border text-muted-foreground",
           )}
         >
           {phase === "injecting" ? (
@@ -116,12 +116,12 @@ function WatcherControls() {
           className={cn(
             "ml-auto inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 font-mono text-[10px] uppercase tracking-wider",
             phase === "analyzing"
-              ? "border-emerald-500/30 text-emerald-400/90"
+              ? "border-primary/30 text-primary/90"
               : phase === "injected"
-                ? "border-emerald-500/20 text-emerald-400/70"
+                ? "border-primary/20 text-primary/70"
                 : phase === "error"
-                  ? "border-rose-500/30 text-rose-400/80"
-                  : "border-white/10 text-white/35",
+                  ? "border-destructive/30 text-destructive/80"
+                  : "border-border text-muted-foreground",
           )}
         >
           <CircleDotIcon className="size-2.5" />
@@ -130,18 +130,18 @@ function WatcherControls() {
       </div>
 
       {error ? (
-        <p className="font-mono text-[10px] text-rose-400/85">{error}</p>
+        <p className="font-mono text-[10px] text-destructive/85">{error}</p>
       ) : null}
 
       {injectedAt ? (
-        <p className="font-mono text-[10px] text-emerald-400/70">
+        <p className="font-mono text-[10px] text-primary/70">
           Inyectado {new Date(injectedAt).toLocaleString("es-AR")} · disponible
           para{" "}
-          <Link href="/molecular" className="underline hover:text-emerald-300">
+          <Link href="/molecular" className="underline hover:text-primary">
             Calibrador Molecular
           </Link>{" "}
           y{" "}
-          <Link href="/jornada" className="underline hover:text-emerald-300">
+          <Link href="/jornada" className="underline hover:text-primary">
             Jornada
           </Link>
         </p>
@@ -157,15 +157,15 @@ function CamRecorderPanels() {
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="space-y-2">
             <div className="flex items-center gap-2">
-              <VideoIcon className="size-5 text-emerald-400/70" />
-              <p className="font-mono text-[10px] uppercase tracking-[0.28em] text-white/40">
+              <VideoIcon className="size-5 text-primary/70" />
+              <p className="font-mono text-[10px] uppercase tracking-[0.28em] text-muted-foreground">
                 Agente Cam-Recorder-Watcher
               </p>
             </div>
-            <h1 className="bg-gradient-to-r from-white via-white/85 to-white/50 bg-clip-text font-mono text-2xl font-semibold tracking-tight text-transparent sm:text-3xl">
+            <h1 className="bg-gradient-to-r from-foreground via-foreground/85 to-foreground/50 bg-clip-text font-mono text-2xl font-semibold tracking-tight text-transparent sm:text-3xl">
               Ingesta de video → Logs de conciencia
             </h1>
-            <p className="max-w-2xl font-mono text-[11px] leading-relaxed text-white/40">
+            <p className="max-w-2xl font-mono text-[11px] leading-relaxed text-muted-foreground">
               Procesa grabaciones de pantalla en bruto e indexa cronológicamente
               contexto visual para auditoría del día y cálculo de la Variable X.
             </p>

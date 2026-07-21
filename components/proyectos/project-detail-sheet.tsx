@@ -226,7 +226,7 @@ export function ProjectDetailSheet({
                   key={`${entry.fecha}-${index}`}
                   className="rounded-md border border-border bg-muted/30 px-3 py-2"
                 >
-                  <p className="font-mono text-[9px] text-muted-foreground">{entry.fecha}</p>
+                  <p className="font-mono text-[10px] text-muted-foreground">{entry.fecha}</p>
                   <p className="mt-1 text-xs leading-relaxed">{entry.nota}</p>
                 </li>
               ))}

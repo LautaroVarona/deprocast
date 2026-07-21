@@ -63,8 +63,8 @@ export function ActivityEntryRow({ entry, compact = false }: ActivityEntryRowPro
   return (
     <article
       className={cn(
-        "rounded-lg border border-zinc-800/80 bg-zinc-900/40 transition hover:border-cyan-500/20",
-        compact && "border-zinc-800/60",
+        "rounded-lg border border-border bg-muted/40 transition hover:border-primary/20",
+        compact && "border-border",
       )}
     >
       <button
@@ -78,28 +78,28 @@ export function ActivityEntryRow({ entry, compact = false }: ActivityEntryRowPro
 
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <time className="font-mono text-[10px] text-zinc-500">
+            <time className="font-mono text-[10px] text-muted-foreground">
               {formatTime(entry.occurredAt)}
             </time>
-            <span className="rounded-full border border-zinc-700/80 bg-zinc-950 px-2 py-0.5 font-mono text-[10px] uppercase tracking-wider text-zinc-400">
+            <span className="rounded-full border border-border bg-background px-2 py-0.5 font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
               {CATEGORY_LABELS[entry.category] ?? entry.category}
             </span>
-            <span className="rounded-full border border-zinc-700/80 px-2 py-0.5 font-mono text-[10px] text-zinc-500">
+            <span className="rounded-full border border-border px-2 py-0.5 font-mono text-[10px] text-muted-foreground">
               {ACTION_LABELS[entry.action] ?? entry.action}
             </span>
           </div>
 
-          <h3 className="mt-1 text-sm font-medium text-zinc-100">{entry.title}</h3>
+          <h3 className="mt-1 text-sm font-medium text-foreground">{entry.title}</h3>
 
           <div className="mt-2 flex flex-wrap gap-1.5">
             {entry.agentName ? (
-              <span className="inline-flex items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-[10px] text-emerald-300">
+              <span className="inline-flex items-center gap-1 rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5 text-[10px] text-primary">
                 <BotIcon className="size-3" />
                 {entry.agentName}
               </span>
             ) : null}
             {entry.modelUsed ? (
-              <span className="inline-flex items-center gap-1 rounded-full border border-cyan-500/30 bg-cyan-500/10 px-2 py-0.5 text-[10px] text-cyan-300">
+              <span className="inline-flex items-center gap-1 rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5 text-[10px] text-primary">
                 <CpuIcon className="size-3" />
                 {entry.modelUsed}
               </span>
@@ -109,20 +109,20 @@ export function ActivityEntryRow({ entry, compact = false }: ActivityEntryRowPro
 
         <ChevronDownIcon
           className={cn(
-            "size-4 shrink-0 text-zinc-500 transition",
+            "size-4 shrink-0 text-muted-foreground transition",
             expanded && "rotate-180",
           )}
         />
       </button>
 
       {showExpanded && expanded ? (
-        <div className="border-t border-zinc-800/60 px-4 pb-4 pt-3 text-xs text-zinc-400">
+        <div className="border-t border-border px-4 pb-4 pt-3 text-xs text-muted-foreground">
           {entry.summary ? (
-            <p className="mb-3 leading-relaxed text-zinc-400">{entry.summary}</p>
+            <p className="mb-3 leading-relaxed text-muted-foreground">{entry.summary}</p>
           ) : null}
 
           {macroTotals ? (
-            <div className="mb-3 flex flex-wrap gap-2 font-mono text-[10px] text-emerald-300/90">
+            <div className="mb-3 flex flex-wrap gap-2 font-mono text-[10px] text-primary/90">
               {typeof macroTotals.calories === "number" ? (
                 <span>{Math.round(macroTotals.calories)} kcal</span>
               ) : null}
@@ -140,14 +140,14 @@ export function ActivityEntryRow({ entry, compact = false }: ActivityEntryRowPro
 
           {stageAgents.length > 0 ? (
             <div className="mb-3">
-              <p className="mb-1.5 font-mono text-[10px] uppercase tracking-wider text-zinc-500">
+              <p className="mb-1.5 font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
                 Agentes por estación
               </p>
               <ul className="space-y-1">
                 {stageAgents.map((stage) => (
-                  <li key={`${stage.station}-${stage.name}`} className="text-zinc-400">
+                  <li key={`${stage.station}-${stage.name}`} className="text-muted-foreground">
                     Est. {stage.station} · {stage.name} →{" "}
-                    <span className="text-emerald-300/90">{stage.agentName}</span>
+                    <span className="text-primary/90">{stage.agentName}</span>
                   </li>
                 ))}
               </ul>
@@ -156,24 +156,24 @@ export function ActivityEntryRow({ entry, compact = false }: ActivityEntryRowPro
 
           {pipelineStages.length > 0 ? (
             <div className="mb-3">
-              <p className="mb-1.5 font-mono text-[10px] uppercase tracking-wider text-zinc-500">
+              <p className="mb-1.5 font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
                 Pipeline (estaciones)
               </p>
               <ul className="space-y-1">
                 {pipelineStages.map((stage) => (
                   <li
                     key={`${stage.station}-${stage.name}-${stage.agentId}`}
-                    className="text-zinc-400"
+                    className="text-muted-foreground"
                   >
                     Est. {stage.station ?? "?"} · {stage.name ?? "—"}
                     {stage.agentId ? (
                       <>
                         {" "}
-                        → <span className="text-emerald-300/90">{stage.agentId}</span>
+                        → <span className="text-primary/90">{stage.agentId}</span>
                       </>
                     ) : null}
                     {stage.model ? (
-                      <span className="text-cyan-300/80"> · {stage.model}</span>
+                      <span className="text-primary/80"> · {stage.model}</span>
                     ) : null}
                   </li>
                 ))}
@@ -181,7 +181,7 @@ export function ActivityEntryRow({ entry, compact = false }: ActivityEntryRowPro
             </div>
           ) : null}
 
-          <dl className="grid gap-1 font-mono text-[10px] text-zinc-500 sm:grid-cols-2">
+          <dl className="grid gap-1 font-mono text-[10px] text-muted-foreground sm:grid-cols-2">
             {entry.sourceType ? (
               <>
                 <dt>Fuente</dt>
@@ -205,7 +205,7 @@ export function ActivityEntryRow({ entry, compact = false }: ActivityEntryRowPro
           {sourceLink ? (
             <Link
               href={sourceLink}
-              className="mt-3 inline-flex text-cyan-400/80 hover:text-cyan-300 hover:underline"
+              className="mt-3 inline-flex text-primary hover:text-primary hover:underline"
             >
               Ver en la plataforma →
             </Link>

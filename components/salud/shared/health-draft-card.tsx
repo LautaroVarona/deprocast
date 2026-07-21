@@ -38,11 +38,11 @@ export function HealthDraftCard({ draft, isSaving, onApprove, onDiscard }: Props
   const compact =
     draft.domain === "alimentacion" ? nutritionSummary(draft) : trainingSummary(draft);
   return (
-    <div className="rounded-xl border border-zinc-700 bg-zinc-900/95 px-3 py-2 shadow-2xl">
-      <p className="font-mono text-[10px] uppercase tracking-wider text-zinc-400">
+    <div className="rounded-xl border border-border bg-card px-3 py-2 shadow-2xl">
+      <p className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
         Borrador health-broker
       </p>
-      <p className="mt-1 text-sm text-zinc-100">{compact || draft.summary}</p>
+      <p className="mt-1 text-sm text-foreground">{compact || draft.summary}</p>
       <div className="mt-2 flex items-center gap-2">
         <Button size="sm" onClick={onApprove} disabled={isSaving}>
           Aprobar

@@ -22,7 +22,7 @@ const FORMATO_CONFIG = {
   audio: {
     label: "Audio",
     icon: FileAudioIcon,
-    className: "bg-orange-500/10 text-orange-700 border-orange-500/30 dark:text-orange-300",
+    className: "bg-accent/10 text-accent border-accent/30 dark:text-accent",
   },
   word: {
     label: "Word",
@@ -32,7 +32,7 @@ const FORMATO_CONFIG = {
   texto: {
     label: "Texto",
     icon: FileTextIcon,
-    className: "bg-cyan-500/10 text-cyan-700 border-cyan-500/30 dark:text-cyan-300",
+    className: "bg-primary/10 text-primary border-primary/30 dark:text-primary",
   },
   documento: {
     label: "Documento",
@@ -89,7 +89,7 @@ export function KnowledgeCard({ node }: KnowledgeCardProps) {
 
         <CardFooter className="flex flex-wrap gap-1.5 border-t border-border/50 pt-3">
           {node.castlePlacement ? (
-            <span className="inline-flex items-center gap-1 rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-[10px] font-medium text-amber-800 dark:text-amber-200">
+            <span className="inline-flex items-center gap-1 rounded-full border border-accent/30 bg-accent/10 px-2 py-0.5 text-[10px] font-medium text-accent dark:text-accent">
               <CastleIcon className="size-3" aria-hidden />
               En el Castillo
               {node.castlePlacement.tagCount > 0 ? (

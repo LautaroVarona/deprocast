@@ -25,7 +25,7 @@ export function ViewModeSwitch({
     <div
       className={cn(
         "inline-flex rounded-lg border p-0.5",
-        skin === "noir" ? "border-white/10 bg-black/40" : "border-white/10 bg-black/25",
+        skin === "noir" ? "border-border bg-card/80" : "border-border bg-muted/40",
       )}
       role="tablist"
     >
@@ -39,8 +39,8 @@ export function ViewModeSwitch({
           className={cn(
             "rounded-md px-3 py-1.5 font-mono text-[10px] uppercase tracking-wider transition-colors",
             mode === item.id
-              ? "bg-cyan-500/20 text-cyan-100"
-              : "text-zinc-500 hover:text-zinc-300",
+              ? "bg-primary/20 text-primary"
+              : "text-muted-foreground hover:text-foreground",
           )}
         >
           {item.label}

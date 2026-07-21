@@ -112,9 +112,9 @@ export function FocalVisual({
             border: shape !== "mandelbrot" ? `1px solid ${primaryColor}88` : undefined,
             background:
               shape === "mandelbrot"
-                ? "#050508"
-                : `linear-gradient(155deg, rgba(255,255,255,0.06), ${primaryColor}22, rgba(0,0,0,0.5))`,
-            boxShadow: `0 0 32px ${primaryColor}33, inset 0 0 0 1px rgba(255,255,255,0.05)`,
+                ? "var(--background)"
+                : `linear-gradient(155deg, color-mix(in oklch, var(--foreground) 6%, transparent), ${primaryColor}22, color-mix(in oklch, var(--background) 50%, transparent))`,
+            boxShadow: `0 0 32px ${primaryColor}33, inset 0 0 0 1px color-mix(in oklch, var(--foreground) 5%, transparent)`,
           }}
         >
           {shape === "mandelbrot" ? (
@@ -131,8 +131,8 @@ export function FocalVisual({
                 clipPath,
                 WebkitClipPath: clipPath,
                 background: bgGradient
-                  ? `radial-gradient(circle at 50% 42%, rgba(255,255,255,0.08), transparent 60%), ${bgGradient}`
-                  : `radial-gradient(circle at 50% 42%, rgba(255,255,255,0.08), transparent 60%)`,
+                  ? `radial-gradient(circle at 50% 42%, color-mix(in oklch, var(--foreground) 8%, transparent), transparent 60%), ${bgGradient}`
+                  : `radial-gradient(circle at 50% 42%, color-mix(in oklch, var(--foreground) 8%, transparent), transparent 60%)`,
               }}
             />
           )}
@@ -154,15 +154,15 @@ export function FocalVisual({
         {showPulseLabel && isBreathing && breathingState ? (
           <div className="relative z-10 flex flex-col items-center gap-1 text-center">
             <span
-              className="font-mono text-[9px] uppercase tracking-[0.32em]"
+              className="font-mono text-[10px] uppercase tracking-[0.32em]"
               style={{ color: `${primaryColor}99` }}
             >
               {BREATHING_PHASE_LABELS[breathingState.phase]}
             </span>
-            <span className="font-mono text-3xl font-light tabular-nums tracking-tight text-white">
+            <span className="font-mono text-3xl font-light tabular-nums tracking-tight text-foreground">
               {breathingState.secondsLeft}
             </span>
-            <span className="font-mono text-[9px] uppercase tracking-[0.28em] text-white/30">
+            <span className="font-mono text-[10px] uppercase tracking-[0.28em] text-muted-foreground">
               seg
             </span>
             <svg
@@ -197,15 +197,15 @@ export function FocalVisual({
         ) : showPulseLabel && pulseHz !== undefined ? (
           <div className="relative z-10 flex flex-col items-center gap-0.5 text-center">
             <span
-              className="font-mono text-[9px] uppercase tracking-[0.38em]"
+              className="font-mono text-[10px] uppercase tracking-[0.38em]"
               style={{ color: `${primaryColor}99` }}
             >
               Pulso
             </span>
-            <span className="font-mono text-3xl font-light tabular-nums tracking-tight text-white">
+            <span className="font-mono text-3xl font-light tabular-nums tracking-tight text-foreground">
               {pulseHz.toFixed(1)}
             </span>
-            <span className="font-mono text-[9px] uppercase tracking-[0.28em] text-white/30">
+            <span className="font-mono text-[10px] uppercase tracking-[0.28em] text-muted-foreground">
               Hz
             </span>
           </div>

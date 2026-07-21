@@ -6,14 +6,14 @@ import Link from "next/link";
 import { PurifyAudioButton } from "@/components/audio-station/purify-audio-button";
 
 const STAGE_STYLES: Record<AudioPipelineInfo["stage"], string> = {
-  pending_stt: "border-sky-500/20 bg-sky-500/8 text-sky-200/70",
-  stt_queued: "border-sky-500/25 bg-sky-500/10 text-sky-200/80",
-  stt_processing: "border-sky-500/35 bg-sky-500/12 text-sky-100/90",
-  stt_error: "border-amber-500/30 bg-amber-500/10 text-amber-200/85",
-  purifying: "border-violet-500/35 bg-violet-500/12 text-violet-100/90",
-  pending_purify: "border-amber-500/30 bg-amber-500/10 text-amber-200/85",
-  in_validation: "border-emerald-500/30 bg-emerald-500/10 text-emerald-200/90",
-  validated: "border-white/10 bg-white/5 text-white/40",
+  pending_stt: "border-primary/20 bg-primary/8 text-primary/70",
+  stt_queued: "border-primary/25 bg-primary/10 text-primary/80",
+  stt_processing: "border-primary/35 bg-primary/12 text-primary/90",
+  stt_error: "border-accent/30 bg-accent/10 text-accent/85",
+  purifying: "border-primary/35 bg-primary/12 text-foreground/90",
+  pending_purify: "border-accent/30 bg-accent/10 text-accent/85",
+  in_validation: "border-primary/30 bg-primary/10 text-primary/90",
+  validated: "border-border bg-muted/40 text-muted-foreground",
 };
 
 type AudioPipelineBadgeProps = {
@@ -26,7 +26,7 @@ export function AudioPipelineBadge({ pipeline, className }: AudioPipelineBadgePr
     <span
       title={pipeline.hint}
       className={cn(
-        "inline-flex items-center rounded-full border px-2 py-0.5 font-mono text-[9px] uppercase tracking-wide",
+        "inline-flex items-center rounded-full border px-2 py-0.5 font-mono text-[10px] uppercase tracking-wide",
         STAGE_STYLES[pipeline.stage],
         className,
       )}
@@ -51,7 +51,7 @@ export function AudioPipelineNextAction({
     return (
       <Link
         href={`/validar?id=${pipeline.reviewId}`}
-        className="font-mono text-[9px] text-emerald-300/90 underline-offset-2 hover:underline"
+        className="font-mono text-[10px] text-primary/90 underline-offset-2 hover:underline"
       >
         Validar →
       </Link>

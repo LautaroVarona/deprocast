@@ -45,7 +45,7 @@ export function UnifiedMealInput({
   }, [imagePreviewUrl]);
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-zinc-800/80 bg-zinc-900/40 focus-within:border-zinc-700/80">
+    <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-border bg-muted/40 focus-within:border-border">
       <input
         ref={fileInputRef}
         type="file"
@@ -59,7 +59,7 @@ export function UnifiedMealInput({
       />
 
       {imagePreviewUrl ? (
-        <div className="relative h-16 shrink-0 overflow-hidden border-b border-zinc-800/60">
+        <div className="relative h-16 shrink-0 overflow-hidden border-b border-border">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={imagePreviewUrl}
@@ -74,18 +74,18 @@ export function UnifiedMealInput({
         onChange={(event) => onChange(event.target.value)}
         disabled={disabled || isProcessing}
         placeholder="¿Qué comiste? (opcional si adjuntás foto o voz)"
-        className="min-h-0 flex-1 resize-none bg-transparent px-3 py-2.5 text-sm leading-snug text-zinc-100 placeholder:text-zinc-500 outline-none"
+        className="min-h-0 flex-1 resize-none bg-transparent px-3 py-2.5 text-sm leading-snug text-foreground placeholder:text-muted-foreground outline-none"
       />
 
-      <div className="flex shrink-0 items-center justify-between gap-2 border-t border-zinc-800/60 px-2 py-1.5">
+      <div className="flex shrink-0 items-center justify-between gap-2 border-t border-border px-2 py-1.5">
         <div className="flex items-center gap-0.5">
           <button
             type="button"
             disabled={disabled || isProcessing || isRecording}
             onClick={() => fileInputRef.current?.click()}
             className={cn(
-              "flex size-8 items-center justify-center rounded-lg text-zinc-400 transition-colors",
-              "hover:bg-zinc-800/80 hover:text-zinc-200",
+              "flex size-8 items-center justify-center rounded-lg text-muted-foreground transition-colors",
+              "hover:bg-muted hover:text-foreground",
               modality === "imagen" && "text-emerald-400",
             )}
             aria-label="Subir imagen"
@@ -100,7 +100,7 @@ export function UnifiedMealInput({
               "flex size-8 items-center justify-center rounded-lg transition-colors",
               isRecording
                 ? "bg-red-500/20 text-red-400"
-                : "text-zinc-400 hover:bg-zinc-800/80 hover:text-zinc-200",
+                : "text-muted-foreground hover:bg-muted hover:text-foreground",
               modality === "audio" && !isRecording && "text-emerald-400",
             )}
             aria-label={isRecording ? "Detener grabación" : "Grabar audio"}
@@ -121,7 +121,7 @@ export function UnifiedMealInput({
             </span>
           ) : null}
           {audioReady && !isProcessing ? (
-            <span className="font-mono text-[10px] text-zinc-500">
+            <span className="font-mono text-[10px] text-muted-foreground">
               Audio {audioDurationSec ?? 0}s
             </span>
           ) : null}

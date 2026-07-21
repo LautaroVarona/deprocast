@@ -22,7 +22,7 @@ export function LudusHeader({ signalPoints = 0, onOpenCommandMenu }: LudusHeader
     <header className="sticky top-0 z-50 shrink-0 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/90">
       <div className="flex h-14 w-full items-center gap-4 px-4 sm:px-6">
         <Link href="/ludus" className="flex items-center gap-2">
-          <span className="flex size-7 items-center justify-center rounded-lg bg-amber-500/20 text-amber-600 dark:text-amber-300">
+          <span className="flex size-7 items-center justify-center rounded-lg bg-accent/20 text-accent dark:text-accent">
             <Gamepad2Icon className="size-4" aria-hidden />
           </span>
           <span className="text-sm font-semibold tracking-tight">Ludus</span>
@@ -49,8 +49,8 @@ export function LudusHeader({ signalPoints = 0, onOpenCommandMenu }: LudusHeader
           ) : null}
           <span
             className={cn(
-              "inline-flex items-center gap-1.5 rounded-full border border-amber-500/25",
-              "bg-amber-500/10 px-3 py-1 font-mono text-[10px] text-amber-700 dark:text-amber-200/90",
+              "inline-flex items-center gap-1.5 rounded-full border border-accent/25",
+              "bg-accent/10 px-3 py-1 font-mono text-[10px] text-accent dark:text-accent/90",
             )}
           >
             <SparklesIcon className="size-3" aria-hidden />

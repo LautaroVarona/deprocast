@@ -60,15 +60,15 @@ export function AsaltoChip({ asalto, onStarted }: AsaltoChipProps) {
       disabled={isStarting}
       className={cn(
         "group flex w-full items-center gap-2 rounded-lg border border-border bg-muted/40 px-3 py-2 text-left transition-all hover:bg-muted/70",
-        asalto.tier === "boss" && "border-amber-500/40 ring-1 ring-amber-500/20",
+        asalto.tier === "boss" && "border-accent/40 ring-1 ring-accent/20",
       )}
     >
       <div
         className={cn(
           "flex size-7 shrink-0 items-center justify-center rounded-md",
           asalto.tier === "boss"
-            ? "bg-amber-500/20 text-amber-700 dark:text-amber-200"
-            : "bg-rose-500/15 text-rose-700 dark:text-rose-200",
+            ? "bg-accent/20 text-accent dark:text-accent"
+            : "bg-destructive/15 text-destructive dark:text-destructive",
         )}
       >
         {isStarting ? (

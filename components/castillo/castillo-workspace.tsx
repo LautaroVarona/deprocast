@@ -93,12 +93,12 @@ function CastilloShell() {
 
   return (
     <div className="flex h-[calc(100dvh-3.5rem)] flex-col overflow-hidden">
-      <header className="flex shrink-0 items-center gap-4 border-b border-white/10 px-4 py-3 sm:px-5">
+      <header className="flex shrink-0 items-center gap-4 border-b border-border px-4 py-3 sm:px-5">
         <Link
           href="/ludus"
           className={cn(
             buttonVariants({ variant: "ghost", size: "sm" }),
-            "text-white/60 hover:bg-white/5 hover:text-white",
+            "text-muted-foreground hover:bg-muted/50 hover:text-foreground",
           )}
         >
           <ArrowLeftIcon className="size-3.5" />
@@ -106,24 +106,24 @@ function CastilloShell() {
         </Link>
 
         <div className="flex items-center gap-2">
-          <CastleIcon className="size-4 text-amber-300/80" aria-hidden />
+          <CastleIcon className="size-4 text-accent" aria-hidden />
           <div>
-            <h1 className="text-sm font-semibold text-white">Castillo</h1>
-            <p className="font-mono text-[10px] text-white/35">
+            <h1 className="text-sm font-semibold text-foreground">Castillo</h1>
+            <p className="font-mono text-[10px] text-muted-foreground">
               Alpha · Vista de pájaro
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-0.5 rounded-lg border border-white/10 bg-black/30 p-0.5">
+        <div className="flex items-center gap-0.5 rounded-lg border border-border bg-muted/40 p-0.5">
           <button
             type="button"
             onClick={() => setView("lienzo")}
             className={cn(
               "inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 font-mono text-[10px] uppercase tracking-wider transition-colors",
               view === "lienzo"
-                ? "bg-amber-500/20 text-amber-100"
-                : "text-white/40 hover:text-white/70",
+                ? "bg-accent/20 text-accent"
+                : "text-muted-foreground hover:text-muted-foreground",
             )}
           >
             <LayoutGridIcon className="size-3" />
@@ -135,8 +135,8 @@ function CastilloShell() {
             className={cn(
               "inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 font-mono text-[10px] uppercase tracking-wider transition-colors",
               view === "mapa"
-                ? "bg-amber-500/20 text-amber-100"
-                : "text-white/40 hover:text-white/70",
+                ? "bg-accent/20 text-accent"
+                : "text-muted-foreground hover:text-muted-foreground",
             )}
           >
             <NetworkIcon className="size-3" />
@@ -148,7 +148,7 @@ function CastilloShell() {
           href="/ludus/mago"
           className={cn(
             buttonVariants({ variant: "outline", size: "sm" }),
-            "ml-auto border-white/15 bg-black/40 text-xs text-white/70 hover:border-amber-500/30 hover:bg-amber-500/10 hover:text-amber-100",
+            "ml-auto border-border bg-card/80 text-xs text-muted-foreground hover:border-accent/30 hover:bg-accent/10 hover:text-accent",
           )}
         >
           <SparklesIcon className="size-3.5" />
@@ -159,7 +159,7 @@ function CastilloShell() {
           type="button"
           variant="outline"
           size="sm"
-          className="border-amber-500/30 bg-amber-500/10 text-xs text-amber-200 hover:bg-amber-500/20"
+          className="border-accent/30 bg-accent/10 text-xs text-accent hover:bg-accent/20"
           onClick={() => setShowCalibration(true)}
         >
           <CrownIcon className="size-3.5" />
@@ -170,7 +170,7 @@ function CastilloShell() {
           type="button"
           variant="outline"
           size="sm"
-          className="border-violet-500/30 bg-violet-500/10 text-xs text-violet-200 hover:bg-violet-500/20"
+          className="border-primary/30 bg-primary/10 text-xs text-primary hover:bg-primary/20"
           onClick={() => setShowVisionModal(true)}
           disabled={isBusy}
         >
@@ -182,7 +182,7 @@ function CastilloShell() {
           type="button"
           variant="ghost"
           size="icon-sm"
-          className="text-white/50 hover:bg-white/5 hover:text-white"
+          className="text-muted-foreground hover:bg-muted/50 hover:text-foreground"
           onClick={() => void refresh()}
           disabled={isBusy}
           aria-label="Actualizar"
@@ -194,14 +194,14 @@ function CastilloShell() {
       </header>
 
       {error ? (
-        <p className="shrink-0 border-b border-rose-500/20 bg-rose-500/10 px-4 py-2 text-xs text-rose-200">
+        <p className="shrink-0 border-b border-destructive/20 bg-destructive/10 px-4 py-2 text-xs text-destructive">
           {error}
         </p>
       ) : null}
 
       <div className="flex min-h-0 flex-1">
         {view === "lienzo" ? (
-          <aside className="flex w-72 shrink-0 flex-col border-r border-white/10 bg-black/25 transition-opacity duration-300 lg:w-80">
+          <aside className="flex w-72 shrink-0 flex-col border-r border-border bg-card/80 transition-opacity duration-300 lg:w-80">
             <CastilloGridTabs />
             <CastilloProjectsWidget />
             <CastilloCatalogPanel />
@@ -213,8 +213,8 @@ function CastilloShell() {
       </div>
 
       {showCalibration ? (
-        <div className="fixed inset-0 z-[150] flex items-start justify-center overflow-y-auto bg-black/80 backdrop-blur-sm pt-8 pb-16">
-          <div className="castillo-card mx-4 w-full max-w-4xl border border-amber-500/20 p-2 shadow-2xl">
+        <div className="fixed inset-0 z-[150] flex items-start justify-center overflow-y-auto bg-foreground/40 backdrop-blur-sm pt-8 pb-16">
+          <div className="castillo-card mx-4 w-full max-w-4xl border border-accent/20 p-2 shadow-2xl">
             <CalibracionReino
               embedded
               onClose={() => setShowCalibration(false)}
@@ -224,39 +224,39 @@ function CastilloShell() {
       ) : null}
 
       {showVisionModal ? (
-        <div className="fixed inset-0 z-[160] flex items-start justify-center overflow-y-auto bg-black/80 backdrop-blur-sm pt-8 pb-16">
-          <div className="castillo-card mx-4 w-full max-w-2xl border border-violet-500/20 p-2 shadow-2xl">
-            <div className="border-b border-white/10 px-4 py-3">
+        <div className="fixed inset-0 z-[160] flex items-start justify-center overflow-y-auto bg-foreground/40 backdrop-blur-sm pt-8 pb-16">
+          <div className="castillo-card mx-4 w-full max-w-2xl border border-primary/20 p-2 shadow-2xl">
+            <div className="border-b border-border px-4 py-3">
               <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
                 Vision Board
               </p>
-              <h2 className="mt-1 text-sm font-semibold text-white">Agregar imagen</h2>
+              <h2 className="mt-1 text-sm font-semibold text-foreground">Agregar imagen</h2>
             </div>
 
             <div className="space-y-3 px-4 py-4">
               <label className="space-y-1">
-                <span className="font-mono text-[10px] uppercase tracking-wider text-white/40">
+                <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
                   URL de imagen
                 </span>
                 <input
                   value={visionImageUrl}
                   onChange={(e) => setVisionImageUrl(e.target.value)}
                   placeholder="https://..."
-                  className="w-full rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-sm text-white outline-none"
+                  className="w-full rounded-lg border border-border bg-card/80 px-3 py-2 text-sm text-foreground outline-none"
                 />
               </label>
 
               <label className="space-y-1">
-                <span className="font-mono text-[10px] uppercase tracking-wider text-white/40">
+                <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
                   Vincular a proyecto (opcional)
                 </span>
                 {isProjectsLoading ? (
-                  <p className="text-sm text-white/50">Cargando proyectos…</p>
+                  <p className="text-sm text-muted-foreground">Cargando proyectos…</p>
                 ) : (
                   <select
                     value={linkedProjectId}
                     onChange={(e) => setLinkedProjectId(e.target.value)}
-                    className="w-full rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-sm text-white outline-none"
+                    className="w-full rounded-lg border border-border bg-card/80 px-3 py-2 text-sm text-foreground outline-none"
                   >
                     <option value="">Sin vínculo</option>
                     {projects.map((p) => (
@@ -269,7 +269,7 @@ function CastilloShell() {
               </label>
             </div>
 
-            <div className="flex justify-end gap-2 border-t border-white/10 px-4 py-3">
+            <div className="flex justify-end gap-2 border-t border-border px-4 py-3">
               <Button
                 type="button"
                 variant="outline"

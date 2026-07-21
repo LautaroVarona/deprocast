@@ -45,8 +45,8 @@ export function XBookmarkMediaGrid({
       {!fitViewport && (
         <p
           className={cn(
-            "font-mono text-[9px] uppercase tracking-wide",
-            noir ? "text-white/40" : "text-muted-foreground",
+            "font-mono text-[10px] uppercase tracking-wide",
+            noir ? "text-muted-foreground" : "text-muted-foreground",
           )}
         >
           Media · {urls.length}
@@ -57,7 +57,7 @@ export function XBookmarkMediaGrid({
           "gap-1.5",
           fitViewport
             ? cn(
-                "grid min-h-0 flex-1 overflow-hidden rounded-lg border border-white/8 bg-black/20 p-1.5",
+                "grid min-h-0 flex-1 overflow-hidden rounded-lg border border-border bg-muted/40 p-1.5",
                 urls.length === 1 ? "grid-cols-1 grid-rows-1" : "grid-cols-2 grid-rows-2",
               )
             : cn("grid", urls.length === 1 ? "grid-cols-1" : "grid-cols-2"),
@@ -89,7 +89,7 @@ function MediaTile({ url, tweetUrl, noir, fit = false }: MediaTileProps) {
   const kind = classifyBookmarkMediaUrl(url);
   const frameClass = cn(
     "overflow-hidden rounded-md border",
-    noir ? "border-white/10 bg-black/30" : "border-border bg-muted/30",
+    noir ? "border-border bg-muted/40" : "border-border bg-muted/30",
     fit && "flex h-full min-h-0 items-center justify-center",
   );
   const mediaClass = fit
@@ -108,8 +108,8 @@ function MediaTile({ url, tweetUrl, noir, fit = false }: MediaTileProps) {
           "flex flex-col items-center justify-center gap-1 p-3 text-center",
         )}
       >
-        <ImageOffIcon className={cn("size-5", noir ? "text-white/40" : "text-muted-foreground")} />
-        <span className={cn("font-mono text-[9px]", noir ? "text-white/50" : "text-muted-foreground")}>
+        <ImageOffIcon className={cn("size-5", noir ? "text-muted-foreground" : "text-muted-foreground")} />
+        <span className={cn("font-mono text-[10px]", noir ? "text-muted-foreground" : "text-muted-foreground")}>
           Abrir media
         </span>
       </a>
@@ -156,8 +156,8 @@ function MediaTile({ url, tweetUrl, noir, fit = false }: MediaTileProps) {
         title="Ver video en X"
       >
         {image}
-        <span className="pointer-events-none absolute inset-0 flex items-center justify-center bg-black/35">
-          <span className="flex size-10 items-center justify-center rounded-full bg-black/60 text-white">
+        <span className="pointer-events-none absolute inset-0 flex items-center justify-center bg-background/35">
+          <span className="flex size-10 items-center justify-center rounded-full bg-foreground/40 text-foreground">
             <PlayIcon className="size-5 fill-white" />
           </span>
         </span>

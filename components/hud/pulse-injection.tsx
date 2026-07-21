@@ -228,15 +228,15 @@ export function PulseInjection() {
 
   return (
     <section className="relative w-full">
-      <label className="mb-3 block font-mono text-[10px] tracking-[0.28em] text-amber-500/70 uppercase">
+      <label className="mb-3 block font-mono text-[10px] tracking-[0.28em] text-accent uppercase">
         Inyección de Pulso
       </label>
 
       <div
         className={cn(
-          "flex items-stretch gap-2 rounded-2xl border border-amber-500/20 bg-black/40 p-2 shadow-[inset_0_1px_0_rgba(251,191,36,0.08)]",
-          "focus-within:border-amber-400/40 focus-within:ring-1 focus-within:ring-amber-500/20",
-          successFlash && "border-emerald-400/40",
+          "flex items-stretch gap-2 rounded-2xl border border-accent/20 bg-card/80 p-2 shadow-[inset_0_1px_0_color-mix(in_oklch,var(--accent)_8%,transparent)]",
+          "focus-within:border-accent/40 focus-within:ring-1 focus-within:ring-accent/20",
+          successFlash && "border-primary/40",
         )}
       >
         <textarea
@@ -251,7 +251,7 @@ export function PulseInjection() {
           rows={3}
           disabled={isSubmitting || isRecording}
           placeholder="¿Qué llevas en la mente, Lautaro?"
-          className="min-h-[5.5rem] flex-1 resize-none bg-transparent px-3 py-3 text-lg leading-snug text-foreground placeholder:text-white/30 outline-none disabled:opacity-50 md:text-xl"
+          className="min-h-[5.5rem] flex-1 resize-none bg-transparent px-3 py-3 text-lg leading-snug text-foreground placeholder:text-muted-foreground outline-none disabled:opacity-50 md:text-xl"
         />
 
         <div className="flex flex-col gap-2">
@@ -262,9 +262,9 @@ export function PulseInjection() {
             disabled={isSubmitting}
             onClick={() => void handleMic()}
             className={cn(
-              "size-11 shrink-0 border-amber-500/30",
+              "size-11 shrink-0 border-accent/30",
               isRecording &&
-                "animate-pulse border-rose-400/50 bg-rose-500/20 text-rose-200",
+                "animate-pulse border-destructive/50 bg-destructive/20 text-destructive",
             )}
             aria-label={isRecording ? "Detener grabación" : "Grabar audio"}
           >
@@ -285,8 +285,8 @@ export function PulseInjection() {
             }
             onClick={() => void submitText()}
             className={cn(
-              "size-11 shrink-0 bg-amber-600 text-black hover:bg-amber-500",
-              successFlash && "bg-emerald-500 hover:bg-emerald-500",
+              "size-11 shrink-0 bg-accent text-accent-foreground hover:bg-accent/90",
+              successFlash && "bg-primary hover:bg-primary",
             )}
             aria-label="Inyectar texto"
           >
@@ -299,22 +299,22 @@ export function PulseInjection() {
         </div>
       </div>
 
-      <div className="mt-2 flex flex-wrap items-center gap-3 font-mono text-[10px] text-white/35">
+      <div className="mt-2 flex flex-wrap items-center gap-3 font-mono text-[10px] text-muted-foreground">
         {successFlash ? (
-          <span className="tracking-[0.18em] text-[#7CFF9A] uppercase">
+          <span className="tracking-[0.18em] text-chart-3 uppercase">
             [ INYECCIÓN EXITOSA ]
           </span>
         ) : isSubmitting ? (
-          <span className="tracking-[0.18em] text-amber-400/80 uppercase">
+          <span className="tracking-[0.18em] text-accent uppercase">
             [ CAPTURANDO… ]
           </span>
         ) : (
           <span>Ctrl/⌘ + Enter · texto_directo</span>
         )}
         {isRecording ? (
-          <span className="text-rose-300/80">Grabando {durationSec}s…</span>
+          <span className="text-destructive/80">Grabando {durationSec}s…</span>
         ) : null}
-        {micError ? <span className="text-rose-400">{micError}</span> : null}
+        {micError ? <span className="text-destructive">{micError}</span> : null}
       </div>
     </section>
   );

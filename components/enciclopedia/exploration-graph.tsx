@@ -40,21 +40,21 @@ export function ExplorationGraph() {
 
   return (
     <section className="enciclopedia-noir-panel flex min-h-[360px] flex-col overflow-hidden">
-      <div className="border-b border-white/8 px-4 py-3">
-        <p className="font-mono text-[10px] uppercase tracking-[0.24em] text-amber-400/60">
+      <div className="border-b border-border px-4 py-3">
+        <p className="font-mono text-[10px] uppercase tracking-[0.24em] text-accent/60">
           04 · Conecta
         </p>
-        <h2 className="font-mono text-sm font-medium text-white/90">
+        <h2 className="font-mono text-sm font-medium text-muted-foreground">
           Tu camino de aprendizaje
         </h2>
-        <p className="mt-1 text-xs text-white/40">
+        <p className="mt-1 text-xs text-muted-foreground">
           Grafo de tu sesión actual. Clic en un nodo para volver a esa entrada.
         </p>
       </div>
 
       <div className="relative min-h-[300px] flex-1">
         {snapshot.nodes.length === 0 ? (
-          <div className="flex h-full items-center justify-center p-6 text-center text-sm text-white/35">
+          <div className="flex h-full items-center justify-center p-6 text-center text-sm text-muted-foreground">
             Explorá conceptos para ver cómo se conectan en tu camino.
           </div>
         ) : (

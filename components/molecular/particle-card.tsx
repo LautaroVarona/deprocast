@@ -28,7 +28,7 @@ export function ParticleCard({
   return (
     <article
       className={cn(
-        "molecular-particle group relative overflow-hidden rounded-lg border border-white/10 bg-white/[0.03] transition-all duration-500",
+        "molecular-particle group relative overflow-hidden rounded-lg border border-border bg-foreground/[0.03] transition-all duration-500",
         visible
           ? "molecular-particle--visible translate-y-0 scale-100 opacity-100"
           : "translate-y-3 scale-95 opacity-0",
@@ -37,24 +37,24 @@ export function ParticleCard({
       )}
       style={{ transitionDelay: `${index * 55}ms` }}
     >
-      <div className="absolute inset-0 bg-gradient-to-br from-white/[0.04] to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
+      <div className="absolute inset-0 bg-gradient-to-br from-foreground/[0.04] to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
 
       <div className="relative flex items-start gap-2">
-        <span className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded border border-white/10 bg-black/40">
-          <AtomIcon className="size-3 text-cyan-400/70" />
+        <span className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded border border-border bg-card/80">
+          <AtomIcon className="size-3 text-primary/70" />
         </span>
         <div className="min-w-0 flex-1 space-y-1">
           <p
             className={cn(
-              "font-mono leading-snug text-white/80",
+              "font-mono leading-snug text-muted-foreground",
               compact ? "text-[10px]" : "text-xs",
             )}
           >
             {preview}
           </p>
-          <div className="flex flex-wrap items-center gap-2 font-mono text-[9px] text-white/30">
+          <div className="flex flex-wrap items-center gap-2 font-mono text-[10px] text-muted-foreground">
             <span>#{String(index + 1).padStart(2, "0")}</span>
-            <span className="text-white/20">·</span>
+            <span className="text-muted-foreground">·</span>
             <span>{particula.fuenteOrigen}</span>
           </div>
         </div>
@@ -75,7 +75,7 @@ export function ParticleTag({
   return (
     <span
       className={cn(
-        "inline-flex items-center rounded border border-white/10 bg-black/50 px-2 py-0.5 font-mono text-[10px] text-white/60",
+        "inline-flex items-center rounded border border-border bg-card/80 px-2 py-0.5 font-mono text-[10px] text-muted-foreground",
         bloque && BLOQUE_COLORS[bloque],
         className,
       )}

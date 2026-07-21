@@ -39,27 +39,27 @@ export function BinauralSlider({
           <p
             className={cn(
               "font-mono text-[10px] uppercase tracking-[0.2em]",
-              active ? "text-emerald-400/90" : "text-amber-400/70",
+              active ? "text-primary/90" : "text-accent/70",
             )}
           >
             {label}
           </p>
           {sublabel ? (
-            <p className="font-mono text-[9px] text-white/25">{sublabel}</p>
+            <p className="font-mono text-[10px] text-muted-foreground">{sublabel}</p>
           ) : null}
         </div>
         <span
           className={cn(
             "font-mono text-lg tabular-nums transition-colors",
-            active ? "text-emerald-300" : "text-amber-200/90",
+            active ? "text-primary" : "text-accent/90",
           )}
         >
           {displayValue}
-          <span className="ml-0.5 text-xs text-white/35">{unit}</span>
+          <span className="ml-0.5 text-xs text-muted-foreground">{unit}</span>
         </span>
       </div>
 
-      <div className="flex justify-between px-0.5 font-mono text-[9px] text-white/30">
+      <div className="flex justify-between px-0.5 font-mono text-[10px] text-muted-foreground">
         <span>
           {min}
           {unit}

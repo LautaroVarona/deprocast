@@ -6,6 +6,7 @@ import {
 } from "@/lib/document-constants";
 import { CALIBRATION_HOTKEY_HINTS } from "@/lib/ingesta/x-bookmarks/types";
 import { vibeWeightTone } from "@/lib/ingesta/x-bookmarks/utils";
+import { Kbd } from "@/components/ui/kbd";
 import { cn } from "@/lib/utils";
 
 type XBookmarkWeightSliderProps = {
@@ -38,10 +39,10 @@ export function XBookmarkWeightSlider({
     >
       <div className="flex items-end justify-between gap-3 px-1">
         <div>
-          <p className="font-mono text-[9px] tracking-[0.22em] text-white/35 uppercase">
+          <p className="font-mono text-[10px] tracking-[0.22em] text-muted-foreground uppercase">
             Puntaje de vibe
           </p>
-          <p className="mt-0.5 font-mono text-[10px] text-white/45">
+          <p className="mt-0.5 font-mono text-[10px] text-muted-foreground">
             Elegí cuánto te resuena · Enter al soltar el slider
           </p>
         </div>
@@ -55,7 +56,7 @@ export function XBookmarkWeightSlider({
           >
             {value}
           </span>
-          <p className="font-mono text-[10px] tracking-wide text-white/35 uppercase">{tone.label}</p>
+          <p className="font-mono text-[10px] tracking-wide text-muted-foreground uppercase">{tone.label}</p>
         </div>
       </div>
 
@@ -63,7 +64,7 @@ export function XBookmarkWeightSlider({
         <div
           className={cn(
             "mb-1.5 flex justify-between font-mono",
-            compact ? "text-[8px]" : "text-[9px]",
+            compact ? "text-[8px]" : "text-[10px]",
           )}
         >
           {Array.from({ length: MAX_BASE_WEIGHT }, (_, index) => {
@@ -74,7 +75,7 @@ export function XBookmarkWeightSlider({
                 key={tick}
                 className={cn(
                   "w-4 text-center tabular-nums transition-colors",
-                  isActive ? "font-semibold text-white" : "text-white/30",
+                  isActive ? "font-semibold text-foreground" : "text-muted-foreground",
                 )}
               >
                 {tick}
@@ -101,16 +102,16 @@ export function XBookmarkWeightSlider({
 
       <div
         className={cn(
-          "flex flex-wrap justify-center gap-1.5 font-mono text-white/45",
-          compact ? "text-[9px]" : "text-[10px]",
+          "flex flex-wrap justify-center gap-1.5 font-mono text-muted-foreground",
+          compact ? "text-[10px]" : "text-[10px]",
         )}
       >
         {CALIBRATION_HOTKEY_HINTS.map((hint) => (
           <span
             key={hint.label}
-            className="rounded-full border border-white/10 bg-white/[0.03] px-2 py-0.5"
+            className="rounded-full border border-border bg-foreground/[0.03] px-2 py-0.5"
           >
-            <kbd className="text-white/70">{hint.label}</kbd>
+            <Kbd className="border-0 bg-transparent px-0 py-0 min-w-0">{hint.label}</Kbd>
             {hint.description === "puntaje directo"
               ? ` ${hint.description}`
               : ` → ${hint.description}`}

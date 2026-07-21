@@ -102,7 +102,7 @@ export function LaboratorioSonoro({
 
   if (!hydrated) {
     return (
-      <div className="flex h-full items-center justify-center text-white/30">
+      <div className="flex h-full items-center justify-center text-muted-foreground">
         <Loader2Icon className="size-5 animate-spin" />
       </div>
     );
@@ -124,17 +124,17 @@ export function LaboratorioSonoro({
     >
       <div className="pointer-events-none absolute inset-0 opacity-[0.04] [background-image:repeating-linear-gradient(0deg,transparent,transparent_2px,rgba(255,255,255,0.15)_2px,rgba(255,255,255,0.15)_3px)]" />
 
-      <header className="relative flex shrink-0 items-center justify-between gap-3 border-b border-white/10 bg-black/25 px-4 py-2.5">
-        <h2 className="text-base font-semibold text-white">Laboratorio Sonoro</h2>
-        <div className="flex items-center gap-2 rounded-lg border border-white/15 bg-black/40 px-3 py-1.5">
-          <TimerIcon className="size-3.5 text-white/50" />
-          <span className="font-mono text-xs font-medium tabular-nums text-white/90">
+      <header className="relative flex shrink-0 items-center justify-between gap-3 border-b border-border bg-card/80 px-4 py-2.5">
+        <h2 className="text-base font-semibold text-foreground">Laboratorio Sonoro</h2>
+        <div className="flex items-center gap-2 rounded-lg border border-border bg-card/80 px-3 py-1.5">
+          <TimerIcon className="size-3.5 text-muted-foreground" />
+          <span className="font-mono text-xs font-medium tabular-nums text-muted-foreground">
             {formatPracticeTime(accumulatedPracticeSec)}
           </span>
         </div>
       </header>
 
-      <div className="relative flex shrink-0 gap-1.5 border-b border-white/10 bg-black/20 px-3 py-2">
+      <div className="relative flex shrink-0 gap-1.5 border-b border-border bg-muted/40 px-3 py-2">
         {MODE_TABS.map(({ id, label, icon: Icon }) => (
           <button
             key={id}
@@ -144,8 +144,8 @@ export function LaboratorioSonoro({
             className={cn(
               "flex flex-1 items-center justify-center gap-1.5 rounded-lg border px-2 py-2 font-mono text-[10px] font-semibold uppercase tracking-[0.1em] transition-colors disabled:opacity-50",
               params.mode === id
-                ? "border-white/35 bg-white/15 text-white shadow-sm"
-                : "border-white/12 bg-black/30 text-white/60 hover:border-white/20 hover:text-white/85",
+                ? "border-border/35 bg-muted/40 text-foreground shadow-sm"
+                : "border-border/12 bg-muted/40 text-muted-foreground hover:border-border hover:text-muted-foreground",
             )}
           >
             <Icon className="size-3.5" />
@@ -182,17 +182,17 @@ export function LaboratorioSonoro({
 
         <aside
           className={cn(
-            "min-h-0 overflow-y-auto bg-black/30 px-2.5 py-2",
-            variant === "compact" ? "border-t border-white/10" : "border-l border-white/10",
+            "min-h-0 overflow-y-auto bg-muted/40 px-2.5 py-2",
+            variant === "compact" ? "border-t border-border" : "border-l border-border",
           )}
         >
           <VisualControls visual={visual} onChange={setVisual} />
         </aside>
       </div>
 
-      <footer className="relative shrink-0 space-y-2.5 border-t border-white/10 bg-black/30 px-3 py-3">
+      <footer className="relative shrink-0 space-y-2.5 border-t border-border bg-muted/40 px-3 py-3">
         <div className="lab-control-surface space-y-2 rounded-lg p-3">
-          <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.2em] text-white/80">
+          <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
             Sesión de asalto
           </p>
 
@@ -210,12 +210,12 @@ export function LaboratorioSonoro({
                     className={cn(
                       "w-full rounded-md border px-2.5 py-1.5 text-left text-xs transition-colors disabled:opacity-50",
                       selectedMicrotaskId === task.id
-                        ? "border-rose-400/50 bg-rose-500/15 text-white"
-                        : "border-white/15 bg-black/40 text-white/75 hover:border-white/25",
+                        ? "border-destructive/50 bg-destructive/15 text-foreground"
+                        : "border-border bg-card/80 text-muted-foreground hover:border-border",
                     )}
                   >
                     <span className="line-clamp-1 font-medium">{task.title}</span>
-                    <span className="font-mono text-[9px] text-white/45">
+                    <span className="font-mono text-[10px] text-muted-foreground">
                       {task.estimatedMin}m · w{task.baseWeight}
                     </span>
                   </button>
@@ -232,7 +232,7 @@ export function LaboratorioSonoro({
               setSelectedMicrotaskId(null);
             }}
             placeholder="Título del asalto..."
-            className="w-full rounded-md border border-white/20 bg-black/50 px-3 py-2 text-sm font-medium text-white placeholder:text-white/35 focus:border-white/35 focus:outline-none disabled:opacity-50"
+            className="w-full rounded-md border border-border bg-card/80 px-3 py-2 text-sm font-medium text-foreground placeholder:text-muted-foreground focus:border-border/35 focus:outline-none disabled:opacity-50"
           />
 
           <div className="flex flex-wrap gap-2">
@@ -245,8 +245,8 @@ export function LaboratorioSonoro({
                 className={cn(
                   "rounded-lg border px-3 py-1.5 font-mono text-[11px] font-semibold transition-colors disabled:opacity-50",
                   selectedBlock === option.minutes
-                    ? "border-rose-400/55 bg-rose-500/20 text-rose-100 shadow-sm"
-                    : "border-white/18 bg-black/40 text-white/70 hover:border-white/28 hover:text-white",
+                    ? "border-destructive/55 bg-destructive/20 text-destructive shadow-sm"
+                    : "border-border/18 bg-card/80 text-muted-foreground hover:border-border/28 hover:text-foreground",
                 )}
               >
                 {option.label}
@@ -360,8 +360,8 @@ export function LaboratorioSonoro({
           className={cn(
             "w-full py-3.5 font-mono text-sm font-semibold uppercase tracking-[0.12em]",
             isSessionActive
-              ? "border border-white/25 bg-black/50 text-white hover:bg-black/65"
-              : "text-white shadow-lg",
+              ? "border border-border bg-card/80 text-foreground hover:bg-background/65"
+              : "text-foreground shadow-lg",
           )}
           style={
             !isSessionActive

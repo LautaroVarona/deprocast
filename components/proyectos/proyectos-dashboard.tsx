@@ -143,7 +143,7 @@ export function ProyectosDashboard() {
           >
             {tab.label}
             {tab.badge !== undefined && tab.badge > 0 && (
-              <span className="rounded-full bg-primary px-1.5 py-0.5 text-[9px] font-semibold text-primary-foreground tabular-nums">
+              <span className="rounded-full bg-primary px-1.5 py-0.5 text-[10px] font-semibold text-primary-foreground tabular-nums">
                 {tab.badge}
               </span>
             )}

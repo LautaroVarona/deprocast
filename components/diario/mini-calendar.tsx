@@ -82,7 +82,7 @@ export function MiniCalendar({
         {WEEKDAY_LABELS.map((label) => (
           <span
             key={label}
-            className="py-0.5 text-center font-mono text-[9px] text-muted-foreground"
+            className="py-0.5 text-center font-mono text-[10px] text-muted-foreground"
           >
             {label}
           </span>

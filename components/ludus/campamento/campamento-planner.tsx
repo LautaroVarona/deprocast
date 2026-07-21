@@ -110,21 +110,21 @@ export function CampamentoPlanner() {
   };
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-[#040505]">
-      <header className="border-b border-white/[0.06] px-4 py-3">
-        <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-emerald-300/70">
+    <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-background">
+      <header className="border-b border-border/[0.06] px-4 py-3">
+        <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-primary/70">
           Campamento · {view === "mapa" ? "Mapa" : "Planificador"}
         </p>
         <div className="mt-2 flex flex-wrap items-center gap-2">
-          <div className="flex items-center gap-0.5 rounded-lg border border-white/10 bg-black/30 p-0.5">
+          <div className="flex items-center gap-0.5 rounded-lg border border-border bg-muted/40 p-0.5">
             <button
               type="button"
               onClick={() => setView("planner")}
               className={cn(
                 "inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 font-mono text-[10px] uppercase tracking-wider transition-colors",
                 view === "planner"
-                  ? "bg-emerald-500/20 text-emerald-100"
-                  : "text-white/40 hover:text-white/70",
+                  ? "bg-primary/20 text-primary"
+                  : "text-muted-foreground hover:text-muted-foreground",
               )}
             >
               <CalendarIcon className="size-3" />
@@ -136,8 +136,8 @@ export function CampamentoPlanner() {
               className={cn(
                 "inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 font-mono text-[10px] uppercase tracking-wider transition-colors",
                 view === "mapa"
-                  ? "bg-emerald-500/20 text-emerald-100"
-                  : "text-white/40 hover:text-white/70",
+                  ? "bg-primary/20 text-primary"
+                  : "text-muted-foreground hover:text-muted-foreground",
               )}
             >
               <MapIcon className="size-3" />
@@ -193,7 +193,7 @@ export function CampamentoPlanner() {
             onActionDone={() => void refresh()}
           />
         ) : isLoading ? (
-          <div className="flex h-full items-center justify-center text-white/40">
+          <div className="flex h-full items-center justify-center text-muted-foreground">
             <Loader2Icon className="size-5 animate-spin" />
           </div>
         ) : (
@@ -214,17 +214,17 @@ export function CampamentoPlanner() {
               />
             )}
 
-            <section className="rounded-xl border border-white/10 bg-black/25 p-3">
-              <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-white/50">
+            <section className="rounded-xl border border-border bg-card/80 p-3">
+              <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
                 Forja meso
               </p>
-              <p className="mt-1 text-sm text-white/80">
+              <p className="mt-1 text-sm text-muted-foreground">
                 Energía semanal + microtareas. Gestioná acá la transición.
               </p>
               <div className="mt-3">
                 <Link
                   href="/ludus/campamento/forja"
-                  className="inline-flex items-center rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white/80 hover:bg-white/10 hover:text-white"
+                  className="inline-flex items-center rounded-lg border border-border bg-muted/40 px-3 py-2 text-sm text-muted-foreground hover:bg-muted/50 hover:text-foreground"
                 >
                   Abrir Forja →
                 </Link>

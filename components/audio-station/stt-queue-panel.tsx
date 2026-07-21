@@ -69,12 +69,12 @@ export function SttQueuePanel() {
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="space-y-1">
           <div className="flex items-center gap-2">
-            <MicIcon className="size-4 text-emerald-400/80" />
-            <h2 className="font-mono text-sm font-medium text-white/90">
+            <MicIcon className="size-4 text-primary/80" />
+            <h2 className="font-mono text-sm font-medium text-muted-foreground">
               Cola STT · Deepgram
             </h2>
           </div>
-          <p className="font-mono text-[10px] text-white/45">
+          <p className="font-mono text-[10px] text-muted-foreground">
             Conversión FFmpeg → transcripción sincrónica o por chunks según
             duración. Extrae texto crudo, confianza y texto parcial ante fallos.
           </p>
@@ -87,37 +87,37 @@ export function SttQueuePanel() {
       </div>
 
       <div className="grid gap-2 sm:grid-cols-3">
-        <div className="rounded border border-white/10 bg-black/20 px-3 py-2">
-          <p className="font-mono text-[9px] uppercase tracking-wider text-white/45">
+        <div className="rounded border border-border bg-muted/40 px-3 py-2">
+          <p className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
             Pendientes STT
           </p>
-          <p className="mt-1 font-mono text-lg text-white/90">{pendingCount}</p>
+          <p className="mt-1 font-mono text-lg text-muted-foreground">{pendingCount}</p>
         </div>
-        <div className="rounded border border-sky-500/20 bg-sky-500/5 px-3 py-2">
-          <p className="font-mono text-[9px] uppercase tracking-wider text-sky-200/75">
+        <div className="rounded border border-primary/20 bg-primary/5 px-3 py-2">
+          <p className="font-mono text-[10px] uppercase tracking-wider text-primary/75">
             Cola activa
           </p>
-          <p className="mt-1 font-mono text-lg text-sky-100">{queueDepth}</p>
+          <p className="mt-1 font-mono text-lg text-primary">{queueDepth}</p>
         </div>
-        <div className="rounded border border-violet-500/20 bg-violet-500/5 px-3 py-2">
-          <p className="font-mono text-[9px] uppercase tracking-wider text-violet-200/75">
+        <div className="rounded border border-primary/20 bg-primary/5 px-3 py-2">
+          <p className="font-mono text-[10px] uppercase tracking-wider text-primary/75">
             Esperando purificar
           </p>
-          <p className="mt-1 font-mono text-lg text-violet-100">{pendingPurifyCount}</p>
+          <p className="mt-1 font-mono text-lg text-foreground">{pendingPurifyCount}</p>
         </div>
       </div>
 
       {activeLabel ? (
-        <div className="rounded border border-emerald-500/30 bg-emerald-500/10 px-3 py-2">
-          <p className="mb-1 flex items-center gap-1 font-mono text-[9px] uppercase tracking-wider text-emerald-200/80">
+        <div className="rounded border border-primary/30 bg-primary/10 px-3 py-2">
+          <p className="mb-1 flex items-center gap-1 font-mono text-[10px] uppercase tracking-wider text-primary/80">
             <ActivityIcon className="size-3" />
             Procesando ahora
           </p>
-          <p className="truncate font-mono text-[11px] text-emerald-100">{activeLabel}</p>
+          <p className="truncate font-mono text-[11px] text-primary">{activeLabel}</p>
         </div>
       ) : (
-        <div className="rounded border border-white/10 bg-black/20 px-3 py-2">
-          <p className="flex items-center gap-1 font-mono text-[10px] text-white/45">
+        <div className="rounded border border-border bg-muted/40 px-3 py-2">
+          <p className="flex items-center gap-1 font-mono text-[10px] text-muted-foreground">
             <CircleDashedIcon className="size-3" />
             Sin proceso activo
           </p>
@@ -131,15 +131,15 @@ export function SttQueuePanel() {
       />
 
       {pendingPurifyCount > 0 ? (
-        <p className="rounded border border-violet-500/25 bg-violet-500/8 px-3 py-2 font-mono text-[10px] text-violet-200/90">
+        <p className="rounded border border-primary/25 bg-primary/8 px-3 py-2 font-mono text-[10px] text-primary/90">
           {pendingPurifyCount} transcrito{pendingPurifyCount === 1 ? "" : "s"} sin
           enviar a Validar — revisá la pestaña Downstream o usá «Enviar a Validar».
         </p>
       ) : null}
 
-      <div className="max-h-[460px] overflow-y-auto rounded border border-white/8 bg-black/30">
+      <div className="max-h-[460px] overflow-y-auto rounded border border-border bg-muted/40">
         {assets.length === 0 ? (
-          <p className="py-8 text-center font-mono text-[10px] text-white/40">
+          <p className="py-8 text-center font-mono text-[10px] text-muted-foreground">
             Subí audios en la biblioteca para encolar STT.
           </p>
         ) : (
@@ -156,10 +156,10 @@ export function SttQueuePanel() {
               return (
                 <li
                   key={asset.id}
-                  className="rounded border border-white/8 bg-black/25 px-3 py-2.5 transition-colors hover:border-white/15"
+                  className="rounded border border-border bg-card/80 px-3 py-2.5 transition-colors hover:border-border"
                 >
                   <div className="mb-2 flex min-w-0 items-start justify-between gap-2">
-                    <p className="truncate font-mono text-[11px] text-white/90">
+                    <p className="truncate font-mono text-[11px] text-muted-foreground">
                       {asset.filename}
                     </p>
                     <AudioPipelineBadge pipeline={pipeline} />
@@ -168,7 +168,7 @@ export function SttQueuePanel() {
                   <div className="flex shrink-0 flex-wrap items-center gap-2">
 
                     {isQueued ? (
-                      <span className="font-mono text-[9px] text-white/40">
+                      <span className="font-mono text-[10px] text-muted-foreground">
                         En cola
                       </span>
                     ) : (
@@ -231,8 +231,8 @@ export function SttQueuePanel() {
 
       <p
         className={cn(
-          "font-mono text-[9px]",
-          pendingCount > 0 ? "text-sky-300/70" : "text-white/30",
+          "font-mono text-[10px]",
+          pendingCount > 0 ? "text-primary/70" : "text-muted-foreground",
         )}
       >
         {pendingCount > 0

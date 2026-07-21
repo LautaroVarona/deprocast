@@ -248,28 +248,28 @@ export function CalendarioWorkspace() {
 
   return (
     <div className="calendario-noir-root flex h-full min-h-0 flex-col overflow-hidden">
-      <header className="shrink-0 border-b border-white/8 px-4 py-3">
+      <header className="shrink-0 border-b border-border px-4 py-3">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-2">
-            <CalendarIcon className="size-5 text-cyan-400/80" />
+            <CalendarIcon className="size-5 text-primary" />
             <div>
-              <p className="font-mono text-[10px] uppercase tracking-[0.24em] text-cyan-400/60">
+              <p className="font-mono text-[10px] uppercase tracking-[0.24em] text-primary/70">
                 Simulador de turnos
               </p>
-              <h1 className="text-lg font-semibold text-zinc-50">Calendario</h1>
+              <h1 className="text-lg font-semibold text-foreground">Calendario</h1>
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <ViewModeSwitch mode={viewMode} onChange={setViewMode} skin="noir" />
             <Link
               href="/ludus/campamento"
-              className="font-mono text-[10px] uppercase tracking-wider text-zinc-500 hover:text-cyan-300"
+              className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground hover:text-primary"
             >
               Campamento →
             </Link>
           </div>
         </div>
-        <p className="mt-2 font-mono text-[9px] text-zinc-600">
+        <p className="mt-2 font-mono text-[10px] text-muted-foreground">
           1·2·3 vistas · Enter coagular · C confirmar rutina · S saltear · Shift+área filtrar
         </p>
       </header>
@@ -277,7 +277,7 @@ export function CalendarioWorkspace() {
       <div className="flex min-h-0 flex-1 gap-3 overflow-hidden p-3">
         <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-3">
           {isLoading ? (
-            <div className="flex flex-1 items-center justify-center gap-2 text-sm text-zinc-500">
+            <div className="flex flex-1 items-center justify-center gap-2 text-sm text-muted-foreground">
               <Loader2Icon className="size-4 animate-spin" />
               Cargando tablero…
             </div>

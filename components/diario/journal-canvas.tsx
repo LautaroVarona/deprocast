@@ -3,6 +3,7 @@
 import { JOURNAL_WAVE_TABS } from "@/components/diario/constants";
 import { JournalEntryPreview } from "@/components/diario/journal-entry-preview";
 import { Button } from "@/components/ui/button";
+import { Kbd } from "@/components/ui/kbd";
 import type { JournalEntryDetail, JournalOnda } from "@/lib/journal/types";
 import { cn } from "@/lib/utils";
 import { Loader2Icon, SparklesIcon } from "lucide-react";
@@ -118,10 +119,10 @@ export function JournalCanvas({
       <footer className="shrink-0 border-t border-border px-4 py-3">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-2 font-mono text-[10px] text-muted-foreground">
-            <kbd className="rounded border border-border bg-muted/50 px-1.5 py-0.5 text-[9px]">
+            <Kbd>
               {modifierKey}
               {" + Enter"}
-            </kbd>
+            </Kbd>
             <span>Coagular Entrada</span>
             {content.trim().length > 0 && (
               <span className="text-muted-foreground/70">

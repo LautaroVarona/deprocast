@@ -38,17 +38,17 @@ export function MealHistoryCompact({
   const displayItems = highlight ? [highlight, ...recent].slice(0, 4) : recent;
 
   return (
-    <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-xl border border-zinc-800/80 bg-zinc-900/30">
-      <p className="shrink-0 border-b border-zinc-800/60 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.2em] text-zinc-500">
+    <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-xl border border-border bg-muted/40">
+      <p className="shrink-0 border-b border-border px-3 py-2 font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
         Historial
       </p>
       <div className="min-h-0 flex-1 overflow-hidden">
         {isLoading ? (
-          <p className="p-3 text-xs text-zinc-500">Cargando...</p>
+          <p className="p-3 text-xs text-muted-foreground">Cargando...</p>
         ) : displayItems.length === 0 ? (
-          <p className="p-3 text-xs text-zinc-500">Sin ingestas aún.</p>
+          <p className="p-3 text-xs text-muted-foreground">Sin ingestas aún.</p>
         ) : (
-          <ul className="divide-y divide-zinc-800/60">
+          <ul className="divide-y divide-border">
             {displayItems.map((item) => (
               <li
                 key={item.id}
@@ -58,22 +58,22 @@ export function MealHistoryCompact({
                 )}
               >
                 <div className="flex items-start gap-2">
-                  <span className="shrink-0 font-mono text-[10px] tabular-nums text-zinc-500">
+                  <span className="shrink-0 font-mono text-[10px] tabular-nums text-muted-foreground">
                     {formatTime(item.occurredAt)}
                   </span>
                   <div className="min-w-0 flex-1">
-                    <p className="line-clamp-2 text-xs font-medium text-zinc-200">
+                    <p className="line-clamp-2 text-xs font-medium text-foreground">
                       {item.descripcion}
                     </p>
                     <div className="mt-0.5 flex flex-wrap items-center gap-1.5">
                       {item.modality === "audio" ? (
-                        <span className="inline-flex items-center gap-0.5 text-[10px] text-zinc-500">
+                        <span className="inline-flex items-center gap-0.5 text-[10px] text-muted-foreground">
                           <MicIcon className="size-3" />
                           Audio
                         </span>
                       ) : null}
                       {item.modality === "imagen" ? (
-                        <span className="inline-flex items-center gap-0.5 text-[10px] text-zinc-500">
+                        <span className="inline-flex items-center gap-0.5 text-[10px] text-muted-foreground">
                           <ImageIcon className="size-3" />
                           Foto
                         </span>
@@ -84,7 +84,7 @@ export function MealHistoryCompact({
                         </span>
                       ) : null}
                       {item.brokenFastMs && item.brokenFastMs > 0 ? (
-                        <span className="font-mono text-[10px] text-zinc-600">
+                        <span className="font-mono text-[10px] text-muted-foreground">
                           +{formatElapsedCompact(item.brokenFastMs)} ayuno
                         </span>
                       ) : null}

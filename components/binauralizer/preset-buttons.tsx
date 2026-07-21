@@ -31,8 +31,8 @@ export function PresetButtons({
               "group flex flex-col items-start gap-1 rounded-lg border px-4 py-3 text-left transition-all",
               "disabled:cursor-not-allowed disabled:opacity-40",
               isActive
-                ? "border-amber-500/40 bg-amber-500/10 shadow-[0_0_20px_-8px_rgba(251,191,36,0.4)]"
-                : "border-white/10 bg-black/30 hover:border-amber-500/25 hover:bg-amber-500/5",
+                ? "border-accent/40 bg-accent/10 shadow-[0_0_20px_-8px_rgba(251,191,36,0.4)]"
+                : "border-border bg-muted/40 hover:border-accent/25 hover:bg-accent/90/5",
             )}
           >
             <span className="flex items-center gap-2">
@@ -42,13 +42,13 @@ export function PresetButtons({
               <span
                 className={cn(
                   "font-mono text-xs font-medium uppercase tracking-wider",
-                  isActive ? "text-amber-200" : "text-white/80",
+                  isActive ? "text-accent" : "text-muted-foreground",
                 )}
               >
                 {preset.label}
               </span>
             </span>
-            <span className="font-mono text-[10px] leading-relaxed text-white/40">
+            <span className="font-mono text-[10px] leading-relaxed text-muted-foreground">
               {preset.subtitle}
             </span>
           </button>

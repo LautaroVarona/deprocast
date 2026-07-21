@@ -41,13 +41,13 @@ export function MonthBoard({
 
   const panelClass =
     skin === "noir"
-      ? "calendario-noir-panel border-white/8"
-      : "border-white/10 bg-black/25";
+      ? "calendario-noir-panel border-border"
+      : "border-border bg-card/80";
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto">
       <div className={cn("rounded-xl border p-3", panelClass)}>
-        <p className="mb-2 font-mono text-[10px] uppercase tracking-[0.2em] text-cyan-400/70">
+        <p className="mb-2 font-mono text-[10px] uppercase tracking-[0.2em] text-primary/70">
           {skin === "noir" ? "El Castillo · Vision Board" : "Control mensual · Campamento"}
         </p>
         <MiniCalendar
@@ -58,23 +58,23 @@ export function MonthBoard({
           onMonthChange={onMonthChange}
           onDaySelect={onDaySelect ?? (() => {})}
         />
-        <p className="mt-2 font-mono text-[10px] text-zinc-500">
+        <p className="mt-2 font-mono text-[10px] text-muted-foreground">
           Niebla de guerra: {fogDays} días sin densidad este mes
         </p>
       </div>
 
       {bosses.length > 0 && skin === "noir" ? (
         <div className={cn("rounded-xl border p-3", panelClass)}>
-          <p className="mb-2 font-mono text-[10px] uppercase tracking-[0.2em] text-amber-400/80">
+          <p className="mb-2 font-mono text-[10px] uppercase tracking-[0.2em] text-accent">
             Bosses del mes
           </p>
           <ul className="space-y-2">
             {bosses.map((boss) => (
               <li
                 key={boss.id}
-                className="rounded-md border border-amber-500/30 bg-amber-950/20 px-3 py-2 text-sm text-amber-100"
+                className="rounded-md border border-accent/30 bg-accent/10 px-3 py-2 text-sm text-foreground"
               >
-                <span className="font-mono text-[10px] text-amber-400/70">
+                <span className="font-mono text-[10px] text-accent/70">
                   G{boss.actionCost}
                 </span>
                 <p className="mt-0.5">{boss.title}</p>

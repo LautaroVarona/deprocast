@@ -36,14 +36,14 @@ export function AtanorRadar() {
   return (
     <aside className="hud-noir-panel flex flex-col justify-between p-4">
       <div className="flex items-start gap-3">
-        <span className="flex size-9 items-center justify-center rounded-md border border-amber-500/25 bg-amber-500/10 text-amber-300">
+        <span className="flex size-9 items-center justify-center rounded-md border border-accent/25 bg-accent/10 text-accent">
           <RadarIcon className="size-4" />
         </span>
         <div>
-          <p className="font-mono text-[10px] tracking-[0.24em] text-amber-500/70 uppercase">
+          <p className="font-mono text-[10px] tracking-[0.24em] text-accent uppercase">
             Radar del Atanor
           </p>
-          <p className="mt-1 text-sm text-white/55">
+          <p className="mt-1 text-sm text-muted-foreground">
             Quántomos pendientes de HITL
           </p>
         </div>
@@ -53,19 +53,19 @@ export function AtanorRadar() {
         <div>
           <p
             className={cn(
-              "font-mono text-4xl tabular-nums tracking-tight text-amber-300",
-              isLoading && "animate-pulse text-white/30",
+              "font-mono text-4xl tabular-nums tracking-tight text-accent",
+              isLoading && "animate-pulse text-muted-foreground",
             )}
           >
             {isLoading ? "—" : pendingCount}
           </p>
-          <p className="mt-1 font-mono text-[10px] text-white/35 uppercase">
+          <p className="mt-1 font-mono text-[10px] text-muted-foreground uppercase">
             nodos en cola
           </p>
         </div>
         <Link
           href="/pendientes"
-          className="rounded-md border border-amber-500/30 px-3 py-1.5 font-mono text-[10px] tracking-wider text-amber-200/90 uppercase transition-colors hover:bg-amber-500/10"
+          className="rounded-md border border-accent/30 px-3 py-1.5 font-mono text-[10px] tracking-wider text-accent/90 uppercase transition-colors hover:bg-accent/10"
         >
           Abrir Atanor →
         </Link>

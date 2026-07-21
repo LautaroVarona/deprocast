@@ -67,15 +67,15 @@ export function CalibrationRow({
     <article
       className={cn(
         "molecular-noir-panel space-y-4 p-4 transition-all duration-500",
-        validated && "border-emerald-500/25 bg-emerald-500/[0.04]",
-        !validated && wasRecalibrated && "border-amber-500/20",
+        validated && "border-primary/25 bg-primary/[0.04]",
+        !validated && wasRecalibrated && "border-accent/20",
       )}
       style={{ animationDelay: `${index * 80}ms` }}
     >
       <header className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0 flex-1 space-y-2">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="font-mono text-[10px] text-white/30">
+            <span className="font-mono text-[10px] text-muted-foreground">
               #{String(index + 1).padStart(2, "0")}
             </span>
             <ParticleTag
@@ -84,29 +84,29 @@ export function CalibrationRow({
               className={cn(BLOQUE_COLORS[bloque], BLOQUE_GLOW[bloque])}
             />
             {validated ? (
-              <span className="inline-flex items-center gap-1 font-mono text-[10px] text-emerald-400">
+              <span className="inline-flex items-center gap-1 font-mono text-[10px] text-primary">
                 <CheckIcon className="size-3" />
                 Validada
               </span>
             ) : null}
           </div>
-          <p className="font-mono text-xs leading-relaxed text-white/75">
+          <p className="font-mono text-xs leading-relaxed text-muted-foreground">
             {item.textoFragmento}
           </p>
-          <p className="font-mono text-[9px] leading-relaxed text-white/25">
+          <p className="font-mono text-[10px] leading-relaxed text-muted-foreground">
             {item.propuesta.razonamiento}
           </p>
         </div>
 
         {showCurrency || validated ? (
           <div className="molecular-currency-badge shrink-0 text-right">
-            <p className="font-mono text-[9px] uppercase tracking-wider text-white/35">
+            <p className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
               Currency Potencial
             </p>
-            <p className="font-mono text-2xl tabular-nums text-emerald-300">
+            <p className="font-mono text-2xl tabular-nums text-primary">
               {currency.toFixed(2)}
             </p>
-            <p className="font-mono text-[9px] text-white/30">
+            <p className="font-mono text-[10px] text-muted-foreground">
               Y({ejeY}) ÷ Z({ejeZ})
             </p>
           </div>
@@ -144,10 +144,10 @@ export function CalibrationRow({
       </div>
 
       {!validated ? (
-        <div className="flex items-center justify-between gap-3 border-t border-white/8 pt-3">
-          <span className="font-mono text-[10px] text-white/30">
+        <div className="flex items-center justify-between gap-3 border-t border-border pt-3">
+          <span className="font-mono text-[10px] text-muted-foreground">
             Confianza agente:{" "}
-            <span className="text-white/50">
+            <span className="text-muted-foreground">
               {(item.propuesta.confianza * 100).toFixed(0)}%
             </span>
           </span>
@@ -156,7 +156,7 @@ export function CalibrationRow({
             size="sm"
             onClick={() => void handleValidate()}
             disabled={disabled || isSubmitting}
-            className="bg-emerald-600/80 font-mono text-[10px] uppercase tracking-wider hover:bg-emerald-500/90"
+            className="bg-primary/80 font-mono text-[10px] uppercase tracking-wider hover:bg-primary/90"
           >
             {isSubmitting ? (
               <Loader2Icon className="size-3.5 animate-spin" />

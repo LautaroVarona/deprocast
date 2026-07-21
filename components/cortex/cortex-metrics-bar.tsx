@@ -67,14 +67,14 @@ export function CortexMetricsBar({ snapshot, isLoading }: CortexMetricsBarProps)
         <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1 xl:grid-cols-3">
           <KpiCard
             icon={NetworkIcon}
-            iconClassName="bg-violet-500/15 text-violet-600 dark:text-violet-400"
+            iconClassName="bg-primary/15 text-primary dark:text-primary"
             label="Total Nodos Indexados"
             value={isLoading ? "—" : (snapshot?.totalNodesIndexed ?? 0)}
             detail="Entidades en el grafo de conocimiento"
           />
           <KpiCard
             icon={FileCheckIcon}
-            iconClassName="bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
+            iconClassName="bg-primary/15 text-primary dark:text-primary"
             label="Documentos Validados"
             value={isLoading ? "—" : (snapshot?.validatedDocuments ?? 0)}
             detail="Nodos con metadatos Meta-Meteador"

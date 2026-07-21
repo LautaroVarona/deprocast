@@ -98,7 +98,7 @@ export function NoirVideoPlayer() {
   if (!videoUrl) {
     return (
       <div className="cam-recorder-noir-panel flex aspect-video items-center justify-center">
-        <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-white/25">
+        <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
           Sin señal de video
         </p>
       </div>
@@ -113,7 +113,7 @@ export function NoirVideoPlayer() {
       onKeyDown={handleKeyDown}
       tabIndex={0}
     >
-      <div className="relative aspect-video bg-black">
+      <div className="relative aspect-video bg-background">
         <video
           ref={videoRef}
           src={videoUrl}
@@ -147,8 +147,8 @@ export function NoirVideoPlayer() {
                   className={cn(
                     "absolute bottom-0 h-2 w-0.5 -translate-x-1/2 rounded-full transition-all",
                     isActive
-                      ? "bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]"
-                      : "bg-white/25",
+                      ? "bg-primary/20 shadow-[0_0_8px_rgba(52,211,153,0.8)]"
+                      : "bg-muted/40",
                   )}
                   style={{ left: `${left}%` }}
                 />
@@ -158,7 +158,7 @@ export function NoirVideoPlayer() {
         ) : null}
       </div>
 
-      <div className="space-y-3 border-t border-white/8 px-4 py-3">
+      <div className="space-y-3 border-t border-border px-4 py-3">
         <div
           ref={progressRef}
           role="slider"
@@ -167,14 +167,14 @@ export function NoirVideoPlayer() {
           aria-valuenow={currentTime}
           tabIndex={0}
           onClick={handleProgressClick}
-          className="group relative h-1.5 cursor-pointer rounded-full bg-white/10"
+          className="group relative h-1.5 cursor-pointer rounded-full bg-muted/40"
         >
           <div
-            className="absolute inset-y-0 left-0 rounded-full bg-emerald-500/70 transition-all"
+            className="absolute inset-y-0 left-0 rounded-full bg-primary/70 transition-all"
             style={{ width: `${progress}%` }}
           />
           <div
-            className="absolute top-1/2 size-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-emerald-300 opacity-0 shadow-[0_0_8px_rgba(52,211,153,0.6)] transition-opacity group-hover:opacity-100"
+            className="absolute top-1/2 size-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary/20 opacity-0 shadow-[0_0_8px_rgba(52,211,153,0.6)] transition-opacity group-hover:opacity-100"
             style={{ left: `${progress}%` }}
           />
         </div>
@@ -183,7 +183,7 @@ export function NoirVideoPlayer() {
           <button
             type="button"
             onClick={togglePlay}
-            className="flex size-8 items-center justify-center rounded border border-white/10 text-white/70 transition-colors hover:border-emerald-500/30 hover:text-emerald-300"
+            className="flex size-8 items-center justify-center rounded border border-border text-muted-foreground transition-colors hover:border-primary/30 hover:text-primary"
             aria-label={isPlaying ? "Pausar" : "Reproducir"}
           >
             {isPlaying ? (
@@ -193,11 +193,11 @@ export function NoirVideoPlayer() {
             )}
           </button>
 
-          <span className="font-mono text-[10px] tabular-nums text-emerald-400/80">
+          <span className="font-mono text-[10px] tabular-nums text-primary/80">
             {formatTimestamp(currentTime)}
           </span>
-          <span className="font-mono text-[10px] text-white/25">/</span>
-          <span className="font-mono text-[10px] tabular-nums text-white/35">
+          <span className="font-mono text-[10px] text-muted-foreground">/</span>
+          <span className="font-mono text-[10px] tabular-nums text-muted-foreground">
             {formatTimestamp(duration)}
           </span>
 
@@ -211,7 +211,7 @@ export function NoirVideoPlayer() {
                 video.muted = nextMuted;
                 setIsMuted(nextMuted);
               }}
-              className="text-white/40 transition-colors hover:text-white/70"
+              className="text-muted-foreground transition-colors hover:text-muted-foreground"
               aria-label={isMuted ? "Activar sonido" : "Silenciar"}
             >
               {isMuted ? (
@@ -252,7 +252,7 @@ export function NoirVideoPlayer() {
                   void video.requestFullscreen();
                 }
               }}
-              className="text-white/40 transition-colors hover:text-white/70"
+              className="text-muted-foreground transition-colors hover:text-muted-foreground"
               aria-label="Pantalla completa"
             >
               <MaximizeIcon className="size-3.5" />

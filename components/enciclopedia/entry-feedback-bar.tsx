@@ -70,10 +70,10 @@ export function EntryFeedbackBar() {
     <>
       <section className="enciclopedia-noir-panel flex flex-wrap items-center justify-between gap-3 px-4 py-3">
         <div className="space-y-0.5">
-          <p className="font-mono text-[10px] uppercase tracking-[0.24em] text-amber-400/60">
+          <p className="font-mono text-[10px] uppercase tracking-[0.24em] text-accent/60">
             05 · Vincula · 06 · Reporta
           </p>
-          <p className="text-xs text-white/40">
+          <p className="text-xs text-muted-foreground">
             {currentEntry.validatedCount} validaciones ·{" "}
             {currentEntry.reportCount} reportes
             {currentEntry.kgNodeId ? " · vinculada al Corpus" : ""}
@@ -88,10 +88,10 @@ export function EntryFeedbackBar() {
             disabled={isBusy || validatedLocally}
             onClick={() => void handleValidate()}
             className={cn(
-              "border-white/15 bg-transparent font-mono text-[10px] uppercase tracking-wider",
+              "border-border bg-transparent font-mono text-[10px] uppercase tracking-wider",
               validatedLocally
-                ? "text-emerald-400"
-                : "text-white/70 hover:border-emerald-500/30 hover:text-emerald-300",
+                ? "text-primary"
+                : "text-muted-foreground hover:border-primary/30 hover:text-primary",
             )}
           >
             {validatedLocally ? (
@@ -108,7 +108,7 @@ export function EntryFeedbackBar() {
             size="sm"
             disabled={isBusy}
             onClick={() => setReportOpen(true)}
-            className="border-white/15 bg-transparent font-mono text-[10px] uppercase tracking-wider text-white/70 hover:border-rose-500/30 hover:text-rose-300"
+            className="border-border bg-transparent font-mono text-[10px] uppercase tracking-wider text-muted-foreground hover:border-destructive/30 hover:text-destructive"
           >
             <FlagIcon className="size-3.5" />
             Reportar
@@ -119,7 +119,7 @@ export function EntryFeedbackBar() {
             size="sm"
             disabled={isBusy}
             onClick={() => setCorpusOpen(true)}
-            className="bg-amber-500/15 font-mono text-[10px] uppercase tracking-wider text-amber-200 hover:bg-amber-500/25"
+            className="bg-accent/15 font-mono text-[10px] uppercase tracking-wider text-accent hover:bg-accent/90/25"
           >
             <LinkIcon className="size-3.5" />
             Vincular al Corpus
@@ -137,7 +137,7 @@ export function EntryFeedbackBar() {
         />
         <SheetBody className="space-y-4">
           <div className="space-y-2">
-            <label className="font-mono text-[10px] uppercase tracking-wider text-white/45">
+            <label className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
               Tipo de reporte
             </label>
             <div className="space-y-2">
@@ -147,8 +147,8 @@ export function EntryFeedbackBar() {
                   className={cn(
                     "flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-sm transition",
                     reportType === type.value
-                      ? "border-amber-500/40 bg-amber-500/10 text-amber-100"
-                      : "border-white/10 text-white/65 hover:border-white/20",
+                      ? "border-accent/40 bg-accent/10 text-accent"
+                      : "border-border text-muted-foreground hover:border-border",
                   )}
                 >
                   <input
@@ -166,7 +166,7 @@ export function EntryFeedbackBar() {
           </div>
 
           <div className="space-y-2">
-            <label className="font-mono text-[10px] uppercase tracking-wider text-white/45">
+            <label className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
               Comentario (opcional)
             </label>
             <textarea
@@ -174,7 +174,7 @@ export function EntryFeedbackBar() {
               onChange={(event) => setComment(event.target.value)}
               rows={4}
               placeholder="¿Qué debería corregirse o ampliarse?"
-              className="w-full rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-sm text-white/90 outline-none"
+              className="w-full rounded-lg border border-border bg-card/80 px-3 py-2 text-sm text-muted-foreground outline-none"
             />
           </div>
         </SheetBody>
@@ -183,7 +183,7 @@ export function EntryFeedbackBar() {
             type="button"
             disabled={isBusy}
             onClick={() => void handleReport()}
-            className="bg-rose-500/90 font-mono text-xs uppercase tracking-wider text-white hover:bg-rose-500"
+            className="bg-destructive/90 font-mono text-xs uppercase tracking-wider text-foreground hover:bg-destructive/20"
           >
             {isBusy ? (
               <Loader2Icon className="size-4 animate-spin" />

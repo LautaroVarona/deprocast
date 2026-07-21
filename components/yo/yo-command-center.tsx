@@ -66,7 +66,7 @@ export function YoCommandCenter() {
   if (loading || !profile) {
     return (
       <div className="yo-noir-root flex items-center justify-center px-4 py-24">
-        <p className="font-mono text-xs tracking-[0.28em] text-[#FFB000]/70 uppercase">
+        <p className="font-mono text-xs tracking-[0.28em] text-accent uppercase">
           [ INICIALIZANDO NODO CERO… ]
         </p>
       </div>

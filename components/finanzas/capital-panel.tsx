@@ -24,10 +24,10 @@ export function CapitalPanel({ capital, onSave, isSaving }: CapitalPanelProps) {
 
   return (
     <div className="finanzas-noir-panel rounded-xl p-4">
-      <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-zinc-500">
+      <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
         Capital económico
       </p>
-      <p className="mt-0.5 text-xs text-zinc-500">Lo que tengo</p>
+      <p className="mt-0.5 text-xs text-muted-foreground">Lo que tengo</p>
 
       {isEditing ? (
         <div className="mt-3 flex items-center gap-2">
@@ -36,7 +36,7 @@ export function CapitalPanel({ capital, onSave, isSaving }: CapitalPanelProps) {
             step="0.01"
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
-            className="w-full rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-2xl font-semibold tabular-nums text-zinc-100 outline-none"
+            className="w-full rounded-lg border border-border bg-card/80 px-3 py-2 text-2xl font-semibold tabular-nums text-foreground outline-none"
             autoFocus
           />
           <button
@@ -63,10 +63,10 @@ export function CapitalPanel({ capital, onSave, isSaving }: CapitalPanelProps) {
           }}
           className="mt-2 block text-left"
         >
-          <span className="text-3xl font-semibold tabular-nums tracking-tight text-zinc-50">
+          <span className="text-3xl font-semibold tabular-nums tracking-tight text-foreground">
             {formatted}
           </span>
-          <span className="mt-1 block font-mono text-[9px] uppercase tracking-wider text-zinc-500">
+          <span className="mt-1 block font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
             Click para editar
           </span>
         </button>

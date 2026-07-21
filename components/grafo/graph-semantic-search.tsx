@@ -1,6 +1,7 @@
 "use client";
 
 import { colorForType } from "@/components/grafo/types";
+import { Kbd } from "@/components/ui/kbd";
 import type { GraphSearchMatch } from "@/lib/kg/graph-search";
 import { cn } from "@/lib/utils";
 import { SearchIcon, XIcon } from "lucide-react";
@@ -46,9 +47,7 @@ export function GraphSemanticSearch({
             {visibleCount}/{totalCount}
           </span>
         ) : (
-          <span className="hidden rounded border border-border px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground sm:inline">
-            ESC
-          </span>
+          <Kbd className="hidden sm:inline-flex">ESC</Kbd>
         )}
       </div>
       {hasQuery && (

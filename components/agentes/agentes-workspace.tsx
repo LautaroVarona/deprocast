@@ -110,34 +110,34 @@ export function AgentesWorkspace() {
   }, [searchQuery, toneFilter]);
 
   return (
-    <div className="min-h-full bg-slate-950 text-zinc-100">
-      <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-cyan-950/20 via-slate-950 to-slate-950" />
+    <div className="min-h-full bg-background text-foreground">
+      <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary/20 via-background to-background" />
 
       <div className="relative mx-auto flex w-full max-w-7xl flex-col gap-10 px-4 py-10 sm:px-6">
-        <header className="space-y-4 border-b border-zinc-800/80 pb-8">
+        <header className="space-y-4 border-b border-border pb-8">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-cyan-500/30 bg-cyan-500/10 px-3 py-1 text-xs font-medium text-cyan-300">
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
               <BotIcon className="size-3.5" />
               Ecosistema cognitivo
             </span>
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-zinc-700 px-3 py-1 text-xs text-zinc-500">
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-border px-3 py-1 text-xs text-muted-foreground">
               <FileTextIcon className="size-3.5" />
               Fuente: {ECOSYSTEM_STATS.docSource}
             </span>
           </div>
 
           <div>
-            <h1 className="text-3xl font-semibold tracking-tight text-zinc-50">
+            <h1 className="text-3xl font-semibold tracking-tight text-foreground">
               Mapa de Agentes
             </h1>
-            <p className="mt-2 max-w-3xl text-sm leading-relaxed text-zinc-500">
+            <p className="mt-2 max-w-3xl text-sm leading-relaxed text-muted-foreground">
               Monitor interactivo del exoesqueleto cognitivo local-first.
               Proveedor LLM unificado:{" "}
-              <code className="rounded bg-zinc-900 px-1.5 py-0.5 text-cyan-300/90">
+              <code className="rounded bg-card px-1.5 py-0.5 text-primary/90">
                 {ECOSYSTEM_STATS.llmProvider}
               </code>{" "}
               vía{" "}
-              <code className="rounded bg-zinc-900 px-1.5 py-0.5 text-zinc-400">
+              <code className="rounded bg-card px-1.5 py-0.5 text-muted-foreground">
                 lib/cohere/chat.ts
               </code>
               .
@@ -168,24 +168,24 @@ export function AgentesWorkspace() {
           </div>
         </header>
 
-        <section className="space-y-4 rounded-xl border border-cyan-500/20 bg-cyan-500/5 p-4">
+        <section className="space-y-4 rounded-xl border border-primary/20 bg-primary/5 p-4">
           <div className="flex flex-wrap items-center gap-2">
-            <ClockIcon className="size-4 text-cyan-300/80" aria-hidden />
-            <h2 className="text-sm font-semibold uppercase tracking-wider text-cyan-200/90">
+            <ClockIcon className="size-4 text-primary/80" aria-hidden />
+            <h2 className="text-sm font-semibold uppercase tracking-wider text-primary/90">
               Eje temporal y calendario
             </h2>
-            <span className="font-mono text-[10px] text-cyan-400/60">
+            <span className="font-mono text-[10px] text-primary/70">
               SSOT · Ludus + /calendario
             </span>
           </div>
-          <p className="max-w-3xl text-xs leading-relaxed text-zinc-400">
+          <p className="max-w-3xl text-xs leading-relaxed text-muted-foreground">
             Agentes que gestionan eventos, tareas y planificación. Comparten la
             capa unificada{" "}
-            <code className="rounded bg-zinc-900 px-1 py-0.5 text-cyan-300/80">
+            <code className="rounded bg-card px-1 py-0.5 text-primary/80">
               lib/temporal
             </code>{" "}
             y se invalidan entre vistas con{" "}
-            <code className="rounded bg-zinc-900 px-1 py-0.5 text-cyan-300/80">
+            <code className="rounded bg-card px-1 py-0.5 text-primary/80">
               bumpTemporal()
             </code>
             .
@@ -210,7 +210,7 @@ export function AgentesWorkspace() {
               <Link
                 key={href}
                 href={href}
-                className="inline-flex items-center gap-1.5 rounded-full border border-cyan-500/25 bg-cyan-500/10 px-3 py-1 text-[11px] text-cyan-200/90 hover:border-cyan-400/40"
+                className="inline-flex items-center gap-1.5 rounded-full border border-primary/25 bg-primary/10 px-3 py-1 text-[11px] text-primary/90 hover:border-primary/40"
               >
                 <CalendarIcon className="size-3" />
                 {label}
@@ -219,25 +219,25 @@ export function AgentesWorkspace() {
           </div>
         </section>
 
-        <section className="space-y-4 rounded-xl border border-amber-500/20 bg-amber-500/5 p-4">
+        <section className="space-y-4 rounded-xl border border-accent/20 bg-accent/5 p-4">
           <div className="flex flex-wrap items-center gap-2">
-            <CompassIcon className="size-4 text-amber-300/80" aria-hidden />
-            <h2 className="text-sm font-semibold uppercase tracking-wider text-amber-200/90">
+            <CompassIcon className="size-4 text-accent" aria-hidden />
+            <h2 className="text-sm font-semibold uppercase tracking-wider text-accent/90">
               Cartografía dual · Ludus
             </h2>
-            <span className="font-mono text-[10px] text-amber-400/60">
+            <span className="font-mono text-[10px] text-accent/60">
               Plano mental + terreno real
             </span>
           </div>
-          <p className="max-w-3xl text-xs leading-relaxed text-zinc-400">
+          <p className="max-w-3xl text-xs leading-relaxed text-muted-foreground">
             Orientación en dos planos: el grafo semántico del Castillo (YO,
             personas, proyectos) y el mapa geográfico del Campamento (hitos
             permanentes + eventos temporales). SSOT en{" "}
-            <code className="rounded bg-zinc-900 px-1 py-0.5 text-amber-300/80">
+            <code className="rounded bg-card px-1 py-0.5 text-accent">
               lib/geo
             </code>{" "}
             y{" "}
-            <code className="rounded bg-zinc-900 px-1 py-0.5 text-amber-300/80">
+            <code className="rounded bg-card px-1 py-0.5 text-accent">
               lib/castillo/semantic-map
             </code>
             .
@@ -260,7 +260,7 @@ export function AgentesWorkspace() {
               <Link
                 key={href}
                 href={href}
-                className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/25 bg-amber-500/10 px-3 py-1 text-[11px] text-amber-200/90 hover:border-amber-400/40"
+                className="inline-flex items-center gap-1.5 rounded-full border border-accent/25 bg-accent/10 px-3 py-1 text-[11px] text-accent/90 hover:border-accent/40"
               >
                 <MapIcon className="size-3" />
                 {label}
@@ -269,21 +269,21 @@ export function AgentesWorkspace() {
           </div>
         </section>
 
-        <section className="space-y-4 rounded-xl border border-amber-500/20 bg-amber-500/5 p-4">
+        <section className="space-y-4 rounded-xl border border-accent/20 bg-accent/5 p-4">
           <div className="flex flex-wrap items-center gap-2">
-            <SparklesIcon className="size-4 text-amber-300/80" aria-hidden />
-            <h2 className="text-sm font-semibold uppercase tracking-wider text-amber-200/90">
+            <SparklesIcon className="size-4 text-accent" aria-hidden />
+            <h2 className="text-sm font-semibold uppercase tracking-wider text-accent/90">
               Magos
             </h2>
-            <span className="font-mono text-[10px] text-amber-400/60">
+            <span className="font-mono text-[10px] text-accent/60">
               {ECOSYSTEM_STATS.magosCount} · matriz hermética
             </span>
           </div>
-          <p className="max-w-3xl text-xs leading-relaxed text-zinc-400">
+          <p className="max-w-3xl text-xs leading-relaxed text-muted-foreground">
             Agentes indexados sobre la matriz de 22 niveles (letra hebrea ↔
             tarot). Relacionan dimensiones reales de Deprocast con la estructura
             cabalística. SSOT en{" "}
-            <code className="rounded bg-zinc-900 px-1 py-0.5 text-amber-300/80">
+            <code className="rounded bg-card px-1 py-0.5 text-accent">
               lib/mago/
             </code>
             .
@@ -307,7 +307,7 @@ export function AgentesWorkspace() {
               <Link
                 key={href}
                 href={href}
-                className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/25 bg-amber-500/10 px-3 py-1 text-[11px] text-amber-200/90 hover:border-amber-400/40"
+                className="inline-flex items-center gap-1.5 rounded-full border border-accent/25 bg-accent/10 px-3 py-1 text-[11px] text-accent/90 hover:border-accent/40"
               >
                 <SparklesIcon className="size-3" />
                 {label}
@@ -315,7 +315,7 @@ export function AgentesWorkspace() {
             ))}
             <Link
               href="/ludus/castillo"
-              className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/25 bg-amber-500/10 px-3 py-1 text-[11px] text-amber-200/90 hover:border-amber-400/40"
+              className="inline-flex items-center gap-1.5 rounded-full border border-accent/25 bg-accent/10 px-3 py-1 text-[11px] text-accent/90 hover:border-accent/40"
             >
               <MapIcon className="size-3" />
               Castillo
@@ -326,16 +326,16 @@ export function AgentesWorkspace() {
         <section className="space-y-5">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-2">
-              <ActivityIcon className="size-4 text-emerald-400/80" aria-hidden />
-              <h2 className="text-sm font-semibold uppercase tracking-wider text-zinc-400">
+              <ActivityIcon className="size-4 text-primary/80" aria-hidden />
+              <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
                 Agentes operativos
               </h2>
-              <span className="font-mono text-[10px] text-zinc-600">
+              <span className="font-mono text-[10px] text-muted-foreground">
                 {filteredAgents.length}
               </span>
             </div>
 
-            <div className="flex items-center gap-1 rounded-md border border-zinc-800 p-0.5">
+            <div className="flex items-center gap-1 rounded-md border border-border p-0.5">
               <Button
                 type="button"
                 size="sm"
@@ -344,8 +344,8 @@ export function AgentesWorkspace() {
                 className={cn(
                   "h-8 gap-1.5 font-mono text-[10px] uppercase tracking-wider",
                   viewMode === "cards"
-                    ? "bg-zinc-800 text-zinc-100"
-                    : "text-zinc-500 hover:text-zinc-300",
+                    ? "bg-muted text-foreground"
+                    : "text-muted-foreground hover:text-foreground/80",
                 )}
               >
                 <LayoutGridIcon className="size-3.5" />
@@ -359,8 +359,8 @@ export function AgentesWorkspace() {
                 className={cn(
                   "h-8 gap-1.5 font-mono text-[10px] uppercase tracking-wider",
                   viewMode === "list"
-                    ? "bg-zinc-800 text-zinc-100"
-                    : "text-zinc-500 hover:text-zinc-300",
+                    ? "bg-muted text-foreground"
+                    : "text-muted-foreground hover:text-foreground/80",
                 )}
               >
                 <ListIcon className="size-3.5" />
@@ -371,13 +371,13 @@ export function AgentesWorkspace() {
 
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
             <div className="relative flex-1">
-              <SearchIcon className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-zinc-600" />
+              <SearchIcon className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
               <input
                 type="search"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Buscar agente, función o tecnología…"
-                className="w-full rounded-lg border border-zinc-800 bg-zinc-950/80 py-2 pl-10 pr-4 text-sm text-zinc-200 outline-none focus:border-cyan-500/40"
+                className="w-full rounded-lg border border-border bg-background/80 py-2 pl-10 pr-4 text-sm text-foreground outline-none focus:border-primary/40"
               />
             </div>
 
@@ -399,8 +399,8 @@ export function AgentesWorkspace() {
                   className={cn(
                     "rounded-full border px-2.5 py-1 font-mono text-[10px] uppercase tracking-wider transition",
                     toneFilter === tone
-                      ? "border-cyan-500/40 bg-cyan-500/10 text-cyan-200"
-                      : "border-zinc-700 text-zinc-500 hover:border-zinc-600",
+                      ? "border-primary/40 bg-primary/10 text-primary"
+                      : "border-border text-muted-foreground hover:border-border",
                   )}
                 >
                   {label}
@@ -420,9 +420,9 @@ export function AgentesWorkspace() {
               ))}
             </div>
           ) : (
-            <div className="overflow-x-auto rounded-xl border border-zinc-800/80">
+            <div className="overflow-x-auto rounded-xl border border-border">
               <table className="w-full min-w-[720px] text-left text-sm">
-                <thead className="border-b border-zinc-800 bg-zinc-900/60 font-mono text-[10px] uppercase tracking-wider text-zinc-500">
+                <thead className="border-b border-border bg-muted/40 font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
                   <tr>
                     <th className="px-3 py-2 w-10" />
                     <th className="px-3 py-2">Agente</th>
@@ -452,7 +452,7 @@ export function AgentesWorkspace() {
 
         <IncubationLab />
 
-        <footer className="border-t border-zinc-800/60 pt-6 text-center text-xs text-zinc-600">
+        <footer className="border-t border-border pt-6 text-center text-xs text-muted-foreground">
           Rutas UI relacionadas:{" "}
           {[
             ["/chat", "Chat"],
@@ -472,7 +472,7 @@ export function AgentesWorkspace() {
             <span key={href}>
               <Link
                 href={href}
-                className="text-cyan-500/70 hover:text-cyan-400 hover:underline"
+                className="text-primary/70 hover:text-primary hover:underline"
               >
                 {label}
               </Link>
@@ -495,10 +495,10 @@ function StatPill({
   tone: "emerald" | "cyan" | "violet" | "zinc";
 }) {
   const tones = {
-    emerald: "border-emerald-500/30 bg-emerald-500/5 text-emerald-300",
-    cyan: "border-cyan-500/30 bg-cyan-500/5 text-cyan-300",
-    violet: "border-violet-500/30 bg-violet-500/5 text-violet-300",
-    zinc: "border-zinc-700 bg-zinc-900/50 text-zinc-400",
+    emerald: "border-primary/30 bg-primary/5 text-primary",
+    cyan: "border-primary/30 bg-primary/5 text-primary",
+    violet: "border-primary/30 bg-primary/5 text-primary",
+    zinc: "border-border bg-muted/40 text-muted-foreground",
   };
 
   return (

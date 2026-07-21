@@ -19,10 +19,10 @@ export function RunwayVital({ metrics }: RunwayVitalProps) {
 
   return (
     <div className="finanzas-noir-panel rounded-xl p-4">
-      <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-zinc-500">
+      <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
         Runway vital
       </p>
-      <p className="mt-0.5 text-xs text-zinc-500">
+      <p className="mt-0.5 text-xs text-muted-foreground">
         Meses cubiertos (capital ÷ necesarios + primarios)
       </p>
 
@@ -30,19 +30,19 @@ export function RunwayVital({ metrics }: RunwayVitalProps) {
         <span className={`text-4xl font-semibold tabular-nums ${statusColor}`}>
           {months.toFixed(1)}
         </span>
-        <span className="mb-1 font-mono text-[10px] uppercase tracking-wider text-zinc-500">
+        <span className="mb-1 font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
           meses
         </span>
       </div>
 
-      <div className="mt-4 h-2 overflow-hidden rounded-full bg-white/5">
+      <div className="mt-4 h-2 overflow-hidden rounded-full bg-muted/40">
         <div
           className="h-full rounded-full bg-gradient-to-r from-emerald-600 to-emerald-400 transition-all duration-500"
           style={{ width: `${fillPercent}%` }}
         />
       </div>
 
-      <div className="mt-3 flex justify-between font-mono text-[9px] text-zinc-500">
+      <div className="mt-3 flex justify-between font-mono text-[10px] text-muted-foreground">
         <span>
           Capital:{" "}
           {new Intl.NumberFormat("es-ES", {

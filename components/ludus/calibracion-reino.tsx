@@ -83,10 +83,10 @@ export function CalibracionReino({ onClose, embedded }: CalibracionReinoProps) {
       <header className="space-y-2">
         <div className="flex items-center justify-between gap-4">
           <div>
-            <p className="font-mono text-[10px] uppercase tracking-[0.28em] text-amber-300/60">
+            <p className="font-mono text-[10px] uppercase tracking-[0.28em] text-accent/60">
               Alpha · Vista de pájaro
             </p>
-            <h2 className="text-xl font-semibold text-white">
+            <h2 className="text-xl font-semibold text-foreground">
               Calibración del Reino
             </h2>
           </div>
@@ -95,38 +95,38 @@ export function CalibracionReino({ onClose, embedded }: CalibracionReinoProps) {
               type="button"
               variant="ghost"
               size="sm"
-              className="text-white/50 hover:bg-white/5 hover:text-white"
+              className="text-muted-foreground hover:bg-muted/50 hover:text-foreground"
               onClick={onClose}
             >
               Cerrar
             </Button>
           ) : null}
         </div>
-        <p className="text-sm text-white/50">
+        <p className="text-sm text-muted-foreground">
           Arrastrá proyectos al inventario o ponélos en pausa consciente. Sin
           actividad en{" "}
-          <code className="text-white/60">data/</code> durante 7 días, aparece
+          <code className="text-muted-foreground">data/</code> durante 7 días, aparece
           niebla de guerra.
         </p>
         {snapshot?.isSunday ? (
-          <p className="inline-flex items-center gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-1.5 font-mono text-[11px] text-amber-200">
+          <p className="inline-flex items-center gap-2 rounded-lg border border-accent/30 bg-accent/10 px-3 py-1.5 font-mono text-[11px] text-accent">
             <SparklesIcon className="size-3.5" />
             Domingo de calibración — momento ideal para reasignar recursos
           </p>
         ) : null}
         {snapshot ? (
-          <p className="font-mono text-[11px] text-white/35">
+          <p className="font-mono text-[11px] text-muted-foreground">
             {snapshot.activeCount} activos · {snapshot.foggedCount} con niebla
           </p>
         ) : null}
       </header>
 
       {isLoading ? (
-        <div className="flex items-center justify-center py-16 text-white/40">
+        <div className="flex items-center justify-center py-16 text-muted-foreground">
           <Loader2Icon className="size-6 animate-spin" />
         </div>
       ) : snapshot?.projects.length === 0 ? (
-        <p className="py-12 text-center text-sm text-white/40">
+        <p className="py-12 text-center text-sm text-muted-foreground">
           No hay proyectos activos para calibrar.
         </p>
       ) : (
@@ -171,8 +171,8 @@ function CalibrationCard({
       <div className="relative space-y-3">
         <div className="flex items-start justify-between gap-2">
           <div>
-            <h3 className="font-medium text-white">{project.title}</h3>
-            <p className="font-mono text-[10px] text-white/40">
+            <h3 className="font-medium text-foreground">{project.title}</h3>
+            <p className="font-mono text-[10px] text-muted-foreground">
               {project.campo} · {project.estado}
             </p>
           </div>
@@ -180,10 +180,10 @@ function CalibrationCard({
             className={cn(
               "shrink-0 rounded-full border px-2 py-0.5 font-mono text-[10px]",
               project.status === "active"
-                ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-200"
+                ? "border-primary/30 bg-primary/10 text-primary"
                 : project.status === "paused"
-                  ? "border-amber-500/30 bg-amber-500/10 text-amber-200"
-                  : "border-white/15 bg-white/5 text-white/50",
+                  ? "border-accent/30 bg-accent/10 text-accent"
+                  : "border-border bg-muted/40 text-muted-foreground",
             )}
           >
             {STATUS_LABELS[project.status]}
@@ -191,13 +191,13 @@ function CalibrationCard({
         </div>
 
         {project.fogLevel !== "none" && project.status === "active" ? (
-          <p className="flex items-center gap-1.5 font-mono text-[10px] text-violet-300/80">
+          <p className="flex items-center gap-1.5 font-mono text-[10px] text-primary/80">
             <CloudFogIcon className="size-3" />
             Niebla de guerra ·{" "}
             {project.daysSinceActivity ?? "?"} días sin actividad
           </p>
         ) : project.lastActivityAt ? (
-          <p className="font-mono text-[10px] text-white/30">
+          <p className="font-mono text-[10px] text-muted-foreground">
             Última actividad:{" "}
             {new Date(project.lastActivityAt).toLocaleDateString("es-AR")}
           </p>
@@ -209,7 +209,7 @@ function CalibrationCard({
             size="sm"
             variant="outline"
             disabled={busy || project.status === "active"}
-            className="h-7 border-emerald-500/30 bg-emerald-500/10 text-xs text-emerald-200 hover:bg-emerald-500/20"
+            className="h-7 border-primary/30 bg-primary/10 text-xs text-primary hover:bg-primary/20"
             onClick={() => onStatusChange(project.id, "active")}
           >
             <SwordsIcon className="size-3" />
@@ -220,7 +220,7 @@ function CalibrationCard({
             size="sm"
             variant="outline"
             disabled={busy || project.status === "paused"}
-            className="h-7 border-amber-500/30 bg-amber-500/10 text-xs text-amber-200 hover:bg-amber-500/20"
+            className="h-7 border-accent/30 bg-accent/10 text-xs text-accent hover:bg-accent/20"
             onClick={() => onStatusChange(project.id, "paused")}
           >
             <PauseIcon className="size-3" />
@@ -231,7 +231,7 @@ function CalibrationCard({
             size="sm"
             variant="outline"
             disabled={busy || project.status === "inventory"}
-            className="h-7 border-white/15 bg-white/5 text-xs text-white/60 hover:bg-white/10"
+            className="h-7 border-border bg-muted/40 text-xs text-muted-foreground hover:bg-muted/50"
             onClick={() => onStatusChange(project.id, "inventory")}
           >
             <ArchiveIcon className="size-3" />

@@ -49,9 +49,9 @@ export function TaskCalibratorPanel({
   };
 
   return (
-    <div className="space-y-4 rounded-xl border border-amber-500/20 bg-[#0a0a0c] p-4 shadow-[inset_0_1px_0_rgba(251,191,36,0.06)]">
+    <div className="space-y-4 rounded-xl border border-accent/20 bg-background p-4 shadow-[inset_0_1px_0_rgba(251,191,36,0.06)]">
       <div>
-        <p className="font-mono text-[10px] tracking-wider text-amber-500/70 uppercase">
+        <p className="font-mono text-[10px] tracking-wider text-accent uppercase">
           Calibrador de Tareas
         </p>
         <h3 className="text-sm font-medium">{task.title}</h3>

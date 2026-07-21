@@ -139,7 +139,7 @@ export function CorpusLinkSheet({ open, onOpenChange }: CorpusLinkSheetProps) {
       />
       <SheetBody className="space-y-4">
         <div className="space-y-2">
-          <label className="font-mono text-[10px] uppercase tracking-wider text-white/45">
+          <label className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
             Tipo de entidad
           </label>
           <div className="flex flex-wrap gap-2">
@@ -154,8 +154,8 @@ export function CorpusLinkSheet({ open, onOpenChange }: CorpusLinkSheetProps) {
                 className={cn(
                   "rounded-full border px-3 py-1 font-mono text-[10px] uppercase tracking-wider transition",
                   nodeType === type.value
-                    ? "border-amber-500/40 bg-amber-500/10 text-amber-200"
-                    : "border-white/10 text-white/40 hover:border-white/20",
+                    ? "border-accent/40 bg-accent/10 text-accent"
+                    : "border-border text-muted-foreground hover:border-border",
                 )}
               >
                 {type.label}
@@ -165,7 +165,7 @@ export function CorpusLinkSheet({ open, onOpenChange }: CorpusLinkSheetProps) {
         </div>
 
         <div className="space-y-2">
-          <label className="font-mono text-[10px] uppercase tracking-wider text-white/45">
+          <label className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
             Buscar en el Corpus
           </label>
           <input
@@ -173,17 +173,17 @@ export function CorpusLinkSheet({ open, onOpenChange }: CorpusLinkSheetProps) {
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             placeholder="Nombre del nodo…"
-            className="w-full rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-sm text-white/90 outline-none focus:border-amber-500/40"
+            className="w-full rounded-lg border border-border bg-card/80 px-3 py-2 text-sm text-muted-foreground outline-none focus:border-accent/40"
           />
         </div>
 
-        <div className="max-h-44 space-y-1 overflow-y-auto rounded-lg border border-white/8 p-2">
+        <div className="max-h-44 space-y-1 overflow-y-auto rounded-lg border border-border p-2">
           {isLoadingTargets ? (
-            <div className="flex items-center justify-center py-6 text-white/40">
+            <div className="flex items-center justify-center py-6 text-muted-foreground">
               <Loader2Icon className="size-4 animate-spin" />
             </div>
           ) : targets.length === 0 ? (
-            <p className="py-4 text-center text-xs text-white/35">
+            <p className="py-4 text-center text-xs text-muted-foreground">
               Sin resultados.
             </p>
           ) : (
@@ -195,12 +195,12 @@ export function CorpusLinkSheet({ open, onOpenChange }: CorpusLinkSheetProps) {
                 className={cn(
                   "flex w-full items-center justify-between rounded-md px-2 py-2 text-left text-sm transition",
                   selectedTarget?.id === target.id
-                    ? "bg-amber-500/15 text-amber-100"
-                    : "text-white/70 hover:bg-white/5",
+                    ? "bg-accent/15 text-accent"
+                    : "text-muted-foreground hover:bg-muted/50",
                 )}
               >
                 <span>{target.primaryName}</span>
-                <span className="font-mono text-[10px] uppercase text-white/30">
+                <span className="font-mono text-[10px] uppercase text-muted-foreground">
                   {target.type}
                 </span>
               </button>
@@ -209,13 +209,13 @@ export function CorpusLinkSheet({ open, onOpenChange }: CorpusLinkSheetProps) {
         </div>
 
         <div className="space-y-2">
-          <label className="font-mono text-[10px] uppercase tracking-wider text-white/45">
+          <label className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
             Tipo de relación
           </label>
           <select
             value={relationType}
             onChange={(event) => setRelationType(event.target.value)}
-            className="w-full rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-sm text-white/90 outline-none"
+            className="w-full rounded-lg border border-border bg-card/80 px-3 py-2 text-sm text-muted-foreground outline-none"
           >
             {RELATION_OPTIONS.map((option) => (
               <option key={option.value} value={option.value}>
@@ -226,7 +226,7 @@ export function CorpusLinkSheet({ open, onOpenChange }: CorpusLinkSheetProps) {
         </div>
 
         <div className="space-y-2">
-          <label className="font-mono text-[10px] uppercase tracking-wider text-white/45">
+          <label className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
             Contexto (opcional)
           </label>
           <textarea
@@ -234,7 +234,7 @@ export function CorpusLinkSheet({ open, onOpenChange }: CorpusLinkSheetProps) {
             onChange={(event) => setContext(event.target.value)}
             rows={3}
             placeholder="Por qué conectás esta entrada con el nodo…"
-            className="w-full rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-sm text-white/90 outline-none"
+            className="w-full rounded-lg border border-border bg-card/80 px-3 py-2 text-sm text-muted-foreground outline-none"
           />
         </div>
       </SheetBody>
@@ -243,7 +243,7 @@ export function CorpusLinkSheet({ open, onOpenChange }: CorpusLinkSheetProps) {
           type="button"
           disabled={!selectedTarget || isSaving || isBusy}
           onClick={() => void handleSave()}
-          className="bg-amber-500/90 font-mono text-xs uppercase tracking-wider text-black hover:bg-amber-400"
+          className="bg-accent/90 font-mono text-xs uppercase tracking-wider text-black hover:bg-accent/20"
         >
           {isSaving ? (
             <Loader2Icon className="size-4 animate-spin" />

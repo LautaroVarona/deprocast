@@ -38,7 +38,7 @@ export function GravityPanel() {
             <MagnetIcon className="size-3" aria-hidden />
           </span>
           <div>
-            <p className="font-mono text-[9px] tracking-[0.2em] text-muted-foreground uppercase">
+            <p className="font-mono text-[10px] tracking-[0.2em] text-muted-foreground uppercase">
               Anclaje
             </p>
             <h2 className="text-xs font-semibold">Configuración</h2>
@@ -80,7 +80,7 @@ export function GravityPanel() {
             ))}
           </select>
           {isBabel && (
-            <p className="font-mono text-[9px] text-amber-600/90 dark:text-amber-400/90">
+            <p className="font-mono text-[10px] text-accent/90 dark:text-accent/90">
               Sumidero · {BABEL_CAMPO_LABEL}
             </p>
           )}
@@ -139,7 +139,7 @@ export function GravityPanel() {
                 type="button"
                 onClick={() => setGravity({ sourceType: type })}
                 className={cn(
-                  "rounded border px-1.5 py-0.5 font-mono text-[9px] transition-colors",
+                  "rounded border px-1.5 py-0.5 font-mono text-[10px] transition-colors",
                   gravity.sourceType === type
                     ? "border-primary bg-primary text-primary-foreground"
                     : "border-border bg-muted/50 text-muted-foreground hover:border-ring hover:text-foreground",
@@ -151,7 +151,7 @@ export function GravityPanel() {
           </div>
         </div>
 
-        <p className="mt-auto font-mono text-[9px] leading-relaxed text-muted-foreground">
+        <p className="mt-auto font-mono text-[10px] leading-relaxed text-muted-foreground">
           Los vectores de gravedad se calibran en Validar, después de la
           purificación.
         </p>

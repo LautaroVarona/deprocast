@@ -38,22 +38,22 @@ export function CalibratorPanel() {
     >
       <header className="space-y-1">
         <div className="flex items-center gap-2">
-          <CrosshairIcon className="size-4 text-violet-400/80" />
-          <p className="font-mono text-[10px] uppercase tracking-[0.24em] text-white/40">
+          <CrosshairIcon className="size-4 text-primary" />
+          <p className="font-mono text-[10px] uppercase tracking-[0.24em] text-muted-foreground">
             Agente 02 · Calibrador Central
           </p>
         </div>
-        <h2 className="font-mono text-lg text-white/90">
+        <h2 className="font-mono text-lg text-muted-foreground">
           Matriz de Geometría Sagrada
         </h2>
-        <p className="text-xs text-white/45">
+        <p className="text-xs text-muted-foreground">
           Recalibrá los tres ejes antes de persistir. Currency Potencial = Y ÷ Z.
         </p>
       </header>
 
       {batchMode && batchQueue.length > 0 ? (
-        <div className="rounded-lg border border-violet-500/20 bg-violet-500/5 px-3 py-2">
-          <div className="flex flex-wrap items-center justify-between gap-2 font-mono text-[10px] text-violet-200/75">
+        <div className="rounded-lg border border-primary/20 bg-primary/5 px-3 py-2">
+          <div className="flex flex-wrap items-center justify-between gap-2 font-mono text-[10px] text-primary/75">
             <span>
               Lote {batchIndex + 1}/{batchQueue.length}
             </span>
@@ -61,7 +61,7 @@ export function CalibratorPanel() {
               type="button"
               onClick={skipBatchDocument}
               disabled={isBusy}
-              className="text-violet-300/90 underline-offset-2 hover:underline disabled:opacity-40"
+              className="text-primary/90 underline-offset-2 hover:underline disabled:opacity-40"
             >
               Saltar documento →
             </button>
@@ -70,9 +70,9 @@ export function CalibratorPanel() {
       ) : null}
 
       {phase === "calibrating" ? (
-        <div className="flex items-center gap-3 rounded-lg border border-violet-500/20 bg-violet-500/5 px-4 py-3">
-          <Loader2Icon className="size-4 animate-spin text-violet-400" />
-          <p className="font-mono text-xs text-violet-300/80">
+        <div className="flex items-center gap-3 rounded-lg border border-primary/20 bg-primary/5 px-4 py-3">
+          <Loader2Icon className="size-4 animate-spin text-primary" />
+          <p className="font-mono text-xs text-primary/80">
             Analizando partículas con IA simulada…
           </p>
         </div>
@@ -81,15 +81,15 @@ export function CalibratorPanel() {
       {calibraciones.length > 0 && phase !== "calibrating" ? (
         <>
           <div className="space-y-1">
-            <div className="flex justify-between font-mono text-[10px] text-white/35">
+            <div className="flex justify-between font-mono text-[10px] text-muted-foreground">
               <span>Validación HITL</span>
-              <span className="tabular-nums text-emerald-400/80">
+              <span className="tabular-nums text-primary/80">
                 {validadas.length}/{calibraciones.length} · {progress}%
               </span>
             </div>
-            <div className="h-1 overflow-hidden rounded-full bg-white/10">
+            <div className="h-1 overflow-hidden rounded-full bg-muted/40">
               <div
-                className="h-full rounded-full bg-emerald-500/70 transition-all duration-500"
+                className="h-full rounded-full bg-primary/70 transition-all duration-500"
                 style={{ width: `${progress}%` }}
               />
             </div>
@@ -109,17 +109,17 @@ export function CalibratorPanel() {
           </div>
         </>
       ) : phase !== "calibrating" ? (
-        <div className="rounded-lg border border-dashed border-white/10 px-4 py-10 text-center">
-          <p className="font-mono text-xs text-white/30">
+        <div className="rounded-lg border border-dashed border-border px-4 py-10 text-center">
+          <p className="font-mono text-xs text-muted-foreground">
             Esperando partículas del Chunkeador…
           </p>
         </div>
       ) : null}
 
       {phase === "complete" ? (
-        <p className="rounded border border-emerald-500/25 bg-emerald-500/5 px-3 py-2 text-center font-mono text-xs text-emerald-300/90">
+        <p className="rounded border border-primary/25 bg-primary/5 px-3 py-2 text-center font-mono text-xs text-primary/90">
           Pipeline completo — {validadas.length} partículas persistidas en{" "}
-          <code className="text-emerald-200/80">data/molecular/</code>
+          <code className="text-primary/80">data/molecular/</code>
         </p>
       ) : null}
     </section>

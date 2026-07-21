@@ -46,7 +46,7 @@ function SectionHeader({
       ) : (
         <CircleIcon className="size-3.5 text-muted-foreground" aria-hidden />
       )}
-      <p className="font-mono text-[9px] tracking-[0.15em] text-muted-foreground uppercase">
+      <p className="font-mono text-[10px] tracking-[0.15em] text-muted-foreground uppercase">
         {label}
       </p>
     </div>
@@ -104,7 +104,7 @@ export function IncubationHitlPanel({
       )}
     >
       <div className="shrink-0 border-b border-border px-4 py-3">
-        <p className="font-mono text-[9px] tracking-[0.2em] text-muted-foreground uppercase">
+        <p className="font-mono text-[10px] tracking-[0.2em] text-muted-foreground uppercase">
           Extracción en vivo
         </p>
         <p className="mt-0.5 text-xs text-muted-foreground">

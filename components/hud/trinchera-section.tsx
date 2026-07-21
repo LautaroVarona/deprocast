@@ -42,9 +42,9 @@ export function TrincheraSection() {
     <section className="hud-noir-panel flex min-h-0 flex-1 flex-col overflow-hidden p-4">
       <header className="mb-3 flex shrink-0 items-center justify-between gap-3">
         <div className="flex items-center gap-2">
-          <ShieldIcon className="size-4 text-amber-400/80" />
+          <ShieldIcon className="size-4 text-accent" />
           <div>
-            <p className="font-mono text-[10px] tracking-[0.24em] text-amber-500/70 uppercase">
+            <p className="font-mono text-[10px] tracking-[0.24em] text-accent uppercase">
               La Trinchera
             </p>
             <h2 className="text-sm font-medium text-foreground">
@@ -54,7 +54,7 @@ export function TrincheraSection() {
         </div>
         <Link
           href="/ludus/trinchera"
-          className="font-mono text-[10px] tracking-wider text-white/40 uppercase hover:text-amber-300"
+          className="font-mono text-[10px] tracking-wider text-muted-foreground uppercase hover:text-accent"
         >
           Ludus →
         </Link>
@@ -62,9 +62,9 @@ export function TrincheraSection() {
 
       <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto">
         {isLoading ? (
-          <p className="font-mono text-xs text-white/30">Cargando asaltos…</p>
+          <p className="font-mono text-xs text-muted-foreground">Cargando asaltos…</p>
         ) : asaltos.length === 0 ? (
-          <p className="rounded-lg border border-dashed border-white/10 px-3 py-6 text-center font-mono text-xs text-white/35">
+          <p className="rounded-lg border border-dashed border-border px-3 py-6 text-center font-mono text-xs text-muted-foreground">
             Sin asaltos calibrados. Cristalizá Quántomos en el Atanor para
             llenar la trinchera.
           </p>

@@ -57,32 +57,32 @@ export function ContinuousCalibrationForm({
     <section className="yo-noir-panel space-y-5 p-5 md:p-7">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <p className="font-mono text-[10px] tracking-[0.28em] text-[#FFB000]/70 uppercase">
+          <p className="font-mono text-[10px] tracking-[0.28em] text-accent uppercase">
             Calibración continua
           </p>
-          <h2 className="mt-2 font-mono text-xl text-[#FFB000]">
+          <h2 className="mt-2 font-mono text-xl text-accent">
             Alimentar soporte vital
           </h2>
-          <p className="mt-1 font-mono text-xs text-white/40">
+          <p className="mt-1 font-mono text-xs text-muted-foreground">
             Una pregunta a la vez. Cada respuesta refuerza la base del
             Observador.
           </p>
         </div>
-        <span className="font-mono text-[10px] tracking-[0.18em] text-white/35 uppercase">
+        <span className="font-mono text-[10px] tracking-[0.18em] text-muted-foreground uppercase">
           {answeredCount}/{CALIBRATION_PROMPTS.length} señales
         </span>
       </div>
 
-      <div className="border border-[#FFB000]/20 bg-black/50 p-4 md:p-5">
-        <p className="font-mono text-[10px] tracking-[0.2em] text-[#FFB000]/55 uppercase">
+      <div className="border border-accent/20 bg-card/80 p-4 md:p-5">
+        <p className="font-mono text-[10px] tracking-[0.2em] text-accent uppercase">
           Consulta del sistema
         </p>
-        <p className="mt-3 font-mono text-lg leading-snug text-[#FFB000] md:text-xl">
+        <p className="mt-3 font-mono text-lg leading-snug text-accent md:text-xl">
           {activePrompt?.question}
         </p>
 
         {calibration[activePrompt?.id ?? ""] ? (
-          <p className="mt-3 font-mono text-xs text-white/40">
+          <p className="mt-3 font-mono text-xs text-muted-foreground">
             Señal previa: {calibration[activePrompt.id]}
           </p>
         ) : null}
@@ -99,15 +99,15 @@ export function ContinuousCalibrationForm({
             }}
             disabled={disabled || submitting}
             placeholder="Respuesta para el exoesqueleto…"
-            className="min-h-11 flex-1 border border-[#FFB000]/25 bg-transparent px-3 font-mono text-sm text-[#FFB000] placeholder:text-white/25 outline-none focus:border-[#FFB000]/55 disabled:opacity-50"
+            className="min-h-11 flex-1 border border-accent/25 bg-transparent px-3 font-mono text-sm text-accent placeholder:text-muted-foreground outline-none focus:border-accent/55 disabled:opacity-50"
           />
           <button
             type="button"
             disabled={disabled || submitting || !answer.trim()}
             onClick={() => void handleSubmit()}
             className={cn(
-              "min-h-11 border border-[#FFB000] bg-[#FFB000]/15 px-4 font-mono text-[11px] tracking-[0.18em] text-[#FFB000] uppercase transition-colors",
-              "hover:bg-[#FFB000]/25 disabled:cursor-not-allowed disabled:opacity-40",
+              "min-h-11 border border-accent bg-accent/15 px-4 font-mono text-[11px] tracking-[0.18em] text-accent uppercase transition-colors",
+              "hover:bg-accent/25 disabled:cursor-not-allowed disabled:opacity-40",
             )}
           >
             {submitting ? "[ INYECTANDO… ]" : "[ CONFIRMAR ]"}
@@ -115,22 +115,22 @@ export function ContinuousCalibrationForm({
         </div>
 
         {flash ? (
-          <p className="mt-3 font-mono text-[10px] tracking-[0.2em] text-[#7CFF9A] uppercase">
+          <p className="mt-3 font-mono text-[10px] tracking-[0.2em] text-chart-3 uppercase">
             [ SEÑAL ABSORBIDA ]
           </p>
         ) : null}
       </div>
 
       {answeredCount > 0 ? (
-        <ul className="space-y-2 border-t border-[#FFB000]/15 pt-4">
+        <ul className="space-y-2 border-t border-accent/15 pt-4">
           {CALIBRATION_PROMPTS.filter((prompt) => calibration[prompt.id]).map(
             (prompt) => (
               <li
                 key={prompt.id}
-                className="font-mono text-[11px] text-white/45"
+                className="font-mono text-[11px] text-muted-foreground"
               >
-                <span className="text-[#FFB000]/55">{prompt.question}</span>
-                <span className="mt-0.5 block text-white/70">
+                <span className="text-accent">{prompt.question}</span>
+                <span className="mt-0.5 block text-muted-foreground">
                   → {calibration[prompt.id]}
                 </span>
               </li>

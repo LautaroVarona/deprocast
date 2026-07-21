@@ -193,7 +193,7 @@ export function PendientesWorkspace() {
     <div className="flex h-full min-h-0 flex-col overflow-hidden">
       <header className="shrink-0 border-b border-border px-4 py-3">
         <div className="flex items-center gap-2">
-          <ListTodoIcon className="size-5 text-amber-400/80" />
+          <ListTodoIcon className="size-5 text-accent" />
           <div>
             <p className="font-mono text-[10px] uppercase tracking-[0.24em] text-muted-foreground">
               El Validador · Tareas

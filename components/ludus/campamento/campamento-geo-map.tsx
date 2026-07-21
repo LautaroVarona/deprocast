@@ -17,7 +17,7 @@ const MapInner = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div className="flex h-full items-center justify-center gap-2 text-sm text-white/40">
+      <div className="flex h-full items-center justify-center gap-2 text-sm text-muted-foreground">
         <Loader2Icon className="size-4 animate-spin" />
         Cargando terreno…
       </div>
@@ -122,10 +122,10 @@ export function CampamentoGeoMap({ fromIso, toIso, onActionDone }: Props) {
   };
 
   return (
-    <div className="ludus-geo-map flex h-full min-h-[420px] flex-col overflow-hidden rounded-xl border border-emerald-500/20 bg-black/40">
-      <div className="flex shrink-0 flex-wrap items-center gap-2 border-b border-white/10 px-3 py-2">
-        <MapPinIcon className="size-3.5 text-emerald-300/80" />
-        <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-emerald-200/70">
+    <div className="ludus-geo-map flex h-full min-h-[420px] flex-col overflow-hidden rounded-xl border border-primary/20 bg-card/80">
+      <div className="flex shrink-0 flex-wrap items-center gap-2 border-b border-border px-3 py-2">
+        <MapPinIcon className="size-3.5 text-primary/80" />
+        <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-primary/70">
           Terreno real
         </p>
         <div className="ml-auto flex gap-1">
@@ -135,8 +135,8 @@ export function CampamentoGeoMap({ fromIso, toIso, onActionDone }: Props) {
             className={cn(
               "rounded-full px-2.5 py-1 font-mono text-[10px] uppercase tracking-wider",
               rangeMode === "today"
-                ? "bg-emerald-500/20 text-emerald-100"
-                : "text-white/40 hover:text-white/70",
+                ? "bg-primary/20 text-primary"
+                : "text-muted-foreground hover:text-muted-foreground",
             )}
           >
             Hoy
@@ -147,8 +147,8 @@ export function CampamentoGeoMap({ fromIso, toIso, onActionDone }: Props) {
             className={cn(
               "rounded-full px-2.5 py-1 font-mono text-[10px] uppercase tracking-wider",
               rangeMode === "range"
-                ? "bg-emerald-500/20 text-emerald-100"
-                : "text-white/40 hover:text-white/70",
+                ? "bg-primary/20 text-primary"
+                : "text-muted-foreground hover:text-muted-foreground",
             )}
           >
             Esta semana
@@ -158,12 +158,12 @@ export function CampamentoGeoMap({ fromIso, toIso, onActionDone }: Props) {
 
       <div className="relative min-h-0 flex-1">
         {isLoading ? (
-          <div className="flex h-full items-center justify-center gap-2 text-sm text-white/40">
+          <div className="flex h-full items-center justify-center gap-2 text-sm text-muted-foreground">
             <Loader2Icon className="size-4 animate-spin" />
             Cartografiando…
           </div>
         ) : error ? (
-          <div className="flex h-full flex-col items-center justify-center gap-2 text-sm text-rose-200">
+          <div className="flex h-full flex-col items-center justify-center gap-2 text-sm text-destructive">
             <p>{error}</p>
             <Button type="button" size="sm" variant="outline" onClick={() => void load()}>
               Reintentar
@@ -179,16 +179,16 @@ export function CampamentoGeoMap({ fromIso, toIso, onActionDone }: Props) {
       </div>
 
       {snapshot ? (
-        <div className="flex shrink-0 gap-3 border-t border-white/10 px-3 py-2 font-mono text-[10px] text-white/40">
+        <div className="flex shrink-0 gap-3 border-t border-border px-3 py-2 font-mono text-[10px] text-muted-foreground">
           <span className="inline-flex items-center gap-1">
-            <span className="size-2 rounded-full bg-amber-400/80" />
+            <span className="size-2 rounded-full bg-accent/80" />
             Permanentes · {snapshot.permanent.length}
           </span>
           <span className="inline-flex items-center gap-1">
-            <span className="size-2 rounded-full bg-emerald-400/80" />
+            <span className="size-2 rounded-full bg-primary/80" />
             Temporales · {snapshot.temporal.length}
           </span>
-          <span className="ml-auto inline-flex items-center gap-1 text-white/30">
+          <span className="ml-auto inline-flex items-center gap-1 text-muted-foreground">
             <CheckIcon className="size-3" />
             HITL desde popup
           </span>

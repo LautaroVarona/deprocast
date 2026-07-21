@@ -76,24 +76,24 @@ export function HistorialSheet({ open, onOpenChange }: HistorialSheetProps) {
       />
 
       <SheetBody className="space-y-4">
-        <div className="flex items-center gap-2 rounded-lg border border-cyan-500/20 bg-cyan-500/5 px-3 py-2">
-          <HistoryIcon className="size-4 text-cyan-400" />
-          <p className="text-xs text-zinc-400">
+        <div className="flex items-center gap-2 rounded-lg border border-primary/20 bg-primary/5 px-3 py-2">
+          <HistoryIcon className="size-4 text-primary" />
+          <p className="text-xs text-muted-foreground">
             Cada evento registra qué agente intervino y qué modelo de IA se usó.
           </p>
         </div>
 
         {isLoading ? (
-          <div className="flex items-center justify-center gap-2 py-12 text-zinc-500">
+          <div className="flex items-center justify-center gap-2 py-12 text-muted-foreground">
             <Loader2Icon className="size-5 animate-spin" />
             Cargando…
           </div>
         ) : error ? (
-          <p className="rounded-lg border border-rose-500/30 bg-rose-500/10 p-3 text-sm text-rose-300">
+          <p className="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
             {error}
           </p>
         ) : groups.length === 0 ? (
-          <p className="py-12 text-center text-sm text-zinc-500">
+          <p className="py-12 text-center text-sm text-muted-foreground">
             Sin actividad registrada en este período.
           </p>
         ) : (
@@ -104,12 +104,12 @@ export function HistorialSheet({ open, onOpenChange }: HistorialSheetProps) {
               {ACTIVITY_CATEGORIES.slice(0, 8).map((cat) => (
                 <span
                   key={cat}
-                  className="rounded-full border border-zinc-800 px-2 py-0.5 font-mono text-[9px] text-zinc-600"
+                  className="rounded-full border border-border px-2 py-0.5 font-mono text-[10px] text-muted-foreground"
                 >
                   {CATEGORY_LABELS[cat]}
                 </span>
               ))}
-              <span className="rounded-full border border-zinc-800 px-2 py-0.5 font-mono text-[9px] text-zinc-600">
+              <span className="rounded-full border border-border px-2 py-0.5 font-mono text-[10px] text-muted-foreground">
                 +{ACTIVITY_CATEGORIES.length - 8} más
               </span>
             </div>

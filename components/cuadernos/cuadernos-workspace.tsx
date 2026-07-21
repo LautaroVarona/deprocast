@@ -68,18 +68,18 @@ export function CuadernosWorkspace() {
   };
 
   return (
-    <div className="flex h-full min-h-0 flex-col bg-[#050505] text-zinc-100">
-      <header className="flex shrink-0 items-center justify-between gap-3 border-b border-zinc-900 px-4 py-3">
+    <div className="flex h-full min-h-0 flex-col bg-background text-foreground">
+      <header className="flex shrink-0 items-center justify-between gap-3 border-b border-border px-4 py-3">
         <div className="flex min-w-0 items-center gap-3">
           <Link
             href="/ingesta"
-            className="inline-flex items-center gap-1 font-mono text-[10px] tracking-widest text-zinc-500 uppercase hover:text-zinc-300"
+            className="inline-flex items-center gap-1 font-mono text-[10px] tracking-widest text-muted-foreground uppercase hover:text-foreground/80"
           >
             <ArrowLeftIcon className="size-3.5" />
             Ingesta
           </Link>
-          <div className="min-w-0 border-l border-zinc-800 pl-3">
-            <p className="font-mono text-[9px] tracking-[0.3em] text-zinc-600 uppercase">
+          <div className="min-w-0 border-l border-border pl-3">
+            <p className="font-mono text-[10px] tracking-[0.3em] text-muted-foreground uppercase">
               Módulo de Cuadernos
             </p>
             <h1 className="text-sm font-semibold tracking-tight">
@@ -92,7 +92,7 @@ export function CuadernosWorkspace() {
           type="button"
           size="sm"
           onClick={() => setShowForm((v) => !v)}
-          className="bg-zinc-100 text-zinc-950 hover:bg-white"
+          className="bg-primary text-primary-foreground hover:bg-foreground"
         >
           <PlusIcon className="size-3.5" />
           Nuevo cuaderno
@@ -102,35 +102,35 @@ export function CuadernosWorkspace() {
       {showForm ? (
         <form
           onSubmit={(e) => void handleCreate(e)}
-          className="shrink-0 border-b border-zinc-900 bg-zinc-950/50 px-4 py-3"
+          className="shrink-0 border-b border-border bg-background/50 px-4 py-3"
         >
           <div className="mx-auto flex max-w-lg flex-col gap-2 sm:flex-row sm:items-end">
             <label className="flex min-w-0 flex-1 flex-col gap-1">
-              <span className="font-mono text-[9px] tracking-widest text-zinc-600 uppercase">
+              <span className="font-mono text-[10px] tracking-widest text-muted-foreground uppercase">
                 Título
               </span>
               <input
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="Cuaderno de campo · 2026"
-                className="rounded border border-zinc-800 bg-[#050505] px-2 py-1.5 text-sm text-zinc-100 outline-none focus:border-zinc-500"
+                className="rounded border border-border bg-background px-2 py-1.5 text-sm text-foreground outline-none focus:border-border"
               />
             </label>
             <label className="flex min-w-0 flex-1 flex-col gap-1">
-              <span className="font-mono text-[9px] tracking-widest text-zinc-600 uppercase">
+              <span className="font-mono text-[10px] tracking-widest text-muted-foreground uppercase">
                 Descripción
               </span>
               <input
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="Opcional"
-                className="rounded border border-zinc-800 bg-[#050505] px-2 py-1.5 text-sm text-zinc-100 outline-none focus:border-zinc-500"
+                className="rounded border border-border bg-background px-2 py-1.5 text-sm text-foreground outline-none focus:border-border"
               />
             </label>
             <Button
               type="submit"
               disabled={isCreating}
-              className="bg-zinc-100 text-zinc-950 hover:bg-white"
+              className="bg-primary text-primary-foreground hover:bg-foreground"
             >
               {isCreating ? (
                 <Loader2Icon className="size-3.5 animate-spin" />

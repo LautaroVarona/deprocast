@@ -74,7 +74,7 @@ export function ProjectRow({ project, onSelect }: ProjectRowProps) {
 
       <span
         className={cn(
-          "shrink-0 rounded px-1.5 py-0.5 text-[9px] uppercase tracking-wide",
+          "shrink-0 rounded px-1.5 py-0.5 text-[10px] uppercase tracking-wide",
           isCritical ? "bg-destructive/20 text-destructive" : "bg-muted text-muted-foreground",
         )}
       >

@@ -34,10 +34,10 @@ const KIND_LABELS: Record<SemanticMapNodeKind, string> = {
 };
 
 const KIND_COLORS: Record<SemanticMapNodeKind, string> = {
-  yo: "border-amber-400/70 bg-amber-500/20 text-amber-50 shadow-[0_0_24px_rgba(251,191,36,0.35)]",
-  persona: "border-cyan-400/40 bg-cyan-500/10 text-cyan-50",
-  proyecto: "border-violet-400/40 bg-violet-500/10 text-violet-50",
-  cuaderno: "border-emerald-400/40 bg-emerald-500/10 text-emerald-50",
+  yo: "border-accent/70 bg-accent/20 text-accent shadow-[0_0_24px_rgba(251,191,36,0.35)]",
+  persona: "border-primary/40 bg-primary/10 text-primary",
+  proyecto: "border-primary/40 bg-primary/10 text-primary",
+  cuaderno: "border-primary/40 bg-primary/10 text-primary",
 };
 
 type MapNodeData = {
@@ -57,15 +57,15 @@ function SemanticNode({ data }: NodeProps) {
         "castillo-card min-w-[100px] max-w-[160px] rounded-xl border px-3 py-2 text-center transition-opacity duration-300",
         KIND_COLORS[d.kind],
         d.dimmed && "opacity-20",
-        d.highlighted && "ring-2 ring-amber-300/80 opacity-100",
+        d.highlighted && "ring-2 ring-accent/80 opacity-100",
         d.kind === "yo" && "min-w-[120px] px-4 py-3",
       )}
     >
-      <Handle type="target" position={Position.Top} className="!bg-white/30" />
+      <Handle type="target" position={Position.Top} className="!bg-muted/40" />
       <p
         className={cn(
-          "font-mono text-[9px] uppercase tracking-[0.16em] text-white/45",
-          d.kind === "yo" && "text-amber-200/70",
+          "font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground",
+          d.kind === "yo" && "text-accent",
         )}
       >
         {KIND_LABELS[d.kind]}
@@ -79,9 +79,9 @@ function SemanticNode({ data }: NodeProps) {
         {d.label}
       </p>
       {d.subtitle ? (
-        <p className="mt-0.5 truncate text-[10px] text-white/40">{d.subtitle}</p>
+        <p className="mt-0.5 truncate text-[10px] text-muted-foreground">{d.subtitle}</p>
       ) : null}
-      <Handle type="source" position={Position.Bottom} className="!bg-white/30" />
+      <Handle type="source" position={Position.Bottom} className="!bg-muted/40" />
     </div>
   );
 }
@@ -246,15 +246,15 @@ export function CastilloSemanticMap() {
 
   return (
     <div className="castillo-semantic-map relative flex h-full flex-col">
-      <div className="flex shrink-0 flex-wrap items-center gap-2 border-b border-white/10 bg-black/30 px-3 py-2">
+      <div className="flex shrink-0 flex-wrap items-center gap-2 border-b border-border bg-muted/40 px-3 py-2">
         <div className="relative min-w-[180px] flex-1">
-          <SearchIcon className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-white/35" />
+          <SearchIcon className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
           <input
             type="search"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Buscador semántico…"
-            className="w-full rounded-lg border border-white/10 bg-black/40 py-1.5 pl-8 pr-3 text-xs text-white outline-none placeholder:text-white/30 focus:border-amber-500/40"
+            className="w-full rounded-lg border border-border bg-card/80 py-1.5 pl-8 pr-3 text-xs text-foreground outline-none placeholder:text-muted-foreground focus:border-accent/40"
           />
         </div>
         <div className="flex flex-wrap gap-1">
@@ -273,8 +273,8 @@ export function CastilloSemanticMap() {
               className={cn(
                 "rounded-full px-2.5 py-1 font-mono text-[10px] uppercase tracking-wider transition-colors",
                 filter === value
-                  ? "bg-amber-500/20 text-amber-100"
-                  : "text-white/40 hover:bg-white/5 hover:text-white/70",
+                  ? "bg-accent/20 text-accent"
+                  : "text-muted-foreground hover:bg-muted/50 hover:text-muted-foreground",
               )}
             >
               {label}
@@ -285,17 +285,17 @@ export function CastilloSemanticMap() {
 
       <div className="relative min-h-0 flex-1">
         {isLoading ? (
-          <div className="flex h-full items-center justify-center gap-2 text-sm text-white/50">
+          <div className="flex h-full items-center justify-center gap-2 text-sm text-muted-foreground">
             <Loader2Icon className="size-4 animate-spin" />
             Trazando el cosmos personal…
           </div>
         ) : error ? (
-          <div className="flex h-full flex-col items-center justify-center gap-2 text-sm text-rose-200">
+          <div className="flex h-full flex-col items-center justify-center gap-2 text-sm text-destructive">
             <p>{error}</p>
             <button
               type="button"
               onClick={() => void load()}
-              className="rounded-lg border border-white/10 px-3 py-1.5 text-xs text-white/70 hover:bg-white/5"
+              className="rounded-lg border border-border px-3 py-1.5 text-xs text-muted-foreground hover:bg-muted/50"
             >
               Reintentar
             </button>
@@ -315,26 +315,26 @@ export function CastilloSemanticMap() {
             className="!bg-transparent"
           >
             <Background color="rgba(255,255,255,0.06)" gap={22} size={1} />
-            <Controls className="!border-white/10 !bg-black/60 !shadow-none [&>button]:!border-white/10 [&>button]:!bg-black/40 [&>button]:!text-white/70" />
+            <Controls className="!border-border !bg-foreground/40 !shadow-none [&>button]:!border-border [&>button]:!bg-card/80 [&>button]:!text-muted-foreground" />
           </ReactFlow>
         )}
 
         {selected ? (
-          <div className="absolute bottom-4 left-4 right-4 z-10 max-w-sm rounded-xl border border-white/10 bg-black/80 p-3 backdrop-blur-md sm:right-auto">
-            <p className="font-mono text-[10px] uppercase tracking-wider text-amber-200/70">
+          <div className="absolute bottom-4 left-4 right-4 z-10 max-w-sm rounded-xl border border-border bg-foreground/40 p-3 backdrop-blur-md sm:right-auto">
+            <p className="font-mono text-[10px] uppercase tracking-wider text-accent">
               {KIND_LABELS[selected.kind]}
             </p>
-            <p className="mt-1 text-sm font-semibold text-white">{selected.label}</p>
+            <p className="mt-1 text-sm font-semibold text-foreground">{selected.label}</p>
             {selected.subtitle ? (
-              <p className="text-xs text-white/45">{selected.subtitle}</p>
+              <p className="text-xs text-muted-foreground">{selected.subtitle}</p>
             ) : null}
-            <p className="mt-1 text-[11px] text-white/35">
+            <p className="mt-1 text-[11px] text-muted-foreground">
               Grado · {selected.degree}
             </p>
             {selected.deepLink ? (
               <Link
                 href={selected.deepLink}
-                className="mt-2 inline-flex items-center gap-1.5 rounded-lg border border-amber-500/30 bg-amber-500/10 px-2.5 py-1 text-[11px] text-amber-100 hover:bg-amber-500/20"
+                className="mt-2 inline-flex items-center gap-1.5 rounded-lg border border-accent/30 bg-accent/10 px-2.5 py-1 text-[11px] text-accent hover:bg-accent/20"
               >
                 <NetworkIcon className="size-3" />
                 Abrir

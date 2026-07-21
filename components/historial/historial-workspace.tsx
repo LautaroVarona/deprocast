@@ -120,17 +120,17 @@ export function HistorialWorkspace() {
   };
 
   return (
-    <div className="min-h-full bg-slate-950 text-zinc-100">
-      <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-cyan-950/20 via-slate-950 to-slate-950" />
+    <div className="min-h-full bg-background text-foreground">
+      <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary/20 via-background to-background" />
 
       <div className="relative mx-auto flex w-full max-w-4xl flex-col gap-8 px-4 py-10 sm:px-6">
-        <header className="space-y-4 border-b border-zinc-800/80 pb-8">
+        <header className="space-y-4 border-b border-border pb-8">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-cyan-500/30 bg-cyan-500/10 px-3 py-1 text-xs font-medium text-cyan-300">
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
               <HistoryIcon className="size-3.5" />
               Registro de actividad
             </span>
-            <span className="text-xs text-zinc-500">
+            <span className="text-xs text-muted-foreground">
               {totalEntries} evento{totalEntries === 1 ? "" : "s"} · últimos{" "}
               {DAYS_WINDOW} días
             </span>
@@ -138,10 +138,10 @@ export function HistorialWorkspace() {
 
           <div className="space-y-4">
             <div>
-              <h1 className="text-3xl font-semibold tracking-tight text-zinc-50">
+              <h1 className="text-3xl font-semibold tracking-tight text-foreground">
                 Historial
               </h1>
-              <p className="mt-2 max-w-2xl text-sm text-zinc-500">
+              <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
                 Log unificado de ingesta, audio, purificación, validación, chat,
                 cuadernos, molecular, KG, vibe, enciclopedia y respaldo — con
                 atribución de agente e IA por intervención. Exportable para
@@ -176,7 +176,7 @@ export function HistorialWorkspace() {
               type="button"
               variant="ghost"
               size="icon"
-              className="size-8 text-zinc-400"
+              className="size-8 text-muted-foreground"
               onClick={() => shiftDay(-1)}
               aria-label="Día anterior"
             >
@@ -187,8 +187,8 @@ export function HistorialWorkspace() {
               variant="outline"
               size="sm"
               className={cn(
-                "border-zinc-700 font-mono text-xs",
-                !selectedDay && "border-cyan-500/40 text-cyan-300",
+                "border-border font-mono text-xs",
+                !selectedDay && "border-primary/40 text-primary",
               )}
               onClick={() => setSelectedDay(null)}
             >
@@ -198,14 +198,14 @@ export function HistorialWorkspace() {
               type="button"
               variant="ghost"
               size="icon"
-              className="size-8 text-zinc-400"
+              className="size-8 text-muted-foreground"
               onClick={() => shiftDay(1)}
               aria-label="Día siguiente"
             >
               <ChevronRightIcon className="size-4" />
             </Button>
             {selectedDay ? (
-              <span className="font-mono text-xs text-zinc-500">{selectedDay}</span>
+              <span className="font-mono text-xs text-muted-foreground">{selectedDay}</span>
             ) : null}
           </div>
 
@@ -216,8 +216,8 @@ export function HistorialWorkspace() {
               className={cn(
                 "rounded-full border px-2.5 py-1 font-mono text-[10px] uppercase tracking-wider transition",
                 category === "all"
-                  ? "border-cyan-500/40 bg-cyan-500/10 text-cyan-200"
-                  : "border-zinc-700 text-zinc-500 hover:border-zinc-600",
+                  ? "border-primary/40 bg-primary/10 text-primary"
+                  : "border-border text-muted-foreground hover:border-border",
               )}
             >
               Todos
@@ -230,8 +230,8 @@ export function HistorialWorkspace() {
                 className={cn(
                   "rounded-full border px-2.5 py-1 font-mono text-[10px] uppercase tracking-wider transition",
                   category === cat
-                    ? "border-cyan-500/40 bg-cyan-500/10 text-cyan-200"
-                    : "border-zinc-700 text-zinc-500 hover:border-zinc-600",
+                    ? "border-primary/40 bg-primary/10 text-primary"
+                    : "border-border text-muted-foreground hover:border-border",
                 )}
               >
                 {CATEGORY_LABELS[cat]}
@@ -241,7 +241,7 @@ export function HistorialWorkspace() {
 
           {agentOptions.length > 0 ? (
             <div className="flex flex-wrap items-center gap-2">
-              <span className="font-mono text-[10px] uppercase tracking-wider text-zinc-600">
+              <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
                 Agente
               </span>
               <button
@@ -250,8 +250,8 @@ export function HistorialWorkspace() {
                 className={cn(
                   "rounded-full border px-2.5 py-1 font-mono text-[10px] uppercase tracking-wider transition",
                   agentId === "all"
-                    ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-200"
-                    : "border-zinc-700 text-zinc-500 hover:border-zinc-600",
+                    ? "border-primary/40 bg-primary/10 text-primary"
+                    : "border-border text-muted-foreground hover:border-border",
                 )}
               >
                 Todos
@@ -264,8 +264,8 @@ export function HistorialWorkspace() {
                   className={cn(
                     "rounded-full border px-2.5 py-1 font-mono text-[10px] tracking-wider transition",
                     agentId === id
-                      ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-200"
-                      : "border-zinc-700 text-zinc-500 hover:border-zinc-600",
+                      ? "border-primary/40 bg-primary/10 text-primary"
+                      : "border-border text-muted-foreground hover:border-border",
                   )}
                 >
                   {name}
@@ -276,16 +276,16 @@ export function HistorialWorkspace() {
         </div>
 
         {isLoading ? (
-          <div className="flex items-center justify-center gap-2 py-16 text-zinc-500">
+          <div className="flex items-center justify-center gap-2 py-16 text-muted-foreground">
             <Loader2Icon className="size-5 animate-spin" />
             Cargando historial…
           </div>
         ) : error ? (
-          <p className="rounded-lg border border-rose-500/30 bg-rose-500/10 p-4 text-sm text-rose-300">
+          <p className="rounded-lg border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive">
             {error}
           </p>
         ) : groups.length === 0 ? (
-          <p className="py-16 text-center text-sm text-zinc-500">
+          <p className="py-16 text-center text-sm text-muted-foreground">
             No hay actividad registrada para este período.
           </p>
         ) : (

@@ -14,24 +14,24 @@ const PHASE_STYLES: Record<
   { dot: string; text: string; connector: string }
 > = {
   pending: {
-    dot: "border-white/15 bg-white/5",
-    text: "text-white/30",
-    connector: "bg-white/10",
+    dot: "border-border bg-muted/40",
+    text: "text-muted-foreground",
+    connector: "bg-muted/40",
   },
   active: {
-    dot: "border-sky-400/50 bg-sky-500/20",
-    text: "text-sky-200/90",
-    connector: "bg-sky-500/30",
+    dot: "border-primary/50 bg-primary/20",
+    text: "text-primary/90",
+    connector: "bg-primary/30",
   },
   done: {
-    dot: "border-emerald-500/35 bg-emerald-500/15",
-    text: "text-emerald-200/75",
-    connector: "bg-emerald-500/25",
+    dot: "border-primary/35 bg-primary/15",
+    text: "text-primary/75",
+    connector: "bg-primary/25",
   },
   attention: {
-    dot: "border-amber-500/40 bg-amber-500/12",
-    text: "text-amber-200/85",
-    connector: "bg-amber-500/25",
+    dot: "border-accent/40 bg-accent/12",
+    text: "text-accent/85",
+    connector: "bg-accent/25",
   },
 };
 
@@ -69,19 +69,19 @@ export function MetabolismPhaseStrip({
                 )}
               >
                 {state === "active" ? (
-                  <Loader2Icon className="size-2.5 animate-spin text-sky-300" />
+                  <Loader2Icon className="size-2.5 animate-spin text-primary" />
                 ) : state === "done" ? (
-                  <CheckIcon className="size-2.5 text-emerald-300/90" />
+                  <CheckIcon className="size-2.5 text-primary/90" />
                 ) : state === "attention" ? (
-                  <AlertCircleIcon className="size-2.5 text-amber-300/90" />
+                  <AlertCircleIcon className="size-2.5 text-accent/90" />
                 ) : (
-                  <span className="size-1 rounded-full bg-white/20" />
+                  <span className="size-1 rounded-full bg-muted/40" />
                 )}
               </span>
               {!compact ? (
                 <span
                   className={cn(
-                    "font-mono text-[9px] uppercase tracking-wide",
+                    "font-mono text-[10px] uppercase tracking-wide",
                     styles.text,
                   )}
                 >

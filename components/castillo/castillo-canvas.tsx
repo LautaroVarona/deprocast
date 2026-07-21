@@ -74,13 +74,13 @@ export function CastilloCanvas() {
   return (
     <div ref={containerRef} className="castillo-dot-grid h-full overflow-auto p-4">
       {isLoading ? (
-        <p className="text-sm text-white/40">Cargando canvas…</p>
+        <p className="text-sm text-muted-foreground">Cargando canvas…</p>
       ) : cards.length === 0 ? (
         <div className="flex h-full min-h-[420px] flex-col items-center justify-center gap-3 px-6 text-center">
-          <p className="max-w-md text-lg font-medium text-white/80">
+          <p className="max-w-md text-lg font-medium text-muted-foreground">
             A futuristic canvas for your personal development
           </p>
-          <p className="max-w-lg text-sm leading-relaxed text-white/45">
+          <p className="max-w-lg text-sm leading-relaxed text-muted-foreground">
             Un lienzo en blanco. Sin preconceptos, solo espacio para que tus
             ideas tomen forma. Arrastrá ítems desde el catálogo lateral.
           </p>
@@ -104,7 +104,7 @@ export function CastilloCanvas() {
         >
           {cards.map((card) => (
             <div key={card.id} className="castillo-grid-item">
-              <div className="castillo-card-drag-handle h-2 cursor-grab rounded-t-xl bg-white/5 active:cursor-grabbing" />
+              <div className="castillo-card-drag-handle h-2 cursor-grab rounded-t-xl bg-muted/40 active:cursor-grabbing" />
               <CastilloCardSurface card={card} />
             </div>
           ))}

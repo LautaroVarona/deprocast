@@ -123,7 +123,7 @@ export function TablesModule() {
   return (
     <section aria-label="Transmutación de tablas" className="space-y-3">
       <div className="flex flex-wrap items-center gap-2">
-        <span className="flex size-8 items-center justify-center rounded-lg bg-orange-500/15 text-orange-600 dark:text-orange-400">
+        <span className="flex size-8 items-center justify-center rounded-lg bg-accent/15 text-accent dark:text-accent">
           <TableIcon className="size-4" aria-hidden />
         </span>
         <div className="min-w-0 flex-1">
@@ -166,7 +166,7 @@ export function TablesModule() {
       <Card
         className={cn(
           "border-dashed transition-colors",
-          isDragging && "border-orange-500 bg-orange-500/5",
+          isDragging && "border-accent/40 bg-accent/5",
         )}
         onDragOver={(event) => {
           event.preventDefault();
@@ -180,8 +180,8 @@ export function TablesModule() {
         }}
       >
         <CardContent className="flex flex-col items-center gap-4 py-8 text-center">
-          <div className="flex size-14 items-center justify-center rounded-full bg-orange-500/10">
-            <UploadCloudIcon className="size-7 text-orange-600" />
+          <div className="flex size-14 items-center justify-center rounded-full bg-accent/10">
+            <UploadCloudIcon className="size-7 text-accent" />
           </div>
           <div className="space-y-1">
             <p className="text-base font-medium">
@@ -213,10 +213,10 @@ export function TablesModule() {
           {fileName && (
             <div className="flex w-full max-w-md items-center gap-2 rounded-md border px-3 py-2 text-left text-sm">
               {status === "uploading" && (
-                <Loader2Icon className="size-4 shrink-0 animate-spin text-orange-600" />
+                <Loader2Icon className="size-4 shrink-0 animate-spin text-accent" />
               )}
               {status === "done" && (
-                <CheckCircle2Icon className="size-4 shrink-0 text-emerald-600" />
+                <CheckCircle2Icon className="size-4 shrink-0 text-primary" />
               )}
               {status === "error" && (
                 <XCircleIcon className="size-4 shrink-0 text-destructive" />
@@ -232,8 +232,8 @@ export function TablesModule() {
           )}
 
           {lastResult && status === "done" && (
-            <div className="w-full max-w-md rounded-lg border border-emerald-500/30 bg-emerald-500/5 px-4 py-3 text-left text-sm">
-              <p className="font-medium text-emerald-800 dark:text-emerald-300">
+            <div className="w-full max-w-md rounded-lg border border-primary/30 bg-primary/5 px-4 py-3 text-left text-sm">
+              <p className="font-medium text-primary dark:text-primary">
                 {lastResult.imported} proyecto(s) estructurado(s) ·{" "}
                 {lastResult.totalRows} fila(s) detectada(s)
               </p>

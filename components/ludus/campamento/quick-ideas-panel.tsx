@@ -37,8 +37,8 @@ export function QuickIdeasPanel({ onCreated }: QuickIdeasPanelProps) {
   };
 
   return (
-    <div className="rounded-xl border border-white/10 bg-black/25 p-3">
-      <p className="mb-2 font-mono text-[10px] uppercase tracking-[0.14em] text-white/50">
+    <div className="rounded-xl border border-border bg-card/80 p-3">
+      <p className="mb-2 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
         Ideas rápidas
       </p>
       <div className="flex gap-2">
@@ -46,7 +46,7 @@ export function QuickIdeasPanel({ onCreated }: QuickIdeasPanelProps) {
           value={title}
           onChange={(event) => setTitle(event.target.value)}
           placeholder="Nueva tarea en transición..."
-          className="flex-1 rounded-md border border-white/10 bg-black/40 px-2 py-1.5 text-sm text-white outline-none"
+          className="flex-1 rounded-md border border-border bg-card/80 px-2 py-1.5 text-sm text-foreground outline-none"
         />
         <Button size="sm" onClick={() => void handleCreate()} disabled={isSubmitting}>
           Crear

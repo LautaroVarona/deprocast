@@ -76,8 +76,8 @@ export function HistorialExportMenu({
               title={option.description}
               className={cn(
                 buttonVariants({ variant: "outline", size: "xs" }),
-                "gap-1 border-zinc-700 bg-zinc-900/60 text-zinc-300",
-                option.accent && "border-emerald-700/50 text-emerald-200",
+                "gap-1 border-border bg-muted/40 text-foreground/80",
+                option.accent && "border-primary/50 text-primary",
               )}
             >
               <Icon className="size-3" />
@@ -106,26 +106,26 @@ export function HistorialExportMenu({
             className={cn(
               "group flex items-start gap-3 rounded-lg border p-3 transition",
               option.accent
-                ? "border-emerald-700/40 bg-emerald-950/20 hover:border-emerald-600/50"
-                : "border-zinc-700/80 bg-zinc-900/40 hover:border-zinc-600",
+                ? "border-primary/40 bg-primary/20 hover:border-primary/50"
+                : "border-border bg-muted/40 hover:border-border",
             )}
           >
             <span
               className={cn(
                 "flex size-8 shrink-0 items-center justify-center rounded-md border",
                 option.accent
-                  ? "border-emerald-600/30 bg-emerald-500/10 text-emerald-300"
-                  : "border-zinc-700 bg-zinc-950 text-zinc-400",
+                  ? "border-primary/30 bg-primary/10 text-primary"
+                  : "border-border bg-background text-muted-foreground",
               )}
             >
               <Icon className="size-4" />
             </span>
             <span className="min-w-0 flex-1">
-              <span className="flex items-center gap-1.5 text-sm font-medium text-zinc-100">
+              <span className="flex items-center gap-1.5 text-sm font-medium text-foreground">
                 <DownloadIcon className="size-3.5 opacity-60" />
                 {option.label}
               </span>
-              <span className="mt-0.5 block text-xs text-zinc-500">
+              <span className="mt-0.5 block text-xs text-muted-foreground">
                 {option.description}
               </span>
             </span>

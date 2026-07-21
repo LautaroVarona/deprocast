@@ -123,8 +123,8 @@ function DensityLevelTabs({
             className={cn(
               "rounded px-2 py-1 font-mono transition-colors",
               isActive
-                ? "bg-primary text-[9px] text-primary-foreground"
-                : "text-[9px] text-muted-foreground hover:bg-muted/60",
+                ? "bg-primary text-[10px] text-primary-foreground"
+                : "text-[10px] text-muted-foreground hover:bg-muted/60",
             )}
             title={option.hint}
           >

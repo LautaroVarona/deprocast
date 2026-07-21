@@ -33,7 +33,7 @@ export function Sheet({ open, onOpenChange, children, className }: SheetProps) {
       <button
         type="button"
         aria-label="Cerrar panel"
-        className="absolute inset-0 bg-black/40 backdrop-blur-[1px] dark:bg-black/60"
+        className="absolute inset-0 bg-foreground/40 backdrop-blur-[1px]"
         onClick={() => onOpenChange(false)}
       />
       <div

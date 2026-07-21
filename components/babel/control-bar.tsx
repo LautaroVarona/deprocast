@@ -16,7 +16,7 @@ export function ControlBar({ area = "default" }: ControlBarProps) {
     <header className="shrink-0 border-b border-border">
       {area === "campamento" ? (
         <div className="border-b border-border/60 px-3 py-1.5">
-          <p className="font-mono text-[9px] uppercase tracking-[0.22em] text-emerald-600 dark:text-emerald-400/70">
+          <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-emerald-600 dark:text-emerald-400/70">
             Campamento · Beta meso
           </p>
         </div>

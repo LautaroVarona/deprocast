@@ -11,13 +11,13 @@ export function TacticalHud() {
 
       <div className="relative z-10 mx-auto flex h-full w-full max-w-5xl flex-col gap-5 overflow-y-auto px-4 py-6 md:px-6">
         <header className="shrink-0">
-          <p className="font-mono text-[10px] tracking-[0.32em] text-amber-500/70 uppercase">
+          <p className="font-mono text-[10px] tracking-[0.32em] text-accent uppercase">
             Deprocast OS · Legio Victrix
           </p>
           <h1 className="mt-1 text-2xl font-semibold tracking-tight text-foreground md:text-3xl">
             HUD Táctico
           </h1>
-          <p className="mt-1 max-w-xl text-sm text-white/45">
+          <p className="mt-1 max-w-xl text-sm text-muted-foreground">
             Inyectá materia, vigilá el Atanor y bajá a la trinchera sin fricción.
           </p>
         </header>

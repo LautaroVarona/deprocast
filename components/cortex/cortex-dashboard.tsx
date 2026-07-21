@@ -119,7 +119,7 @@ export function CortexDashboard() {
             href="/ludus"
             className={cn(
               buttonVariants({ variant: "outline", size: "lg" }),
-              "gap-2 rounded-full border-amber-500/30 bg-amber-500/5 text-amber-800 shadow-sm hover:bg-amber-500/10 dark:text-amber-200",
+              "gap-2 rounded-full border-accent/30 bg-accent/5 text-accent shadow-sm hover:bg-accent/10 dark:text-accent",
             )}
           >
             <Gamepad2Icon className="size-4" />

@@ -19,8 +19,8 @@ export function MagoLensBar({ activeId }: MagoLensBarProps) {
           className={cn(
             "rounded-md border px-2.5 py-1.5 font-mono text-[10px] uppercase tracking-wider transition-colors",
             activeId === lens.id
-              ? "border-amber-500/40 bg-amber-500/15 text-amber-100"
-              : "border-white/10 text-white/40 hover:border-white/20 hover:text-white/70",
+              ? "border-accent/40 bg-accent/15 text-accent"
+              : "border-border text-muted-foreground hover:border-border hover:text-muted-foreground",
           )}
         >
           {lens.label}

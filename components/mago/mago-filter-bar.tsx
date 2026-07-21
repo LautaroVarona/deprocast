@@ -13,7 +13,7 @@ type MagoFilterBarProps = {
 
 export function MagoFilterBar({ value, onChange }: MagoFilterBarProps) {
   return (
-    <div className="flex flex-wrap items-center gap-0.5 rounded-lg border border-white/10 bg-black/30 p-0.5">
+    <div className="flex flex-wrap items-center gap-0.5 rounded-lg border border-border bg-muted/40 p-0.5">
       {FILTERS.map((filter) => (
         <button
           key={filter}
@@ -22,8 +22,8 @@ export function MagoFilterBar({ value, onChange }: MagoFilterBarProps) {
           className={cn(
             "rounded-md px-2.5 py-1.5 font-mono text-[10px] uppercase tracking-wider transition-colors",
             value === filter
-              ? "bg-amber-500/20 text-amber-100"
-              : "text-white/40 hover:text-white/70",
+              ? "bg-accent/20 text-accent"
+              : "text-muted-foreground hover:text-muted-foreground",
           )}
         >
           {MAGO_FILTER_LABELS[filter]}

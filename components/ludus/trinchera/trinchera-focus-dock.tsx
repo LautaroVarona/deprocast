@@ -10,8 +10,8 @@ type TrincheraFocusDockProps = {
 
 export function TrincheraFocusDock({ snapshot }: TrincheraFocusDockProps) {
   return (
-    <aside className="flex min-h-0 w-full flex-col overflow-hidden bg-[#050506] lg:w-[36%]">
-      <div className="min-h-[45%] border-b border-white/[0.06]">
+    <aside className="flex min-h-0 w-full flex-col overflow-hidden bg-background lg:w-[36%]">
+      <div className="min-h-[45%] border-b border-border/[0.06]">
         <LaboratorioSonoro snapshot={snapshot} variant="compact" className="h-full min-h-0" />
       </div>
       <div className="min-h-0 flex-1">

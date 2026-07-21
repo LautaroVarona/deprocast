@@ -36,24 +36,24 @@ function DayColumn({
 }) {
   const panelClass =
     skin === "noir"
-      ? "calendario-noir-panel border-white/8"
-      : "border-white/10 bg-black/25";
+      ? "calendario-noir-panel border-border"
+      : "border-border bg-card/80";
 
   return (
     <section
       className={cn(
         "flex min-h-0 flex-1 flex-col rounded-xl border p-3",
         panelClass,
-        emphasis === "focus" && "ring-1 ring-cyan-400/40",
+        emphasis === "focus" && "ring-1 ring-primary/40",
         emphasis === "muted" && "opacity-80",
       )}
     >
-      <h3 className="mb-3 font-mono text-[10px] uppercase tracking-[0.2em] text-zinc-400">
+      <h3 className="mb-3 font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
         {label}
       </h3>
       <div className="min-h-0 flex-1 space-y-2 overflow-y-auto">
         {blocks.length === 0 ? (
-          <p className="text-xs text-zinc-500">Sin bloques</p>
+          <p className="text-xs text-muted-foreground">Sin bloques</p>
         ) : (
           blocks.map((block) => (
             <div key={`${block.kind}-${block.id}`} className="space-y-1">
@@ -68,14 +68,14 @@ function DayColumn({
                   <button
                     type="button"
                     onClick={() => onConfirmRoutine?.(block)}
-                    className="rounded border border-emerald-500/30 px-2 py-0.5 font-mono text-[9px] uppercase text-emerald-300 hover:bg-emerald-500/10"
+                    className="rounded border border-primary/30 px-2 py-0.5 font-mono text-[10px] uppercase text-primary hover:bg-primary/10"
                   >
                     Confirmar
                   </button>
                   <button
                     type="button"
                     onClick={() => onSkipRoutine?.(block)}
-                    className="rounded border border-zinc-600/40 px-2 py-0.5 font-mono text-[9px] uppercase text-zinc-400 hover:bg-zinc-800/50"
+                    className="rounded border border-border px-2 py-0.5 font-mono text-[10px] uppercase text-muted-foreground hover:bg-muted/50"
                   >
                     Saltear
                   </button>

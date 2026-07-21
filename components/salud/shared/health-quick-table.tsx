@@ -41,7 +41,7 @@ export function HealthQuickTable({
                 onFoodRowsChange(next);
               }}
               placeholder="Alimento"
-              className="rounded-md border border-zinc-800 bg-zinc-900/60 px-2 py-1 text-xs text-zinc-100"
+              className="rounded-md border border-border bg-muted/40 px-2 py-1 text-xs text-foreground"
             />
             <input
               value={row.quantity ?? ""}
@@ -51,7 +51,7 @@ export function HealthQuickTable({
                 onFoodRowsChange(next);
               }}
               placeholder="Cantidad"
-              className="rounded-md border border-zinc-800 bg-zinc-900/60 px-2 py-1 text-xs text-zinc-100"
+              className="rounded-md border border-border bg-muted/40 px-2 py-1 text-xs text-foreground"
             />
             <input
               value={row.grams ?? ""}
@@ -64,7 +64,7 @@ export function HealthQuickTable({
                 onFoodRowsChange(next);
               }}
               placeholder="g"
-              className="rounded-md border border-zinc-800 bg-zinc-900/60 px-2 py-1 text-xs text-zinc-100"
+              className="rounded-md border border-border bg-muted/40 px-2 py-1 text-xs text-foreground"
             />
           </div>
         ))}
@@ -84,7 +84,7 @@ export function HealthQuickTable({
               onTrainingRowsChange(next);
             }}
             placeholder="Ejercicio"
-            className="rounded-md border border-zinc-800 bg-zinc-900/60 px-2 py-1 text-xs text-zinc-100"
+            className="rounded-md border border-border bg-muted/40 px-2 py-1 text-xs text-foreground"
           />
           <input
             value={row.series ?? ""}
@@ -97,7 +97,7 @@ export function HealthQuickTable({
               onTrainingRowsChange(next);
             }}
             placeholder="Series"
-            className="rounded-md border border-zinc-800 bg-zinc-900/60 px-2 py-1 text-xs text-zinc-100"
+            className="rounded-md border border-border bg-muted/40 px-2 py-1 text-xs text-foreground"
           />
           <input
             value={row.reps ?? ""}
@@ -110,7 +110,7 @@ export function HealthQuickTable({
               onTrainingRowsChange(next);
             }}
             placeholder="Reps"
-            className="rounded-md border border-zinc-800 bg-zinc-900/60 px-2 py-1 text-xs text-zinc-100"
+            className="rounded-md border border-border bg-muted/40 px-2 py-1 text-xs text-foreground"
           />
           <input
             value={row.weightKg ?? ""}
@@ -123,7 +123,7 @@ export function HealthQuickTable({
               onTrainingRowsChange(next);
             }}
             placeholder="Kg"
-            className="rounded-md border border-zinc-800 bg-zinc-900/60 px-2 py-1 text-xs text-zinc-100"
+            className="rounded-md border border-border bg-muted/40 px-2 py-1 text-xs text-foreground"
           />
         </div>
       ))}
