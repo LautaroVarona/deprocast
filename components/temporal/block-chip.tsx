@@ -41,6 +41,9 @@ const KIND_STYLES = {
   },
 } as const;
 
+type SkinStyleMap = (typeof KIND_STYLES)[TemporalSkin];
+type SkinClassName = SkinStyleMap[keyof SkinStyleMap];
+
 function resolveBlockKind(block: TemporalBlock) {
   if (block.kind === "task") return null;
   return block.blockKind ?? "ROUTINE";
@@ -61,7 +64,8 @@ export function BlockChip({
     coagulated || block.executionStatus === "coagulated";
   const isSkipped = block.executionStatus === "skipped";
 
-  let className = block.kind === "task" ? styles.task : styles.default;
+  let className: SkinClassName =
+    block.kind === "task" ? styles.task : styles.default;
   if (blockKind && blockKind in styles) {
     className = styles[blockKind as keyof typeof styles];
   }
