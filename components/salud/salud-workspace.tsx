@@ -45,7 +45,17 @@ function buildManualDraft(input: {
   trainingRows: TrainingRow[];
 }): HealthDraft | null {
   if (input.activeTab === "alimentacion") {
-    const items =
+    type ManualNutritionItem = {
+      name: string;
+      quantity?: string;
+      grams?: number;
+      calories?: number;
+      protein?: number;
+      carbs?: number;
+      fat?: number;
+    };
+
+    const items: ManualNutritionItem[] =
       input.ingestMode === "tabla"
         ? input.foodRows
             .filter((row) => row.name.trim())
