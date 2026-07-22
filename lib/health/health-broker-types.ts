@@ -1,5 +1,13 @@
 import { z } from "zod";
 
+/** Coerce null/empty/invalid intensity → "media" (LLM often returns null). */
+export const healthIntensitySchema = z.preprocess((value) => {
+  if (value === "baja" || value === "media" || value === "alta") return value;
+  return "media";
+}, z.enum(["baja", "media", "alta"]));
+
+export type HealthIntensity = z.infer<typeof healthIntensitySchema>;
+
 export const healthDraftSchema = z.object({
   domain: z.enum(["alimentacion", "entrenamiento"]),
   summary: z.string().min(1),
@@ -34,7 +42,7 @@ export const healthDraftSchema = z.object({
   training: z
     .object({
       durationMin: z.number().optional(),
-      intensity: z.enum(["baja", "media", "alta"]).optional(),
+      intensity: healthIntensitySchema,
       sets: z
         .array(
           z.object({

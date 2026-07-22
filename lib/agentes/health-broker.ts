@@ -62,7 +62,10 @@ function fallbackDraft(raw: string): HealthDraft {
     domain: "entrenamiento",
     summary: raw.slice(0, 120) || "Entrenamiento registrado",
     confidence: 0.35,
-    training: { sets: [{ exercise: "Actividad registrada" }] },
+    training: {
+      intensity: "media",
+      sets: [{ exercise: "Actividad registrada" }],
+    },
   };
 }
 

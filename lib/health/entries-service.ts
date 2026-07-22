@@ -154,7 +154,7 @@ export async function persistHealthDraft(input: {
 
   const sets = input.draft.training?.sets ?? [];
   const summary = input.draft.summary.trim() || "Entrenamiento registrado";
-  const intensity = input.draft.training?.intensity ?? null;
+  const intensity = input.draft.training?.intensity ?? "media";
   const durationMin = input.draft.training?.durationMin ?? null;
   const totalVolumeKg = sumVolume(sets);
 

@@ -46,11 +46,18 @@ export type EventLinkEntityType = (typeof EVENT_LINK_ENTITY_TYPES)[number];
 export const EVENT_LINK_ROLES = ["primary", "affected_by", "related"] as const;
 export type EventLinkRole = (typeof EVENT_LINK_ROLES)[number];
 
+/** Coerce null/empty/invalid intensity → "media". */
+const healthIntensityMetricSchema = z.preprocess((value) => {
+  if (value === null || value === undefined || value === "") return undefined;
+  if (value === "baja" || value === "media" || value === "alta") return value;
+  return "media";
+}, z.enum(["baja", "media", "alta"]).optional());
+
 export const rendimientoMetricsSchema = z.object({
   blockType: z.string().optional(),
   zone: z.string().optional(),
   durationMin: z.number().optional(),
-  intensity: z.enum(["baja", "media", "alta"]).optional(),
+  intensity: healthIntensityMetricSchema,
   metricType: z.enum(["duration_min", "distance_km", "intensity"]).optional(),
   metricValue: z.number().optional(),
 });
@@ -60,7 +67,9 @@ export const combustibleMetricsSchema = z.object({
   value: z.union([z.number(), z.string()]).optional(),
   unit: z.string().optional(),
   note: z.string().optional(),
-  modality: z.enum(["texto", "audio", "imagen"]).optional(),
+  modality: z
+    .enum(["texto", "audio", "imagen", "text", "table", "image"])
+    .optional(),
   items: z
     .array(
       z.object({
