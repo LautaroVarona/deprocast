@@ -1,8 +1,11 @@
 import { z } from "zod";
 
-export const OPERATOR_PROFILE_ID = "operator";
+export const YO_CORE_ID = "core";
+
+export const DEFAULT_EXOCORTEX_NAME = "Mastropiero";
 
 export const OPERATIONAL_STATUSES = [
+  "STANDBY",
   "OPERATIVO",
   "EN_FOCO",
   "REPOSO",
@@ -10,6 +13,9 @@ export const OPERATIONAL_STATUSES = [
 ] as const;
 
 export type OperationalStatus = (typeof OPERATIONAL_STATUSES)[number];
+
+export const EXOCORTEX_NAMED_BY = ["operator", "autonomous"] as const;
+export type ExocortexNamedBy = (typeof EXOCORTEX_NAMED_BY)[number];
 
 export const CALIBRATION_PROMPTS = [
   {
@@ -36,17 +42,45 @@ export const CALIBRATION_PROMPTS = [
 
 export type CalibrationMap = Record<string, string>;
 
-export type OperatorProfileDto = {
+export type YoDto = {
   id: string;
-  displayName: string;
+  operatorName: string | null;
+  exocortexName: string | null;
+  exocortexNamedBy: ExocortexNamedBy | null;
   operationalStatus: string;
   energyLevel: number;
   calibration: CalibrationMap;
+  genesisCompleted: boolean;
+  genesisCompletedAt: string | null;
   updatedAt: string;
 };
 
-export const patchOperatorProfileSchema = z.object({
-  displayName: z.string().trim().min(1).max(80).optional(),
+export type YoConduitMessageDto = {
+  id: string;
+  role: "operator" | "exocortex" | "system";
+  content: string;
+  createdAt: string;
+};
+
+export const baptizeOperatorSchema = z.object({
+  operatorName: z.string().trim().min(1).max(80),
+});
+
+export const baptizeExocortexSchema = z.object({
+  exocortexName: z
+    .string()
+    .trim()
+    .max(80)
+    .optional()
+    .nullable()
+    .transform((value) => {
+      if (value == null) return null;
+      const trimmed = value.trim();
+      return trimmed.length > 0 ? trimmed : null;
+    }),
+});
+
+export const patchYoSchema = z.object({
   operationalStatus: z.enum(OPERATIONAL_STATUSES).optional(),
   energyLevel: z.number().int().min(1).max(12).optional(),
   calibrationEntry: z
@@ -57,6 +91,8 @@ export const patchOperatorProfileSchema = z.object({
     .optional(),
 });
 
-export type PatchOperatorProfileInput = z.infer<
-  typeof patchOperatorProfileSchema
->;
+export type PatchYoInput = z.infer<typeof patchYoSchema>;
+
+export const conduitMessageSchema = z.object({
+  content: z.string().trim().min(1).max(4000),
+});

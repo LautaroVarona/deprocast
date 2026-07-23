@@ -1,100 +1,94 @@
 "use client";
 
 import { ContinuousCalibrationForm } from "@/components/yo/continuous-calibration-form";
-import { OperatorProfile } from "@/components/yo/operator-profile";
-import type {
-  OperatorProfileDto,
-  OperationalStatus,
-} from "@/lib/yo/types";
+import { YoConduit } from "@/components/yo/yo-conduit";
+import { YoGenesisTerminal } from "@/components/yo/yo-genesis-terminal";
+import { YoStatusHud } from "@/components/yo/yo-status-hud";
+import { getYoAction, patchYoAction } from "@/app/yo/actions";
+import type { OperationalStatus, YoDto } from "@/lib/yo/types";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 
 export function YoCommandCenter() {
-  const [profile, setProfile] = useState<OperatorProfileDto | null>(null);
+  const [yo, setYo] = useState<YoDto | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
-  const loadProfile = useCallback(async () => {
+  const load = useCallback(async () => {
     setLoading(true);
-    try {
-      const response = await fetch("/api/yo", { cache: "no-store" });
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.error ?? "No se pudo cargar /yo.");
-      }
-      setProfile(data.profile as OperatorProfileDto);
-    } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : "Error al cargar el Nodo Cero.",
-      );
-    } finally {
+    const result = await getYoAction();
+    if (!result.ok) {
+      toast.error(result.error);
       setLoading(false);
+      return;
     }
+    setYo(result.data);
+    setLoading(false);
   }, []);
 
   useEffect(() => {
-    void loadProfile();
-  }, [loadProfile]);
+    void load();
+  }, [load]);
 
-  const patchProfile = useCallback(
-    async (body: Record<string, unknown>) => {
-      setSaving(true);
-      try {
-        const response = await fetch("/api/yo", {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(body),
-        });
-        const data = await response.json();
-        if (!response.ok) {
-          throw new Error(data.error ?? "No se pudo sincronizar.");
-        }
-        setProfile(data.profile as OperatorProfileDto);
-      } catch (error) {
-        toast.error(
-          error instanceof Error
-            ? error.message
-            : "Fallo de sincronización del operador.",
-        );
-      } finally {
-        setSaving(false);
-      }
-    },
-    [],
-  );
+  const patch = useCallback(async (body: Record<string, unknown>) => {
+    setSaving(true);
+    const result = await patchYoAction(body);
+    setSaving(false);
+    if (!result.ok) {
+      toast.error(result.error);
+      return;
+    }
+    setYo(result.data);
+  }, []);
 
-  if (loading || !profile) {
+  if (loading || !yo) {
     return (
       <div className="yo-noir-root flex items-center justify-center px-4 py-24">
         <p className="font-mono text-xs tracking-[0.28em] text-accent uppercase">
-          [ INICIALIZANDO NODO CERO… ]
+          [ INICIALIZANDO NODO YO… ]
         </p>
       </div>
     );
   }
 
+  if (!yo.genesisCompleted) {
+    return (
+      <YoGenesisTerminal
+        yo={yo}
+        onComplete={(next) => {
+          setYo(next);
+        }}
+      />
+    );
+  }
+
   return (
-    <div className="yo-noir-root px-4 py-8 md:px-8 md:py-10">
-      <div className="mx-auto flex w-full max-w-3xl flex-col gap-6">
-        <OperatorProfile
-          profile={profile}
+    <div className="yo-noir-root px-4 py-6 md:px-6 md:py-8">
+      <div className="mx-auto flex w-full max-w-5xl flex-col gap-5">
+        <YoStatusHud
+          yo={yo}
           saving={saving}
           onStatusChange={(status: OperationalStatus) => {
-            void patchProfile({ operationalStatus: status });
+            void patch({ operationalStatus: status });
           }}
           onEnergyChange={(level: number) => {
-            void patchProfile({ energyLevel: level });
+            void patch({ energyLevel: level });
           }}
         />
-        <ContinuousCalibrationForm
-          calibration={profile.calibration}
-          disabled={saving}
-          onSubmitAnswer={async (promptId, answer) => {
-            await patchProfile({
-              calibrationEntry: { promptId, answer },
-            });
-          }}
-        />
+
+        <div className="grid gap-5 lg:grid-cols-[1.15fr_0.85fr]">
+          <YoConduit yo={yo} />
+          <ContinuousCalibrationForm
+            yo={yo}
+            calibration={yo.calibration}
+            disabled={saving}
+            onSubmitAnswer={async (promptId, answer) => {
+              await patch({
+                calibrationEntry: { promptId, answer },
+              });
+            }}
+          />
+        </div>
       </div>
     </div>
   );

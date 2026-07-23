@@ -65,6 +65,77 @@ export function ensureCoreColumnPatches(): void {
         `CREATE INDEX IF NOT EXISTS "PurifierReview_pipelineStatus_processedAt_idx" ON "PurifierReview"("pipelineStatus", "processedAt");`,
       );
     }
+
+    if (!tableExists(db, "Yo")) {
+      db.exec(`
+        CREATE TABLE "Yo" (
+          "id" TEXT NOT NULL PRIMARY KEY,
+          "operatorName" TEXT,
+          "exocortexName" TEXT,
+          "exocortexNamedBy" TEXT,
+          "operationalStatus" TEXT NOT NULL DEFAULT 'STANDBY',
+          "energyLevel" INTEGER NOT NULL DEFAULT 5,
+          "calibration" JSONB NOT NULL DEFAULT '{}',
+          "genesisCompletedAt" DATETIME,
+          "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          "updatedAt" DATETIME NOT NULL
+        );
+      `);
+      db.exec(`
+        INSERT INTO "Yo" ("id", "operationalStatus", "energyLevel", "calibration", "createdAt", "updatedAt")
+        VALUES ('core', 'STANDBY', 5, '{}', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
+      `);
+    }
+
+    if (!tableExists(db, "YoConduitMessage")) {
+      db.exec(`
+        CREATE TABLE "YoConduitMessage" (
+          "id" TEXT NOT NULL PRIMARY KEY,
+          "yoId" TEXT NOT NULL DEFAULT 'core',
+          "role" TEXT NOT NULL,
+          "content" TEXT NOT NULL,
+          "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          CONSTRAINT "YoConduitMessage_yoId_fkey" FOREIGN KEY ("yoId") REFERENCES "Yo" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+        );
+      `);
+      db.exec(
+        `CREATE INDEX IF NOT EXISTS "YoConduitMessage_yoId_createdAt_idx" ON "YoConduitMessage"("yoId", "createdAt");`,
+      );
+    }
+
+    if (tableExists(db, "OperatorProfile") && tableExists(db, "Yo")) {
+      const hasCore = db
+        .prepare(`SELECT operatorName FROM "Yo" WHERE id = 'core'`)
+        .get() as { operatorName: string | null } | undefined;
+      if (hasCore && !hasCore.operatorName) {
+        const legacy = db
+          .prepare(
+            `SELECT displayName, operationalStatus, energyLevel, calibration FROM "OperatorProfile" WHERE id = 'operator'`,
+          )
+          .get() as
+          | {
+              displayName: string;
+              operationalStatus: string;
+              energyLevel: number;
+              calibration: string;
+            }
+          | undefined;
+        if (
+          legacy &&
+          legacy.displayName?.trim() &&
+          legacy.displayName.trim().toLowerCase() !== "lautaro"
+        ) {
+          db.prepare(
+            `UPDATE "Yo" SET operatorName = ?, operationalStatus = ?, energyLevel = ?, calibration = ?, genesisCompletedAt = CURRENT_TIMESTAMP, updatedAt = CURRENT_TIMESTAMP WHERE id = 'core'`,
+          ).run(
+            legacy.displayName.trim(),
+            legacy.operationalStatus || "OPERATIVO",
+            legacy.energyLevel ?? 5,
+            legacy.calibration || "{}",
+          );
+        }
+      }
+    }
   } finally {
     db.close();
   }

@@ -117,15 +117,34 @@ model KgNode {
   @@index([reconocido])
 }
 
-// Perfil singleton del Observador — Centro de Mando /yo
-model OperatorProfile {
-  id                String   @id @default("operator")
-  displayName       String   @default("Lautaro")
-  operationalStatus String   @default("OPERATIVO")
-  energyLevel       Int      @default(6)
-  calibration       Json
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+// Nodo gravitacional del sistema — identidad dual Operador + Exocórtex (/yo).
+// Todo el exoesqueleto orbita este singleton (directa o semánticamente vía YO_CORE_ID).
+model Yo {
+  id                 String    @id @default("core")
+  operatorName       String?
+  exocortexName      String?
+  exocortexNamedBy   String? // operator | autonomous
+  operationalStatus  String    @default("STANDBY")
+  energyLevel        Int       @default(5)
+  calibration        Json      @default("{}")
+  genesisCompletedAt DateTime?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  conduitMessages YoConduitMessage[]
+}
+
+// Conducto: canal sin filtros entre Operador y Exocórtex.
+model YoConduitMessage {
+  id        String   @id @default(uuid())
+  yoId      String   @default("core")
+  role      String // operator | exocortex | system
+  content   String
+  createdAt DateTime @default(now())
+
+  yo Yo @relation(fields: [yoId], references: [id], onDelete: Cascade)
+
+  @@index([yoId, createdAt])
 }
 
 model KgEdge {
@@ -931,6 +950,7 @@ model FinancialTransaction {
 }
 
 // Capital económico del operador (singleton id = "operator").
+// Capital financiero del Operador — anclado semánticamente al nodo Yo (id=core).
 model FinancialCapital {
   id        String   @id @default("operator")
   amount    Float    @default(0)

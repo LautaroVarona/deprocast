@@ -3,17 +3,20 @@
 import {
   CALIBRATION_PROMPTS,
   type CalibrationMap,
+  type YoDto,
 } from "@/lib/yo/types";
 import { cn } from "@/lib/utils";
 import { useMemo, useState } from "react";
 
 type ContinuousCalibrationFormProps = {
+  yo: YoDto;
   calibration: CalibrationMap;
   onSubmitAnswer: (promptId: string, answer: string) => Promise<void>;
   disabled?: boolean;
 };
 
 export function ContinuousCalibrationForm({
+  yo,
   calibration,
   onSubmitAnswer,
   disabled = false,
@@ -33,9 +36,11 @@ export function ContinuousCalibrationForm({
       ? unanswered[cycleIndex % unanswered.length]
       : CALIBRATION_PROMPTS[cycleIndex % CALIBRATION_PROMPTS.length];
 
-  const answeredCount = CALIBRATION_PROMPTS.filter(
-    (prompt) => Boolean(calibration[prompt.id]),
+  const answeredCount = CALIBRATION_PROMPTS.filter((prompt) =>
+    Boolean(calibration[prompt.id]),
   ).length;
+
+  const exocortex = yo.exocortexName ?? "Exocórtex";
 
   const handleSubmit = async () => {
     const trimmed = answer.trim();
@@ -54,18 +59,17 @@ export function ContinuousCalibrationForm({
   };
 
   return (
-    <section className="yo-noir-panel space-y-5 p-5 md:p-7">
+    <section className="yo-noir-panel space-y-5 p-5 md:p-6">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <p className="font-mono text-[10px] tracking-[0.28em] text-accent uppercase">
-            Calibración continua
+            Soporte vital · Telemetría
           </p>
           <h2 className="mt-2 font-mono text-xl text-accent">
             Alimentar soporte vital
           </h2>
           <p className="mt-1 font-mono text-xs text-muted-foreground">
-            Una pregunta a la vez. Cada respuesta refuerza la base del
-            Observador.
+            {exocortex} solicita una señal. Una pregunta a la vez.
           </p>
         </div>
         <span className="font-mono text-[10px] tracking-[0.18em] text-muted-foreground uppercase">
@@ -73,11 +77,12 @@ export function ContinuousCalibrationForm({
         </span>
       </div>
 
-      <div className="border border-accent/20 bg-card/80 p-4 md:p-5">
+      <div className="border border-accent/20 bg-black/30 p-4 md:p-5">
         <p className="font-mono text-[10px] tracking-[0.2em] text-accent uppercase">
-          Consulta del sistema
+          {exocortex} pregunta
         </p>
         <p className="mt-3 font-mono text-lg leading-snug text-accent md:text-xl">
+          <span className="text-muted-foreground">{exocortex}&gt; </span>
           {activePrompt?.question}
         </p>
 
@@ -98,7 +103,7 @@ export function ContinuousCalibrationForm({
               }
             }}
             disabled={disabled || submitting}
-            placeholder="Respuesta para el exoesqueleto…"
+            placeholder={`respuesta para ${exocortex}…`}
             className="min-h-11 flex-1 border border-accent/25 bg-transparent px-3 font-mono text-sm text-accent placeholder:text-muted-foreground outline-none focus:border-accent/55 disabled:opacity-50"
           />
           <button
@@ -116,7 +121,7 @@ export function ContinuousCalibrationForm({
 
         {flash ? (
           <p className="mt-3 font-mono text-[10px] tracking-[0.2em] text-chart-3 uppercase">
-            [ SEÑAL ABSORBIDA ]
+            [ SEÑAL ABSORBIDA POR {exocortex.toUpperCase()} ]
           </p>
         ) : null}
       </div>

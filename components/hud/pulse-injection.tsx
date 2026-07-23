@@ -250,7 +250,7 @@ export function PulseInjection() {
           }}
           rows={3}
           disabled={isSubmitting || isRecording}
-          placeholder="¿Qué llevas en la mente, Lautaro?"
+          placeholder="¿Qué llevas en la mente, Operador?"
           className="min-h-[5.5rem] flex-1 resize-none bg-transparent px-3 py-3 text-lg leading-snug text-foreground placeholder:text-muted-foreground outline-none disabled:opacity-50 md:text-xl"
         />
 

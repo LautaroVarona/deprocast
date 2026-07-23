@@ -14,7 +14,7 @@ import {
 } from "@/lib/journal/types";
 
 const BODY_HEADER = "### 📝 Transcripción / Cuerpo del Registro:";
-const DEFAULT_RESPONSABLE = "Lautaro";
+const DEFAULT_RESPONSABLE = "Operador";
 const DEFAULT_FIELD = "cognitive-exo-cortex";
 const DEFAULT_BASE_WEIGHT = 6;
 
