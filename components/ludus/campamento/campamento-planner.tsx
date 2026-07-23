@@ -7,7 +7,6 @@ import { CampamentoMonthView } from "@/components/ludus/campamento/campamento-mo
 import { CampamentoWeekGrid } from "@/components/ludus/campamento/campamento-week-grid";
 import { QuickIdeasPanel } from "@/components/ludus/campamento/quick-ideas-panel";
 import { Button } from "@/components/ui/button";
-import { GridBottomNavWithPlus } from "@/components/grid/grid-bottom-nav";
 import { useTemporalData } from "@/hooks/use-temporal-data";
 import { addDays, monthRange, weekRangeForDate } from "@/lib/temporal/ranges";
 import { cn } from "@/lib/utils";
@@ -234,8 +233,6 @@ export function CampamentoPlanner() {
           </div>
         )}
       </div>
-
-      <GridBottomNavWithPlus ludusMode />
     </div>
   );
 }

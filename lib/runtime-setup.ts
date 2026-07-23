@@ -172,6 +172,10 @@ export async function ensureRuntimeReady(): Promise<void> {
       await ensureRuntimeDirs();
       await ensureDatabase();
       await ensureLocalDatabaseSchema();
+      const { ensureCoreColumnPatchesRuntime } = await import(
+        "@/lib/ensure-core-columns"
+      );
+      await ensureCoreColumnPatchesRuntime();
       const { ensureMagoRuntime } = await import("@/lib/mago/ensure-schema");
       await ensureMagoRuntime();
       const { ensureFeedbackRuntime } = await import(
