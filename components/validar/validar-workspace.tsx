@@ -8,7 +8,7 @@ import { PurificationAuditStepper } from "@/components/validar/purification-audi
 
 import { ProjectLinkCombobox } from "@/components/validar/project-link-combobox";
 
-import { TagPillsInput } from "@/components/validar/tag-pills-input";
+import { StrictMetaTagsEditor } from "@/components/validar/strict-meta-tags-editor";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -30,9 +30,17 @@ import {
 
   normalizeMateria,
 
+  normalizeOnda,
+
   normalizeOrigen,
 
+  normalizePosicion,
+
+  ONDA_OPTIONS,
+
   ORIGEN_OPTIONS,
+
+  POSICION_OPTIONS,
 
   resolveIngestTimestamp,
 
@@ -42,6 +50,10 @@ import {
 
 import type { PurifierReviewRecord } from "@/lib/purifier/types";
 import { resolveReviewMetaTags } from "@/lib/purifier/meta-tags";
+import {
+  PIPELINE_STATUS_LABELS,
+  type PipelineStatus,
+} from "@/lib/purifier/pipeline-status";
 
 import { cn } from "@/lib/utils";
 
@@ -369,9 +381,9 @@ export function ValidarWorkspace() {
 
         materia: normalizeMateria(d.materia, channel),
 
-        posicion: d.posicion,
+        posicion: normalizePosicion(d.posicion),
 
-        onda: d.onda,
+        onda: normalizeOnda(d.onda),
 
         origen: normalizeOrigen(d.espacio, channel),
 
@@ -434,6 +446,37 @@ export function ValidarWorkspace() {
     }
 
   }, [selectedId, records, loadRecord, router]);
+
+  // Poll mientras la materia está en purificación / refresco de cola Aduana.
+  useEffect(() => {
+    if (isUniverseLoading) return;
+
+    const status = record?.pipelineStatus;
+    const purifying =
+      status === "pendiente_purificacion" || status === "prima_materia";
+
+    if (!purifying && !selectedId) {
+      const queueTimer = window.setInterval(() => {
+        void loadQueue();
+      }, 8000);
+      return () => window.clearInterval(queueTimer);
+    }
+
+    if (!purifying || !selectedId) return;
+
+    const timer = window.setInterval(() => {
+      void loadRecord(selectedId);
+      void loadQueue();
+    }, 3000);
+
+    return () => window.clearInterval(timer);
+  }, [
+    record?.pipelineStatus,
+    selectedId,
+    loadRecord,
+    loadQueue,
+    isUniverseLoading,
+  ]);
 
 
 
@@ -725,6 +768,27 @@ export function ValidarWorkspace() {
 
         </div>
 
+      ) : record.pipelineStatus === "pendiente_purificacion" ||
+        record.pipelineStatus === "prima_materia" ? (
+
+        <div className="flex flex-1 flex-col items-center justify-center gap-3 p-6 text-center">
+          <Loader2Icon className="size-6 animate-spin text-muted-foreground" />
+          <div className="space-y-1">
+            <p className="font-mono text-xs text-foreground">
+              {PIPELINE_STATUS_LABELS[record.pipelineStatus as PipelineStatus]}
+            </p>
+            <p className="max-w-sm font-mono text-[11px] text-muted-foreground">
+              La captura ya está en el pipeline. Cuando pase a pendiente de
+              validación se abrirá el editor de la Aduana.
+            </p>
+            {record.purificationError ? (
+              <p className="font-mono text-[11px] text-destructive">
+                {record.purificationError}
+              </p>
+            ) : null}
+          </div>
+        </div>
+
       ) : (
 
         <>
@@ -914,21 +978,25 @@ export function ValidarWorkspace() {
 
 
                 <Accordion className="rounded border border-border">
-                  <AccordionItem value="avanzado">
+                  <AccordionItem value="vectores-gravedad">
                     <AccordionTrigger className="px-2 py-1.5 font-mono text-[10px] tracking-wide text-muted-foreground uppercase hover:no-underline">
-                      Avanzado
+                      Vectores de Gravedad
                     </AccordionTrigger>
                     <AccordionContent className="px-2">
-                      <div className="grid grid-cols-2 gap-2">
-                        <TextField
-                          label="Onda"
+                      <div className="grid grid-cols-1 gap-2">
+                        <SelectField
+                          label="Onda · Energía"
                           value={dimensions.onda}
                           onChange={(value) =>
                             setDimensions((current) => ({ ...current, onda: value }))
                           }
+                          options={ONDA_OPTIONS}
                         />
-                        <TextField
-                          label="Posición"
+                        <p className="font-mono text-[9px] text-muted-foreground">
+                          Estado de energía requerido (ej. Foco Profundo, Trámite Rápido).
+                        </p>
+                        <SelectField
+                          label="Posición · Rol / Sombrero"
                           value={dimensions.posicion}
                           onChange={(value) =>
                             setDimensions((current) => ({
@@ -936,7 +1004,11 @@ export function ValidarWorkspace() {
                               posicion: value,
                             }))
                           }
+                          options={POSICION_OPTIONS}
                         />
+                        <p className="font-mono text-[9px] text-muted-foreground">
+                          Rol activo del Observador al trabajar esta materia.
+                        </p>
                       </div>
                     </AccordionContent>
                   </AccordionItem>
@@ -964,9 +1036,9 @@ export function ValidarWorkspace() {
 
                 <div className="space-y-1">
 
-                  <FieldLabel>Meta tags</FieldLabel>
+                  <FieldLabel>Meta tags · 6 estrictos</FieldLabel>
 
-                  <TagPillsInput tags={metaTags} onChange={setMetaTags} />
+                  <StrictMetaTagsEditor tags={metaTags} onChange={setMetaTags} />
 
                 </div>
 

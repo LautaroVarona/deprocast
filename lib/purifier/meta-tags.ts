@@ -1,25 +1,39 @@
+import {
+  arrayToStrictMetaTags,
+  normalizeStrictMetaTags,
+  parseStrictMetaTagsJson,
+  strictMetaTagsToArray,
+  type StrictMetaTags,
+} from "@/lib/purifier/meta-tags-taxonomy";
 import type { PurifierReviewRecord } from "@/lib/purifier/types";
 
 export function parseMetaTagsArray(raw: string | undefined): string[] {
   if (!raw?.trim()) return [];
 
   const trimmed = raw.trim();
+  if (trimmed.startsWith("{")) {
+    return strictMetaTagsToArray(parseStrictMetaTagsJson(trimmed));
+  }
+
   if (trimmed.startsWith("[")) {
     try {
       const parsed = JSON.parse(trimmed) as unknown;
       if (Array.isArray(parsed)) {
-        return parsed.map(String).filter(Boolean).slice(0, 30);
+        return strictMetaTagsToArray(normalizeStrictMetaTags(parsed));
       }
     } catch {
       // ignore
     }
   }
 
-  return trimmed
-    .split(",")
-    .map((item) => item.trim().replace(/^["']|["']$/g, ""))
-    .filter(Boolean)
-    .slice(0, 30);
+  return strictMetaTagsToArray(
+    arrayToStrictMetaTags(
+      trimmed
+        .split(",")
+        .map((item) => item.trim().replace(/^["']|["']$/g, ""))
+        .filter(Boolean),
+    ),
+  );
 }
 
 export function extractMetaTagsSecundariosFromMarkdown(markdown: string): string[] {
@@ -36,37 +50,33 @@ export function extractMetaTagsSecundariosFromMarkdown(markdown: string): string
   return [];
 }
 
-export function resolveReviewMetaTags(record: PurifierReviewRecord): string[] {
-  const tags = new Set<string>();
-
-  for (const tag of record.metaTagsSecundarios ?? []) {
-    if (tag.trim()) tags.add(tag.trim());
+export function resolveStrictMetaTags(
+  record: PurifierReviewRecord,
+): StrictMetaTags {
+  if (record.strictMetaTags) {
+    return normalizeStrictMetaTags(record.strictMetaTags);
   }
 
-  for (const tag of extractMetaTagsSecundariosFromMarkdown(
+  if (record.metaTagsSecundarios?.length) {
+    return normalizeStrictMetaTags(record.metaTagsSecundarios);
+  }
+
+  const fromMarkdown = extractMetaTagsSecundariosFromMarkdown(
     record.normalizedMarkdown ?? "",
-  )) {
-    tags.add(tag);
+  );
+  if (fromMarkdown.length) {
+    return normalizeStrictMetaTags(fromMarkdown);
   }
 
   const stage4 = record.stages?.find((stage) => stage.station === 4);
   if (stage4?.output) {
-    try {
-      const parsed = JSON.parse(stage4.output) as unknown;
-      if (Array.isArray(parsed)) {
-        for (const item of parsed) {
-          if (typeof item === "string" && item.trim()) tags.add(item.trim());
-        }
-      }
-    } catch {
-      // ignore
-    }
+    return parseStrictMetaTagsJson(stage4.output);
   }
 
-  for (const entity of record.kgExtraction?.entities ?? []) {
-    const name = entity.name?.trim();
-    if (name) tags.add(name);
-  }
+  return normalizeStrictMetaTags(null);
+}
 
-  return [...tags].slice(0, 30);
+/** Siempre exactamente 6 etiquetas en orden de taxonomía. */
+export function resolveReviewMetaTags(record: PurifierReviewRecord): string[] {
+  return strictMetaTagsToArray(resolveStrictMetaTags(record));
 }

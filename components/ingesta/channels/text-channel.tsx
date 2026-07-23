@@ -7,7 +7,10 @@ import {
 import { useBabel } from "@/components/babel/babel-context";
 import { useIngesta } from "@/components/ingesta/ingesta-context";
 import { Button } from "@/components/ui/button";
-import { CAPTURE_SUCCESS_TOAST } from "@/lib/purifier/constants";
+import {
+  CAPTURE_QUEUED_TOAST,
+  CAPTURE_SUCCESS_TOAST,
+} from "@/lib/purifier/constants";
 import { Loader2Icon, SparklesIcon } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -34,8 +37,11 @@ export function TextChannel() {
         { universeSlug: activeUniverse?.slug },
       );
 
-      toast.success(CAPTURE_SUCCESS_TOAST, {
-        description: "El sistema está estructurando el contenido.",
+      const queued = data.queued !== false;
+      toast.success(queued ? CAPTURE_QUEUED_TOAST : CAPTURE_SUCCESS_TOAST, {
+        description: queued
+          ? "Cuando termine la purificación aparecerá en la Aduana."
+          : "Lista para validar en la Aduana.",
         action: {
           label: "Validar →",
           onClick: () => {
@@ -68,7 +74,7 @@ export function TextChannel() {
         <p className="font-mono text-[10px] text-muted-foreground">
           {content.trim().length > 0
             ? `${content.trim().length.toLocaleString("es-AR")} caracteres`
-            : "Soltá o pegá prima materia · purificación automática"}
+            : "Soltá o pegá prima materia · cola de purificación"}
         </p>
         <Button
           type="button"
@@ -81,7 +87,7 @@ export function TextChannel() {
           ) : (
             <SparklesIcon />
           )}
-          {isSaving ? "Purificando…" : "Ingestar"}
+          {isSaving ? "Capturando…" : "Ingestar"}
         </Button>
       </div>
     </div>

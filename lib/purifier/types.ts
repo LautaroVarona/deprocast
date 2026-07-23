@@ -1,6 +1,8 @@
 import type { SourceType } from "@/lib/document-constants";
 import type { IngestResult, LlmKgExtraction } from "@/lib/kg/types";
 import type { CampoSlug } from "@/lib/projects/campos";
+import type { PipelineStatus } from "@/lib/purifier/pipeline-status";
+import type { StrictMetaTags } from "@/lib/purifier/meta-tags-taxonomy";
 
 export const DUDA_MARKER_REGEX = /==DUDA:\s*(.+?)==/gs;
 
@@ -49,8 +51,11 @@ export type PurifierStageSnapshot = {
 export type PurifierReviewRecord = {
   schemaVersion: "2";
   reviewId: string;
+  /** Estado canónico del pipeline de ingesta. */
+  pipelineStatus: PipelineStatus;
   particula: string;
   assetId?: string;
+  captureId?: string;
   gravity: Required<Pick<GravityInput, "campoSlug">> &
     GravityInput & {
       prioridad: number;
@@ -65,7 +70,10 @@ export type PurifierReviewRecord = {
   stages: PurifierStageSnapshot[];
   afterRegex: string;
   cleanedText: string;
+  /** Siempre exactamente 6 etiquetas en orden de taxonomía. */
   metaTagsSecundarios: string[];
+  /** Forma estructurada de las 6 etiquetas (fuente de verdad preferida). */
+  strictMetaTags?: StrictMetaTags;
   doubts: string[];
   suggestedDimensions: SevenDimensions & {
     title: string;
@@ -84,6 +92,7 @@ export type PurifierReviewRecord = {
   model: string;
   kgExtraction?: LlmKgExtraction;
   kgIngest?: IngestResult;
+  purificationError?: string;
 };
 
 export type PurifierInput = {

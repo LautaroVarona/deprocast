@@ -2,6 +2,12 @@ import "server-only";
 
 import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import {
+  ADUANA_QUEUE_STATUSES,
+  assertPipelineTransition,
+  normalizePipelineStatus,
+  type PipelineStatus,
+} from "@/lib/purifier/pipeline-status";
 import type { PurifierReviewRecord } from "@/lib/purifier/types";
 import { getRawDocumentsPath } from "@/lib/runtime-paths";
 import {
@@ -20,19 +26,32 @@ export type ReviewListItem = {
   title: string;
   processedAt: string;
   assetId?: string;
+  pipelineStatus: PipelineStatus;
 };
 
 function reviewFilename(reviewId: string): string {
   return `${reviewId}.json`;
 }
 
-function toListItem(record: PurifierReviewRecord): ReviewListItem {
+function withPipelineStatus(
+  record: PurifierReviewRecord,
+  fallback: PipelineStatus = "pendiente_validacion",
+): PurifierReviewRecord {
   return {
-    reviewId: record.reviewId,
-    filename: reviewFilename(record.reviewId),
-    title: record.suggestedDimensions?.title ?? record.particula,
-    processedAt: record.processedAt,
-    assetId: record.assetId,
+    ...record,
+    pipelineStatus: normalizePipelineStatus(record.pipelineStatus, fallback),
+  };
+}
+
+function toListItem(record: PurifierReviewRecord): ReviewListItem {
+  const normalized = withPipelineStatus(record);
+  return {
+    reviewId: normalized.reviewId,
+    filename: reviewFilename(normalized.reviewId),
+    title: normalized.suggestedDimensions?.title ?? normalized.particula,
+    processedAt: normalized.processedAt,
+    assetId: normalized.assetId,
+    pipelineStatus: normalized.pipelineStatus,
   };
 }
 
@@ -42,7 +61,7 @@ function parseReviewRecord(raw: string): PurifierReviewRecord | null {
     if (!parsed.reviewId || parsed.schemaVersion !== "2") {
       return null;
     }
-    return parsed;
+    return withPipelineStatus(parsed);
   } catch {
     return null;
   }
@@ -53,24 +72,27 @@ function toJsonPayload(record: PurifierReviewRecord): Prisma.InputJsonValue {
 }
 
 async function upsertReviewRecord(record: PurifierReviewRecord): Promise<void> {
-  const title = record.suggestedDimensions?.title ?? record.particula;
-  const payload = toJsonPayload(record);
+  const normalized = withPipelineStatus(record);
+  const title = normalized.suggestedDimensions?.title ?? normalized.particula;
+  const payload = toJsonPayload(normalized);
 
   await prisma.purifierReview.upsert({
-    where: { reviewId: record.reviewId },
+    where: { reviewId: normalized.reviewId },
     create: {
-      reviewId: record.reviewId,
-      particula: record.particula,
-      assetId: record.assetId ?? null,
+      reviewId: normalized.reviewId,
+      particula: normalized.particula,
+      assetId: normalized.assetId ?? null,
       title,
-      processedAt: new Date(record.processedAt),
+      pipelineStatus: normalized.pipelineStatus,
+      processedAt: new Date(normalized.processedAt),
       payload,
     },
     update: {
-      particula: record.particula,
-      assetId: record.assetId ?? null,
+      particula: normalized.particula,
+      assetId: normalized.assetId ?? null,
       title,
-      processedAt: new Date(record.processedAt),
+      pipelineStatus: normalized.pipelineStatus,
+      processedAt: new Date(normalized.processedAt),
       payload,
     },
   });
@@ -137,28 +159,51 @@ async function deleteLegacyReviewFromDisk(reviewId: string): Promise<boolean> {
 export async function saveReviewRecord(
   record: PurifierReviewRecord,
 ): Promise<{ filepath: string; reviewId: string }> {
-  await upsertReviewRecord(record);
+  await upsertReviewRecord(withPipelineStatus(record));
 
   const filepath = path.join(REVIEW_DIR, reviewFilename(record.reviewId));
   return { filepath, reviewId: record.reviewId };
 }
 
-export async function listReviewRecords(): Promise<ReviewListItem[]> {
+export type ListReviewOptions = {
+  /** Por defecto solo la cola de Aduana (`pendiente_validacion`). */
+  statuses?: readonly PipelineStatus[];
+  includeAll?: boolean;
+};
+
+export async function listReviewRecords(
+  options: ListReviewOptions = {},
+): Promise<ReviewListItem[]> {
+  const statuses = options.includeAll
+    ? null
+    : (options.statuses ?? ADUANA_QUEUE_STATUSES);
+
   const rows = await prisma.purifierReview.findMany({
+    where: statuses ? { pipelineStatus: { in: [...statuses] } } : undefined,
     orderBy: { processedAt: "desc" },
   });
 
   const byId = new Map<string, ReviewListItem>();
 
   for (const row of rows) {
-    const record = row.payload as PurifierReviewRecord;
+    const record = withPipelineStatus(
+      row.payload as PurifierReviewRecord,
+      normalizePipelineStatus(row.pipelineStatus),
+    );
+    // Columna DB es fuente de verdad si el payload legacy no tiene status.
+    record.pipelineStatus = normalizePipelineStatus(
+      row.pipelineStatus,
+      record.pipelineStatus,
+    );
+    if (statuses && !statuses.includes(record.pipelineStatus)) continue;
     byId.set(row.reviewId, toListItem(record));
   }
 
+  // Legacy en disco: solo migrar a la cola si aún no hay fila DB.
   for (const legacy of await listLegacyReviewsFromDisk()) {
-    if (!byId.has(legacy.reviewId)) {
-      byId.set(legacy.reviewId, legacy);
-    }
+    if (byId.has(legacy.reviewId)) continue;
+    if (statuses && !statuses.includes(legacy.pipelineStatus)) continue;
+    byId.set(legacy.reviewId, legacy);
   }
 
   return Array.from(byId.values()).sort(
@@ -168,7 +213,14 @@ export async function listReviewRecords(): Promise<ReviewListItem[]> {
 }
 
 export async function getReviewQueueAssetIds(): Promise<string[]> {
-  const records = await listReviewRecords();
+  // Incluye en vuelo + cola HITL para no re-purificar el mismo asset.
+  const records = await listReviewRecords({
+    statuses: [
+      "prima_materia",
+      "pendiente_purificacion",
+      "pendiente_validacion",
+    ],
+  });
   return records
     .map((record) => record.assetId)
     .filter((id): id is string => Boolean(id));
@@ -182,13 +234,44 @@ export async function loadReviewRecord(
   });
 
   if (row) {
+    const record = withPipelineStatus(
+      row.payload as PurifierReviewRecord,
+      normalizePipelineStatus(row.pipelineStatus),
+    );
+    record.pipelineStatus = normalizePipelineStatus(
+      row.pipelineStatus,
+      record.pipelineStatus,
+    );
     return {
-      record: row.payload as PurifierReviewRecord,
+      record,
       filename: reviewFilename(reviewId),
     };
   }
 
   return loadLegacyReviewFromDisk(reviewId);
+}
+
+export async function updateReviewPipelineStatus(
+  reviewId: string,
+  nextStatus: PipelineStatus,
+  patch?: Partial<PurifierReviewRecord>,
+): Promise<PurifierReviewRecord | null> {
+  const loaded = await loadReviewRecord(reviewId);
+  if (!loaded) return null;
+
+  const current = normalizePipelineStatus(loaded.record.pipelineStatus);
+  assertPipelineTransition(current, nextStatus);
+
+  const updated: PurifierReviewRecord = {
+    ...loaded.record,
+    ...patch,
+    reviewId,
+    pipelineStatus: nextStatus,
+    processedAt: patch?.processedAt ?? new Date().toISOString(),
+  };
+
+  await saveReviewRecord(updated);
+  return updated;
 }
 
 export async function deleteReviewRecord(reviewId: string): Promise<boolean> {

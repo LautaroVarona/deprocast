@@ -24,10 +24,20 @@ import type {
 import { DUDA_MARKER_REGEX } from "@/lib/purifier/types";
 import {
   resolveReviewMetaTags,
+  resolveStrictMetaTags,
 } from "@/lib/purifier/meta-tags";
+import {
+  EXTRACT_STRICT_META_TAGS_PROMPT,
+  strictMetaTagsToArray,
+  type StrictMetaTags,
+  parseStrictMetaTagsJson,
+} from "@/lib/purifier/meta-tags-taxonomy";
 import {
   inferMateriaFromChannel,
   normalizeMateria,
+  normalizeOnda,
+  normalizeOrigen,
+  normalizePosicion,
 } from "@/lib/purifier/hitl-metadata";
 import {
   saveReviewRecord,
@@ -39,6 +49,7 @@ export {
   listReviewRecords,
   loadReviewRecord,
   saveReviewRecord,
+  updateReviewPipelineStatus,
 } from "@/lib/purifier/review-store";
 
 // ---------------------------------------------------------------------------
@@ -77,12 +88,7 @@ Reglas estrictas:
 6. NO modifiques ni elimines bloques ==DUDA:...== ya presentes en el texto.
 7. Devuelve SOLO el texto limpio, sin markdown, sin explicaciones.`;
 
-const EXTRACT_ESSENCES_PROMPT = `Analiza el texto limpio y extrae un array JSON de conceptos atómicos identificables.
-
-Incluye: nombres propios, leyes, bugs, tecnologías, procesos, entidades y conceptos clave.
-
-Responde ÚNICAMENTE con un array JSON de strings en español, sin explicaciones.
-Ejemplo: ["Ley 24.240", "Margarita", "bug de autenticación", "NFC"]`;
+const EXTRACT_ESSENCES_PROMPT = EXTRACT_STRICT_META_TAGS_PROMPT;
 
 function buildNormalizeSystemPrompt(defaultMateria: string): string {
   return `Eres un archivista del sistema DeProcast. Recibes una captura ya limpia (texto, audio/STT, visión u otro canal).
@@ -93,16 +99,16 @@ Estructura obligatoria del frontmatter:
 ---
 materia: "<formato del soporte>"
 particula: "<identificador único en kebab-case>"
-posicion: "<observador|jugador|avatar>"
-onda: "<área taxonómica>"
+posicion: "<rol activo / sombrero: observador|jugador|arquitecto|operador|avatar>"
+onda: "<estado de energía requerido: foco-profundo|tramite-rapido|exploracion|revision-critica|sin-clasificar>"
 tiempo: "<fecha ISO-8601>"
-espacio: "<entorno de captura>"
+espacio: "<vector de entrada físico: ingesta-web|editor-directo|extension-recorte|mobile|telegram>"
 field: "<campo de influencia — por defecto babel si no hay otro>"
 title: "<título sugerido>"
 prioridad: <1-12>
 impacto: <1-12>
 dificultad: <1-12>
-meta_tags_secundarios: ["tag1", "tag2"]
+meta_tags_secundarios: ["Dominio", "Entidad/Cliente", "Tipo de Acción", "Concepto 1", "Concepto 2", "Fricción/Emoción"]
 ---
 
 # <título>
@@ -114,7 +120,10 @@ meta_tags_secundarios: ["tag1", "tag2"]
 Reglas:
 - field por defecto: "babel"
 - materia por defecto: "${defaultMateria}" (respeta el canal de captura; no uses audio/transcript si el origen es texto)
-- espacio por defecto: "local-atanor"
+- espacio por defecto: "ingesta-web" (vector de entrada físico, no el entorno geográfico)
+- onda = energía requerida para trabajar el contenido (no un área temática)
+- posicion = rol/sombrero activo del Observador (no un avatar del sistema)
+- meta_tags_secundarios DEBE tener exactamente 6 strings en ese orden taxonómico
 - NO inventes hechos no presentes.
 - Preserva todos los ==DUDA:...== intactos.
 - Devuelve SOLO el Markdown completo.`;
@@ -173,7 +182,7 @@ function resolveGravity(input?: GravityInput) {
   return {
     title: input?.title?.trim() ?? "",
     campoSlug: resolveCampoSlug(input?.campoSlug),
-    onda: input?.onda?.trim() || "sin-clasificar",
+    onda: normalizeOnda(input?.onda),
     sourceType: input?.sourceType ?? ("ai_chat" as const),
     prioridad: clampScale(input?.prioridad ?? 6),
     impacto: clampScale(input?.impacto ?? 6),
@@ -344,7 +353,7 @@ export function station3Deduplicate(
 export async function station4ExtractEssences(
   text: string,
   model?: string,
-): Promise<string[]> {
+): Promise<StrictMetaTags> {
   const raw = await cohereGenerateText({
     systemPrompt: EXTRACT_ESSENCES_PROMPT,
     userContent: text,
@@ -354,26 +363,7 @@ export async function station4ExtractEssences(
     throttle: true,
   });
 
-  try {
-    const parsed = JSON.parse(raw) as unknown;
-    if (Array.isArray(parsed)) {
-      return parsed.map(String).filter(Boolean).slice(0, 30);
-    }
-  } catch {
-    const fallback = raw.match(/\[([\s\S]*?)\]/);
-    if (fallback) {
-      try {
-        const parsed = JSON.parse(fallback[0]) as unknown;
-        if (Array.isArray(parsed)) {
-          return parsed.map(String).filter(Boolean).slice(0, 30);
-        }
-      } catch {
-        // ignore
-      }
-    }
-  }
-
-  return [];
+  return parseStrictMetaTagsJson(raw);
 }
 
 // ---------------------------------------------------------------------------
@@ -409,7 +399,7 @@ export function parseFrontmatterFromMarkdown(markdown: string): Record<string, s
 
 function buildNormalizePrompt(
   dedupedText: string,
-  metaTags: string[],
+  metaTags: StrictMetaTags,
   gravity: ReturnType<typeof resolveGravity>,
   filename: string,
   channel?: string | null,
@@ -426,13 +416,13 @@ function buildNormalizePrompt(
     `impacto_sugerido: ${gravity.impacto}`,
     `dificultad_sugerida: ${gravity.dificultad}`,
     `titulo_sugerido: ${gravity.title || filename}`,
-    `meta_tags_secundarios: ${JSON.stringify(metaTags)}`,
+    `meta_tags_secundarios: ${JSON.stringify(strictMetaTagsToArray(metaTags))}`,
   ].join("\n") + `\n\nCaptura purificada:\n\n${dedupedText}`;
 }
 
 export async function station5Normalize(
   dedupedText: string,
-  metaTags: string[],
+  metaTags: StrictMetaTags,
   gravity: ReturnType<typeof resolveGravity>,
   filename: string,
   model?: string,
@@ -458,10 +448,10 @@ export async function station5Normalize(
   const dimensions = {
     materia: normalizeMateria(fields.materia || defaultMateria, channel),
     particula,
-    posicion: fields.posicion || "observador",
-    onda: fields.onda || gravity.onda,
+    posicion: normalizePosicion(fields.posicion),
+    onda: normalizeOnda(fields.onda || gravity.onda),
     tiempo: fields.tiempo || new Date().toISOString().slice(0, 10),
-    espacio: fields.espacio || "local-atanor",
+    espacio: normalizeOrigen(fields.espacio, channel),
     field: fields.field || DEFAULT_CAMPO_SLUG,
     title: fields.title || gravity.title || filename.replace(/\.[^.]+$/, ""),
     prioridad: clampScale(Number(fields.prioridad) || gravity.prioridad),
@@ -538,11 +528,18 @@ export function extractDoubts(text: string): string[] {
 
 export async function runPurificationPipeline(
   input: PurifierInput,
-  options: { model?: string; saveReview?: boolean; extractKg?: boolean } = {},
+  options: {
+    model?: string;
+    saveReview?: boolean;
+    extractKg?: boolean;
+    reviewId?: string;
+    captureId?: string;
+    pipelineStatus?: PurifierReviewRecord["pipelineStatus"];
+  } = {},
 ): Promise<PurifierReviewRecord> {
   const gravity = resolveGravity(input.gravity);
   const filename = input.filename ?? `asset-${input.assetId ?? randomUUID().slice(0, 8)}`;
-  const reviewId = randomUUID();
+  const reviewId = options.reviewId ?? randomUUID();
   const stages: PurifierStageSnapshot[] = [];
 
   // Station 1
@@ -586,14 +583,15 @@ export async function runPurificationPipeline(
     },
   });
 
-  // Station 4
-  const metaTags = await station4ExtractEssences(dedupResult.text, options.model);
+  // Station 4 — Structured Outputs: exactamente 6 meta tags
+  const strictMetaTags = await station4ExtractEssences(dedupResult.text, options.model);
+  const metaTags = strictMetaTagsToArray(strictMetaTags);
   stages.push({
     station: 4,
     name: "Extracción de Esencias",
     input: dedupResult.text,
-    output: JSON.stringify(metaTags),
-    meta: { count: metaTags.length, tags: metaTags.slice(0, 5) },
+    output: JSON.stringify(strictMetaTags),
+    meta: { count: metaTags.length, tags: metaTags },
   });
 
   let kgExtraction: LlmKgExtraction | undefined;
@@ -618,7 +616,7 @@ export async function runPurificationPipeline(
   // Station 5
   const { normalizedMarkdown, dimensions } = await station5Normalize(
     dedupResult.text,
-    metaTags,
+    strictMetaTags,
     gravity,
     filename,
     options.model,
@@ -636,11 +634,13 @@ export async function runPurificationPipeline(
     },
   });
 
-  const mergedMetaTags = resolveReviewMetaTags({
+  const draftRecord: PurifierReviewRecord = {
     schemaVersion: "2",
     reviewId,
+    pipelineStatus: options.pipelineStatus ?? "pendiente_validacion",
     particula: dimensions.particula,
     assetId: input.assetId,
+    captureId: options.captureId,
     gravity,
     source: { filename, metadata: input.metadata ?? {} },
     originalText: input.rawText,
@@ -648,6 +648,7 @@ export async function runPurificationPipeline(
     afterRegex: regexResult.text,
     cleanedText: dedupResult.text,
     metaTagsSecundarios: metaTags,
+    strictMetaTags,
     doubts: extractDoubts(dedupResult.text),
     suggestedDimensions: dimensions,
     normalizedMarkdown,
@@ -660,6 +661,12 @@ export async function runPurificationPipeline(
     processedAt: new Date().toISOString(),
     model: getCohereModelName("default"),
     kgExtraction,
+  };
+
+  const mergedMetaTags = resolveReviewMetaTags(draftRecord);
+  const mergedStrict = resolveStrictMetaTags({
+    ...draftRecord,
+    metaTagsSecundarios: mergedMetaTags,
   });
 
   // Station 6
@@ -678,35 +685,13 @@ export async function runPurificationPipeline(
   });
 
   const record: PurifierReviewRecord = {
-    schemaVersion: "2",
-    reviewId,
-    particula: dimensions.particula,
-    assetId: input.assetId,
-    gravity,
-    source: {
-      filename,
-      metadata: input.metadata ?? {},
-    },
-    originalText: input.rawText,
+    ...draftRecord,
     stages,
-    afterRegex: regexResult.text,
-    cleanedText: dedupResult.text,
-    metaTagsSecundarios: metaTags,
-    doubts: extractDoubts(dedupResult.text),
-    suggestedDimensions: dimensions,
-    normalizedMarkdown,
     fractalSegments,
-    dedup: {
-      mergedCount: dedupResult.mergedCount,
-      threshold: PURIFIER_DEDUP_THRESHOLD,
-    },
-    regex: { removedCount: regexResult.removedCount },
-    processedAt: new Date().toISOString(),
-    model: getCohereModelName("default"),
-    kgExtraction,
+    metaTagsSecundarios: mergedMetaTags,
+    strictMetaTags: mergedStrict,
+    pipelineStatus: "pendiente_validacion",
   };
-
-  record.metaTagsSecundarios = mergedMetaTags;
 
   if (options.saveReview !== false) {
     await saveReviewRecord(record);

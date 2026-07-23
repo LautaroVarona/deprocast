@@ -16,14 +16,11 @@ const SOURCE_LABELS: Record<SourceType, string> = {
 };
 
 const ONDA_SUGGESTIONS = [
+  "foco-profundo",
+  "tramite-rapido",
+  "exploracion",
+  "revision-critica",
   "sin-clasificar",
-  "procesal",
-  "laboral",
-  "tecnico",
-  "salud",
-  "personal",
-  "legal",
-  "finanzas",
 ];
 
 export function GravityPanel() {
@@ -110,7 +107,7 @@ export function GravityPanel() {
             htmlFor="ingesta-onda"
             className="text-[10px] font-medium tracking-wide text-muted-foreground uppercase"
           >
-            Onda
+            Onda · Energía
           </label>
           <input
             id="ingesta-onda"
@@ -118,7 +115,7 @@ export function GravityPanel() {
             list="onda-suggestions"
             value={gravity.onda}
             onChange={(event) => setGravity({ onda: event.target.value })}
-            placeholder="sin-clasificar"
+            placeholder="foco-profundo / tramite-rapido…"
             className="h-7 w-full rounded border border-input bg-background px-2 font-mono text-[11px] outline-none placeholder:text-muted-foreground focus:border-ring focus:ring-1 focus:ring-ring"
           />
           <datalist id="onda-suggestions">
@@ -126,6 +123,9 @@ export function GravityPanel() {
               <option key={onda} value={onda} />
             ))}
           </datalist>
+          <p className="font-mono text-[9px] text-muted-foreground">
+            Estado de energía requerido (no área temática).
+          </p>
         </div>
 
         <div className="space-y-1">

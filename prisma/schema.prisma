@@ -606,18 +606,21 @@ model NotebookPage {
 }
 
 // Cola HITL del purificador (reemplaza JSON en data/raw_documents/review/).
+// pipelineStatus: prima_materia | pendiente_purificacion | pendiente_validacion | molecularizado
 model PurifierReview {
-  reviewId    String   @id
-  particula   String
-  assetId     String?
-  title       String
-  processedAt DateTime
-  payload     Json
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  reviewId       String   @id
+  particula      String
+  assetId        String?
+  title          String
+  pipelineStatus String   @default("pendiente_validacion")
+  processedAt    DateTime
+  payload        Json
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
   @@index([processedAt])
   @@index([assetId])
+  @@index([pipelineStatus, processedAt])
 }
 
 // Metadatos desacoplados del agente Meta-Meteador (vinculados por documentId).

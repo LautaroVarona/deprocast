@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
         metadata,
         gravity: body.gravity,
       },
-      { extractKg: body.extractKg !== false },
+      { extractKg: body.extractKg !== false, async: false },
     );
 
     return NextResponse.json(
@@ -73,6 +73,8 @@ export async function POST(request: NextRequest) {
         reviewId: result.reviewId,
         particula: result.particula,
         captureId: result.captureId,
+        pipelineStatus: result.pipelineStatus,
+        queued: result.queued,
       },
       { status: 201 },
     );

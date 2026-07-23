@@ -137,7 +137,9 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    return NextResponse.json(result, { status: 201 });
+    return NextResponse.json(result, {
+      status: result.queued ? 202 : 201,
+    });
   } catch (error) {
     console.error("Ingesta capture error:", error);
     const message =

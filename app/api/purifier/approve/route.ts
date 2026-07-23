@@ -53,7 +53,7 @@ export async function POST(request: NextRequest) {
         posicion: String(d.posicion ?? "observador"),
         onda: String(d.onda ?? "sin-clasificar"),
         tiempo: String(d.tiempo ?? new Date().toISOString().slice(0, 10)),
-        espacio: String(d.espacio ?? "local-atanor"),
+        espacio: String(d.espacio ?? "ingesta-web"),
         field: String(d.field ?? body.campoSlug),
         prioridad: Number(d.prioridad) || 6,
         impacto: Number(d.impacto) || 6,

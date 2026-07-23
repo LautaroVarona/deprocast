@@ -1,9 +1,6 @@
 import { indexPurifierDocMemory } from "@/lib/mnemosyne/hooks";
 import { prisma } from "@/lib/prisma";
-import {
-  deleteReviewRecord,
-  loadReviewRecord,
-} from "@/lib/purifier/engine";
+import { loadReviewRecord } from "@/lib/purifier/engine";
 import type { PurifierReviewRecord } from "@/lib/purifier/types";
 import { ingestKgExtraction } from "@/lib/kg/ingest";
 import type { LlmEntity } from "@/lib/kg/types";
@@ -193,7 +190,26 @@ export async function approveToProposal(
     }
   }
 
-  await deleteReviewRecord(input.reviewId);
+  // Estado final: molecularizado (aprobado + vectorizado). Queda fuera de la Aduana.
+  const { updateReviewPipelineStatus } = await import("@/lib/purifier/review-store");
+  await updateReviewPipelineStatus(input.reviewId, "molecularizado", {
+    suggestedDimensions: {
+      ...loaded.record.suggestedDimensions,
+      title: input.title.trim(),
+      materia: input.dimensions.materia,
+      particula: input.dimensions.particula || loaded.record.particula,
+      posicion: input.dimensions.posicion,
+      onda: input.dimensions.onda,
+      tiempo: input.dimensions.tiempo,
+      espacio: input.dimensions.espacio,
+      field: input.dimensions.field,
+      prioridad: input.dimensions.prioridad,
+      impacto: input.dimensions.impacto,
+      dificultad: input.dimensions.dificultad,
+    },
+    metaTagsSecundarios: input.metaTagsSecundarios,
+    normalizedMarkdown: input.markdownBody,
+  });
 
   void import("@/lib/historial/pipeline-log").then(({ logApprovedActivity }) =>
     logApprovedActivity({

@@ -65,7 +65,7 @@ export async function autoPurifyAudioAsset(
           meta: { assetId: asset.id, filename: asset.filename },
         }),
       },
-      { extractKg: true },
+      { extractKg: true, async: false },
     );
 
     return {

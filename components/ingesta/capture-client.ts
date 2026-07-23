@@ -48,6 +48,8 @@ export async function postIngestaCapture(
     reviewId: string;
     captureId: string;
     particula?: string;
+    pipelineStatus?: string;
+    queued?: boolean;
   }>("/api/ingesta/capture", {
     method: "POST",
     headers,
