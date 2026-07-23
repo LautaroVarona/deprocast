@@ -136,6 +136,131 @@ export function ensureCoreColumnPatches(): void {
         }
       }
     }
+
+    if (!tableExists(db, "PersonToPerson")) {
+      db.exec(`
+        CREATE TABLE "PersonToPerson" (
+          "id" TEXT NOT NULL PRIMARY KEY,
+          "personAId" TEXT NOT NULL,
+          "personBId" TEXT NOT NULL,
+          "relationContext" TEXT NOT NULL,
+          "relationType" TEXT,
+          "strength" INTEGER,
+          "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          "updatedAt" DATETIME NOT NULL,
+          CONSTRAINT "PersonToPerson_personAId_fkey" FOREIGN KEY ("personAId") REFERENCES "KgNode" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
+          CONSTRAINT "PersonToPerson_personBId_fkey" FOREIGN KEY ("personBId") REFERENCES "KgNode" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+        );
+      `);
+      db.exec(
+        `CREATE UNIQUE INDEX IF NOT EXISTS "PersonToPerson_personAId_personBId_key" ON "PersonToPerson"("personAId", "personBId");`,
+      );
+      db.exec(
+        `CREATE INDEX IF NOT EXISTS "PersonToPerson_personAId_idx" ON "PersonToPerson"("personAId");`,
+      );
+      db.exec(
+        `CREATE INDEX IF NOT EXISTS "PersonToPerson_personBId_idx" ON "PersonToPerson"("personBId");`,
+      );
+    }
+
+    if (!tableExists(db, "PersonToProject")) {
+      db.exec(`
+        CREATE TABLE "PersonToProject" (
+          "id" TEXT NOT NULL PRIMARY KEY,
+          "personId" TEXT NOT NULL,
+          "projectId" TEXT NOT NULL,
+          "relationContext" TEXT NOT NULL,
+          "relationType" TEXT,
+          "strength" INTEGER,
+          "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          "updatedAt" DATETIME NOT NULL,
+          CONSTRAINT "PersonToProject_personId_fkey" FOREIGN KEY ("personId") REFERENCES "KgNode" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
+          CONSTRAINT "PersonToProject_projectId_fkey" FOREIGN KEY ("projectId") REFERENCES "KgNode" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+        );
+      `);
+      db.exec(
+        `CREATE UNIQUE INDEX IF NOT EXISTS "PersonToProject_personId_projectId_key" ON "PersonToProject"("personId", "projectId");`,
+      );
+      db.exec(
+        `CREATE INDEX IF NOT EXISTS "PersonToProject_personId_idx" ON "PersonToProject"("personId");`,
+      );
+      db.exec(
+        `CREATE INDEX IF NOT EXISTS "PersonToProject_projectId_idx" ON "PersonToProject"("projectId");`,
+      );
+    }
+
+    if (!tableExists(db, "EntityCandidate")) {
+      db.exec(`
+        CREATE TABLE "EntityCandidate" (
+          "id" TEXT NOT NULL PRIMARY KEY,
+          "name" TEXT NOT NULL,
+          "type" TEXT NOT NULL,
+          "contextSnippet" TEXT NOT NULL,
+          "sourceId" TEXT,
+          "status" TEXT NOT NULL DEFAULT 'PENDING',
+          "resolvedNodeId" TEXT,
+          "metadata" JSONB NOT NULL DEFAULT '{}',
+          "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          "updatedAt" DATETIME NOT NULL
+        );
+      `);
+      db.exec(
+        `CREATE INDEX IF NOT EXISTS "EntityCandidate_status_createdAt_idx" ON "EntityCandidate"("status", "createdAt");`,
+      );
+      db.exec(
+        `CREATE INDEX IF NOT EXISTS "EntityCandidate_type_status_idx" ON "EntityCandidate"("type", "status");`,
+      );
+      db.exec(
+        `CREATE INDEX IF NOT EXISTS "EntityCandidate_sourceId_idx" ON "EntityCandidate"("sourceId");`,
+      );
+      db.exec(
+        `CREATE INDEX IF NOT EXISTS "EntityCandidate_name_idx" ON "EntityCandidate"("name");`,
+      );
+    } else {
+      if (!columnExists(db, "EntityCandidate", "contextSnippet")) {
+        db.exec(
+          `ALTER TABLE "EntityCandidate" ADD COLUMN "contextSnippet" TEXT NOT NULL DEFAULT '';`,
+        );
+      }
+      if (!columnExists(db, "EntityCandidate", "sourceId")) {
+        db.exec(`ALTER TABLE "EntityCandidate" ADD COLUMN "sourceId" TEXT;`);
+      }
+      if (!columnExists(db, "EntityCandidate", "resolvedNodeId")) {
+        db.exec(
+          `ALTER TABLE "EntityCandidate" ADD COLUMN "resolvedNodeId" TEXT;`,
+        );
+      }
+    }
+
+    // Migración one-shot desde CandidateEntity legacy.
+    if (tableExists(db, "CandidateEntity") && tableExists(db, "EntityCandidate")) {
+      db.exec(`
+        INSERT OR IGNORE INTO "EntityCandidate" (
+          "id", "name", "type", "contextSnippet", "sourceId", "status",
+          "resolvedNodeId", "metadata", "createdAt", "updatedAt"
+        )
+        SELECT
+          "id",
+          "name",
+          CASE
+            WHEN UPPER("type") IN ('PERSON', 'PERSONA') THEN 'PERSON'
+            WHEN UPPER("type") IN ('PROJECT', 'PROYECTO') THEN 'PROJECT'
+            ELSE 'PERSON'
+          END,
+          COALESCE(NULLIF(TRIM("sourceContext"), ''), 'Extracción sin fragmento de contexto.'),
+          NULL,
+          CASE
+            WHEN UPPER("status") IN ('PENDING', 'APPROVED', 'REJECTED', 'MERGED')
+              THEN UPPER("status")
+            ELSE 'PENDING'
+          END,
+          NULL,
+          COALESCE("metadata", '{}'),
+          "createdAt",
+          "updatedAt"
+        FROM "CandidateEntity";
+      `);
+    }
   } finally {
     db.close();
   }

@@ -1,6 +1,6 @@
 /**
  * Modelo de dominio del subgrafo de Personas.
- * Persistido en KgNode (nodos) y KgEdge (aristas) — ver mappers.ts.
+ * Persistido en KgNode (nodos), KgEdge (grafo) y tablas tipadas PersonTo*.
  */
 
 export interface Persona {
@@ -76,6 +76,23 @@ export interface CreatePersonaPayload {
   notasGenerales?: string;
 }
 
+/** Borrador de vínculo al crear persona (antes de conocer el id origen). */
+export type PersonaConnectionDraft = {
+  targetId: string;
+  targetKind: "persona" | "proyecto";
+  targetLabel: string;
+  relationContext: string;
+  relationType?: string;
+  strength?: number;
+};
+
+export interface CreatePersonaWithRelationsPayload {
+  nombrePrincipal: string;
+  aliases?: string[];
+  notasGenerales?: string;
+  connections?: PersonaConnectionDraft[];
+}
+
 export interface UpdatePersonaPayload {
   nombrePrincipal?: string;
   aliases?: string[];
@@ -126,3 +143,17 @@ export interface UpdateRelacionPayload {
   rolPrincipal?: string;
   contexto?: string;
 }
+
+export type CandidateEntityType = "PERSON" | "PROJECT" | "UNKNOWN";
+export type CandidateEntityStatus =
+  | "PENDING"
+  | "APPROVED"
+  | "REJECTED"
+  | "MERGED";
+
+export type EntityCandidateType = "PERSON" | "PROJECT";
+export type EntityCandidateStatus =
+  | "PENDING"
+  | "APPROVED"
+  | "REJECTED"
+  | "MERGED";

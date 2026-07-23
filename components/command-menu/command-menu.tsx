@@ -2,11 +2,13 @@
 
 import {
   COMMAND_CATEGORY_LABELS,
+  COMMAND_CATEGORY_ORDER,
   COMMAND_ROUTES,
   type CommandCategory,
   type CommandRoute,
   filterRoutes,
   findRouteByHotkey,
+  groupRoutesByCategory,
 } from "@/lib/navigation/routes";
 import { UniverseSelect } from "@/components/babel/universe-select";
 import { Kbd } from "@/components/ui/kbd";
@@ -52,18 +54,6 @@ function isEditableTarget(target: EventTarget | null): boolean {
   return target.isContentEditable;
 }
 
-function groupRoutes(routes: CommandRoute[]): Map<CommandCategory, CommandRoute[]> {
-  const groups = new Map<CommandCategory, CommandRoute[]>();
-  for (const route of routes) {
-    const list = groups.get(route.category) ?? [];
-    list.push(route);
-    groups.set(route.category, list);
-  }
-  return groups;
-}
-
-const CATEGORY_ORDER: CommandCategory[] = ["nav", "ludus", "extra"];
-
 export function CommandMenu({ open, onOpenChange }: CommandMenuProps) {
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -76,7 +66,10 @@ export function CommandMenu({ open, onOpenChange }: CommandMenuProps) {
   const [searchError, setSearchError] = useState<string | null>(null);
 
   const filteredRoutes = useMemo(() => filterRoutes(query), [query]);
-  const routeGroups = useMemo(() => groupRoutes(filteredRoutes), [filteredRoutes]);
+  const routeGroups = useMemo(
+    () => groupRoutesByCategory(filteredRoutes),
+    [filteredRoutes],
+  );
 
   const showSemantic = query.trim().length >= 2;
 
@@ -89,12 +82,15 @@ export function CommandMenu({ open, onOpenChange }: CommandMenuProps) {
       }
     }
 
-    for (const route of filteredRoutes) {
-      list.push({ type: "route", route });
+    for (const category of COMMAND_CATEGORY_ORDER) {
+      const routes = routeGroups.get(category) ?? [];
+      for (const route of routes) {
+        list.push({ type: "route", route });
+      }
     }
 
     return list;
-  }, [filteredRoutes, searchResults, showSemantic]);
+  }, [routeGroups, searchResults, showSemantic]);
 
   const close = useCallback(() => {
     onOpenChange(false);
@@ -225,6 +221,49 @@ export function CommandMenu({ open, onOpenChange }: CommandMenuProps) {
         return;
       }
 
+      if (event.key === "ArrowRight" || event.key === "ArrowLeft") {
+        // Navegación por columnas del grid: salta al bloque de categoría adyacente
+        event.preventDefault();
+        const delta = event.key === "ArrowRight" ? 1 : -1;
+        const current = entries[activeIndex];
+        if (!current || current.type !== "route") {
+          setActiveIndex((index) =>
+            entries.length === 0 ? 0 : (index + delta + entries.length) % entries.length,
+          );
+          return;
+        }
+
+        const categoriesWithRoutes = COMMAND_CATEGORY_ORDER.filter(
+          (category) => (routeGroups.get(category)?.length ?? 0) > 0,
+        );
+        const currentCatIndex = categoriesWithRoutes.indexOf(
+          current.route.category,
+        );
+        if (currentCatIndex < 0) return;
+
+        const nextCat =
+          categoriesWithRoutes[
+            (currentCatIndex + delta + categoriesWithRoutes.length) %
+              categoriesWithRoutes.length
+          ];
+        const nextRoutes = routeGroups.get(nextCat) ?? [];
+        if (!nextRoutes.length) return;
+
+        const currentRoutes = routeGroups.get(current.route.category) ?? [];
+        const itemOffset = currentRoutes.findIndex(
+          (route) => route.id === current.route.id,
+        );
+        const targetRoute =
+          nextRoutes[Math.min(Math.max(itemOffset, 0), nextRoutes.length - 1)];
+
+        const nextIndex = entries.findIndex(
+          (entry) =>
+            entry.type === "route" && entry.route.id === targetRoute.id,
+        );
+        if (nextIndex >= 0) setActiveIndex(nextIndex);
+        return;
+      }
+
       if (event.key === "Enter" && entries[activeIndex]) {
         event.preventDefault();
         selectEntry(entries[activeIndex]);
@@ -248,7 +287,15 @@ export function CommandMenu({ open, onOpenChange }: CommandMenuProps) {
 
     window.addEventListener("keydown", onKeyDown, true);
     return () => window.removeEventListener("keydown", onKeyDown, true);
-  }, [open, close, entries, activeIndex, navigate, selectEntry]);
+  }, [
+    open,
+    close,
+    entries,
+    activeIndex,
+    navigate,
+    selectEntry,
+    routeGroups,
+  ]);
 
   useEffect(() => {
     if (!open || !listRef.current) return;
@@ -258,12 +305,26 @@ export function CommandMenu({ open, onOpenChange }: CommandMenuProps) {
     active?.scrollIntoView({ block: "nearest" });
   }, [open, activeIndex]);
 
+  const visibleCategories = COMMAND_CATEGORY_ORDER.filter(
+    (category) => (routeGroups.get(category)?.length ?? 0) > 0,
+  );
+
+  const entryIndexByKey = useMemo(() => {
+    const map = new Map<string, number>();
+    entries.forEach((entry, index) => {
+      const key =
+        entry.type === "route"
+          ? `route:${entry.route.id}`
+          : `search:${entry.result.id}`;
+      map.set(key, index);
+    });
+    return map;
+  }, [entries]);
+
   if (!open) return null;
 
-  let runningIndex = 0;
-
   return (
-    <div className="fixed inset-0 z-[100] flex items-start justify-center p-4 pt-[12vh] sm:p-6">
+    <div className="fixed inset-0 z-[100] flex items-start justify-center p-4 pt-[8vh] sm:p-6">
       <button
         type="button"
         aria-label="Cerrar menú"
@@ -276,8 +337,8 @@ export function CommandMenu({ open, onOpenChange }: CommandMenuProps) {
         aria-modal="true"
         aria-label="Menú de navegación"
         className={cn(
-          "relative flex w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-accent/20",
-          "bg-background/95 shadow-2xl shadow-accent/10 backdrop-blur-md",
+          "relative flex w-full max-w-5xl flex-col overflow-hidden rounded-2xl border border-accent/20",
+          "bg-background shadow-2xl shadow-accent/10",
           "animate-in fade-in zoom-in-95 duration-200",
         )}
       >
@@ -302,7 +363,7 @@ export function CommandMenu({ open, onOpenChange }: CommandMenuProps) {
               onChange={(event) => setQuery(event.target.value)}
               placeholder="Buscar en todo el corpus… (semántica + archivo + grafo)"
               className={cn(
-                "h-11 w-full rounded-xl border border-input bg-background/80 pr-24 pl-10 text-sm",
+                "h-11 w-full rounded-xl border border-input bg-background pr-24 pl-10 text-sm",
                 "outline-none ring-accent/30 focus:border-accent/40 focus:ring-2",
               )}
               autoComplete="off"
@@ -318,26 +379,26 @@ export function CommandMenu({ open, onOpenChange }: CommandMenuProps) {
           </div>
 
           <p className="mt-2 font-mono text-[10px] text-muted-foreground">
-            ↑↓ navegar · Enter ir · Alt+tecla atajo · 1-9 selección rápida
+            ↑↓ filas · ←→ columnas · Enter ir · Alt+tecla atajo · 1-9 selección rápida
           </p>
         </div>
 
-        <div ref={listRef} className="max-h-[min(58vh,520px)] overflow-y-auto p-2">
+        <div ref={listRef} className="overflow-y-auto p-3">
           {showSemantic && (
-            <section className="mb-3">
-              <header className="px-2 py-1.5 font-mono text-[10px] uppercase tracking-[0.18em] text-amber-600 dark:text-amber-300">
+            <section className="mb-3 border-b border-border/60 pb-3">
+              <header className="mb-1.5 px-1 font-mono text-[10px] uppercase tracking-[0.18em] text-amber-600 dark:text-amber-300">
                 Búsqueda semántica
               </header>
               {searchError ? (
-                <p className="px-2 py-2 text-xs text-destructive">{searchError}</p>
+                <p className="px-1 py-2 text-xs text-destructive">{searchError}</p>
               ) : searchResults.length === 0 && !isSearching ? (
-                <p className="px-2 py-2 text-xs text-muted-foreground">
+                <p className="px-1 py-2 text-xs text-muted-foreground">
                   Sin coincidencias en memoria, archivo o grafo.
                 </p>
               ) : (
-                <ul className="space-y-0.5">
+                <ul className="grid grid-cols-1 gap-0.5 sm:grid-cols-2">
                   {searchResults.map((result) => {
-                    const index = runningIndex++;
+                    const index = entryIndexByKey.get(`search:${result.id}`) ?? 0;
                     return (
                       <MenuSearchRow
                         key={result.id}
@@ -354,33 +415,30 @@ export function CommandMenu({ open, onOpenChange }: CommandMenuProps) {
             </section>
           )}
 
-          {CATEGORY_ORDER.map((category) => {
-            const routes = routeGroups.get(category);
-            if (!routes?.length) return null;
-
-            return (
-              <section key={category} className="mb-2">
-                <header className="px-2 py-1.5 font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-                  {COMMAND_CATEGORY_LABELS[category]}
-                </header>
-                <ul className="space-y-0.5">
-                  {routes.map((route) => {
-                    const index = runningIndex++;
-                    return (
-                      <MenuRouteRow
-                        key={route.id}
-                        route={route}
-                        index={index}
-                        active={activeIndex === index}
-                        onSelect={() => navigate(route.href)}
-                        onHover={() => setActiveIndex(index)}
-                      />
-                    );
-                  })}
-                </ul>
-              </section>
-            );
-          })}
+          {visibleCategories.length > 0 ? (
+            <div
+              className={cn(
+                "grid grid-cols-1 gap-3",
+                "md:grid-cols-3",
+                "lg:grid-cols-5",
+              )}
+            >
+              {visibleCategories.map((category) => {
+                const routes = routeGroups.get(category) ?? [];
+                return (
+                  <CategoryColumn
+                    key={category}
+                    category={category}
+                    routes={routes}
+                    activeIndex={activeIndex}
+                    entryIndexByKey={entryIndexByKey}
+                    onSelect={(href) => navigate(href)}
+                    onHover={(index) => setActiveIndex(index)}
+                  />
+                );
+              })}
+            </div>
+          ) : null}
 
           {entries.length === 0 && (
             <p className="px-3 py-6 text-center text-sm text-muted-foreground">
@@ -407,8 +465,43 @@ export function CommandMenu({ open, onOpenChange }: CommandMenuProps) {
   );
 }
 
-function HotkeyBadge({ label }: { label: string }) {
-  return <Kbd>{label}</Kbd>;
+function CategoryColumn({
+  category,
+  routes,
+  activeIndex,
+  entryIndexByKey,
+  onSelect,
+  onHover,
+}: {
+  category: CommandCategory;
+  routes: CommandRoute[];
+  activeIndex: number;
+  entryIndexByKey: Map<string, number>;
+  onSelect: (href: string) => void;
+  onHover: (index: number) => void;
+}) {
+  return (
+    <section className="min-w-0">
+      <header className="mb-1 truncate border-b border-border/50 px-1 pb-1 font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
+        {COMMAND_CATEGORY_LABELS[category]}
+      </header>
+      <ul className="flex flex-col gap-0.5">
+        {routes.map((route) => {
+          const index = entryIndexByKey.get(`route:${route.id}`) ?? 0;
+          return (
+            <MenuRouteRow
+              key={route.id}
+              route={route}
+              index={index}
+              active={activeIndex === index}
+              onSelect={() => onSelect(route.href)}
+              onHover={() => onHover(index)}
+            />
+          );
+        })}
+      </ul>
+    </section>
+  );
 }
 
 function MenuRouteRow({
@@ -425,7 +518,6 @@ function MenuRouteRow({
   onHover: () => void;
 }) {
   const Icon = route.icon;
-  const quickIndex = index < 9 ? String(index + 1) : null;
 
   return (
     <li>
@@ -435,32 +527,23 @@ function MenuRouteRow({
         onClick={onSelect}
         onMouseEnter={onHover}
         className={cn(
-          "flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-colors",
+          "flex w-full items-center gap-2 rounded-md px-1.5 py-1 text-left transition-colors",
           active
             ? "bg-accent/15 text-foreground ring-1 ring-accent/25"
             : "hover:bg-muted/70",
         )}
       >
-        <span
+        <Icon
           className={cn(
-            "flex size-8 shrink-0 items-center justify-center rounded-lg",
-            active ? "bg-accent/20 text-accent" : "bg-muted text-muted-foreground",
+            "size-3.5 shrink-0",
+            active ? "text-accent" : "text-muted-foreground",
           )}
-        >
-          <Icon className="size-4" aria-hidden />
+          aria-hidden
+        />
+        <span className="min-w-0 flex-1 truncate font-mono text-xs tracking-wide">
+          {route.label}
         </span>
-        <span className="min-w-0 flex-1">
-          <span className="block truncate text-sm font-medium">{route.label}</span>
-          {route.description ? (
-            <span className="block truncate text-xs text-muted-foreground">
-              {route.description}
-            </span>
-          ) : null}
-        </span>
-        <span className="flex shrink-0 items-center gap-1">
-          {quickIndex ? <HotkeyBadge label={quickIndex} /> : null}
-          <HotkeyBadge label={`Alt+${route.hotkey}`} />
-        </span>
+        <Kbd className="shrink-0 opacity-70">{`Alt+${route.hotkey}`}</Kbd>
       </button>
     </li>
   );
@@ -487,28 +570,18 @@ function MenuSearchRow({
         onClick={onSelect}
         onMouseEnter={onHover}
         className={cn(
-          "flex w-full items-start gap-3 rounded-xl px-3 py-2.5 text-left transition-colors",
+          "flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left transition-colors",
           active
             ? "bg-primary/15 text-foreground ring-1 ring-primary/25"
             : "hover:bg-muted/70",
         )}
       >
-        <span className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/15 text-primary">
-          <SearchIcon className="size-4" aria-hidden />
+        <SearchIcon className="size-3.5 shrink-0 text-primary" aria-hidden />
+        <span className="min-w-0 flex-1 truncate text-sm font-medium">
+          {result.title}
         </span>
-        <span className="min-w-0 flex-1">
-          <span className="flex items-center gap-2">
-            <span className="truncate text-sm font-medium">{result.title}</span>
-            <span className="shrink-0 rounded-full bg-primary/15 px-2 py-0.5 font-mono text-[10px] uppercase tracking-wide text-primary">
-              {result.badge}
-            </span>
-          </span>
-          <span className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">
-            {result.subtitle}
-          </span>
-        </span>
-        <span className="shrink-0 font-mono text-[10px] text-muted-foreground">
-          {Math.round(result.score)}
+        <span className="shrink-0 rounded bg-primary/15 px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-wide text-primary">
+          {result.badge}
         </span>
       </button>
     </li>

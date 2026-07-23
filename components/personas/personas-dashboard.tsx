@@ -1,14 +1,15 @@
 "use client";
 
 import { useBabel } from "@/components/babel/babel-context";
+import { NuevaPersonaSidebar } from "@/components/personas/NuevaPersonaSidebar";
 import { PersonaFormSheet } from "@/components/personas/persona-form-sheet";
 import { PersonaCard } from "@/components/personas/persona-card";
-import { PersonaMergeSheet } from "@/components/personas/persona-merge-sheet";
 import { PersonaRelationsSheet } from "@/components/personas/persona-relations-sheet";
-import { PersonasCandidatesPanel } from "@/components/personas/personas-candidates-panel";
 import { PersonasGraphWorkspace } from "@/components/personas/personas-graph-workspace";
 import { PersonasTable } from "@/components/personas/personas-table";
+import { TriageWorkspace } from "@/components/triage/triage-workspace";
 import { Button } from "@/components/ui/button";
+import { listPendingCandidatesAction } from "@/app/triage/actions";
 import type { Persona } from "@/lib/personas/model";
 import type { PersonaCardDto } from "@/lib/personas/types";
 import { personaSlugFromName } from "@/lib/personas/slug";
@@ -43,17 +44,13 @@ export function PersonasDashboard() {
   );
   const [listView, setListView] = useState<ListView>("table");
   const [personas, setPersonas] = useState<PersonaCardDto[]>([]);
-  const [candidates, setCandidates] = useState<PersonaCardDto[]>([]);
+  const [pendingCount, setPendingCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
-  const [isLoadingCandidates, setIsLoadingCandidates] = useState(true);
   const [query, setQuery] = useState("");
   const [showForm, setShowForm] = useState(false);
+  const [showCreate, setShowCreate] = useState(false);
   const [showRelations, setShowRelations] = useState(false);
-  const [showMerge, setShowMerge] = useState(false);
   const [editPersona, setEditPersona] = useState<Persona | null>(null);
-  const [mergeCandidate, setMergeCandidate] = useState<PersonaCardDto | null>(
-    null,
-  );
   const [linkPersona, setLinkPersona] = useState<{
     id: string;
     nombrePrincipal: string;
@@ -75,29 +72,19 @@ export function PersonasDashboard() {
     }
   }, [universeFetch]);
 
-  const loadCandidates = useCallback(async () => {
-    setIsLoadingCandidates(true);
-    try {
-      const response = await universeFetch("/api/personas?status=pending", {
-        cache: "no-store",
-      });
-      if (!response.ok) return;
-      const data: { personas: PersonaCardDto[] } = await response.json();
-      setCandidates(data.personas);
-    } catch {
-      setCandidates([]);
-    } finally {
-      setIsLoadingCandidates(false);
-    }
-  }, [universeFetch]);
+  const loadPendingCount = useCallback(async () => {
+    const result = await listPendingCandidatesAction();
+    if (result.ok) setPendingCount(result.data.length);
+    else setPendingCount(0);
+  }, []);
 
   const reloadAll = useCallback(async () => {
-    await Promise.all([loadPersonas(), loadCandidates()]);
-  }, [loadPersonas, loadCandidates]);
+    await Promise.all([loadPersonas(), loadPendingCount()]);
+  }, [loadPersonas, loadPendingCount]);
 
   useEffect(() => {
     setPersonas([]);
-    setCandidates([]);
+    setPendingCount(0);
   }, [universeSlug]);
 
   useEffect(() => {
@@ -127,9 +114,9 @@ export function PersonasDashboard() {
       total: personas.length,
       withMentions,
       withProjects,
-      pending: candidates.length,
+      pending: pendingCount,
     };
-  }, [personas, candidates]);
+  }, [personas, pendingCount]);
 
   const handleCreated = (persona: Persona) => {
     void reloadAll();
@@ -295,10 +282,7 @@ export function PersonasDashboard() {
                   <Button
                     type="button"
                     size="sm"
-                    onClick={() => {
-                      setEditPersona(null);
-                      setShowForm(true);
-                    }}
+                    onClick={() => setShowCreate(true)}
                   >
                     <PlusIcon />
                     Añadir la primera persona
@@ -340,16 +324,11 @@ export function PersonasDashboard() {
       )}
 
       {tab === "candidatas" && (
-        <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4 sm:px-6">
-          <PersonasCandidatesPanel
-            candidates={candidates}
-            isLoading={isLoadingCandidates}
-            onEdit={(persona) => void openEdit(persona)}
-            onMerge={(persona) => {
-              setMergeCandidate(persona);
-              setShowMerge(true);
+        <div className="min-h-0 flex-1 overflow-hidden">
+          <TriageWorkspace
+            onChanged={() => {
+              void reloadAll();
             }}
-            onChanged={() => void reloadAll()}
           />
         </div>
       )}
@@ -368,32 +347,32 @@ export function PersonasDashboard() {
             "fixed right-6 bottom-6 z-40 shadow-lg shadow-emerald-500/20",
             "rounded-full px-5",
           )}
-          onClick={() => {
-            setEditPersona(null);
-            setShowForm(true);
-          }}
+          onClick={() => setShowCreate(true)}
         >
           <PlusIcon />
           Añadir persona
         </Button>
       )}
 
-      <PersonaFormSheet
-        open={showForm}
-        onOpenChange={(open) => {
-          setShowForm(open);
-          if (!open) setEditPersona(null);
-        }}
-        mode={editPersona ? "edit" : "create"}
-        initialPersona={editPersona}
-        onSaved={(persona) => {
-          if (editPersona) {
-            void reloadAll();
-          } else {
-            handleCreated(persona);
-          }
-        }}
+      <NuevaPersonaSidebar
+        open={showCreate}
+        onOpenChange={setShowCreate}
+        onCreated={handleCreated}
       />
+
+      {editPersona && (
+        <PersonaFormSheet
+          open={showForm}
+          onOpenChange={(open) => {
+            setShowForm(open);
+            if (!open) setEditPersona(null);
+          }}
+          initialPersona={editPersona}
+          onSaved={() => {
+            void reloadAll();
+          }}
+        />
+      )}
 
       <PersonaRelationsSheet
         open={showRelations}
@@ -403,16 +382,6 @@ export function PersonasDashboard() {
           if (!open) setLinkPersona(null);
         }}
         onCreated={() => void reloadAll()}
-      />
-
-      <PersonaMergeSheet
-        open={showMerge}
-        candidate={mergeCandidate}
-        onOpenChange={(open) => {
-          setShowMerge(open);
-          if (!open) setMergeCandidate(null);
-        }}
-        onMerged={() => void reloadAll()}
       />
     </div>
   );

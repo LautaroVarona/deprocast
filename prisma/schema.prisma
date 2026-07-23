@@ -111,10 +111,76 @@ model KgNode {
   incomingEdges KgEdge[]    @relation("KgEdgeTarget")
   mentions      KgMention[]
 
+  // CRM tipado: vínculos con contexto (complementa KgEdge del grafo).
+  personLinksAsA     PersonToPerson[]  @relation("PersonToPersonA")
+  personLinksAsB     PersonToPerson[]  @relation("PersonToPersonB")
+  projectLinksAsPerson PersonToProject[] @relation("PersonToProjectPerson")
+  projectLinksAsProject PersonToProject[] @relation("PersonToProjectProject")
+
   @@unique([primaryName, type])
   @@index([type])
   @@index([primaryName])
   @@index([reconocido])
+}
+
+// Vínculo tipado Persona ↔ Persona con contexto descriptivo obligatorio.
+model PersonToPerson {
+  id              String   @id @default(uuid())
+  personAId       String
+  personBId       String
+  relationContext String
+  relationType    String?
+  strength        Int?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  personA KgNode @relation("PersonToPersonA", fields: [personAId], references: [id], onDelete: Cascade)
+  personB KgNode @relation("PersonToPersonB", fields: [personBId], references: [id], onDelete: Cascade)
+
+  @@unique([personAId, personBId])
+  @@index([personAId])
+  @@index([personBId])
+}
+
+// Vínculo tipado Persona ↔ Proyecto (KgNode type=proyecto) con contexto.
+model PersonToProject {
+  id              String   @id @default(uuid())
+  personId        String
+  projectId       String
+  relationContext String
+  relationType    String?
+  strength        Int?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  person  KgNode @relation("PersonToProjectPerson", fields: [personId], references: [id], onDelete: Cascade)
+  project KgNode @relation("PersonToProjectProject", fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([personId, projectId])
+  @@index([personId])
+  @@index([projectId])
+}
+
+// Cola de triage Mastropiero — extracciones brutas antes de sellar en el KG.
+// type: PERSON | PROJECT
+// status: PENDING | APPROVED | REJECTED | MERGED
+model EntityCandidate {
+  id             String   @id @default(uuid())
+  name           String
+  type           String
+  contextSnippet String
+  sourceId       String?
+  status         String   @default("PENDING")
+  /// Id del KgNode resultante tras APPROVED / MERGED
+  resolvedNodeId String?
+  metadata       Json     @default("{}")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([status, createdAt])
+  @@index([type, status])
+  @@index([sourceId])
+  @@index([name])
 }
 
 // Nodo gravitacional del sistema — identidad dual Operador + Exocórtex (/yo).

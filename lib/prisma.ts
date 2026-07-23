@@ -48,7 +48,11 @@ function isPrismaClientStale(client: PrismaClient): boolean {
     !("magoColeccion" in client) ||
     client.magoColeccion === undefined ||
     !("yo" in client) ||
-    client.yo === undefined
+    client.yo === undefined ||
+    !("personToPerson" in client) ||
+    client.personToPerson === undefined ||
+    !("entityCandidate" in client) ||
+    client.entityCandidate === undefined
   );
 }
 

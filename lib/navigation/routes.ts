@@ -27,7 +27,13 @@ import {
   WalletIcon,
 } from "lucide-react";
 
-export type CommandCategory = "nav" | "ludus" | "extra";
+/** Categorías semánticas del Portal de navegación (⌘K / ESC). */
+export type CommandCategory =
+  | "nucleo"
+  | "captura"
+  | "cortex"
+  | "ludus"
+  | "sistema";
 
 export type CommandRoute = {
   id: string;
@@ -40,31 +46,70 @@ export type CommandRoute = {
 };
 
 export const COMMAND_ROUTES: CommandRoute[] = [
+  // ── NÚCLEO ──────────────────────────────────────────────
   {
     id: "yo",
     href: "/yo",
     label: "Yo",
     description: "Centro de mando del operador",
     hotkey: "C",
-    category: "nav",
+    category: "nucleo",
     icon: UserRoundIcon,
   },
   {
-    id: "cortex",
-    href: "/cortex",
-    label: "Córtex",
-    description: "Snapshot de corpus y conocimiento",
-    hotkey: "X",
-    category: "nav",
-    icon: BrainCircuitIcon,
+    id: "jornada",
+    href: "/jornada",
+    label: "Jornada",
+    description: "Ritmo del día",
+    hotkey: "J",
+    category: "nucleo",
+    icon: SparklesIcon,
   },
+  {
+    id: "diario",
+    href: "/diario",
+    label: "Diario",
+    description: "Entradas diarias",
+    hotkey: "D",
+    category: "nucleo",
+    icon: NotebookPenIcon,
+  },
+  {
+    id: "chat",
+    href: "/chat",
+    label: "Chat",
+    description: "Conversación con contexto",
+    hotkey: "H",
+    category: "nucleo",
+    icon: MessageSquareIcon,
+  },
+  {
+    id: "calendario",
+    href: "/calendario",
+    label: "Calendario",
+    description: "Simulador de turnos / draft de misiones",
+    hotkey: "Y",
+    category: "nucleo",
+    icon: CalendarIcon,
+  },
+  {
+    id: "pendientes",
+    href: "/pendientes",
+    label: "Pendientes",
+    description: "Tareas abiertas",
+    hotkey: "U",
+    category: "nucleo",
+    icon: ListTodoIcon,
+  },
+
+  // ── CAPTURA ─────────────────────────────────────────────
   {
     id: "ingesta",
     href: "/ingesta",
     label: "Ingesta",
     description: "Captura multimodal",
     hotkey: "I",
-    category: "nav",
+    category: "captura",
     icon: InboxIcon,
   },
   {
@@ -73,89 +118,8 @@ export const COMMAND_ROUTES: CommandRoute[] = [
     label: "Audio",
     description: "Transcripciones y grabaciones",
     hotkey: "A",
-    category: "nav",
+    category: "captura",
     icon: MicIcon,
-  },
-  {
-    id: "diario",
-    href: "/diario",
-    label: "Diario",
-    description: "Entradas diarias",
-    hotkey: "D",
-    category: "nav",
-    icon: NotebookPenIcon,
-  },
-  {
-    id: "jornada",
-    href: "/jornada",
-    label: "Jornada",
-    description: "Ritmo del día",
-    hotkey: "J",
-    category: "nav",
-    icon: SparklesIcon,
-  },
-  {
-    id: "salud",
-    href: "/salud",
-    label: "Salud",
-    description: "Registros de bienestar",
-    hotkey: "S",
-    category: "nav",
-    icon: HeartPulseIcon,
-  },
-  {
-    id: "finanzas",
-    href: "/finanzas",
-    label: "Finanzas",
-    description: "Ledger financiero y eco-pulse",
-    hotkey: "F",
-    category: "nav",
-    icon: WalletIcon,
-  },
-  {
-    id: "chat",
-    href: "/chat",
-    label: "Chat",
-    description: "Conversación con contexto",
-    hotkey: "H",
-    category: "nav",
-    icon: MessageSquareIcon,
-  },
-  {
-    id: "validar",
-    href: "/validar",
-    label: "Validar",
-    description: "Revisión HITL del Purifier",
-    hotkey: "V",
-    category: "nav",
-    icon: ShieldCheckIcon,
-  },
-  {
-    id: "molecular",
-    href: "/molecular",
-    label: "Molecular",
-    description: "Vista molecular del corpus",
-    hotkey: "M",
-    category: "nav",
-    icon: FlaskConicalIcon,
-  },
-  {
-    id: "archivo",
-    href: "/archivo",
-    label: "Archivo",
-    description: "Explorador unificado",
-    hotkey: "R",
-    category: "nav",
-    icon: ArchiveIcon,
-  },
-  {
-    id: "enciclopedia",
-    href: "/enciclopedia",
-    label: "Enciclopedia",
-    description: "Exploración conceptual",
-    hotkey: "E",
-    category: "nav",
-    icon: BookOpenIcon,
   },
   {
     id: "watcher",
@@ -163,17 +127,28 @@ export const COMMAND_ROUTES: CommandRoute[] = [
     label: "Watcher",
     description: "Grabación y observación",
     hotkey: "W",
-    category: "nav",
+    category: "captura",
     icon: VideoIcon,
   },
+
+  // ── CÓRTEX & NODOS ──────────────────────────────────────
   {
-    id: "calibrador",
-    href: "/calibrador",
-    label: "Calibrador",
-    description: "Calibración de vibe",
-    hotkey: "B",
-    category: "nav",
-    icon: WrenchIcon,
+    id: "cortex",
+    href: "/cortex",
+    label: "Córtex",
+    description: "Snapshot de corpus y conocimiento",
+    hotkey: "X",
+    category: "cortex",
+    icon: BrainCircuitIcon,
+  },
+  {
+    id: "validar",
+    href: "/validar",
+    label: "Validar",
+    description: "Revisión HITL del Purifier",
+    hotkey: "V",
+    category: "cortex",
+    icon: ShieldCheckIcon,
   },
   {
     id: "proyectos",
@@ -181,7 +156,7 @@ export const COMMAND_ROUTES: CommandRoute[] = [
     label: "Proyectos",
     description: "Tablero por campos",
     hotkey: "P",
-    category: "nav",
+    category: "cortex",
     icon: GitBranchIcon,
   },
   {
@@ -190,7 +165,7 @@ export const COMMAND_ROUTES: CommandRoute[] = [
     label: "Personas",
     description: "CRM de contactos",
     hotkey: "N",
-    category: "nav",
+    category: "cortex",
     icon: UserRoundIcon,
   },
   {
@@ -199,36 +174,38 @@ export const COMMAND_ROUTES: CommandRoute[] = [
     label: "Grafo",
     description: "Knowledge graph visual",
     hotkey: "G",
-    category: "nav",
+    category: "cortex",
     icon: NetworkIcon,
   },
   {
-    id: "agentes",
-    href: "/agentes",
-    label: "Agentes",
-    description: "Herramientas autónomas",
-    hotkey: "T",
-    category: "nav",
-    icon: SparklesIcon,
+    id: "molecular",
+    href: "/molecular",
+    label: "Molecular",
+    description: "Vista molecular del corpus",
+    hotkey: "M",
+    category: "cortex",
+    icon: FlaskConicalIcon,
   },
   {
-    id: "historial",
-    href: "/historial",
-    label: "Historial",
-    description: "Log de actividad y agentes",
-    hotkey: "O",
-    category: "nav",
-    icon: HistoryIcon,
-  },
-  {
-    id: "respaldo",
-    href: "/respaldo",
-    label: "Respaldo",
-    description: "Import y export",
-    hotkey: "K",
-    category: "nav",
+    id: "archivo",
+    href: "/archivo",
+    label: "Archivo",
+    description: "Explorador unificado",
+    hotkey: "R",
+    category: "cortex",
     icon: ArchiveIcon,
   },
+  {
+    id: "enciclopedia",
+    href: "/enciclopedia",
+    label: "Enciclopedia",
+    description: "Exploración conceptual",
+    hotkey: "E",
+    category: "cortex",
+    icon: BookOpenIcon,
+  },
+
+  // ── LUDUS ───────────────────────────────────────────────
   {
     id: "ludus",
     href: "/ludus",
@@ -274,30 +251,198 @@ export const COMMAND_ROUTES: CommandRoute[] = [
     category: "ludus",
     icon: WandSparklesIcon,
   },
+
+  // ── SISTEMA & TELEMETRÍA ────────────────────────────────
   {
-    id: "calendario",
-    href: "/calendario",
-    label: "Calendario",
-    description: "Simulador de turnos / draft de misiones",
-    hotkey: "Y",
-    category: "extra",
-    icon: CalendarIcon,
+    id: "salud",
+    href: "/salud",
+    label: "Salud",
+    description: "Registros de bienestar",
+    hotkey: "S",
+    category: "sistema",
+    icon: HeartPulseIcon,
   },
   {
-    id: "pendientes",
-    href: "/pendientes",
-    label: "Pendientes",
-    description: "Tareas abiertas",
-    hotkey: "U",
-    category: "extra",
-    icon: ListTodoIcon,
+    id: "finanzas",
+    href: "/finanzas",
+    label: "Finanzas",
+    description: "Ledger financiero y eco-pulse",
+    hotkey: "F",
+    category: "sistema",
+    icon: WalletIcon,
+  },
+  {
+    id: "calibrador",
+    href: "/calibrador",
+    label: "Calibrador",
+    description: "Calibración de vibe",
+    hotkey: "B",
+    category: "sistema",
+    icon: WrenchIcon,
+  },
+  {
+    id: "agentes",
+    href: "/agentes",
+    label: "Agentes",
+    description: "Herramientas autónomas",
+    hotkey: "T",
+    category: "sistema",
+    icon: SparklesIcon,
+  },
+  {
+    id: "historial",
+    href: "/historial",
+    label: "Historial",
+    description: "Log de actividad y agentes",
+    hotkey: "O",
+    category: "sistema",
+    icon: HistoryIcon,
+  },
+  {
+    id: "respaldo",
+    href: "/respaldo",
+    label: "Respaldo",
+    description: "Import y export",
+    hotkey: "K",
+    category: "sistema",
+    icon: ArchiveIcon,
   },
 ];
 
-/** Links del header horizontal (subset de COMMAND_ROUTES). */
-export const NAV_LINKS = COMMAND_ROUTES.filter((route) => route.category === "nav").map(
-  ({ href, label }) => ({ href, label }),
+export const COMMAND_CATEGORY_LABELS: Record<CommandCategory, string> = {
+  nucleo: "Núcleo",
+  captura: "Captura",
+  cortex: "Córtex & Nodos",
+  ludus: "Ludus",
+  sistema: "Sistema & Telemetría",
+};
+
+/** Orden de columnas en el Portal de navegación. */
+export const COMMAND_CATEGORY_ORDER: CommandCategory[] = [
+  "nucleo",
+  "captura",
+  "cortex",
+  "ludus",
+  "sistema",
+];
+
+const ROUTE_BY_ID = new Map(
+  COMMAND_ROUTES.map((route) => [route.id, route] as const),
 );
+
+export function getRouteById(id: string): CommandRoute | undefined {
+  return ROUTE_BY_ID.get(id);
+}
+
+/** Enlaces fijos a la izquierda de la topbar. */
+export const TOP_NAV_PINNED_IDS = ["yo", "jornada", "chat"] as const;
+
+export type TopNavMenuId =
+  | "ingesta"
+  | "nodos"
+  | "cortex"
+  | "ludus"
+  | "sistema";
+
+export type TopNavMenuItem = {
+  routeId: string;
+  /** Etiqueta opcional distinta del label de la ruta (ej. Texto → /ingesta). */
+  label?: string;
+};
+
+export type TopNavMenu = {
+  id: TopNavMenuId;
+  label: string;
+  items: TopNavMenuItem[];
+};
+
+/**
+ * Menús desplegables de la topbar.
+ * Escalable: añadir un ítem aquí basta para que aparezca en el dropdown.
+ */
+export const TOP_NAV_MENUS: TopNavMenu[] = [
+  {
+    id: "ingesta",
+    label: "Ingesta",
+    items: [
+      { routeId: "ingesta", label: "Texto" },
+      { routeId: "audio" },
+      { routeId: "watcher" },
+      { routeId: "diario" },
+    ],
+  },
+  {
+    id: "nodos",
+    label: "Nodos",
+    items: [
+      { routeId: "personas" },
+      { routeId: "proyectos" },
+      { routeId: "calendario" },
+      { routeId: "pendientes" },
+    ],
+  },
+  {
+    id: "cortex",
+    label: "Córtex",
+    items: [
+      { routeId: "validar" },
+      { routeId: "molecular" },
+      { routeId: "archivo" },
+      { routeId: "enciclopedia" },
+      { routeId: "grafo" },
+    ],
+  },
+  {
+    id: "ludus",
+    label: "Ludus",
+    items: [
+      { routeId: "castillo" },
+      { routeId: "campamento" },
+      { routeId: "trinchera" },
+      { routeId: "mago" },
+    ],
+  },
+  {
+    id: "sistema",
+    label: "Sistema",
+    items: [
+      { routeId: "salud" },
+      { routeId: "finanzas" },
+      { routeId: "calibrador" },
+      { routeId: "agentes" },
+      { routeId: "historial" },
+      { routeId: "respaldo" },
+    ],
+  },
+];
+
+export const TOP_NAV_PINNED = TOP_NAV_PINNED_IDS.map((id) => {
+  const route = getRouteById(id);
+  if (!route) throw new Error(`Ruta pinned desconocida: ${id}`);
+  return { href: route.href, label: route.label, id: route.id };
+});
+
+/** Resuelve ítems de un menú topbar a rutas concretas. */
+export function resolveTopNavMenuItems(menu: TopNavMenu) {
+  return menu.items.flatMap((item) => {
+    const route = getRouteById(item.routeId);
+    if (!route) return [];
+    return [
+      {
+        href: route.href,
+        label: item.label ?? route.label,
+        icon: route.icon,
+        id: route.id,
+      },
+    ];
+  });
+}
+
+/** @deprecated Prefer TOP_NAV_PINNED + TOP_NAV_MENUS. */
+export const NAV_LINKS = TOP_NAV_PINNED.map(({ href, label }) => ({
+  href,
+  label,
+}));
 
 const HOTKEY_MAP = new Map(
   COMMAND_ROUTES.map((route) => [route.hotkey.toLowerCase(), route]),
@@ -319,8 +464,17 @@ export function filterRoutes(query: string): CommandRoute[] {
   });
 }
 
-export const COMMAND_CATEGORY_LABELS: Record<CommandCategory, string> = {
-  nav: "Navegación",
-  ludus: "Ludus",
-  extra: "Accesos extra",
-};
+export function groupRoutesByCategory(
+  routes: CommandRoute[],
+): Map<CommandCategory, CommandRoute[]> {
+  const groups = new Map<CommandCategory, CommandRoute[]>();
+  for (const category of COMMAND_CATEGORY_ORDER) {
+    groups.set(category, []);
+  }
+  for (const route of routes) {
+    const list = groups.get(route.category) ?? [];
+    list.push(route);
+    groups.set(route.category, list);
+  }
+  return groups;
+}

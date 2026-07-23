@@ -387,7 +387,6 @@ export function PersonaDetailWorkspace({ idOrSlug }: PersonaDetailWorkspaceProps
           <PersonaFormSheet
             open={showEdit}
             onOpenChange={setShowEdit}
-            mode="edit"
             initialPersona={entity}
             onSaved={() => void loadPersona()}
           />

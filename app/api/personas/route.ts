@@ -1,8 +1,13 @@
 import { listPersonas } from "@/lib/personas/queries";
-import { createPersona, createPersonaEntity } from "@/lib/personas/service";
+import { createPersonaWithRelations } from "@/lib/personas/create-with-relations";
+import { createPersona } from "@/lib/personas/service";
 import { isPersonaKind } from "@/lib/kg/types";
 import { getUniverseFilterSlugFromRequest } from "@/lib/babel/universe-scope";
 import { resolveUniverseKgNodeIds } from "@/lib/babel/universe-refs";
+import type {
+  CreatePersonaWithRelationsPayload,
+  PersonaConnectionDraft,
+} from "@/lib/personas/model";
 import type { PersonaListStatus } from "@/lib/personas/types";
 import { ensureRuntimeReady } from "@/lib/runtime-setup";
 import { NextRequest, NextResponse } from "next/server";
@@ -68,6 +73,7 @@ export async function POST(request: NextRequest) {
       aliases?: string[];
       notasGenerales?: string;
       campoSlug?: string;
+      connections?: unknown;
     };
 
     const nombre =
@@ -79,12 +85,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (body.notasGenerales !== undefined || body.nombrePrincipal) {
-      const persona = await createPersonaEntity({
+    // Alta con vínculos tipados (mismo contrato que el server action).
+    if (Array.isArray(body.connections) || body.nombrePrincipal) {
+      const connections = Array.isArray(body.connections)
+        ? (body.connections as PersonaConnectionDraft[])
+        : undefined;
+      const payload: CreatePersonaWithRelationsPayload = {
         nombrePrincipal: nombre,
         aliases: Array.isArray(body.aliases) ? body.aliases : undefined,
         notasGenerales: body.notasGenerales,
-      });
+        connections,
+      };
+      const persona = await createPersonaWithRelations(payload);
       return NextResponse.json({ persona }, { status: 201 });
     }
 
