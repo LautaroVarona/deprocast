@@ -1,5 +1,6 @@
 import { listPersonaLinkTargets } from "@/lib/personas/relations";
 import type { PersonaLinkTargetKind } from "@/lib/personas/model";
+import { ensureRuntimeReady } from "@/lib/runtime-setup";
 import { NextRequest, NextResponse } from "next/server";
 
 export const runtime = "nodejs";
@@ -13,6 +14,8 @@ function parseKind(value: string | null): PersonaLinkTargetKind | null {
 
 export async function GET(request: NextRequest) {
   try {
+    await ensureRuntimeReady();
+
     const { searchParams } = request.nextUrl;
     const kind = parseKind(searchParams.get("kind"));
     if (!kind) {

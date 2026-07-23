@@ -1,10 +1,13 @@
 import { mergePersonaIdentities } from "@/lib/personas/service";
+import { ensureRuntimeReady } from "@/lib/runtime-setup";
 import { NextRequest, NextResponse } from "next/server";
 
 export const runtime = "nodejs";
 
 export async function POST(request: NextRequest) {
   try {
+    await ensureRuntimeReady();
+
     const body = (await request.json().catch(() => null)) as {
       keepId?: string;
       dropId?: string;

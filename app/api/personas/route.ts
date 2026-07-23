@@ -4,6 +4,7 @@ import { isPersonaKind } from "@/lib/kg/types";
 import { getUniverseFilterSlugFromRequest } from "@/lib/babel/universe-scope";
 import { resolveUniverseKgNodeIds } from "@/lib/babel/universe-refs";
 import type { PersonaListStatus } from "@/lib/personas/types";
+import { ensureRuntimeReady } from "@/lib/runtime-setup";
 import { NextRequest, NextResponse } from "next/server";
 
 export const runtime = "nodejs";
@@ -17,6 +18,8 @@ function parseStatus(value: string | null): PersonaListStatus {
 
 export async function GET(request: NextRequest) {
   try {
+    await ensureRuntimeReady();
+
     const status = parseStatus(request.nextUrl.searchParams.get("status"));
     const universeSlug = getUniverseFilterSlugFromRequest(request);
     const allPersonas = await listPersonas(status);
@@ -55,6 +58,8 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    await ensureRuntimeReady();
+
     const body = (await request.json()) as {
       name?: string;
       nombrePrincipal?: string;

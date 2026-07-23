@@ -5,6 +5,7 @@ import {
   updatePersonaEntity,
 } from "@/lib/personas/service";
 import { getPersonaByIdOrSlug } from "@/lib/personas/queries";
+import { ensureRuntimeReady } from "@/lib/runtime-setup";
 import { NextRequest, NextResponse } from "next/server";
 
 export const runtime = "nodejs";
@@ -15,6 +16,8 @@ type RouteContext = {
 
 export async function GET(_request: NextRequest, context: RouteContext) {
   try {
+    await ensureRuntimeReady();
+
     const { id } = await context.params;
     const persona = await getPersonaByIdOrSlug(id);
     const entity = await getPersonaEntity(id);
@@ -38,6 +41,8 @@ export async function GET(_request: NextRequest, context: RouteContext) {
 
 export async function PATCH(request: NextRequest, context: RouteContext) {
   try {
+    await ensureRuntimeReady();
+
     const { id } = await context.params;
     const body = (await request.json()) as {
       nombrePrincipal?: string;
@@ -68,6 +73,8 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
 
 export async function DELETE(_request: NextRequest, context: RouteContext) {
   try {
+    await ensureRuntimeReady();
+
     const { id } = await context.params;
     const existing = await getPersonaEntity(id);
     if (!existing) {

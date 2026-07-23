@@ -1,13 +1,19 @@
+import fs from "node:fs";
+import path from "node:path";
+
 import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
 import { PrismaClient } from "@prisma/client";
 
-import { getDatabaseUrl } from "@/lib/runtime-paths";
+import { getDatabaseFilePath, getDatabaseUrl } from "@/lib/runtime-paths";
 
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
 };
 
 function createPrismaClient() {
+  // better-sqlite3 exige que el directorio padre exista (si no: "Cannot open database…").
+  fs.mkdirSync(path.dirname(getDatabaseFilePath()), { recursive: true });
+
   const adapter = new PrismaBetterSqlite3({
     url: getDatabaseUrl(),
   });

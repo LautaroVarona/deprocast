@@ -3,12 +3,15 @@ import {
   createRelacionPersonaPersona,
   createRelacionPersonaProyecto,
 } from "@/lib/personas/relations";
+import { ensureRuntimeReady } from "@/lib/runtime-setup";
 import { NextRequest, NextResponse } from "next/server";
 
 export const runtime = "nodejs";
 
 export async function POST(request: NextRequest) {
   try {
+    await ensureRuntimeReady();
+
     const body = (await request.json()) as {
       kind?: string;
       origenId?: string;

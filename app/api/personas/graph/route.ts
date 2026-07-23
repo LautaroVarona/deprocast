@@ -1,5 +1,6 @@
 import { buildPersonaGraphSnapshot } from "@/lib/personas/graph";
 import type { PersonaGraphViewMode } from "@/lib/personas/model";
+import { ensureRuntimeReady } from "@/lib/runtime-setup";
 import { NextRequest, NextResponse } from "next/server";
 
 export const runtime = "nodejs";
@@ -10,6 +11,8 @@ function parseMode(value: string | null): PersonaGraphViewMode {
 
 export async function GET(request: NextRequest) {
   try {
+    await ensureRuntimeReady();
+
     const mode = parseMode(request.nextUrl.searchParams.get("mode"));
     const snapshot = await buildPersonaGraphSnapshot(mode);
     return NextResponse.json({ snapshot });

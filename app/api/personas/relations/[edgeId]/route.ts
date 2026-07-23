@@ -2,6 +2,7 @@ import {
   deleteRelacionEntity,
   updateRelacionEntity,
 } from "@/lib/personas/relations";
+import { ensureRuntimeReady } from "@/lib/runtime-setup";
 import { NextRequest, NextResponse } from "next/server";
 
 export const runtime = "nodejs";
@@ -12,6 +13,8 @@ type RouteContext = {
 
 export async function PATCH(request: NextRequest, context: RouteContext) {
   try {
+    await ensureRuntimeReady();
+
     const { edgeId } = await context.params;
     const body = (await request.json()) as {
       tipoRelacion?: string;
@@ -32,6 +35,8 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
 
 export async function DELETE(_request: NextRequest, context: RouteContext) {
   try {
+    await ensureRuntimeReady();
+
     const { edgeId } = await context.params;
     await deleteRelacionEntity(edgeId);
     return NextResponse.json({ ok: true });

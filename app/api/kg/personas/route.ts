@@ -1,11 +1,14 @@
 import { ensurePersonaStub } from "@/lib/kg/personas";
 import { searchNodes } from "@/lib/kg/queries";
+import { ensureRuntimeReady } from "@/lib/runtime-setup";
 import { NextRequest, NextResponse } from "next/server";
 
 export const runtime = "nodejs";
 
 export async function GET(request: NextRequest) {
   try {
+    await ensureRuntimeReady();
+
     const { searchParams } = request.nextUrl;
     const q = searchParams.get("q") ?? "";
     const limitRaw = Number.parseInt(searchParams.get("limit") ?? "20", 10);
@@ -27,6 +30,8 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: Request) {
   try {
+    await ensureRuntimeReady();
+
     const body = (await request.json()) as { name?: string };
     const persona = await ensurePersonaStub(String(body.name ?? ""));
     return NextResponse.json({ persona }, { status: 201 });

@@ -102,7 +102,8 @@ export function getDatabaseFilePath(): string {
 }
 
 export function getDatabaseUrl(): string {
-  return `file:${getDatabaseFilePath()}`;
+  // Forward slashes: URI file: estable en Windows para el adapter better-sqlite3.
+  return `file:${getDatabaseFilePath().replace(/\\/g, "/")}`;
 }
 
 export function getDatabaseSeedPath(): string {

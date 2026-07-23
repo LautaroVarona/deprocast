@@ -1,4 +1,5 @@
 import { promotePersona } from "@/lib/personas/service";
+import { ensureRuntimeReady } from "@/lib/runtime-setup";
 import { NextRequest, NextResponse } from "next/server";
 
 export const runtime = "nodejs";
@@ -9,6 +10,8 @@ type RouteContext = {
 
 export async function POST(_request: NextRequest, context: RouteContext) {
   try {
+    await ensureRuntimeReady();
+
     const { id } = await context.params;
     if (!id?.trim()) {
       return NextResponse.json(
