@@ -89,13 +89,39 @@ class ProcessingQueue {
     return false;
   }
 
-  async clearQueue(): Promise<void> {
+  /**
+   * Aborta la cola STT de inmediato: pausa, cancela el job activo,
+   * corta auto-purify y marca PENDING/PROCESSING como ERROR.
+   * Usado por wipe / reinicio de fábrica (no espera a que termine la ingesta).
+   */
+  async forceAbortAll(): Promise<void> {
+    setQueuePaused(true);
+
+    if (this.activeId) {
+      requestCancellation(this.activeId);
+    }
+
+    const inFlight = await prisma.audioAsset.findMany({
+      where: { status: { in: ["PENDING", "PROCESSING"] } },
+      select: { id: true },
+    });
+    for (const asset of inFlight) {
+      requestCancellation(asset.id);
+    }
+
+    this.purifyingIds.clear();
+
     await prisma.audioAsset.updateMany({
-      where: { status: "PENDING" },
+      where: { status: { in: ["PENDING", "PROCESSING"] } },
       data: { status: "ERROR", partialText: null },
     });
+
     this.running = false;
     this.activeId = null;
+  }
+
+  async clearQueue(): Promise<void> {
+    await this.forceAbortAll();
   }
 
   async getStatus(): Promise<QueueStatus> {

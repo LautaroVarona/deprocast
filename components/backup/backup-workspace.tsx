@@ -656,8 +656,10 @@ export function BackupWorkspace() {
               </strong>
               : base SQLite, diario, chat, grafo, audios, uploads, Ludus,
               preferencias del navegador y cualquier residuo en{" "}
-              <code className="text-xs">data/</code>. No hay papelera ni
-              recuperación. Exportá una copia antes si querés conservar algo.
+              <code className="text-xs">data/</code>. Si hay una ingesta de
+              audio en curso, se aborta y el reinicio sigue igual. No hay
+              papelera ni recuperación. Exportá una copia antes si querés
+              conservar algo.
             </p>
           </div>
 

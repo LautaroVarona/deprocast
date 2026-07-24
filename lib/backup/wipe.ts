@@ -1,10 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 
-import {
-  assertLocalBackupAllowed,
-  assertNoActiveProcessing,
-} from "@/lib/backup/guards";
+import { assertLocalBackupAllowed } from "@/lib/backup/guards";
 import { disconnectPrismaClient, getPrismaClient, resetPrismaClient } from "@/lib/prisma";
 import { processingQueue } from "@/lib/processing-queue";
 import {
@@ -18,6 +15,41 @@ import {
   resetRuntimeSetupCache,
 } from "@/lib/runtime-setup";
 
+async function removePathWithRetry(
+  targetPath: string,
+  attempts = 8,
+): Promise<void> {
+  for (let attempt = 0; attempt < attempts; attempt += 1) {
+    try {
+      if (!fs.existsSync(targetPath)) {
+        return;
+      }
+      const stat = await fs.promises.lstat(targetPath);
+      if (stat.isDirectory()) {
+        await fs.promises.rm(targetPath, { recursive: true, force: true });
+      } else {
+        await fs.promises.unlink(targetPath);
+      }
+      return;
+    } catch (error) {
+      const code = (error as NodeJS.ErrnoException).code;
+      if (code === "ENOENT") {
+        return;
+      }
+      if (
+        (code !== "EBUSY" && code !== "EPERM" && code !== "EACCES") ||
+        attempt === attempts - 1
+      ) {
+        throw error;
+      }
+
+      await new Promise((resolve) => {
+        setTimeout(resolve, 150 * (attempt + 1));
+      });
+    }
+  }
+}
+
 async function removeDirectoryContents(dirPath: string): Promise<void> {
   if (!fs.existsSync(dirPath)) {
     return;
@@ -27,14 +59,7 @@ async function removeDirectoryContents(dirPath: string): Promise<void> {
 
   await Promise.all(
     entries.map(async (entry) => {
-      const entryPath = path.join(dirPath, entry.name);
-
-      if (entry.isDirectory()) {
-        await fs.promises.rm(entryPath, { recursive: true, force: true });
-        return;
-      }
-
-      await fs.promises.unlink(entryPath);
+      await removePathWithRetry(path.join(dirPath, entry.name));
     }),
   );
 }
@@ -71,11 +96,12 @@ async function removeSqliteDatabaseFiles(dbPath: string): Promise<void> {
 }
 
 /**
- * Limpia cola, desconecta Prisma y vacía data/ + uploads/.
+ * Limpia cola (abortando ingesta activa si hace falta), desconecta Prisma
+ * y vacía data/ + uploads/.
  * No elimina el archivo SQLite (el restore full lo sobrescribe).
  */
 export async function wipeCurrentState(): Promise<void> {
-  await processingQueue.clearQueue();
+  await processingQueue.forceAbortAll();
   await disconnectPrismaClient();
 
   const dbPath = getDatabaseFilePath();
@@ -104,7 +130,10 @@ export type FactoryResetResult = {
  */
 export async function factoryResetSystem(): Promise<FactoryResetResult> {
   assertLocalBackupAllowed();
-  await assertNoActiveProcessing();
+  // Force: no bloquear por ingesta STT — se aborta la cola y se borra todo.
+  await processingQueue.forceAbortAll();
+  // Breve margen para que handlers de cancelación suelten locks de archivos.
+  await new Promise((resolve) => setTimeout(resolve, 250));
 
   await wipeCurrentState();
 
@@ -127,6 +156,9 @@ export async function factoryResetSystem(): Promise<FactoryResetResult> {
       "El reinicio falló: la base de datos vacía no se pudo recrear correctamente.",
     );
   }
+
+  // La cola quedó pausada por forceAbortAll; reabrir para el sistema vacío.
+  processingQueue.resume();
 
   return {
     success: true,
