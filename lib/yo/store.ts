@@ -159,6 +159,44 @@ export async function saveCalibrationEntry(
   return maybeCompleteConsecration(yo);
 }
 
+/** Sella las tres señales de Nosce Te Ipsum de una sola vez (modal). */
+export async function saveNosceMissionAnswers(input: {
+  exoesqueleto: string;
+  primaMateria: string;
+  esperanza: string;
+}): Promise<YoDto> {
+  const current = await ensureYoShell();
+  if (current.genesisStatus !== "PENDING_MISSIONS") {
+    throw new Error("Nosce solo puede sellarse durante las Misiones de Consagración.");
+  }
+  if (current.consecration.activeMissionId !== "nosce") {
+    throw new Error("Nosce Te Ipsum ya está sellado o no está activa.");
+  }
+
+  const calibration = {
+    ...current.calibration,
+    consecration_exoesqueleto: input.exoesqueleto.trim(),
+    consecration_prima_materia: input.primaMateria.trim(),
+    consecration_esperanza: input.esperanza.trim(),
+  };
+
+  const updated = await prisma.yo.update({
+    where: { id: YO_CORE_ID },
+    data: {
+      calibration: calibration as Prisma.InputJsonValue,
+    },
+  });
+
+  const exocortex = current.exocortexName ?? DEFAULT_EXOCORTEX_NAME;
+  await appendConduitMessage({
+    role: "exocortex",
+    content: `ADN personal indexado. Telemetría de energía desbloqueada. Misión I sellada — El Senado espera. ${exocortex} confirma el sello.`,
+  });
+
+  const yo = await toDto(updated);
+  return maybeCompleteConsecration(yo);
+}
+
 export async function patchYo(input: PatchYoInput): Promise<YoDto> {
   const current = await ensureYoShell();
 
@@ -271,7 +309,7 @@ export async function seedMissionBoardIntro(): Promise<void> {
   });
   await appendConduitMessage({
     role: "exocortex",
-    content: `Misión I activa: Nosce Te Ipsum. Respondé en este Conducto. ${exocortex} extraerá tu ADN operativo.`,
+    content: `Misión I activa: Nosce Te Ipsum. Abrí la columna de la Tabula. ${exocortex} extraerá tu ADN operativo.`,
   });
 }
 

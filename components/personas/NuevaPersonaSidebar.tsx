@@ -1,6 +1,7 @@
 "use client";
 
 import { createPersonaAction } from "@/app/personas/actions";
+import { useBabel } from "@/components/babel/babel-context";
 import { AliasTagInput } from "@/components/personas/alias-tag-input";
 import { ConnectionEntityPicker } from "@/components/personas/connection-entity-picker";
 import { Button } from "@/components/ui/button";
@@ -39,6 +40,7 @@ export function NuevaPersonaSidebar({
   onOpenChange,
   onCreated,
 }: NuevaPersonaSidebarProps) {
+  const { universeSlug } = useBabel();
   const [nombre, setNombre] = useState(EMPTY_FORM.nombre);
   const [aliases, setAliases] = useState<string[]>(EMPTY_FORM.aliases);
   const [notas, setNotas] = useState(EMPTY_FORM.notas);
@@ -141,6 +143,7 @@ export function NuevaPersonaSidebar({
         aliases,
         notasGenerales: notas,
         relationToOperator: relationToOperator.trim() || undefined,
+        universeSlug,
         connections: connections.map(
           ({ localId: _localId, ...connection }) => connection,
         ),

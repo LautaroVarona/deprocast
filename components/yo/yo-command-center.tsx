@@ -13,7 +13,7 @@ import { YoConduit } from "@/components/yo/yo-conduit";
 import { YoGenesisTerminal } from "@/components/yo/yo-genesis-terminal";
 import { YoStatusHud } from "@/components/yo/yo-status-hud";
 import type { OperationalStatus, YoDto } from "@/lib/yo/types";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 
 export function YoCommandCenter() {
@@ -21,7 +21,7 @@ export function YoCommandCenter() {
   const [yo, setYo] = useState<YoDto | null>(genesisYo);
   const [loading, setLoading] = useState(!genesisYo);
   const [saving, setSaving] = useState(false);
-  const conduitFocusRef = useRef<(() => void) | null>(null);
+  const [nosceOpen, setNosceOpen] = useState(false);
 
   const syncYo = useCallback(
     (next: YoDto) => {
@@ -103,43 +103,36 @@ export function YoCommandCenter() {
   }
 
   if (yo.genesisStatus === "PENDING_MISSIONS") {
-    const energyUnlocked = yo.consecration.missions.some(
-      (mission) =>
-        mission.id === "nosce" && mission.status === "completed",
-    );
-
     return (
-      <div className="yo-noir-root px-4 py-6 md:px-6 md:py-8">
-        <div className="mx-auto flex w-full max-w-5xl flex-col gap-5">
-          <YoStatusHud
-            yo={yo}
-            saving={saving}
-            compact
-            energyUnlocked={energyUnlocked}
-            onStatusChange={(status: OperationalStatus) => {
-              void patch({ operationalStatus: status });
-            }}
-            onEnergyChange={(level: number) => {
-              void patch({ energyLevel: level });
-            }}
-          />
+      <div className="flex h-full min-h-0 w-full flex-1 flex-col overflow-hidden bg-zinc-950 p-6 font-mono text-amber-100">
+        <YoStatusHud
+          yo={yo}
+          saving={saving}
+          compact
+          energyUnlocked={false}
+          onStatusChange={(status: OperationalStatus) => {
+            void patch({ operationalStatus: status });
+          }}
+          onEnergyChange={(level: number) => {
+            void patch({ energyLevel: level });
+          }}
+        />
 
-          <div className="grid gap-5 lg:grid-cols-[1.05fr_0.95fr]">
-            <MissionBoard
-              yo={yo}
-              consecration={yo.consecration}
-              onFocusConduit={() => conduitFocusRef.current?.()}
-              onProgress={refreshMissions}
-            />
-            <YoConduit
-              yo={yo}
-              missionMode
-              onYoUpdate={syncYo}
-              registerFocus={(focus) => {
-                conduitFocusRef.current = focus;
-              }}
-            />
-          </div>
+        <p className="mt-5 shrink-0 font-display text-base leading-snug tracking-[0.02em] text-amber-100/90 md:text-lg">
+          Para comenzar a entender Deprocast, Deprocast debe entenderte primero.
+        </p>
+
+        <div className="mt-4 flex min-h-0 flex-1 flex-col">
+          <MissionBoard
+            consecration={yo.consecration}
+            nosceOpen={nosceOpen}
+            onNosceOpenChange={setNosceOpen}
+            onNosceCompleted={(next) => {
+              syncYo(next);
+              toast.success("Misión I sellada. El Senado espera.");
+            }}
+            onProgress={refreshMissions}
+          />
         </div>
       </div>
     );

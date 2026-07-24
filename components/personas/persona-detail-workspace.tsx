@@ -1,5 +1,6 @@
 "use client";
 
+import { useBabel } from "@/components/babel/babel-context";
 import { ActivityFeed } from "@/components/personas/activity-feed";
 import { PersonaRelationsSheet } from "@/components/personas/persona-relations-sheet";
 import { PersonaFormSheet } from "@/components/personas/persona-form-sheet";
@@ -45,6 +46,7 @@ function formatWhen(iso: string | null): string {
 
 export function PersonaDetailWorkspace({ idOrSlug }: PersonaDetailWorkspaceProps) {
   const router = useRouter();
+  const { universeFetch } = useBabel();
   const [persona, setPersona] = useState<PersonaDetailDto | null>(null);
   const [entity, setEntity] = useState<Persona | null>(null);
   const [relations, setRelations] = useState<PersonaRelationListItem[]>([]);
@@ -58,9 +60,10 @@ export function PersonaDetailWorkspace({ idOrSlug }: PersonaDetailWorkspaceProps
     setIsLoading(true);
     setNotFound(false);
     try {
-      const response = await fetch(`/api/personas/${encodeURIComponent(idOrSlug)}`, {
-        cache: "no-store",
-      });
+      const response = await universeFetch(
+        `/api/personas/${encodeURIComponent(idOrSlug)}`,
+        { cache: "no-store" },
+      );
       if (response.status === 404) {
         setNotFound(true);
         setPersona(null);
@@ -82,7 +85,7 @@ export function PersonaDetailWorkspace({ idOrSlug }: PersonaDetailWorkspaceProps
     } finally {
       setIsLoading(false);
     }
-  }, [idOrSlug]);
+  }, [idOrSlug, universeFetch]);
 
   useEffect(() => {
     void loadPersona();

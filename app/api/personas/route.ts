@@ -1,14 +1,15 @@
-import { listPersonas } from "@/lib/personas/queries";
-import { createPersonaWithRelations } from "@/lib/personas/create-with-relations";
-import { createPersona } from "@/lib/personas/service";
-import { isPersonaKind } from "@/lib/kg/types";
 import { getUniverseFilterSlugFromRequest } from "@/lib/babel/universe-scope";
 import { resolveUniverseKgNodeIds } from "@/lib/babel/universe-refs";
+import { isPersonaKind } from "@/lib/kg/types";
+import { createPersonaWithRelations } from "@/lib/personas/create-with-relations";
 import type {
   CreatePersonaWithRelationsPayload,
   PersonaConnectionDraft,
 } from "@/lib/personas/model";
+import { listPersonas } from "@/lib/personas/queries";
+import { createPersona } from "@/lib/personas/service";
 import type { PersonaListStatus } from "@/lib/personas/types";
+import { sealKgNodeInUniverse } from "@/lib/personas/universe-seal";
 import { ensureRuntimeReady } from "@/lib/runtime-setup";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -86,6 +87,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const universeSlug = getUniverseFilterSlugFromRequest(request);
+
     // Alta con vínculos tipados (mismo contrato que el server action).
     if (Array.isArray(body.connections) || body.nombrePrincipal) {
       const connections = Array.isArray(body.connections)
@@ -99,6 +102,7 @@ export async function POST(request: NextRequest) {
         connections,
       };
       const persona = await createPersonaWithRelations(payload);
+      await sealKgNodeInUniverse(persona.id, universeSlug, persona.nombrePrincipal);
       return NextResponse.json({ persona }, { status: 201 });
     }
 
@@ -114,6 +118,8 @@ export async function POST(request: NextRequest) {
       aliases: Array.isArray(body.aliases) ? body.aliases : undefined,
       campoSlug: body.campoSlug?.trim(),
     });
+
+    await sealKgNodeInUniverse(persona.id, universeSlug, persona.primaryName);
 
     return NextResponse.json({ persona }, { status: 201 });
   } catch (error) {

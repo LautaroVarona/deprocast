@@ -11,10 +11,15 @@ import {
   listConduitMessages,
   patchYo,
   refreshConsecration,
+  saveNosceMissionAnswers,
   seedMissionBoardIntro,
 } from "@/lib/yo/store";
 import {
   DEFAULT_EXOCORTEX_NAME,
+  NOSCE_BINARY_OPTIONS,
+  NOSCE_PRIMA_MATERIA_CHIPS,
+  ROMAN_FREE_TEXT_REGEX,
+  ROMAN_WORD_MAX,
   baptizeExocortexSchema,
   baptizeOperatorSchema,
   conduitMessageSchema,
@@ -22,6 +27,7 @@ import {
   type YoConduitMessageDto,
   type YoDto,
 } from "@/lib/yo/types";
+import { z } from "zod";
 import { ensureRuntimeReady } from "@/lib/runtime-setup";
 
 export type YoActionResult<T> =
@@ -176,7 +182,6 @@ export async function prepareMissionBoardAction(): Promise<
   try {
     await ready();
     await seedMissionBoardIntro();
-    await ensureMissionIPromptEmitted();
     const yo = await refreshConsecration();
     return { ok: true, data: yo };
   } catch (error) {
@@ -186,6 +191,60 @@ export async function prepareMissionBoardAction(): Promise<
         error instanceof Error
           ? error.message
           : "No se pudo preparar la Tabula.",
+    };
+  }
+}
+
+const nosceMissionSchema = z.object({
+  exoesqueleto: z.enum(NOSCE_BINARY_OPTIONS),
+  primaMateria: z
+    .array(z.enum(NOSCE_PRIMA_MATERIA_CHIPS))
+    .min(1, "Seleccioná al menos un tipo de Prima Materia."),
+  esperanza: z
+    .string()
+    .trim()
+    .min(1, "Escribí qué esperás de Deprocast.")
+    .max(500)
+    .refine((value) => ROMAN_FREE_TEXT_REGEX.test(value), {
+      message: "Sólo letras y espacios. Sin números ni símbolos.",
+    })
+    .refine(
+      (value) =>
+        value.split(/\s+/).every((word) => word.length <= ROMAN_WORD_MAX),
+      {
+        message: `Cada palabra puede tener como máximo ${ROMAN_WORD_MAX} caracteres.`,
+      },
+    ),
+});
+
+export async function completeNosceMissionAction(input: {
+  exoesqueleto: string;
+  primaMateria: string[];
+  esperanza: string;
+}): Promise<YoActionResult<YoDto>> {
+  try {
+    await ready();
+    const parsed = nosceMissionSchema.safeParse(input);
+    if (!parsed.success) {
+      return {
+        ok: false,
+        error: parsed.error.issues[0]?.message ?? "Respuestas inválidas.",
+      };
+    }
+
+    const yo = await saveNosceMissionAnswers({
+      exoesqueleto: parsed.data.exoesqueleto,
+      primaMateria: parsed.data.primaMateria.join(" · "),
+      esperanza: parsed.data.esperanza,
+    });
+    return { ok: true, data: yo };
+  } catch (error) {
+    return {
+      ok: false,
+      error:
+        error instanceof Error
+          ? error.message
+          : "No se pudo sellar Nosce Te Ipsum.",
     };
   }
 }

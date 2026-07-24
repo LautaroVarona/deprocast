@@ -1,5 +1,6 @@
 "use client";
 
+import { useBabel } from "@/components/babel/babel-context";
 import {
   PersonaRelationsSheet,
   type PersonaRelationDraft,
@@ -12,14 +13,18 @@ import type {
   PersonaGraphSnapshot,
   PersonaGraphViewMode,
 } from "@/lib/personas/model";
-import { cn } from "@/lib/utils";
+import { personaSlugFromName } from "@/lib/personas/slug";
 import { GitBranchIcon, Loader2Icon, NetworkIcon } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
-import { personaSlugFromName } from "@/lib/personas/slug";
 
-export function PersonasGraphWorkspace() {
-  const [mode, setMode] = useState<PersonaGraphViewMode>("mixed");
+type Props = {
+  mode: PersonaGraphViewMode;
+  onStatsChange?: (stats: { nodes: number; edges: number } | null) => void;
+};
+
+export function PersonasGraphWorkspace({ mode, onStatsChange }: Props) {
+  const { universeFetch } = useBabel();
   const [snapshot, setSnapshot] = useState<PersonaGraphSnapshot | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
@@ -27,28 +32,40 @@ export function PersonasGraphWorkspace() {
   const [linkDraft, setLinkDraft] = useState<PersonaRelationDraft | null>(null);
   const [showLinkForm, setShowLinkForm] = useState(false);
 
-  const loadGraph = useCallback(async (viewMode: PersonaGraphViewMode) => {
-    setIsLoading(true);
-    try {
-      const response = await fetch(
-        `/api/personas/graph?mode=${encodeURIComponent(viewMode)}`,
-        { cache: "no-store" },
-      );
-      if (!response.ok) return;
-      const data: { snapshot: PersonaGraphSnapshot } = await response.json();
-      setSnapshot(data.snapshot);
-      setSelectedNodeId(null);
-      setSelectedEdge(null);
-    } catch {
-      setSnapshot(null);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
+  const loadGraph = useCallback(
+    async (viewMode: PersonaGraphViewMode) => {
+      setIsLoading(true);
+      try {
+        const response = await universeFetch(
+          `/api/personas/graph?mode=${encodeURIComponent(viewMode)}`,
+          { cache: "no-store" },
+        );
+        if (!response.ok) return;
+        const data: { snapshot: PersonaGraphSnapshot } = await response.json();
+        setSnapshot(data.snapshot);
+        onStatsChange?.({
+          nodes: data.snapshot.nodes.length,
+          edges: data.snapshot.edges.length,
+        });
+        setSelectedNodeId(null);
+        setSelectedEdge(null);
+      } catch {
+        setSnapshot(null);
+        onStatsChange?.(null);
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [onStatsChange, universeFetch],
+  );
 
   useEffect(() => {
     void loadGraph(mode);
   }, [loadGraph, mode]);
+
+  useEffect(() => {
+    return () => onStatsChange?.(null);
+  }, [onStatsChange]);
 
   const selectedNode = snapshot?.nodes.find((n) => n.id === selectedNodeId);
 
@@ -59,47 +76,18 @@ export function PersonasGraphWorkspace() {
     setSelectedEdge(null);
   };
 
+  const edgeLabel = (edge: PersonaGraphEdge) => {
+    const source =
+      snapshot?.nodes.find((n) => n.id === edge.source)?.nombrePrincipal ??
+      "…";
+    const target =
+      snapshot?.nodes.find((n) => n.id === edge.target)?.nombrePrincipal ??
+      "…";
+    return `${source} ↔ ${target}`;
+  };
+
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <div className="flex shrink-0 flex-wrap items-center gap-2 border-b border-border px-4 py-2 sm:px-6">
-        <div className="flex gap-1 rounded-lg border border-border p-0.5">
-          <button
-            type="button"
-            onClick={() => setMode("exclusive")}
-            className={cn(
-              "rounded-md px-3 py-1 text-xs font-medium transition-colors",
-              mode === "exclusive"
-                ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-300"
-                : "text-muted-foreground hover:bg-muted/60",
-            )}
-          >
-            Exclusivo
-          </button>
-          <button
-            type="button"
-            onClick={() => setMode("mixed")}
-            className={cn(
-              "rounded-md px-3 py-1 text-xs font-medium transition-colors",
-              mode === "mixed"
-                ? "bg-violet-500/15 text-violet-600 dark:text-violet-300"
-                : "text-muted-foreground hover:bg-muted/60",
-            )}
-          >
-            Mixto
-          </button>
-        </div>
-        <p className="font-mono text-[10px] text-muted-foreground">
-          {mode === "exclusive"
-            ? "Personas · Shift+arrastrar entre personas"
-            : "Personas + proyectos + campos · Shift+arrastrar para vincular"}
-        </p>
-        {snapshot && (
-          <span className="ml-auto font-mono text-[10px] text-muted-foreground">
-            {snapshot.nodes.length} nodos · {snapshot.edges.length} aristas
-          </span>
-        )}
-      </div>
-
       <div className="relative min-h-0 flex-1">
         {isLoading ? (
           <div className="flex h-full items-center justify-center gap-2 font-mono text-[10px] text-muted-foreground">
@@ -119,7 +107,7 @@ export function PersonasGraphWorkspace() {
         ) : (
           <div className="flex h-full flex-col items-center justify-center gap-2 text-sm text-muted-foreground">
             <NetworkIcon className="size-8 opacity-40" />
-            <p>Sin nodos para visualizar. Creá personas primero.</p>
+            <p>Sin nodos verificados en este universo.</p>
           </div>
         )}
       </div>
@@ -155,8 +143,8 @@ export function PersonasGraphWorkspace() {
 
           {selectedEdge && !selectedNode && (
             <div className="space-y-1">
-              <p className="font-mono text-[10px] text-muted-foreground uppercase">
-                Arista seleccionada
+              <p className="font-mono text-[10px] text-emerald-500 uppercase">
+                {edgeLabel(selectedEdge)}
               </p>
               <p className="text-sm font-medium">{selectedEdge.tipoRelacion}</p>
               {selectedEdge.rolPrincipal && (

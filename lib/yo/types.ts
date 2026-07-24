@@ -35,21 +35,37 @@ export const MISSION_RUNTIME_STATUSES = [
 ] as const;
 export type MissionRuntimeStatus = (typeof MISSION_RUNTIME_STATUSES)[number];
 
-/** Misión I — ADN personal vía Conducto. */
+/** Misión I — ADN personal vía modal Nosce (3 pasos). */
 export const CONSECRATION_MISSION_I_PROMPTS = [
   {
-    id: "consecration_ritmo",
-    question: "¿Cuál es tu ritmo ideal de trabajo?",
+    id: "consecration_exoesqueleto",
+    question: "¿Has operado un Exoesqueleto Cognitivo antes?",
   },
   {
-    id: "consecration_lineas_rojas",
-    question: "¿Qué líneas rojas no cruzarías?",
+    id: "consecration_prima_materia",
+    question:
+      "¿Qué tipo de Prima Materia (Input) planeas cargar con mayor frecuencia?",
   },
   {
-    id: "consecration_principio",
-    question: "¿Qué principio guía tus decisiones bajo presión?",
+    id: "consecration_esperanza",
+    question: "¿Qué esperas de Deprocast?",
   },
 ] as const;
+
+export const NOSCE_BINARY_OPTIONS = ["Sí", "No", "Algo parecido"] as const;
+
+export const NOSCE_PRIMA_MATERIA_CHIPS = [
+  "Texto",
+  "Audio",
+  "Archivos (Tablas/CSV/IMAGENES)",
+  "Telemetría (gadgets)",
+  "Cuadernos/Notas Visuales",
+  "Enlaces/Web",
+] as const;
+
+/** Texto libre romano: sólo letras y espacios; máx. 13 chars por palabra. */
+export const ROMAN_FREE_TEXT_REGEX = /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/;
+export const ROMAN_WORD_MAX = 13;
 
 export const CONSECRATION_PERSONA_TARGET = 3;
 export const CONSECRATION_PROJECT_TARGET = 1;

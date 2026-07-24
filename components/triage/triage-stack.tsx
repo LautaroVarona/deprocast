@@ -6,6 +6,7 @@ import {
   rejectCandidateAction,
   searchMergeTargetsAction,
 } from "@/app/triage/actions";
+import { useBabel } from "@/components/babel/babel-context";
 import { CandidateCard } from "@/components/triage/candidate-card";
 import type {
   EntityCandidateDto,
@@ -48,6 +49,7 @@ export function TriageStack({
   onQueueEmpty,
   className,
 }: TriageStackProps) {
+  const { universeSlug } = useBabel();
   const [candidates, setCandidates] =
     useState<EntityCandidateDto[]>(initialCandidates);
   const [optimisticCandidates, applyOptimistic] = useOptimistic(
@@ -141,8 +143,12 @@ export function TriageStack({
         direction === "left"
           ? await rejectCandidateAction(currentId)
           : direction === "right"
-            ? await approveCandidateAction(currentId)
-            : await mergeCandidateAction(currentId, targetNodeId ?? "");
+            ? await approveCandidateAction(currentId, universeSlug)
+            : await mergeCandidateAction(
+                currentId,
+                targetNodeId ?? "",
+                universeSlug,
+              );
 
       if (!result.ok) {
         toast.error(result.error);

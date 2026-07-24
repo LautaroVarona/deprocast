@@ -1,3 +1,4 @@
+import type { UniverseIdFilter } from "@/lib/babel/universe-refs";
 import { parseAliasesJson, parseMetadataJson } from "@/lib/kg/normalize";
 import { listCampos } from "@/lib/projects/service";
 import { toPersonaGraphEdge } from "@/lib/personas/mappers";
@@ -36,14 +37,24 @@ function isCampoConcepto(metadata: Record<string, unknown>): boolean {
 
 export async function buildPersonaGraphSnapshot(
   mode: PersonaGraphViewMode,
+  universeNodeIds: UniverseIdFilter = null,
 ): Promise<PersonaGraphSnapshot> {
   const operatorNode = await ensureOperatorPersonaNode();
   const centerNodeId = operatorNode?.id ?? null;
 
-  const personaNodes = await prisma.kgNode.findMany({
+  const personaNodesRaw = await prisma.kgNode.findMany({
     where: { type: "persona", reconocido: true },
     orderBy: { primaryName: "asc" },
   });
+
+  const personaNodes =
+    universeNodeIds === null
+      ? personaNodesRaw
+      : personaNodesRaw.filter(
+          (node) =>
+            universeNodeIds.has(node.id) ||
+            (centerNodeId !== null && node.id === centerNodeId),
+        );
 
   if (
     centerNodeId &&
@@ -92,10 +103,39 @@ export async function buildPersonaGraphSnapshot(
       include: { sourceNode: true, targetNode: true },
     });
 
-    projectNodes = await prisma.kgNode.findMany({
+    const linkedProjectIds = new Set<string>();
+    for (const edge of personaProjectEdges) {
+      const touchesPersona =
+        (edge.sourceNode.type === "persona" &&
+          personaIds.has(edge.sourceNodeId)) ||
+        (edge.targetNode.type === "persona" &&
+          personaIds.has(edge.targetNodeId));
+      if (!touchesPersona) continue;
+      if (edge.sourceNode.type === "proyecto") linkedProjectIds.add(edge.sourceNodeId);
+      if (edge.targetNode.type === "proyecto") linkedProjectIds.add(edge.targetNodeId);
+    }
+
+    const projectNodesRaw = await prisma.kgNode.findMany({
       where: { type: "proyecto" },
       orderBy: { primaryName: "asc" },
     });
+    projectNodes = projectNodesRaw.filter((node) => {
+      if (linkedProjectIds.has(node.id)) return true;
+      if (universeNodeIds === null) return true;
+      return universeNodeIds.has(node.id);
+    });
+
+    const linkedCampoIds = new Set<string>();
+    for (const edge of personaCampoEdges) {
+      const touchesPersona =
+        (edge.sourceNode.type === "persona" &&
+          personaIds.has(edge.sourceNodeId)) ||
+        (edge.targetNode.type === "persona" &&
+          personaIds.has(edge.targetNodeId));
+      if (!touchesPersona) continue;
+      if (edge.sourceNode.type === "concepto") linkedCampoIds.add(edge.sourceNodeId);
+      if (edge.targetNode.type === "concepto") linkedCampoIds.add(edge.targetNodeId);
+    }
 
     const campos = await listCampos();
     const allConceptos = await prisma.kgNode.findMany({
@@ -110,7 +150,12 @@ export async function buildPersonaGraphSnapshot(
     }
     campoNodes = campos
       .map((campo) => campoNodeBySlug.get(campo.slug))
-      .filter((node): node is NonNullable<typeof node> => node !== undefined);
+      .filter((node): node is NonNullable<typeof node> => node !== undefined)
+      .filter((node) => {
+        if (linkedCampoIds.has(node.id)) return true;
+        if (universeNodeIds === null) return true;
+        return universeNodeIds.has(node.id);
+      });
   }
 
   const degree = new Map<string, number>();

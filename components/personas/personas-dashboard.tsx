@@ -9,8 +9,8 @@ import { PersonasGraphWorkspace } from "@/components/personas/personas-graph-wor
 import { PersonasTable } from "@/components/personas/personas-table";
 import { TriageWorkspace } from "@/components/triage/triage-workspace";
 import { Button } from "@/components/ui/button";
-import { listPendingCandidatesAction } from "@/app/triage/actions";
 import type { Persona } from "@/lib/personas/model";
+import type { PersonaGraphViewMode } from "@/lib/personas/model";
 import type { PersonaCardDto } from "@/lib/personas/types";
 import { personaSlugFromName } from "@/lib/personas/slug";
 import { cn } from "@/lib/utils";
@@ -21,7 +21,6 @@ import {
   SearchIcon,
   SparklesIcon,
   TableIcon,
-  UsersRoundIcon,
 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -47,6 +46,10 @@ export function PersonasDashboard() {
   const [pendingCount, setPendingCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [query, setQuery] = useState("");
+  const [graphMode, setGraphMode] = useState<PersonaGraphViewMode>("mixed");
+  const [graphStats, setGraphStats] = useState<{ nodes: number; edges: number } | null>(
+    null,
+  );
   const [showForm, setShowForm] = useState(false);
   const [showCreate, setShowCreate] = useState(false);
   const [showRelations, setShowRelations] = useState(false);
@@ -73,10 +76,20 @@ export function PersonasDashboard() {
   }, [universeFetch]);
 
   const loadPendingCount = useCallback(async () => {
-    const result = await listPendingCandidatesAction();
-    if (result.ok) setPendingCount(result.data.length);
-    else setPendingCount(0);
-  }, []);
+    try {
+      const response = await universeFetch("/api/personas?status=pending", {
+        cache: "no-store",
+      });
+      if (!response.ok) {
+        setPendingCount(0);
+        return;
+      }
+      const data: { personas: PersonaCardDto[] } = await response.json();
+      setPendingCount(data.personas.length);
+    } catch {
+      setPendingCount(0);
+    }
+  }, [universeFetch]);
 
   const reloadAll = useCallback(async () => {
     await Promise.all([loadPersonas(), loadPendingCount()]);
@@ -85,6 +98,7 @@ export function PersonasDashboard() {
   useEffect(() => {
     setPersonas([]);
     setPendingCount(0);
+    setGraphStats(null);
   }, [universeSlug]);
 
   useEffect(() => {
@@ -107,17 +121,6 @@ export function PersonasDashboard() {
     );
   }, [personas, query]);
 
-  const stats = useMemo(() => {
-    const withMentions = personas.filter((p) => p.mentionCount > 0).length;
-    const withProjects = personas.filter((p) => p.projects.length > 0).length;
-    return {
-      total: personas.length,
-      withMentions,
-      withProjects,
-      pending: pendingCount,
-    };
-  }, [personas, pendingCount]);
-
   const handleCreated = (persona: Persona) => {
     void reloadAll();
     router.push(`/personas/${personaSlugFromName(persona.nombrePrincipal)}`);
@@ -125,7 +128,9 @@ export function PersonasDashboard() {
 
   const openEdit = async (card: PersonaCardDto) => {
     try {
-      const response = await fetch(`/api/personas/${encodeURIComponent(card.id)}`);
+      const response = await universeFetch(
+        `/api/personas/${encodeURIComponent(card.id)}`,
+      );
       const data = await response.json();
       if (response.ok && data.entity) {
         setEditPersona(data.entity as Persona);
@@ -159,65 +164,43 @@ export function PersonasDashboard() {
       id: "candidatas",
       label: "Candidatas",
       icon: SparklesIcon,
-      badge: stats.pending > 0 ? stats.pending : undefined,
+      badge: pendingCount > 0 ? pendingCount : undefined,
     },
     { id: "grafo", label: "Grafo", icon: NetworkIcon },
   ];
 
   return (
     <div className="relative flex h-[calc(100dvh-3.5rem)] flex-col overflow-hidden bg-background text-foreground">
-      <header className="flex shrink-0 items-center justify-between gap-4 border-b border-border px-4 py-2.5 sm:px-6">
-        <div className="flex min-w-0 items-center gap-3">
-          <span className="flex size-7 shrink-0 items-center justify-center rounded-md border border-emerald-500/30 bg-emerald-500/10 text-emerald-500">
-            <UsersRoundIcon className="size-3.5" aria-hidden />
-          </span>
-          <div className="min-w-0">
-            <p className="font-mono text-[10px] tracking-[0.2em] text-muted-foreground uppercase">
-              Red Humana · Grafo de Personas
-            </p>
-            <h1 className="truncate text-sm font-semibold">
-              Stakeholders e identidades de silicio
-            </h1>
-          </div>
+      <div className="flex shrink-0 flex-wrap items-center gap-2 border-b border-border px-4 py-1.5 sm:px-6">
+        <div className="flex items-center gap-0.5">
+          {tabs.map(({ id, label, icon: Icon, badge }) => (
+            <button
+              key={id}
+              type="button"
+              onClick={() => selectTab(id)}
+              className={cn(
+                "flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors",
+                tab === id
+                  ? id === "candidatas"
+                    ? "bg-amber-500/15 text-amber-700 dark:text-amber-300"
+                    : "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300"
+                  : "text-muted-foreground hover:bg-muted/60 hover:text-foreground",
+              )}
+            >
+              <Icon className="size-3.5" />
+              {label}
+              {typeof badge === "number" ? (
+                <span className="rounded-full bg-amber-500/20 px-1.5 py-0.5 font-mono text-[9px] text-amber-700 dark:text-amber-400">
+                  {badge}
+                </span>
+              ) : null}
+            </button>
+          ))}
         </div>
-        <div className="hidden items-center gap-3 font-mono text-[10px] text-muted-foreground sm:flex">
-          <span>{stats.total} verificadas</span>
-          <span>{stats.pending} en revisión</span>
-          <span>{stats.withMentions} con menciones</span>
-          <span>{stats.withProjects} en proyectos activos</span>
-        </div>
-      </header>
 
-      <div className="flex shrink-0 items-center gap-1 border-b border-border px-4 sm:px-6">
-        {tabs.map(({ id, label, icon: Icon, badge }) => (
-          <button
-            key={id}
-            type="button"
-            onClick={() => selectTab(id)}
-            className={cn(
-              "flex items-center gap-1.5 border-b-2 px-3 py-2 text-xs font-medium transition-colors",
-              tab === id
-                ? id === "candidatas"
-                  ? "border-amber-500 text-foreground"
-                  : "border-emerald-500 text-foreground"
-                : "border-transparent text-muted-foreground hover:text-foreground",
-            )}
-          >
-            <Icon className="size-3.5" />
-            {label}
-            {typeof badge === "number" ? (
-              <span className="rounded-full bg-amber-500/20 px-1.5 py-0.5 font-mono text-[9px] text-amber-700 dark:text-amber-400">
-                {badge}
-              </span>
-            ) : null}
-          </button>
-        ))}
-      </div>
-
-      {tab === "lista" && (
-        <>
-          <div className="flex shrink-0 flex-wrap items-center gap-2 border-b border-border px-4 py-2 sm:px-6">
-            <div className="relative min-w-[200px] max-w-md flex-1">
+        {tab === "lista" && (
+          <>
+            <div className="relative min-w-[180px] max-w-sm flex-1">
               <SearchIcon
                 className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground"
                 aria-hidden
@@ -225,16 +208,16 @@ export function PersonasDashboard() {
               <input
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
-                placeholder="Buscar por nombre, alias o rol…"
-                className="w-full rounded-lg border border-input bg-background py-1.5 pr-3 pl-8 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+                placeholder="Buscar nombre, alias o rol…"
+                className="w-full rounded-md border border-input bg-background py-1.5 pr-3 pl-8 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
               />
             </div>
-            <div className="flex gap-1 rounded-lg border border-border p-0.5">
+            <div className="flex gap-0.5 rounded-md border border-border p-0.5">
               <button
                 type="button"
                 onClick={() => setListView("table")}
                 className={cn(
-                  "rounded-md px-2 py-1 text-xs",
+                  "rounded px-2 py-1 text-xs",
                   listView === "table" ? "bg-muted" : "text-muted-foreground",
                 )}
                 aria-label="Vista tabla"
@@ -245,7 +228,7 @@ export function PersonasDashboard() {
                 type="button"
                 onClick={() => setListView("cards")}
                 className={cn(
-                  "rounded-md px-2 py-1 text-xs",
+                  "rounded px-2 py-1 text-xs",
                   listView === "cards" ? "bg-muted" : "text-muted-foreground",
                 )}
                 aria-label="Vista tarjetas"
@@ -253,74 +236,128 @@ export function PersonasDashboard() {
                 <LayoutGridIcon className="size-3.5" />
               </button>
             </div>
-          </div>
+          </>
+        )}
 
-          <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4 sm:px-6">
-            {isLoading ? (
-              <div className="flex h-40 items-center justify-center font-mono text-[10px] text-muted-foreground">
-                Indexando identidades…
-              </div>
-            ) : filtered.length === 0 ? (
-              <div className="flex h-40 flex-col items-center justify-center gap-2 text-center text-sm text-muted-foreground">
-                <p>
-                  {query
-                    ? "Ninguna persona coincide con la búsqueda."
-                    : "Todavía no hay personas verificadas."}
-                </p>
-                {!query && stats.pending > 0 ? (
-                  <Button
+        {tab === "grafo" && (
+          <>
+            <div className="flex gap-0.5 rounded-md border border-border p-0.5">
+              <button
+                type="button"
+                onClick={() => setGraphMode("exclusive")}
+                className={cn(
+                  "rounded px-2.5 py-1 text-xs font-medium transition-colors",
+                  graphMode === "exclusive"
+                    ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-300"
+                    : "text-muted-foreground hover:bg-muted/60",
+                )}
+              >
+                Exclusivo
+              </button>
+              <button
+                type="button"
+                onClick={() => setGraphMode("mixed")}
+                className={cn(
+                  "rounded px-2.5 py-1 text-xs font-medium transition-colors",
+                  graphMode === "mixed"
+                    ? "bg-violet-500/15 text-violet-600 dark:text-violet-300"
+                    : "text-muted-foreground hover:bg-muted/60",
+                )}
+              >
+                Mixto
+              </button>
+            </div>
+            <p className="hidden font-mono text-[10px] text-muted-foreground md:block">
+              Shift+arrastrar para vincular
+            </p>
+            {graphStats && (
+              <span className="ml-auto font-mono text-[10px] text-muted-foreground">
+                {graphStats.nodes} nodos · {graphStats.edges} aristas
+              </span>
+            )}
+          </>
+        )}
+      </div>
+
+      {tab === "lista" && (
+        <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4 sm:px-6">
+          {isLoading ? (
+            <div className="flex h-40 items-center justify-center font-mono text-[10px] text-muted-foreground">
+              Indexando identidades…
+            </div>
+          ) : filtered.length === 0 ? (
+            <div className="flex h-40 flex-col items-center justify-center gap-2 text-center text-sm text-muted-foreground">
+              <p>
+                {query
+                  ? "Ninguna persona coincide con la búsqueda."
+                  : "Todavía no hay personas verificadas en este universo."}
+              </p>
+              {!query && pendingCount > 0 ? (
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={() => selectTab("candidatas")}
+                >
+                  Revisar {pendingCount} candidata
+                  {pendingCount === 1 ? "" : "s"} de la carga
+                </Button>
+              ) : null}
+              {!query && pendingCount === 0 ? (
+                <p className="max-w-sm text-xs text-muted-foreground">
+                  Tras una ingesta, las entidades aparecen primero en{" "}
+                  <button
                     type="button"
-                    size="sm"
-                    variant="outline"
+                    className="underline underline-offset-2"
                     onClick={() => selectTab("candidatas")}
                   >
-                    Revisar {stats.pending} candidata
-                    {stats.pending === 1 ? "" : "s"}
-                  </Button>
-                ) : null}
-                {!query && (
-                  <Button
-                    type="button"
-                    size="sm"
-                    onClick={() => setShowCreate(true)}
-                  >
-                    <PlusIcon />
-                    Añadir la primera persona
-                  </Button>
-                )}
-              </div>
-            ) : listView === "table" ? (
-              <PersonasTable
-                personas={filtered}
-                onLink={(persona) => {
-                  setLinkPersona({
-                    id: persona.id,
-                    nombrePrincipal: persona.primaryName,
-                  });
-                  setShowRelations(true);
-                }}
-                onEdit={(persona) => void openEdit(persona)}
-              />
-            ) : (
-              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                {filtered.map((persona) => (
-                  <PersonaCard
-                    key={persona.id}
-                    persona={persona}
-                    onLink={() => {
-                      setLinkPersona({
-                        id: persona.id,
-                        nombrePrincipal: persona.primaryName,
-                      });
-                      setShowRelations(true);
-                    }}
-                    onEdit={() => void openEdit(persona)}
-                  />
-                ))}
-              </div>
-            )}
-          </div>
-        </>
+                    Candidatas
+                  </button>{" "}
+                  hasta que las apruebes.
+                </p>
+              ) : null}
+              {!query && (
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={() => setShowCreate(true)}
+                >
+                  <PlusIcon />
+                  Añadir la primera persona
+                </Button>
+              )}
+            </div>
+          ) : listView === "table" ? (
+            <PersonasTable
+              personas={filtered}
+              onLink={(persona) => {
+                setLinkPersona({
+                  id: persona.id,
+                  nombrePrincipal: persona.primaryName,
+                });
+                setShowRelations(true);
+              }}
+              onEdit={(persona) => void openEdit(persona)}
+            />
+          ) : (
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              {filtered.map((persona) => (
+                <PersonaCard
+                  key={persona.id}
+                  persona={persona}
+                  onLink={() => {
+                    setLinkPersona({
+                      id: persona.id,
+                      nombrePrincipal: persona.primaryName,
+                    });
+                    setShowRelations(true);
+                  }}
+                  onEdit={() => void openEdit(persona)}
+                />
+              ))}
+            </div>
+          )}
+        </div>
       )}
 
       {tab === "candidatas" && (
@@ -335,7 +372,10 @@ export function PersonasDashboard() {
 
       {tab === "grafo" && (
         <div className="min-h-0 flex-1">
-          <PersonasGraphWorkspace />
+          <PersonasGraphWorkspace
+            mode={graphMode}
+            onStatsChange={setGraphStats}
+          />
         </div>
       )}
 

@@ -334,6 +334,17 @@ export function PersonasForceGraph({
       const selectedNode = selectedNodeRef.current;
       const linkTargetId = linkDrag?.targetId ?? null;
 
+      const rankedByDegree = [...nodesRef.current].sort(
+        (a, b) => b.degree - a.degree || a.nombrePrincipal.localeCompare(b.nombrePrincipal),
+      );
+      const labelBudget = Math.max(
+        12,
+        Math.ceil(nodesRef.current.length * 0.28),
+      );
+      const priorityLabels = new Set(
+        rankedByDegree.slice(0, labelBudget).map((n) => n.id),
+      );
+
       for (const n of nodesRef.current) {
         const r = nodeRadius(n) + (n.isCenter ? 3 : 0);
         const isSel = n.id === selectedNode;
@@ -359,9 +370,19 @@ export function PersonasForceGraph({
         }
         context.globalAlpha = 1;
 
-        if (isSel || isLinkTarget || n.isCenter || n.degree >= 3 || scale > 1.3) {
+        const showLabel =
+          isSel ||
+          isLinkTarget ||
+          n.isCenter ||
+          n.degree >= 2 ||
+          priorityLabels.has(n.id) ||
+          scale > 1.15;
+
+        if (showLabel) {
           context.fillStyle = labelCol;
-          context.font = `${isSel || isLinkTarget || n.isCenter ? 12 : 10}px ui-sans-serif, system-ui`;
+          const weight =
+            isSel || isLinkTarget || n.isCenter || n.degree >= 4 ? 12 : 10;
+          context.font = `${weight}px ui-sans-serif, system-ui`;
           const label =
             n.nombrePrincipal.length > 26
               ? `${n.nombrePrincipal.slice(0, 25)}…`
@@ -600,6 +621,8 @@ export function PersonasForceGraph({
   }, [linkMode, onLinkRequest, onSelectEdge, onSelectNode]);
 
   const displayEdge = hoverEdge;
+  const nodeName = (id: string) =>
+    snapshot.nodes.find((n) => n.id === id)?.nombrePrincipal ?? "…";
 
   return (
     <div className="relative h-full w-full">
@@ -616,7 +639,7 @@ export function PersonasForceGraph({
 
       {!isLinking && (
         <div className="pointer-events-none absolute bottom-3 left-3 z-10 rounded-lg border border-border bg-background/80 px-2.5 py-1.5 font-mono text-[10px] text-muted-foreground backdrop-blur">
-          Shift + arrastrar → persona, proyecto o campo
+          Shift + arrastrar → vincular
         </div>
       )}
 
@@ -628,12 +651,8 @@ export function PersonasForceGraph({
             top: Math.max(tooltipPos.y - 8, 8),
           }}
         >
-          <p className="font-mono text-[10px] text-emerald-500 uppercase">
-            {displayEdge.kind === "persona-proyecto"
-              ? "Persona ↔ Proyecto"
-              : displayEdge.kind === "persona-campo"
-                ? "Persona ↔ Campo"
-                : "Persona ↔ Persona"}
+          <p className="font-mono text-[10px] text-emerald-500">
+            {nodeName(displayEdge.source)} ↔ {nodeName(displayEdge.target)}
           </p>
           <p className="mt-1 text-xs font-medium">{displayEdge.tipoRelacion}</p>
           {displayEdge.rolPrincipal && (

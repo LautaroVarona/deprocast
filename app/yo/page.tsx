@@ -8,5 +8,9 @@ export const metadata: Metadata = {
 };
 
 export default function YoPage() {
-  return <YoCommandCenter />;
+  return (
+    <div className="flex min-h-0 flex-1 flex-col">
+      <YoCommandCenter />
+    </div>
+  );
 }

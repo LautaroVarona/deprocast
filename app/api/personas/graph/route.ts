@@ -1,3 +1,5 @@
+import { getUniverseFilterSlugFromRequest } from "@/lib/babel/universe-scope";
+import { resolveUniverseKgNodeIds } from "@/lib/babel/universe-refs";
 import { buildPersonaGraphSnapshot } from "@/lib/personas/graph";
 import type { PersonaGraphViewMode } from "@/lib/personas/model";
 import { ensureRuntimeReady } from "@/lib/runtime-setup";
@@ -14,8 +16,15 @@ export async function GET(request: NextRequest) {
     await ensureRuntimeReady();
 
     const mode = parseMode(request.nextUrl.searchParams.get("mode"));
-    const snapshot = await buildPersonaGraphSnapshot(mode);
-    return NextResponse.json({ snapshot });
+    const universeSlug = getUniverseFilterSlugFromRequest(request);
+    const universeNodeIds = universeSlug
+      ? await resolveUniverseKgNodeIds(universeSlug)
+      : null;
+    const snapshot = await buildPersonaGraphSnapshot(mode, universeNodeIds);
+    return NextResponse.json({
+      snapshot,
+      universe: universeSlug ?? "babel",
+    });
   } catch (error) {
     console.error("Personas graph error:", error);
     const message =

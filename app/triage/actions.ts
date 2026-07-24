@@ -1,5 +1,6 @@
 "use server";
 
+import { sealKgNodeInUniverse } from "@/lib/personas/universe-seal";
 import { ensureRuntimeReady } from "@/lib/runtime-setup";
 import {
   approveCandidate,
@@ -60,10 +61,14 @@ export async function rejectCandidateAction(
 
 export async function approveCandidateAction(
   id: string,
+  universeSlug?: string,
 ): Promise<TriageActionResult<EntityCandidateDto>> {
   try {
     await ready();
     const data = await approveCandidate(id);
+    if (data.resolvedNodeId) {
+      await sealKgNodeInUniverse(data.resolvedNodeId, universeSlug, data.name);
+    }
     return { ok: true, data };
   } catch (error) {
     return {
@@ -79,10 +84,12 @@ export async function approveCandidateAction(
 export async function mergeCandidateAction(
   id: string,
   targetNodeId: string,
+  universeSlug?: string,
 ): Promise<TriageActionResult<EntityCandidateDto>> {
   try {
     await ready();
     const data = await mergeCandidate(id, targetNodeId);
+    await sealKgNodeInUniverse(targetNodeId, universeSlug, data.name);
     return { ok: true, data };
   } catch (error) {
     return {

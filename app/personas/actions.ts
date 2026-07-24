@@ -6,6 +6,7 @@ import type {
   Persona,
   PersonaConnectionDraft,
 } from "@/lib/personas/model";
+import { sealKgNodeInUniverse } from "@/lib/personas/universe-seal";
 import { ensureRuntimeReady } from "@/lib/runtime-setup";
 
 export type PersonaActionResult<T> =
@@ -48,7 +49,7 @@ function parseConnections(raw: unknown): PersonaConnectionDraft[] {
 }
 
 export async function createPersonaAction(
-  input: CreatePersonaWithRelationsPayload,
+  input: CreatePersonaWithRelationsPayload & { universeSlug?: string },
 ): Promise<PersonaActionResult<Persona>> {
   try {
     await ensureRuntimeReady();
@@ -89,6 +90,12 @@ export async function createPersonaAction(
       relationToOperator: relationToOperator || undefined,
       connections,
     });
+
+    await sealKgNodeInUniverse(
+      persona.id,
+      input.universeSlug,
+      persona.nombrePrincipal,
+    );
 
     return { ok: true, data: persona };
   } catch (error) {

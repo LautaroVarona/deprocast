@@ -81,17 +81,29 @@ export async function resolveUniverseKgNodeIds(
     return null;
   }
 
+  const ids = new Set<string>();
+
   const sourceIds = await resolveUniverseKgSourceIds(universeSlug);
-  if (sourceIds.size === 0) {
-    return new Set();
+  if (sourceIds.size > 0) {
+    const groups = await prisma.kgMention.groupBy({
+      by: ["nodeId"],
+      where: { sourceId: { in: [...sourceIds] } },
+    });
+    for (const group of groups) {
+      ids.add(group.nodeId);
+    }
   }
 
-  const groups = await prisma.kgMention.groupBy({
-    by: ["nodeId"],
-    where: { sourceId: { in: [...sourceIds] } },
+  // Sellos CRM explícitos (alta manual / promote sin mención de fuente).
+  const sealed = await prisma.babelRecord.findMany({
+    where: { contextSeal: universeSlug, kind: "kg_node" },
+    select: { physicalRef: true },
   });
+  for (const row of sealed) {
+    ids.add(row.physicalRef);
+  }
 
-  return new Set(groups.map((group) => group.nodeId));
+  return ids;
 }
 
 export async function filterReviewRecordsForUniverse<

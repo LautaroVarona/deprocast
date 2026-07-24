@@ -5,6 +5,8 @@ import {
   updatePersonaEntity,
 } from "@/lib/personas/service";
 import { getPersonaByIdOrSlug } from "@/lib/personas/queries";
+import { sealKgNodeInUniverse } from "@/lib/personas/universe-seal";
+import { getUniverseFilterSlugFromRequest } from "@/lib/babel/universe-scope";
 import { ensureRuntimeReady } from "@/lib/runtime-setup";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -14,7 +16,7 @@ type RouteContext = {
   params: Promise<{ id: string }>;
 };
 
-export async function GET(_request: NextRequest, context: RouteContext) {
+export async function GET(request: NextRequest, context: RouteContext) {
   try {
     await ensureRuntimeReady();
 
@@ -25,6 +27,13 @@ export async function GET(_request: NextRequest, context: RouteContext) {
     if (!persona || !entity) {
       return NextResponse.json({ error: "Persona no encontrada." }, { status: 404 });
     }
+
+    const universeSlug = getUniverseFilterSlugFromRequest(request);
+    await sealKgNodeInUniverse(
+      entity.id,
+      universeSlug,
+      entity.nombrePrincipal,
+    );
 
     const relations = await listPersonaRelations(entity.id);
 
