@@ -66,6 +66,9 @@ export const NOSCE_PRIMA_MATERIA_CHIPS = [
 export const CONSECRATION_PERSONA_TARGET = 3;
 export const CONSECRATION_PROJECT_TARGET = 1;
 
+/** Clave de calibration que sella la Misión III (Prima Materia). */
+export const CONSECRATION_MISSION_III_KEY = "consecration_prima_objetivo";
+
 export const CALIBRATION_PROMPTS = [
   {
     id: "metrica_exito_hoy",

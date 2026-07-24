@@ -136,6 +136,14 @@ export function YoCommandCenter() {
               syncYo(next);
               toast.success("Misión I sellada. El Senado espera.");
             }}
+            onPrimaCompleted={(next) => {
+              syncYo(next);
+              if (next.genesisStatus === "COMPLETED") {
+                toast.success("Protocolo Génesis cerrado. Navegación liberada.");
+              } else {
+                toast.success("Misión III sellada.");
+              }
+            }}
             onProgress={refreshMissions}
           />
         </div>

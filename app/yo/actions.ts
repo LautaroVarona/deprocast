@@ -14,6 +14,7 @@ import {
   patchYo,
   refreshConsecration,
   saveNosceMissionAnswers,
+  savePrimaMissionObjective,
   seedMissionBoardIntro,
 } from "@/lib/yo/store";
 import {
@@ -254,6 +255,41 @@ export async function completeNosceMissionAction(input: {
         error instanceof Error
           ? error.message
           : "No se pudo sellar Nosce Te Ipsum.",
+    };
+  }
+}
+
+const primaMissionSchema = z.object({
+  title: z.string().trim().min(1, "El objetivo a 90 días es obligatorio.").max(200),
+  why: z.string().trim().max(2000).optional(),
+});
+
+export async function completePrimaMissionAction(input: {
+  title: string;
+  why?: string;
+}): Promise<YoActionResult<YoDto>> {
+  try {
+    await ready();
+    const parsed = primaMissionSchema.safeParse(input);
+    if (!parsed.success) {
+      return {
+        ok: false,
+        error: parsed.error.issues[0]?.message ?? "Datos inválidos.",
+      };
+    }
+
+    const yo = await savePrimaMissionObjective({
+      title: parsed.data.title,
+      why: parsed.data.why,
+    });
+    return { ok: true, data: yo };
+  } catch (error) {
+    return {
+      ok: false,
+      error:
+        error instanceof Error
+          ? error.message
+          : "No se pudo cerrar Prima Materia.",
     };
   }
 }

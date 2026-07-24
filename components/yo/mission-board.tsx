@@ -41,6 +41,7 @@ type MissionBoardProps = {
   nosceOpen: boolean;
   onNosceOpenChange: (open: boolean) => void;
   onNosceCompleted: (yo: YoDto) => void;
+  onPrimaCompleted: (yo: YoDto) => void;
   onProgress: () => Promise<void> | void;
   operatorName: string;
   onSenadoOpenChange?: (open: boolean) => void;
@@ -51,6 +52,7 @@ export function MissionBoard({
   nosceOpen,
   onNosceOpenChange,
   onNosceCompleted,
+  onPrimaCompleted,
   onProgress,
   operatorName,
   onSenadoOpenChange,
@@ -201,9 +203,7 @@ export function MissionBoard({
       <MissionProjectOverlay
         open={projectOpen}
         onOpenChange={setProjectOpen}
-        onCreated={async () => {
-          await onProgress();
-        }}
+        onCompleted={onPrimaCompleted}
       />
     </>
   );

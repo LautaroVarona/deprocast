@@ -41,8 +41,10 @@ async function readOperatorName(): Promise<string | null> {
  * Resuelve o crea el KgNode persona del Operador (nombre en Yo).
  * Es el hub natural de todos los grafos.
  */
-export async function ensureOperatorPersonaNode(): Promise<OperatorPersonaNode | null> {
-  const primaryName = await readOperatorName();
+export async function ensureOperatorPersonaNode(
+  nameOverride?: string | null,
+): Promise<OperatorPersonaNode | null> {
+  const primaryName = nameOverride?.trim() || (await readOperatorName());
   if (!primaryName) return null;
 
   const personas = await prisma.kgNode.findMany({

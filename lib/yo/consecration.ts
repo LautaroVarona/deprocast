@@ -1,8 +1,9 @@
 import "server-only";
 
-import { prisma } from "@/lib/prisma";
+import { countOperatorLinkedPersonas } from "@/lib/yo/senado-graph";
 import {
   CONSECRATION_MISSION_I_PROMPTS,
+  CONSECRATION_MISSION_III_KEY,
   CONSECRATION_PERSONA_TARGET,
   CONSECRATION_PROJECT_TARGET,
   type CalibrationMap,
@@ -12,7 +13,6 @@ import {
   type GenesisStatus,
   type MissionRuntimeStatus,
 } from "@/lib/yo/types";
-import { countOperatorLinkedPersonas } from "@/lib/yo/senado-graph";
 
 export function deriveGenesisStatus(input: {
   operatorName: string | null;
@@ -25,8 +25,12 @@ export function deriveGenesisStatus(input: {
   );
   if (!hasNames) return "PENDING_NAMES";
   if (input.genesisCompletedAt) {
-    // Sellado prematuro / legacy sin ADN de Nosce → reabrir consagración.
-    if (input.calibration && !isMissionIComplete(input.calibration)) {
+    // Sellado prematuro / incompleto → seguir en Tabula hasta Nosce + Prima.
+    if (
+      !input.calibration ||
+      !isMissionIComplete(input.calibration) ||
+      !isMissionIIIComplete(input.calibration)
+    ) {
       return "PENDING_MISSIONS";
     }
     return "COMPLETED";
@@ -42,6 +46,10 @@ export function countMissionIAnswers(calibration: CalibrationMap): number {
 
 export function isMissionIComplete(calibration: CalibrationMap): boolean {
   return countMissionIAnswers(calibration) >= CONSECRATION_MISSION_I_PROMPTS.length;
+}
+
+export function isMissionIIIComplete(calibration: CalibrationMap): boolean {
+  return Boolean(calibration[CONSECRATION_MISSION_III_KEY]?.trim());
 }
 
 function resolveMissionStatus(input: {
@@ -64,15 +72,12 @@ function resolveMissionStatus(input: {
 export async function buildConsecrationProgress(
   calibration: CalibrationMap,
 ): Promise<ConsecrationProgress> {
-  const [personaCount, proposalCount] = await Promise.all([
-    countOperatorLinkedPersonas(),
-    prisma.projectProposal.count(),
-  ]);
-
+  const personaCount = await countOperatorLinkedPersonas();
   const missionIAnswers = countMissionIAnswers(calibration);
   const missionIDone = missionIAnswers >= CONSECRATION_MISSION_I_PROMPTS.length;
   const missionIIDone = personaCount >= CONSECRATION_PERSONA_TARGET;
-  const missionIIIDone = proposalCount >= CONSECRATION_PROJECT_TARGET;
+  const missionIIIDone = isMissionIIIComplete(calibration);
+  const projectCount = missionIIIDone ? CONSECRATION_PROJECT_TARGET : 0;
 
   const missions: ConsecrationMissionState[] = [
     {
@@ -105,7 +110,7 @@ export async function buildConsecrationProgress(
         missionIIDone,
         missionIIIDone,
       }),
-      progress: Math.min(proposalCount, CONSECRATION_PROJECT_TARGET),
+      progress: projectCount,
       target: CONSECRATION_PROJECT_TARGET,
     },
   ];
@@ -114,7 +119,7 @@ export async function buildConsecrationProgress(
     missions,
     missionIAnswers,
     personaCount,
-    projectCount: proposalCount,
+    projectCount,
     allComplete: missionIDone && missionIIDone && missionIIIDone,
     activeMissionId:
       missions.find((mission) => mission.status === "active")?.id ?? null,

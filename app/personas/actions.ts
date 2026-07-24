@@ -8,6 +8,8 @@ import type {
 } from "@/lib/personas/model";
 import { sealKgNodeInUniverse } from "@/lib/personas/universe-seal";
 import { ensureRuntimeReady } from "@/lib/runtime-setup";
+import { ensureYoShell } from "@/lib/yo/store";
+import { ensureOperatorPersonaNode } from "@/lib/yo/operator-node";
 
 export type PersonaActionResult<T> =
   | { ok: true; data: T }
@@ -81,6 +83,20 @@ export async function createPersonaAction(
       typeof input.relationToOperator === "string"
         ? input.relationToOperator.trim()
         : "";
+
+    // Asegurar shell Yo + nodo Operador antes del vínculo (Misión II / Senado).
+    const yo = await ensureYoShell();
+    if (relationToOperator) {
+      const operator = await ensureOperatorPersonaNode(yo.operatorName);
+      if (!operator) {
+        return {
+          ok: false,
+          error: yo.operatorName?.trim()
+            ? `No se pudo anclar el vínculo a ${yo.operatorName}. Recargá /yo.`
+            : "Definí tu nombre en /yo antes de vincular personas al Operador.",
+        };
+      }
+    }
 
     const persona = await createPersonaWithRelations({
       nombrePrincipal,

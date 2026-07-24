@@ -11,6 +11,7 @@ import type {
 } from "@/lib/personas/model";
 import { prisma } from "@/lib/prisma";
 import { ensureOperatorPersonaNode } from "@/lib/yo/operator-node";
+import { YO_CORE_ID } from "@/lib/yo/types";
 import { Prisma } from "@prisma/client";
 
 function sanitizeAliases(
@@ -138,15 +139,27 @@ export async function createPersonaWithRelations(
     notasGenerales: input.notasGenerales ?? "",
   });
 
-  const operator =
-    relationToOperator.length > 0
-      ? await ensureOperatorPersonaNode()
-      : null;
+  let operator: { id: string; primaryName: string } | null = null;
+  if (relationToOperator.length > 0) {
+    const yo = await prisma.yo.findUnique({
+      where: { id: YO_CORE_ID },
+      select: { operatorName: true },
+    });
+    const operatorName = yo?.operatorName?.trim() || null;
+    operator = await ensureOperatorPersonaNode(operatorName);
 
-  if (relationToOperator && !operator) {
-    throw new Error(
-      "Definí tu nombre en /yo antes de vincular personas al Operador.",
-    );
+    if (!operator && operatorName) {
+      // Reintento explícito: crear hub si el ensure falló por carrera.
+      operator = await ensureOperatorPersonaNode(operatorName);
+    }
+
+    if (!operator) {
+      throw new Error(
+        operatorName
+          ? `No se pudo anclar el vínculo a ${operatorName}. Recargá /yo e intentá de nuevo.`
+          : "Definí tu nombre en /yo antes de vincular personas al Operador.",
+      );
+    }
   }
 
   return prisma.$transaction(async (tx) => {

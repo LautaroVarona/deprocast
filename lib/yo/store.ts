@@ -209,6 +209,66 @@ export async function saveNosceMissionAnswers(input: {
   return maybeCompleteConsecration(yo);
 }
 
+/** Sella la Misión III (Prima Materia) creando la propuesta y marcando calibration. */
+export async function savePrimaMissionObjective(input: {
+  title: string;
+  why?: string;
+}): Promise<YoDto> {
+  const current = await ensureYoShell();
+  const title = input.title.trim();
+  if (!title) {
+    throw new Error("El objetivo a 90 días es obligatorio.");
+  }
+
+  if (!current.operatorName?.trim() || !current.exocortexName?.trim()) {
+    throw new Error("Completá el bautismo de nombres antes de Prima Materia.");
+  }
+
+  if (current.consecration.missions.find((m) => m.id === "senado")?.status !== "completed") {
+    throw new Error("Completá El Senado (Misión II) antes de Prima Materia.");
+  }
+
+  const description = input.why?.trim()
+    ? `Horizonte 90 días: ${input.why.trim()}`
+    : "Primer fuego · Consagración Prima Materia.";
+
+  const { createProposal } = await import("@/lib/projects/proposal-store");
+  await createProposal({
+    title,
+    description,
+    originType: "quick_create",
+    originContext: `Consagración · Prima Materia · ${title}`,
+  });
+
+  const { CONSECRATION_MISSION_III_KEY } = await import("@/lib/yo/types");
+  const calibration = {
+    ...current.calibration,
+    [CONSECRATION_MISSION_III_KEY]: title,
+  };
+
+  const updated = await prisma.yo.update({
+    where: { id: YO_CORE_ID },
+    data: {
+      calibration: calibration as Prisma.InputJsonValue,
+      ...(current.genesisCompletedAt
+        ? {
+            genesisCompletedAt: null,
+            operationalStatus: "CALIBRANDO",
+          }
+        : {}),
+    },
+  });
+
+  const exocortex = current.exocortexName ?? DEFAULT_EXOCORTEX_NAME;
+  await appendConduitMessage({
+    role: "exocortex",
+    content: `Prima Materia fijada: «${title}». El Atanor enciende. ${exocortex} cierra el protocolo de consagración.`,
+  });
+
+  const yo = await toDto(updated);
+  return maybeCompleteConsecration(yo);
+}
+
 export async function patchYo(input: PatchYoInput): Promise<YoDto> {
   const current = await ensureYoShell();
 

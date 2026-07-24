@@ -1,6 +1,8 @@
 "use client";
 
+import { completePrimaMissionAction } from "@/app/yo/actions";
 import { Sheet, SheetBody, SheetHeader } from "@/components/ui/sheet";
+import type { YoDto } from "@/lib/yo/types";
 import { Loader2Icon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -8,13 +10,13 @@ import { toast } from "sonner";
 type MissionProjectOverlayProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onCreated: () => void;
+  onCompleted: (yo: YoDto) => void;
 };
 
 export function MissionProjectOverlay({
   open,
   onOpenChange,
-  onCreated,
+  onCompleted,
 }: MissionProjectOverlayProps) {
   const [title, setTitle] = useState("");
   const [horizon, setHorizon] = useState("");
@@ -33,34 +35,23 @@ export function MissionProjectOverlay({
 
     setSaving(true);
     try {
-      const description = horizon.trim()
-        ? `Horizonte 90 días: ${horizon.trim()}`
-        : "Primer fuego · Consagración Prima Materia.";
-
-      const response = await fetch("/api/proyectos", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          mode: "quick",
-          title: trimmed,
-          description,
-        }),
+      const result = await completePrimaMissionAction({
+        title: trimmed,
+        why: horizon.trim() || undefined,
       });
 
-      const data = (await response.json()) as { error?: string };
-      if (!response.ok) {
-        throw new Error(data.error ?? "No se pudo inyectar el objetivo.");
+      if (!result.ok) {
+        toast.error(result.error);
+        return;
       }
 
-      toast.success("Prima Materia inyectada en el Atanor.");
-      onCreated();
-      onOpenChange(false);
-    } catch (error) {
-      toast.error(
-        error instanceof Error
-          ? error.message
-          : "No se pudo inyectar el objetivo.",
+      toast.success(
+        result.data.genesisStatus === "COMPLETED"
+          ? "Génesis completa. El exoesqueleto está libre."
+          : "Prima Materia inyectada en el Atanor.",
       );
+      onCompleted(result.data);
+      onOpenChange(false);
     } finally {
       setSaving(false);
     }
@@ -70,7 +61,7 @@ export function MissionProjectOverlay({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetHeader
         title="Prima Materia · Primer fuego"
-        description="Inyectá tu gran objetivo a 90 días. El Atanor lo purificará en asaltos."
+        description="Inyectá tu gran objetivo a 90 días. Al sellarlo, liberás la app."
         onClose={() => onOpenChange(false)}
       />
       <SheetBody>
@@ -86,32 +77,24 @@ export function MissionProjectOverlay({
             ritual ahora.
           </p>
 
-          <label className="block space-y-1.5">
-            <span className="font-mono text-[10px] tracking-[0.2em] text-muted-foreground uppercase">
-              Objetivo a 90 días
-            </span>
-            <input
-              value={title}
-              onChange={(event) => setTitle(event.target.value)}
-              className="w-full border border-legion-bronze/35 bg-black/40 px-3 py-2.5 font-mono text-sm text-legion-bone outline-none focus:border-legion-bronze"
-              required
-              autoFocus
-              placeholder="Ej. Cerrar el MVP del Exocórtex"
-            />
-          </label>
+          <input
+            value={title}
+            onChange={(event) => setTitle(event.target.value)}
+            className="w-full border border-legion-bronze/35 bg-black/40 px-3 py-2.5 font-mono text-sm text-legion-bone outline-none placeholder:text-legion-bone/35 focus:border-legion-bronze"
+            required
+            autoFocus
+            placeholder="Objetivo a 90 días"
+            aria-label="Objetivo a 90 días"
+          />
 
-          <label className="block space-y-1.5">
-            <span className="font-mono text-[10px] tracking-[0.2em] text-muted-foreground uppercase">
-              Por qué importa (opcional)
-            </span>
-            <textarea
-              value={horizon}
-              onChange={(event) => setHorizon(event.target.value)}
-              rows={3}
-              className="w-full resize-none border border-legion-bronze/35 bg-black/40 px-3 py-2.5 font-mono text-sm text-legion-bone outline-none focus:border-legion-bronze"
-              placeholder="Señal de victoria, restricción, o coste de no hacerlo."
-            />
-          </label>
+          <textarea
+            value={horizon}
+            onChange={(event) => setHorizon(event.target.value)}
+            rows={3}
+            className="w-full resize-none border border-legion-bronze/35 bg-black/40 px-3 py-2.5 font-mono text-sm text-legion-bone outline-none placeholder:text-legion-bone/35 focus:border-legion-bronze"
+            placeholder="Por qué importa (opcional)"
+            aria-label="Por qué importa"
+          />
 
           <button
             type="submit"
@@ -119,7 +102,7 @@ export function MissionProjectOverlay({
             className="genesis-btn flex min-h-11 w-full items-center justify-center gap-2 px-4 font-display text-sm tracking-[0.14em] uppercase disabled:opacity-50"
           >
             {saving ? <Loader2Icon className="size-4 animate-spin" /> : null}
-            Inyectar en el Atanor
+            Finalizar Misión
           </button>
         </form>
       </SheetBody>
