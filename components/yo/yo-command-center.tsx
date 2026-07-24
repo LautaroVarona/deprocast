@@ -43,9 +43,9 @@ export function YoCommandCenter() {
 
   if (loading || !yo) {
     return (
-      <div className="yo-noir-root flex items-center justify-center px-4 py-24">
-        <p className="font-mono text-xs tracking-[0.28em] text-accent uppercase">
-          [ INICIALIZANDO NODO YO… ]
+      <div className="genesis-void-root flex items-center justify-center px-4 py-24">
+        <p className="font-display text-sm tracking-[0.28em] text-legion-bronze uppercase">
+          Inicializando Nodo Yo…
         </p>
       </div>
     );

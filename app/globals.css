@@ -11,6 +11,17 @@
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
   --font-heading: var(--font-heading);
+  --font-display: var(--font-legion), ui-serif, Georgia, "Times New Roman", serif;
+  --color-legion-void: var(--legion-void);
+  --color-legion-ash: var(--legion-ash);
+  --color-legion-leather: var(--legion-leather);
+  --color-legion-scroll: var(--legion-scroll);
+  --color-legion-bronze: var(--legion-bronze);
+  --color-legion-brass: var(--legion-brass);
+  --color-legion-patina: var(--legion-patina);
+  --color-legion-bone: var(--legion-bone);
+  --color-legion-gold: var(--legion-gold);
+  --color-legion-marble: var(--legion-marble);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -124,42 +135,56 @@
   --sidebar-ring: oklch(0.72 0.12 195);
 }
 
-/* Legión — gloria imperial SPQR */
+/* Legión — neo-romana / pergamino · piedra · bronce */
+:root,
+.theme-legion {
+  --legion-void: #111111;
+  --legion-ash: #18181b;
+  --legion-leather: #2c241b;
+  --legion-scroll: #3f3122;
+  --legion-bronze: #b8905b;
+  --legion-brass: #8b6d43;
+  --legion-patina: #5c4a3d;
+  --legion-bone: #e6dfd3;
+  --legion-gold: #c9a66b;
+  --legion-marble: #6b7f6a;
+}
+
 .theme-legion {
   color-scheme: dark;
-  --font-heading: var(--font-legion), ui-serif, Georgia, serif;
-  --background: oklch(0.17 0.035 35);
-  --foreground: oklch(0.92 0.02 85);
-  --card: oklch(0.21 0.038 35);
-  --card-foreground: oklch(0.92 0.02 85);
-  --popover: oklch(0.2 0.036 35);
-  --popover-foreground: oklch(0.92 0.02 85);
-  --primary: oklch(0.78 0.14 85);
-  --primary-foreground: oklch(0.18 0.04 40);
-  --secondary: oklch(0.26 0.04 35);
-  --secondary-foreground: oklch(0.9 0.03 85);
-  --muted: oklch(0.24 0.03 35);
-  --muted-foreground: oklch(0.72 0.04 75);
-  --accent: oklch(0.45 0.17 25);
-  --accent-foreground: oklch(0.95 0.02 85);
-  --destructive: oklch(0.55 0.2 25);
-  --border: oklch(0.55 0.1 75 / 45%);
-  --input: oklch(0.28 0.04 40 / 75%);
-  --ring: oklch(0.72 0.12 80);
-  --chart-1: oklch(0.78 0.14 85);
-  --chart-2: oklch(0.5 0.16 25);
-  --chart-3: oklch(0.62 0.1 70);
-  --chart-4: oklch(0.4 0.08 40);
-  --chart-5: oklch(0.7 0.08 90);
-  --radius: 0.5rem;
-  --sidebar: oklch(0.15 0.032 35);
-  --sidebar-foreground: oklch(0.92 0.02 85);
-  --sidebar-primary: oklch(0.78 0.14 85);
-  --sidebar-primary-foreground: oklch(0.18 0.04 40);
-  --sidebar-accent: oklch(0.24 0.035 35);
-  --sidebar-accent-foreground: oklch(0.92 0.02 85);
-  --sidebar-border: oklch(0.55 0.1 75 / 40%);
-  --sidebar-ring: oklch(0.72 0.12 80);
+  --font-heading: var(--font-legion), ui-serif, Georgia, "Times New Roman", serif;
+  --background: #111111;
+  --foreground: #e6dfd3;
+  --card: #2c241b;
+  --card-foreground: #e6dfd3;
+  --popover: #241c15;
+  --popover-foreground: #e6dfd3;
+  --primary: #b8905b;
+  --primary-foreground: #1a1410;
+  --secondary: #3f3122;
+  --secondary-foreground: #e6dfd3;
+  --muted: #2a221a;
+  --muted-foreground: #a89880;
+  --accent: #b8905b;
+  --accent-foreground: #1a1410;
+  --destructive: #9a4a3a;
+  --border: color-mix(in srgb, #8b6d43 55%, transparent);
+  --input: color-mix(in srgb, #3f3122 80%, transparent);
+  --ring: #b8905b;
+  --chart-1: #b8905b;
+  --chart-2: #8b6d43;
+  --chart-3: #6b7f6a;
+  --chart-4: #5c4a3d;
+  --chart-5: #c9a66b;
+  --radius: 1.15rem;
+  --sidebar: #141210;
+  --sidebar-foreground: #e6dfd3;
+  --sidebar-primary: #b8905b;
+  --sidebar-primary-foreground: #1a1410;
+  --sidebar-accent: #2c241b;
+  --sidebar-accent-foreground: #e6dfd3;
+  --sidebar-border: color-mix(in srgb, #8b6d43 40%, transparent);
+  --sidebar-ring: #b8905b;
 }
 
 @layer base {
@@ -633,6 +658,151 @@
   box-shadow:
     0 0 0 1px color-mix(in oklch, var(--foreground) 2%, transparent) inset,
     0 20px 48px -28px color-mix(in oklch, var(--foreground) 14%, transparent);
+}
+
+/* Génesis / Bautismo — pergamino · tabula cerata · bronce */
+.genesis-void-root {
+  position: relative;
+  min-height: calc(100dvh - 3.5rem);
+  background:
+    radial-gradient(ellipse 55% 40% at 50% 30%, color-mix(in srgb, #3f3122 35%, transparent), transparent 70%),
+    radial-gradient(ellipse 70% 50% at 80% 90%, color-mix(in srgb, #5c4a3d 22%, transparent), transparent 65%),
+    radial-gradient(ellipse 40% 35% at 10% 80%, color-mix(in srgb, #2c241b 40%, transparent), transparent 60%),
+    #111111;
+  color: #e6dfd3;
+}
+
+.genesis-scroll {
+  position: relative;
+  border-radius: 1.75rem 1.35rem 1.85rem 1.45rem / 1.55rem 1.75rem 1.35rem 1.65rem;
+  border: 1px solid color-mix(in srgb, #b8905b 45%, #5c4a3d);
+  background:
+    radial-gradient(ellipse 80% 60% at 30% 20%, color-mix(in srgb, #4a3a28 55%, transparent), transparent 55%),
+    radial-gradient(ellipse 70% 50% at 80% 85%, color-mix(in srgb, #241c14 70%, transparent), transparent 50%),
+    linear-gradient(155deg, #3f3122 0%, #2c241b 48%, #231c15 100%);
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, #e6dfd3 12%, transparent),
+    inset 0 -18px 36px color-mix(in srgb, #111111 45%, transparent),
+    inset 0 18px 28px color-mix(in srgb, #5c4a3d 18%, transparent),
+    0 28px 64px -24px rgba(0, 0, 0, 0.75),
+    0 0 0 1px color-mix(in srgb, #8b6d43 25%, transparent);
+}
+
+.genesis-scroll::before {
+  content: "";
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  opacity: 0.18;
+  background-image:
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 3px,
+      rgba(0, 0, 0, 0.04) 3px,
+      rgba(0, 0, 0, 0.04) 4px
+    ),
+    radial-gradient(circle at 20% 30%, rgba(184, 144, 91, 0.08), transparent 40%),
+    radial-gradient(circle at 75% 70%, rgba(0, 0, 0, 0.15), transparent 45%);
+}
+
+.genesis-plaque {
+  border-radius: 0.95rem 1.15rem 1.05rem 0.85rem / 1.1rem 0.9rem 1.2rem 1rem;
+  border: 1px solid color-mix(in srgb, #8b6d43 55%, #5c4a3d);
+  background:
+    linear-gradient(145deg, #3a2e22 0%, #2c241b 45%, #1f1812 100%);
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, #b8905b 22%, transparent),
+    inset 0 -10px 18px color-mix(in srgb, #111111 40%, transparent),
+    0 12px 28px -16px rgba(0, 0, 0, 0.65);
+  color: #e6dfd3;
+  text-shadow:
+    0 1px 0 rgba(0, 0, 0, 0.55),
+    0 -1px 0 color-mix(in srgb, #b8905b 18%, transparent);
+}
+
+.genesis-plaque--flash {
+  animation: genesis-gold-flash 1.1s ease-out;
+}
+
+@keyframes genesis-gold-flash {
+  0% {
+    box-shadow:
+      inset 0 1px 0 color-mix(in srgb, #b8905b 22%, transparent),
+      0 0 0 0 color-mix(in srgb, #c9a66b 0%, transparent),
+      0 12px 28px -16px rgba(0, 0, 0, 0.65);
+  }
+  35% {
+    border-color: #c9a66b;
+    box-shadow:
+      inset 0 1px 0 color-mix(in srgb, #e6dfd3 35%, transparent),
+      0 0 28px 4px color-mix(in srgb, #c9a66b 45%, transparent),
+      0 12px 28px -16px rgba(0, 0, 0, 0.65);
+  }
+  100% {
+    box-shadow:
+      inset 0 1px 0 color-mix(in srgb, #b8905b 22%, transparent),
+      0 0 0 0 color-mix(in srgb, #c9a66b 0%, transparent),
+      0 12px 28px -16px rgba(0, 0, 0, 0.65);
+  }
+}
+
+.genesis-input {
+  border-radius: 1rem 0.85rem 1.1rem 0.95rem / 0.9rem 1.05rem 0.85rem 1rem;
+  border: 1px solid color-mix(in srgb, #b8905b 50%, #5c4a3d);
+  background: color-mix(in srgb, #111111 55%, transparent);
+  box-shadow:
+    inset 0 2px 8px rgba(0, 0, 0, 0.45),
+    inset 0 1px 0 color-mix(in srgb, #e6dfd3 6%, transparent);
+}
+
+.genesis-btn {
+  border-radius: 1rem 0.9rem 1.15rem 0.95rem / 0.95rem 1.1rem 0.9rem 1.05rem;
+  border: 1px solid color-mix(in srgb, #c9a66b 55%, #8b6d43);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, #b8905b 55%, #3f3122) 0%, #8b6d43 48%, #5c4a3d 100%);
+  color: #1a1410;
+  text-shadow: 0 1px 0 color-mix(in srgb, #e6dfd3 25%, transparent);
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, #e6dfd3 28%, transparent),
+    inset 0 -2px 4px color-mix(in srgb, #111111 35%, transparent),
+    0 8px 18px -10px rgba(0, 0, 0, 0.7);
+  transition: filter 160ms ease, transform 160ms ease;
+}
+
+.genesis-btn:hover:not(:disabled) {
+  filter: brightness(1.08);
+}
+
+.genesis-btn:active:not(:disabled) {
+  transform: translateY(1px);
+  box-shadow:
+    inset 0 2px 6px rgba(0, 0, 0, 0.45),
+    0 4px 10px -8px rgba(0, 0, 0, 0.6);
+}
+
+.genesis-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.genesis-type-cursor {
+  display: inline-block;
+  width: 0.55ch;
+  margin-left: 1px;
+  animation: genesis-blink 0.9s step-end infinite;
+  color: #b8905b;
+}
+
+@keyframes genesis-blink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
 }
 
 /* Calendario — Simulador de Turnos Noir */
