@@ -166,6 +166,11 @@ async function ensureDatabase(): Promise<void> {
   await copySeedDatabase(targetPath, seedPath);
 }
 
+/** Invalida el cache de boot para forzar re-inicialización tras un wipe. */
+export function resetRuntimeSetupCache(): void {
+  setupPromise = null;
+}
+
 export async function ensureRuntimeReady(): Promise<void> {
   if (!setupPromise) {
     setupPromise = (async () => {

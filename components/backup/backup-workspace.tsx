@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   applyBrowserPreferences,
+  clearBrowserPreferences,
   collectBrowserPreferences,
 } from "@/lib/backup/browser-preferences-client";
 import type { ExportDomainId, DomainPreviewStat } from "@/lib/backup/domains";
@@ -16,6 +17,7 @@ import {
   DownloadIcon,
   HardDriveDownloadIcon,
   Loader2Icon,
+  SkullIcon,
   UploadCloudIcon,
   XCircleIcon,
 } from "lucide-react";
@@ -26,6 +28,8 @@ type UploadState = "idle" | "uploading" | "done" | "error";
 
 const CONFIRM_FULL = "RESTAURAR";
 const CONFIRM_PARTIAL = "RESTAURAR PARCIAL";
+const WIPE_CONFIRM_PHRASE = "ELIMINAR TODO";
+const WIPE_CONFIRM_TOKEN = "WIPE";
 
 type ValidatedBackup = {
   manifest: {
@@ -57,6 +61,10 @@ export function BackupWorkspace() {
   const [validatedBackup, setValidatedBackup] = useState<ValidatedBackup | null>(null);
   const [selectedImportDomains, setSelectedImportDomains] = useState<ExportDomainId[]>([]);
   const [isValidating, setIsValidating] = useState(false);
+
+  const [showWipePanel, setShowWipePanel] = useState(false);
+  const [wipeConfirmInput, setWipeConfirmInput] = useState("");
+  const [isWiping, setIsWiping] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -247,6 +255,51 @@ export function BackupWorkspace() {
     [selectedImportDomains, validatedBackup],
   );
 
+  const resetWipePanel = useCallback(() => {
+    setShowWipePanel(false);
+    setWipeConfirmInput("");
+    setIsWiping(false);
+  }, []);
+
+  const executeFactoryReset = useCallback(async () => {
+    if (wipeConfirmInput.trim() !== WIPE_CONFIRM_PHRASE) {
+      return;
+    }
+
+    setIsWiping(true);
+
+    try {
+      const response = await fetch("/api/backup/wipe", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          confirm: WIPE_CONFIRM_TOKEN,
+          phrase: WIPE_CONFIRM_PHRASE,
+        }),
+      });
+
+      const data = (await response.json().catch(() => ({}))) as {
+        error?: string;
+      };
+
+      if (!response.ok) {
+        throw new Error(data.error ?? "No se pudo reiniciar el sistema.");
+      }
+
+      clearBrowserPreferences();
+      toast.success("Sistema reiniciado desde cero. Recargando…");
+
+      window.setTimeout(() => {
+        window.location.href = "/yo";
+      }, 1000);
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Error al reiniciar.";
+      toast.error(message);
+      setIsWiping(false);
+    }
+  }, [wipeConfirmInput]);
+
   const validateSelectedFile = useCallback(async (file: File) => {
     setIsValidating(true);
     setErrorMessage(null);
@@ -319,6 +372,7 @@ export function BackupWorkspace() {
   const isPartialBackup = validatedBackup?.manifest.exportMode === "partial";
   const requiredConfirm = isPartialBackup ? CONFIRM_PARTIAL : CONFIRM_FULL;
   const canConfirmRestore = confirmInput.trim() === requiredConfirm;
+  const canConfirmWipe = wipeConfirmInput.trim() === WIPE_CONFIRM_PHRASE;
   const importDomainStats = previewStats.filter((stat) =>
     validatedBackup?.includedDomains.includes(stat.id),
   );
@@ -588,6 +642,104 @@ export function BackupWorkspace() {
           </CardContent>
         </Card>
       ) : null}
+
+      <Card className="border-destructive/50 bg-destructive/5">
+        <CardContent className="space-y-4 p-6">
+          <div className="space-y-1">
+            <p className="font-mono text-[10px] tracking-widest text-destructive uppercase">
+              Zona de peligro · Reinicio sistema
+            </p>
+            <p className="text-sm text-muted-foreground">
+              Borra{" "}
+              <strong className="text-foreground">
+                todo rastro de datos de este operador
+              </strong>
+              : base SQLite, diario, chat, grafo, audios, uploads, Ludus,
+              preferencias del navegador y cualquier residuo en{" "}
+              <code className="text-xs">data/</code>. No hay papelera ni
+              recuperación. Exportá una copia antes si querés conservar algo.
+            </p>
+          </div>
+
+          {!showWipePanel ? (
+            <Button
+              type="button"
+              variant="destructive"
+              disabled={isWiping || isExporting || uploadStatus === "uploading"}
+              onClick={() => {
+                setShowWipePanel(true);
+                setWipeConfirmInput("");
+              }}
+            >
+              <SkullIcon className="size-4" aria-hidden />
+              Reinicio sistema
+            </Button>
+          ) : (
+            <div className="space-y-4 rounded-xl border border-destructive/40 bg-background p-4">
+              <div className="flex items-start gap-3">
+                <AlertTriangleIcon className="mt-0.5 size-5 shrink-0 text-destructive" />
+                <div className="space-y-2 text-sm">
+                  <p className="font-medium text-destructive">
+                    Confirmación irreversible — paso 2 de 2
+                  </p>
+                  <ul className="list-disc space-y-1 pl-4 text-muted-foreground">
+                    <li>Se eliminará toda la información sin posibilidad de recuperación.</li>
+                    <li>El sistema arrancará vacío (como instalación nueva).</li>
+                    <li>
+                      Esta acción no se puede deshacer. No existe backup automático.
+                    </li>
+                  </ul>
+                  <p>
+                    Escribí exactamente{" "}
+                    <strong className="font-mono text-destructive">
+                      {WIPE_CONFIRM_PHRASE}
+                    </strong>{" "}
+                    para habilitar el borrado.
+                  </p>
+                </div>
+              </div>
+
+              <input
+                type="text"
+                value={wipeConfirmInput}
+                onChange={(event) => setWipeConfirmInput(event.target.value)}
+                placeholder={WIPE_CONFIRM_PHRASE}
+                disabled={isWiping}
+                className="w-full rounded-lg border border-destructive/40 bg-background px-3 py-2 font-mono text-sm outline-none ring-offset-background focus-visible:ring-2 focus-visible:ring-destructive/40"
+                autoComplete="off"
+                spellCheck={false}
+                aria-label={`Escribí ${WIPE_CONFIRM_PHRASE} para confirmar`}
+              />
+
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  type="button"
+                  variant="destructive"
+                  disabled={!canConfirmWipe || isWiping}
+                  onClick={() => void executeFactoryReset()}
+                >
+                  {isWiping ? (
+                    <Loader2Icon className="animate-spin" />
+                  ) : (
+                    <SkullIcon className="size-4" aria-hidden />
+                  )}
+                  {isWiping
+                    ? "Borrando todo…"
+                    : "Borrar todo sin recuperación"}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={isWiping}
+                  onClick={resetWipePanel}
+                >
+                  Cancelar
+                </Button>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }

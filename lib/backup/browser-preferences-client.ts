@@ -41,6 +41,17 @@ export function applyBrowserPreferences(
   }
 }
 
+/** Borra preferencias de navegador asociadas a Deprocast (post-wipe). */
+export function clearBrowserPreferences(): void {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  for (const key of BROWSER_PREFERENCE_KEYS) {
+    window.localStorage.removeItem(key);
+  }
+}
+
 function formatBytes(bytes: number): string {
   if (bytes < 1024) {
     return `${bytes} B`;
