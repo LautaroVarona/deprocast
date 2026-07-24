@@ -62,21 +62,41 @@ export type YoConduitMessageDto = {
   createdAt: string;
 };
 
+/** Filtro romano del bautismo: sólo letras, máx. 13. */
+export const ROMAN_NAME_REGEX = /^[a-zA-ZáéíóúÁÉÍÓÚñÑ]+$/;
+export const ROMAN_NAME_MAX = 13;
+
+const romanNameSchema = z
+  .string()
+  .trim()
+  .min(1, "El nombre no puede estar vacío.")
+  .max(ROMAN_NAME_MAX, `Máximo ${ROMAN_NAME_MAX} caracteres.`)
+  .regex(ROMAN_NAME_REGEX, "Sólo letras. Sin números, espacios ni símbolos.");
+
 export const baptizeOperatorSchema = z.object({
-  operatorName: z.string().trim().min(1).max(80),
+  operatorName: romanNameSchema,
 });
 
 export const baptizeExocortexSchema = z.object({
   exocortexName: z
     .string()
     .trim()
-    .max(80)
+    .max(ROMAN_NAME_MAX, `Máximo ${ROMAN_NAME_MAX} caracteres.`)
     .optional()
     .nullable()
     .transform((value) => {
       if (value == null) return null;
       const trimmed = value.trim();
       return trimmed.length > 0 ? trimmed : null;
+    })
+    .superRefine((value, ctx) => {
+      if (value == null) return;
+      if (!ROMAN_NAME_REGEX.test(value)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Sólo letras. Sin números, espacios ni símbolos.",
+        });
+      }
     }),
 });
 

@@ -5,6 +5,7 @@ import {
   useAudioStation,
 } from "@/components/audio-station/audio-station-context";
 import { MetabolismView } from "@/components/audio-station/MetabolismView";
+import { PauseQueueButton } from "@/components/pause-queue-button";
 import { resolveAudioPipelineStage } from "@/lib/audio-station/pipeline-status";
 import { cn } from "@/lib/utils";
 import { AudioLinesIcon, ArrowRightIcon, WavesIcon } from "lucide-react";
@@ -18,7 +19,7 @@ type FlowChip = {
 };
 
 function AudioStationShell() {
-  const { error, scan, assets, queueStatus, reviewByAssetId } =
+  const { error, scan, assets, queueStatus, globalQueueStatus, reviewByAssetId, refresh } =
     useAudioStation();
 
   const queuedIds = new Set(queueStatus?.queuedIds ?? []);
@@ -92,12 +93,22 @@ function AudioStationShell() {
             </p>
           </div>
 
-          <Link
-            href="/ingesta"
-            className="font-mono text-[10px] text-primary/80 underline-offset-2 hover:underline"
-          >
-            Ingesta con metadatos →
-          </Link>
+          <div className="flex flex-wrap items-center gap-3">
+            {(globalQueueStatus?.active ||
+              (globalQueueStatus?.queuedCount ?? 0) > 0 ||
+              globalQueueStatus?.paused) && (
+              <PauseQueueButton
+                paused={globalQueueStatus?.paused === true}
+                onToggled={() => void refresh()}
+              />
+            )}
+            <Link
+              href="/ingesta"
+              className="font-mono text-[10px] text-primary/80 underline-offset-2 hover:underline"
+            >
+              Ingesta con metadatos →
+            </Link>
+          </div>
         </div>
 
         {error ? (

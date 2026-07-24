@@ -5,6 +5,7 @@ import { useAudioStation } from "@/components/audio-station/audio-station-contex
 import { useBabel } from "@/components/babel/babel-context";
 import { DeduplicatePanel } from "@/components/audio-station/deduplicate-panel";
 import { LiveProcessingPanel } from "@/components/live-processing-panel";
+import { PauseQueueButton } from "@/components/pause-queue-button";
 import { UploadDropzone } from "@/components/upload-dropzone";
 import type { AssetMetabolismSummary } from "@/lib/audio-station/metabolism";
 import {
@@ -33,6 +34,7 @@ export function MetabolismView() {
     assets,
     scan,
     queueStatus,
+    globalQueueStatus,
     reviewByAssetId,
     refresh,
     refreshKey,
@@ -54,6 +56,16 @@ export function MetabolismView() {
     [queueStatus?.purifyingIds],
   );
   const activeId = queueStatus?.active?.id ?? null;
+  const globalActive = globalQueueStatus?.active ?? null;
+  const outsideUniverse = Boolean(
+    globalActive && (!activeId || globalActive.id !== activeId),
+  );
+  const showLivePanel = Boolean(
+    globalActive ||
+      (globalQueueStatus?.queuedCount ?? 0) > 0 ||
+      globalQueueStatus?.paused,
+  );
+  const isPaused = globalQueueStatus?.paused === true;
 
   const filteredAssets = useMemo(() => {
     return assets.filter((asset) => {
@@ -115,6 +127,13 @@ export function MetabolismView() {
               y validación HITL. Sin clicks intermedios.
             </p>
           </div>
+
+          {showLivePanel || isPaused ? (
+            <PauseQueueButton
+              paused={isPaused}
+              onToggled={() => void refresh()}
+            />
+          ) : null}
         </div>
 
         <UploadDropzone
@@ -123,8 +142,13 @@ export function MetabolismView() {
           onUploaded={() => void refresh()}
         />
 
-        {activeId ? (
-          <LiveProcessingPanel refreshKey={refreshKey} />
+        {showLivePanel ? (
+          <LiveProcessingPanel
+            refreshKey={refreshKey}
+            outsideUniverse={outsideUniverse}
+            onStopped={() => void refresh()}
+            onQueueIdle={() => void refresh()}
+          />
         ) : null}
 
         <div className="flex flex-wrap gap-2">

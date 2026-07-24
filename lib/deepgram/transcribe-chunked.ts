@@ -2,6 +2,7 @@ import {
   isCancelled,
   ProcessingCancelledError,
 } from "@/lib/processing-cancellation";
+import { isQueuePaused } from "@/lib/processing-queue-control";
 import {
   getAudioDurationSeconds,
   splitIntoChunks,
@@ -17,6 +18,28 @@ import {
   transcribeSync,
   type TranscriptionResult,
 } from "@/lib/deepgram/transcribe-sync";
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/** Espera mientras la cola esté pausada; respeta cancelación del asset. */
+async function waitWhileQueuePaused(assetId: string): Promise<void> {
+  let announced = false;
+  while (isQueuePaused()) {
+    if (isCancelled(assetId)) {
+      throw new ProcessingCancelledError();
+    }
+    if (!announced) {
+      logInfo(
+        assetId,
+        "Cola pausada — no se envían más segmentos a Deepgram hasta reanudar.",
+      );
+      announced = true;
+    }
+    await sleep(500);
+  }
+}
 
 function averageConfidence(values: Array<number | null>): number | null {
   const valid = values.filter((value): value is number => value !== null);
@@ -60,6 +83,8 @@ export async function transcribeChunked(
     if (isCancelled(assetId)) {
       throw new ProcessingCancelledError();
     }
+
+    await waitWhileQueuePaused(assetId);
 
     const chunkNumber = index + 1;
     const chunkPath = chunkPaths[index];

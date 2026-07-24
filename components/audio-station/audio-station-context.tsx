@@ -19,10 +19,16 @@ import {
 } from "react";
 
 type ProcessStatus = {
-  active: { id: string } | null;
+  active: {
+    id: string;
+    filename?: string;
+    partialText?: string | null;
+    status?: string;
+  } | null;
   queuedIds: string[];
   queuedCount: number;
   purifyingIds: string[];
+  paused?: boolean;
 };
 
 type ReviewRecord = {
@@ -34,7 +40,13 @@ type AudioStationContextValue = {
   phase: AudioStationPhase;
   assets: AudioAssetSummary[];
   scan: DeduplicateScanResult | null;
+  /** Estado de cola filtrado al universo activo (para chips / cards). */
   queueStatus: ProcessStatus | null;
+  /**
+   * Estado global de la cola STT (sin filtrar por universo).
+   * Sirve para ver/pausar jobs que corren fuera del universo activo.
+   */
+  globalQueueStatus: ProcessStatus | null;
   reviewByAssetId: Map<string, string>;
   isLoading: boolean;
   isBusy: boolean;
@@ -57,6 +69,8 @@ export function AudioStationProvider({ children }: { children: ReactNode }) {
   const [assets, setAssets] = useState<AudioAssetSummary[]>([]);
   const [scan, setScan] = useState<DeduplicateScanResult | null>(null);
   const [queueStatus, setQueueStatus] = useState<ProcessStatus | null>(null);
+  const [globalQueueStatus, setGlobalQueueStatus] =
+    useState<ProcessStatus | null>(null);
   const [reviewByAssetId, setReviewByAssetId] = useState<Map<string, string>>(
     new Map(),
   );
@@ -110,12 +124,14 @@ export function AudioStationProvider({ children }: { children: ReactNode }) {
             purifyingIds: (statusData.purifyingIds ?? []).filter((id) =>
               allowedAssetIds.has(id),
             ),
+            paused: statusData.paused ?? false,
           }
         : null;
 
       setAssets(stationData.assets);
       setScan(stationData.scan);
       setQueueStatus(filteredStatus);
+      setGlobalQueueStatus(statusData);
       setReviewByAssetId(reviewMap);
       setError(null);
       setRefreshKey((key) => key + 1);
@@ -235,8 +251,11 @@ export function AudioStationProvider({ children }: { children: ReactNode }) {
       assets.some((asset) => asset.status === "PROCESSING") ||
       (queueStatus?.queuedCount ?? 0) > 0 ||
       (queueStatus?.purifyingIds?.length ?? 0) > 0 ||
-      Boolean(queueStatus?.active),
-    [assets, queueStatus],
+      Boolean(queueStatus?.active) ||
+      Boolean(globalQueueStatus?.active) ||
+      (globalQueueStatus?.queuedCount ?? 0) > 0 ||
+      globalQueueStatus?.paused === true,
+    [assets, queueStatus, globalQueueStatus],
   );
 
   useEffect(() => {
@@ -255,6 +274,7 @@ export function AudioStationProvider({ children }: { children: ReactNode }) {
       assets,
       scan,
       queueStatus,
+      globalQueueStatus,
       reviewByAssetId,
       isLoading,
       isBusy,
@@ -270,6 +290,7 @@ export function AudioStationProvider({ children }: { children: ReactNode }) {
       assets,
       scan,
       queueStatus,
+      globalQueueStatus,
       reviewByAssetId,
       isLoading,
       isBusy,

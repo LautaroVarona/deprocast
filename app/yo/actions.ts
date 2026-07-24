@@ -1,6 +1,5 @@
 "use server";
 
-import { resolveAutonomousExocortexName } from "@/lib/yo/exocortex-name";
 import { runConduitTurn } from "@/lib/yo/conduit";
 import {
   baptizeExocortex,
@@ -10,6 +9,7 @@ import {
   patchYo,
 } from "@/lib/yo/store";
 import {
+  DEFAULT_EXOCORTEX_NAME,
   baptizeExocortexSchema,
   baptizeOperatorSchema,
   conduitMessageSchema,
@@ -102,9 +102,9 @@ export async function baptizeExocortexAction(
       };
     }
 
-    const autonomous = await resolveAutonomousExocortexName(shell.operatorName);
+    // Campo vacío → default canónico estricto (sin LLM que copie el Operador).
     const yo = await baptizeExocortex({
-      exocortexName: autonomous.name,
+      exocortexName: DEFAULT_EXOCORTEX_NAME,
       namedBy: "autonomous",
     });
 
@@ -112,7 +112,7 @@ export async function baptizeExocortexAction(
       ok: true,
       data: {
         yo,
-        resolvedName: autonomous.name,
+        resolvedName: DEFAULT_EXOCORTEX_NAME,
         namedBy: "autonomous",
       },
     };

@@ -1,5 +1,6 @@
 "use client";
 
+import { PauseQueueButton } from "@/components/pause-queue-button";
 import { StatusBadge } from "@/components/status-badge";
 import { StopProcessButton } from "@/components/stop-process-button";
 import {
@@ -9,7 +10,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Loader2Icon } from "lucide-react";
+import { Loader2Icon, PauseIcon } from "lucide-react";
 import { fetchJson } from "@/lib/fetch-json";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -24,18 +25,22 @@ type ProcessStatus = {
   } | null;
   queuedIds: string[];
   queuedCount: number;
+  paused?: boolean;
 };
 
 type LiveProcessingPanelProps = {
   refreshKey: number;
   onStopped?: () => void;
   onQueueIdle?: () => void;
+  /** Si true, el asset activo no pertenece al universo filtrado en la UI. */
+  outsideUniverse?: boolean;
 };
 
 export function LiveProcessingPanel({
   refreshKey,
   onStopped,
   onQueueIdle,
+  outsideUniverse = false,
 }: LiveProcessingPanelProps) {
   const [status, setStatus] = useState<ProcessStatus | null>(null);
   const transcriptRef = useRef<HTMLPreElement>(null);
@@ -62,8 +67,11 @@ export function LiveProcessingPanel({
     void loadStatus();
   }, [loadStatus, refreshKey]);
 
+  const isPaused = status?.paused === true;
   const isActive =
-    status?.active?.status === "PROCESSING" || (status?.queuedCount ?? 0) > 0;
+    status?.active?.status === "PROCESSING" ||
+    (status?.queuedCount ?? 0) > 0 ||
+    isPaused;
 
   useEffect(() => {
     if (isActive) {
@@ -105,27 +113,55 @@ export function LiveProcessingPanel({
     }
   }, [status?.active?.partialText]);
 
-  if (!status || (!status.active && status.queuedCount === 0)) {
+  if (
+    !status ||
+    (!status.active && status.queuedCount === 0 && !status.paused)
+  ) {
     return null;
   }
 
   const waitingCount = status.queuedCount;
 
   return (
-    <Card className="border-amber-500/30 bg-amber-500/5">
+    <Card
+      className={
+        isPaused
+          ? "border-amber-500/40 bg-amber-500/8"
+          : "border-amber-500/30 bg-amber-500/5"
+      }
+    >
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Loader2Icon className="size-5 animate-spin text-amber-600" />
-          Procesamiento en vivo
-        </CardTitle>
-        <CardDescription>
-          Los audios se procesan uno a uno. La transcripción aparece en tiempo
-          real.
-          {waitingCount > 0 &&
-            ` · ${waitingCount} en cola`}
-        </CardDescription>
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="space-y-1.5">
+            <CardTitle className="flex items-center gap-2">
+              {isPaused ? (
+                <PauseIcon className="size-5 text-amber-600" />
+              ) : (
+                <Loader2Icon className="size-5 animate-spin text-amber-600" />
+              )}
+              {isPaused ? "STT pausado" : "Procesamiento en vivo"}
+            </CardTitle>
+            <CardDescription>
+              {isPaused
+                ? "No se envían más segmentos a Deepgram. El segmento en vuelo puede terminar."
+                : "Los audios se procesan uno a uno. La transcripción aparece en tiempo real."}
+              {waitingCount > 0 && ` · ${waitingCount} en cola`}
+            </CardDescription>
+          </div>
+          <PauseQueueButton
+            paused={isPaused}
+            onToggled={() => void loadStatus()}
+          />
+        </div>
       </CardHeader>
       <CardContent className="space-y-4">
+        {outsideUniverse ? (
+          <p className="rounded border border-amber-500/30 bg-amber-500/10 px-3 py-2 font-mono text-[11px] text-amber-800 dark:text-amber-200">
+            Este audio no está en el universo activo: la biblioteca puede verse
+            vacía, pero Deepgram sigue (o seguía) trabajando en background.
+          </p>
+        ) : null}
+
         {status.active ? (
           <div className="space-y-3">
             <div className="flex flex-wrap items-center gap-3">
@@ -148,13 +184,19 @@ export function LiveProcessingPanel({
               ref={transcriptRef}
               className="max-h-64 overflow-auto whitespace-pre-wrap rounded-lg border bg-background p-4 text-sm leading-relaxed"
             >
-              {status.active.partialText?.trim() ||
-                "Escuchando audio, esperando primeros segmentos..."}
+              {isPaused && !status.active.partialText?.trim()
+                ? "Pausado — esperando reanudación antes del próximo segmento..."
+                : status.active.partialText?.trim() ||
+                  (isPaused
+                    ? "Pausado entre segmentos..."
+                    : "Escuchando audio, esperando primeros segmentos...")}
             </pre>
           </div>
         ) : (
           <p className="text-sm text-muted-foreground">
-            Preparando el siguiente audio en la cola...
+            {isPaused
+              ? "Cola pausada. Reanudá para seguir con los PENDING."
+              : "Preparando el siguiente audio en la cola..."}
           </p>
         )}
       </CardContent>

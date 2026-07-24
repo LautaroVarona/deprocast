@@ -1,4 +1,8 @@
 import { requestCancellation } from "@/lib/processing-cancellation";
+import {
+  isQueuePaused,
+  setQueuePaused,
+} from "@/lib/processing-queue-control";
 import { prisma } from "@/lib/prisma";
 
 type QueueStatus = {
@@ -11,6 +15,8 @@ type QueueStatus = {
   queuedIds: string[];
   queuedCount: number;
   purifyingIds: string[];
+  /** Si true, no se inician jobs nuevos y el STT espera entre segmentos. */
+  paused: boolean;
 };
 
 /** Cola STT durable: SSOT = AudioAsset.status en SQLite (PENDING/PROCESSING/…). */
@@ -66,6 +72,23 @@ class ProcessingQueue {
     return this.purifyingIds.has(assetId);
   }
 
+  isPaused(): boolean {
+    return isQueuePaused();
+  }
+
+  /** Pausa envíos a Deepgram: el job activo espera entre segmentos; no arranca el siguiente. */
+  pause(): QueueStatus["paused"] {
+    setQueuePaused(true);
+    return true;
+  }
+
+  /** Reanuda envíos y drena PENDING. */
+  resume(): QueueStatus["paused"] {
+    setQueuePaused(false);
+    void this.processNext();
+    return false;
+  }
+
   async clearQueue(): Promise<void> {
     await prisma.audioAsset.updateMany({
       where: { status: "PENDING" },
@@ -90,6 +113,7 @@ class ProcessingQueue {
       queuedIds,
       queuedCount: queuedIds.length,
       purifyingIds: [...this.purifyingIds],
+      paused: isQueuePaused(),
     };
   }
 
@@ -146,6 +170,11 @@ class ProcessingQueue {
       });
     }
 
+    // Encolar de forma explícita implica querer trabajar: salir de pausa.
+    if (isQueuePaused()) {
+      setQueuePaused(false);
+    }
+
     void this.processNext();
     return true;
   }
@@ -180,7 +209,7 @@ class ProcessingQueue {
   }
 
   private async processNext(): Promise<void> {
-    if (this.running) {
+    if (this.running || isQueuePaused()) {
       return;
     }
 

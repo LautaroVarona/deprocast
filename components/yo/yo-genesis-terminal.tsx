@@ -4,13 +4,26 @@ import {
   baptizeExocortexAction,
   baptizeOperatorAction,
 } from "@/app/yo/actions";
-import type { YoDto } from "@/lib/yo/types";
+import {
+  DEFAULT_EXOCORTEX_NAME,
+  ROMAN_NAME_MAX,
+  ROMAN_NAME_REGEX,
+  type YoDto,
+} from "@/lib/yo/types";
 import { cn } from "@/lib/utils";
 import { AnimatePresence, motion } from "framer-motion";
 import { Brain, User } from "lucide-react";
-import { useEffect, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
+import { useRouter } from "next/navigation";
+import {
+  useEffect,
+  useRef,
+  useState,
+  type ChangeEvent,
+  type KeyboardEvent,
+  type ReactNode,
+} from "react";
 
-type GenesisStep = "operator" | "exocortex" | "decoding";
+type GenesisStep = "operator" | "exocortex" | "decoding" | "welcome";
 type Phase = "boot" | "form";
 
 type YoGenesisTerminalProps = {
@@ -23,6 +36,26 @@ const BOOT_HOLD_MS = 1500;
 const DECODE_MS = 2000;
 const GLYPHS =
   "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789·ÆØÞΩΨΣΞ";
+
+/** Filtra tecla a tecla: sólo letras latinas/acentos, máx. 13. */
+function filterRomanNameInput(raw: string): string {
+  return raw
+    .normalize("NFC")
+    .replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ]/g, "")
+    .slice(0, ROMAN_NAME_MAX);
+}
+
+function validateRomanName(value: string): string | null {
+  const trimmed = value.trim();
+  if (!trimmed) return "El nombre no puede estar vacío.";
+  if (trimmed.length > ROMAN_NAME_MAX) {
+    return `Máximo ${ROMAN_NAME_MAX} caracteres.`;
+  }
+  if (!ROMAN_NAME_REGEX.test(trimmed)) {
+    return "Sólo letras. Sin números, espacios ni símbolos.";
+  }
+  return null;
+}
 
 function TypewriterBoot({
   text,
@@ -177,6 +210,7 @@ function StatusPlaque({
 }
 
 export function YoGenesisTerminal({ yo, onComplete }: YoGenesisTerminalProps) {
+  const router = useRouter();
   const [phase, setPhase] = useState<Phase>("boot");
   const [step, setStep] = useState<GenesisStep>(() =>
     yo.operatorName?.trim() ? "exocortex" : "operator",
@@ -193,6 +227,7 @@ export function YoGenesisTerminal({ yo, onComplete }: YoGenesisTerminalProps) {
   const [pendingYo, setPendingYo] = useState<YoDto | null>(null);
   const [operatorFlash, setOperatorFlash] = useState(false);
   const [exocortexFlash, setExocortexFlash] = useState(false);
+  const [initiating, setInitiating] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const bootDoneRef = useRef(false);
 
@@ -203,7 +238,7 @@ export function YoGenesisTerminal({ yo, onComplete }: YoGenesisTerminalProps) {
   };
 
   useEffect(() => {
-    if (phase === "form" && step !== "decoding") {
+    if (phase === "form" && (step === "operator" || step === "exocortex")) {
       inputRef.current?.focus();
     }
   }, [phase, step]);
@@ -218,9 +253,18 @@ export function YoGenesisTerminal({ yo, onComplete }: YoGenesisTerminalProps) {
     window.setTimeout(() => setExocortexFlash(false), 1200);
   };
 
+  const handleInputChange = (event: ChangeEvent<HTMLInputElement>) => {
+    setInput(filterRomanNameInput(event.target.value));
+    if (error) setError(null);
+  };
+
   const submitOperator = async () => {
     const name = input.trim();
-    if (!name || busy) return;
+    const validationError = validateRomanName(name);
+    if (validationError || busy) {
+      if (validationError) setError(validationError);
+      return;
+    }
     setBusy(true);
     setError(null);
     const result = await baptizeOperatorAction(name);
@@ -237,15 +281,23 @@ export function YoGenesisTerminal({ yo, onComplete }: YoGenesisTerminalProps) {
 
   const submitExocortex = async () => {
     if (busy) return;
-    setBusy(true);
-    setError(null);
-    const provided = input.trim() || null;
 
-    if (!provided) {
-      setStep("decoding");
+    const provided = input.trim();
+    if (provided) {
+      const validationError = validateRomanName(provided);
+      if (validationError) {
+        setError(validationError);
+        return;
+      }
     }
 
-    const result = await baptizeExocortexAction(provided);
+    setBusy(true);
+    setError(null);
+    setDecodedName(null);
+    setDecodingPreview(null);
+    setStep("decoding");
+
+    const result = await baptizeExocortexAction(provided || null);
     if (!result.ok) {
       setBusy(false);
       setStep("exocortex");
@@ -253,18 +305,25 @@ export function YoGenesisTerminal({ yo, onComplete }: YoGenesisTerminalProps) {
       return;
     }
 
-    if (result.data.namedBy === "autonomous") {
-      setDecodedName(result.data.resolvedName);
-      setPendingYo(result.data.yo);
-      setBusy(false);
-      setStep("decoding");
-      return;
-    }
-
-    setExocortexName(result.data.resolvedName);
-    flashExocortex();
+    // Siempre decodificar: personalizado o Mastropiero por defecto.
+    setDecodedName(result.data.resolvedName);
+    setPendingYo(result.data.yo);
     setBusy(false);
-    onComplete(result.data.yo);
+  };
+
+  const handleDecodeComplete = () => {
+    if (!decodedName) return;
+    setExocortexName(decodedName);
+    setDecodingPreview(null);
+    flashExocortex();
+    setStep("welcome");
+  };
+
+  const handleStartProtocol = () => {
+    if (!pendingYo || initiating) return;
+    setInitiating(true);
+    onComplete(pendingYo);
+    router.push("/");
   };
 
   const handleKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
@@ -282,6 +341,9 @@ export function YoGenesisTerminal({ yo, onComplete }: YoGenesisTerminalProps) {
     : decodingPreview
       ? decodingPreview
       : "— pendiente";
+
+  const welcomeOperator =
+    operatorName.trim() || pendingYo?.operatorName?.trim() || "Operador";
 
   return (
     <div className="genesis-void-root overflow-x-hidden">
@@ -311,11 +373,39 @@ export function YoGenesisTerminal({ yo, onComplete }: YoGenesisTerminalProps) {
               >
                 <header className="relative z-10 space-y-5 text-center">
                   <h1 className="font-display text-3xl tracking-[0.08em] text-legion-bone md:text-4xl">
-                    I - Bautismo
+                    {step === "welcome" ? "Legión" : "I - Bautismo"}
                   </h1>
 
                   <AnimatePresence mode="wait">
-                    {step === "decoding" && decodedName ? (
+                    {step === "welcome" ? (
+                      <motion.div
+                        key="welcome"
+                        initial={{ opacity: 0, y: 16 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+                        className="space-y-7"
+                      >
+                        <p className="font-display text-lg leading-relaxed text-legion-bone md:text-xl">
+                          Encantado de conocerte,{" "}
+                          <span className="text-legion-gold">
+                            {welcomeOperator}
+                          </span>
+                          . Mi objetivo es convertirme en tu Exoesqueleto
+                          Cognitivo.
+                        </p>
+                        <button
+                          type="button"
+                          disabled={initiating || !pendingYo}
+                          onClick={handleStartProtocol}
+                          className="genesis-btn mx-auto block min-h-12 w-full max-w-[18rem] px-5 font-display text-sm tracking-[0.14em]"
+                        >
+                          {initiating
+                            ? "Iniciando…"
+                            : "Iniciar Protocolo Deprocast"}
+                        </button>
+                      </motion.div>
+                    ) : step === "decoding" && decodedName ? (
                       <motion.div
                         key="decode"
                         initial={{ opacity: 0, y: 12 }}
@@ -326,12 +416,7 @@ export function YoGenesisTerminal({ yo, onComplete }: YoGenesisTerminalProps) {
                         <DecodeGlyphs
                           finalName={decodedName}
                           onTick={setDecodingPreview}
-                          onComplete={() => {
-                            setExocortexName(decodedName);
-                            setDecodingPreview(null);
-                            flashExocortex();
-                            if (pendingYo) onComplete(pendingYo);
-                          }}
+                          onComplete={handleDecodeComplete}
                         />
                       </motion.div>
                     ) : step === "decoding" ? (
@@ -343,7 +428,7 @@ export function YoGenesisTerminal({ yo, onComplete }: YoGenesisTerminalProps) {
                         className="space-y-3 py-2"
                       >
                         <p className="font-mono text-[10px] tracking-[0.28em] text-legion-bronze uppercase">
-                          Consultando núcleo
+                          Sellando identidad
                         </p>
                         <p className="font-display animate-pulse text-2xl tracking-[0.2em] text-legion-gold">
                           ▓▒░█▒▓░▒█▓▒░
@@ -368,19 +453,26 @@ export function YoGenesisTerminal({ yo, onComplete }: YoGenesisTerminalProps) {
                           <input
                             ref={inputRef}
                             value={input}
-                            onChange={(event) => setInput(event.target.value)}
+                            onChange={handleInputChange}
                             onKeyDown={handleKeyDown}
                             disabled={busy}
+                            maxLength={ROMAN_NAME_MAX}
                             autoComplete="off"
                             spellCheck={false}
+                            inputMode="text"
+                            pattern="[A-Za-záéíóúÁÉÍÓÚñÑ]*"
                             placeholder={
                               step === "operator"
                                 ? "Nombre"
-                                : "Deja en blanco para auto-asignación"
+                                : `Vacío → ${DEFAULT_EXOCORTEX_NAME}`
                             }
                             className="w-full bg-transparent font-mono text-sm text-legion-bone outline-none placeholder:text-legion-patina disabled:opacity-50"
                           />
                         </div>
+
+                        <p className="font-mono text-[9px] tracking-[0.18em] text-legion-patina uppercase">
+                          Sólo letras · máx. {ROMAN_NAME_MAX}
+                        </p>
 
                         <button
                           type="button"

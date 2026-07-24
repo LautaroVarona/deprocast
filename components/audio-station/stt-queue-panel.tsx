@@ -6,6 +6,7 @@ import {
   AudioPipelineNextAction,
 } from "@/components/audio-station/audio-pipeline-badge";
 import { LiveProcessingPanel } from "@/components/live-processing-panel";
+import { PauseQueueButton } from "@/components/pause-queue-button";
 import { ProcessAllButton } from "@/components/process-all-button";
 import { ProcessButton } from "@/components/process-button";
 import { StopProcessButton } from "@/components/stop-process-button";
@@ -18,11 +19,22 @@ import { MicIcon, ActivityIcon, CircleDashedIcon } from "lucide-react";
 import { useMemo } from "react";
 
 export function SttQueuePanel() {
-  const { assets, queueStatus, reviewByAssetId, refresh, refreshKey } =
-    useAudioStation();
+  const {
+    assets,
+    queueStatus,
+    globalQueueStatus,
+    reviewByAssetId,
+    refresh,
+    refreshKey,
+  } = useAudioStation();
 
   const queuedIds = new Set(queueStatus?.queuedIds ?? []);
   const activeId = queueStatus?.active?.id ?? null;
+  const globalActive = globalQueueStatus?.active ?? null;
+  const outsideUniverse = Boolean(
+    globalActive && (!activeId || globalActive.id !== activeId),
+  );
+  const isPaused = globalQueueStatus?.paused === true;
 
   const pendingCount = assets.filter(
     (asset) =>
@@ -80,10 +92,21 @@ export function SttQueuePanel() {
           </p>
         </div>
 
-        <ProcessAllButton
-          pendingCount={pendingCount}
-          onQueued={() => void refresh()}
-        />
+        <div className="flex flex-wrap items-center gap-2">
+          <PauseQueueButton
+            paused={isPaused}
+            visible={
+              Boolean(globalActive) ||
+              (globalQueueStatus?.queuedCount ?? 0) > 0 ||
+              isPaused
+            }
+            onToggled={() => void refresh()}
+          />
+          <ProcessAllButton
+            pendingCount={pendingCount}
+            onQueued={() => void refresh()}
+          />
+        </div>
       </div>
 
       <div className="grid gap-2 sm:grid-cols-3">
@@ -107,6 +130,13 @@ export function SttQueuePanel() {
         </div>
       </div>
 
+      {isPaused ? (
+        <p className="rounded border border-amber-500/30 bg-amber-500/10 px-3 py-2 font-mono text-[10px] text-amber-800 dark:text-amber-200">
+          Envíos a Deepgram pausados. El job activo espera entre segmentos; no se
+          inician audios nuevos.
+        </p>
+      ) : null}
+
       {activeLabel ? (
         <div className="rounded border border-primary/30 bg-primary/10 px-3 py-2">
           <p className="mb-1 flex items-center gap-1 font-mono text-[10px] uppercase tracking-wider text-primary/80">
@@ -114,6 +144,16 @@ export function SttQueuePanel() {
             Procesando ahora
           </p>
           <p className="truncate font-mono text-[11px] text-primary">{activeLabel}</p>
+        </div>
+      ) : globalActive ? (
+        <div className="rounded border border-amber-500/30 bg-amber-500/10 px-3 py-2">
+          <p className="mb-1 flex items-center gap-1 font-mono text-[10px] uppercase tracking-wider text-amber-700 dark:text-amber-300">
+            <ActivityIcon className="size-3" />
+            STT activo fuera de este universo
+          </p>
+          <p className="truncate font-mono text-[11px] text-amber-900 dark:text-amber-100">
+            {globalActive.filename ?? globalActive.id}
+          </p>
         </div>
       ) : (
         <div className="rounded border border-border bg-muted/40 px-3 py-2">
@@ -126,6 +166,7 @@ export function SttQueuePanel() {
 
       <LiveProcessingPanel
         refreshKey={refreshKey}
+        outsideUniverse={outsideUniverse}
         onStopped={() => void refresh()}
         onQueueIdle={() => void refresh()}
       />
