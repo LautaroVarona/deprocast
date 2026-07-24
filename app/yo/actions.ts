@@ -4,6 +4,8 @@ import {
   ensureMissionIPromptEmitted,
   runConduitTurn,
 } from "@/lib/yo/conduit";
+import { getSenadoGraphSnapshot } from "@/lib/yo/senado-graph";
+import type { SenadoGraphSnapshot } from "@/lib/yo/senado-types";
 import {
   baptizeExocortex,
   baptizeOperator,
@@ -189,6 +191,25 @@ export async function prepareMissionBoardAction(): Promise<
         error instanceof Error
           ? error.message
           : "No se pudo preparar la Tabula.",
+    };
+  }
+}
+
+export async function getSenadoGraphAction(): Promise<
+  YoActionResult<SenadoGraphSnapshot>
+> {
+  try {
+    await ready();
+    await ensureYoShell();
+    const snapshot = await getSenadoGraphSnapshot();
+    return { ok: true, data: snapshot };
+  } catch (error) {
+    return {
+      ok: false,
+      error:
+        error instanceof Error
+          ? error.message
+          : "No se pudo cargar el grafo del Senado.",
     };
   }
 }

@@ -25,7 +25,7 @@ const MISSION_COPY: Record<
   senado: {
     roman: "II",
     title: "El Senado",
-    subtitle: "Registrá 3 entidades de tu círculo íntimo en el grafo.",
+    subtitle: "Registrá 3 personas de tu círculo íntimo en el grafo.",
     reward: "Desbloquea el ritual de Nodos",
   },
   prima: {
@@ -42,6 +42,8 @@ type MissionBoardProps = {
   onNosceOpenChange: (open: boolean) => void;
   onNosceCompleted: (yo: YoDto) => void;
   onProgress: () => Promise<void> | void;
+  operatorName: string;
+  onSenadoOpenChange?: (open: boolean) => void;
 };
 
 export function MissionBoard({
@@ -50,9 +52,16 @@ export function MissionBoard({
   onNosceOpenChange,
   onNosceCompleted,
   onProgress,
+  operatorName,
+  onSenadoOpenChange,
 }: MissionBoardProps) {
   const [personaOpen, setPersonaOpen] = useState(false);
   const [projectOpen, setProjectOpen] = useState(false);
+
+  const setSenadoOpen = (open: boolean) => {
+    setPersonaOpen(open);
+    onSenadoOpenChange?.(open);
+  };
 
   const handleActivate = (id: ConsecrationMissionId) => {
     const mission = consecration.missions.find((item) => item.id === id);
@@ -63,7 +72,7 @@ export function MissionBoard({
       return;
     }
     if (id === "senado" && mission.status === "active") {
-      setPersonaOpen(true);
+      setSenadoOpen(true);
       return;
     }
     if (id === "prima" && mission.status === "active") {
@@ -177,12 +186,13 @@ export function MissionBoard({
 
       <MissionPersonaOverlay
         open={personaOpen}
-        onOpenChange={setPersonaOpen}
+        onOpenChange={setSenadoOpen}
         progress={consecration.personaCount}
         target={
           consecration.missions.find((mission) => mission.id === "senado")
             ?.target ?? 3
         }
+        operatorName={operatorName}
         onCreated={async () => {
           await onProgress();
         }}

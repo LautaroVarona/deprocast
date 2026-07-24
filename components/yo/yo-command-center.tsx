@@ -22,6 +22,7 @@ export function YoCommandCenter() {
   const [loading, setLoading] = useState(!genesisYo);
   const [saving, setSaving] = useState(false);
   const [nosceOpen, setNosceOpen] = useState(false);
+  const [senadoOpen, setSenadoOpen] = useState(false);
 
   const syncYo = useCallback(
     (next: YoDto) => {
@@ -119,7 +120,9 @@ export function YoCommandCenter() {
         />
 
         <p className="mt-5 shrink-0 font-display text-base leading-snug tracking-[0.02em] text-amber-100/90 md:text-lg">
-          Para comenzar a entender Deprocast, Deprocast debe entenderte primero.
+          {senadoOpen || yo.consecration.activeMissionId === "senado"
+            ? "Somos con quienes somos. Registra en el grafo las tres primeras personas que quieras. Tus más cercanos, tus inspiraciones, con quienes vivas o sueñes."
+            : "Para comenzar a entender Deprocast, Deprocast debe entenderte primero."}
         </p>
 
         <div className="mt-4 flex min-h-0 flex-1 flex-col">
@@ -127,6 +130,8 @@ export function YoCommandCenter() {
             consecration={yo.consecration}
             nosceOpen={nosceOpen}
             onNosceOpenChange={setNosceOpen}
+            operatorName={yo.operatorName?.trim() || "Operador"}
+            onSenadoOpenChange={setSenadoOpen}
             onNosceCompleted={(next) => {
               syncYo(next);
               toast.success("Misión I sellada. El Senado espera.");

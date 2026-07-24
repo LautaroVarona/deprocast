@@ -12,6 +12,7 @@ import {
   type GenesisStatus,
   type MissionRuntimeStatus,
 } from "@/lib/yo/types";
+import { countOperatorLinkedPersonas } from "@/lib/yo/senado-graph";
 
 export function deriveGenesisStatus(input: {
   operatorName: string | null;
@@ -64,7 +65,7 @@ export async function buildConsecrationProgress(
   calibration: CalibrationMap,
 ): Promise<ConsecrationProgress> {
   const [personaCount, proposalCount] = await Promise.all([
-    prisma.kgNode.count({ where: { type: "persona" } }),
+    countOperatorLinkedPersonas(),
     prisma.projectProposal.count(),
   ]);
 
