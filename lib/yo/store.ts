@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import {
   buildConsecrationProgress,
   deriveGenesisStatus,
+  isMissionIComplete,
 } from "@/lib/yo/consecration";
 import {
   DEFAULT_EXOCORTEX_NAME,
@@ -46,7 +47,7 @@ async function toDto(row: {
   updatedAt: Date;
 }): Promise<YoDto> {
   const calibration = parseCalibration(row.calibration);
-  const genesisStatus = deriveGenesisStatus(row);
+  const genesisStatus = deriveGenesisStatus({ ...row, calibration });
   const consecration = await buildConsecrationProgress(calibration);
 
   return {
@@ -166,11 +167,15 @@ export async function saveNosceMissionAnswers(input: {
   esperanza: string;
 }): Promise<YoDto> {
   const current = await ensureYoShell();
-  if (current.genesisStatus !== "PENDING_MISSIONS") {
-    throw new Error("Nosce solo puede sellarse durante las Misiones de Consagración.");
+
+  if (!current.operatorName?.trim() || !current.exocortexName?.trim()) {
+    throw new Error(
+      "Completá el bautismo de nombres antes de finalizar la Misión I.",
+    );
   }
-  if (current.consecration.activeMissionId !== "nosce") {
-    throw new Error("Nosce Te Ipsum ya está sellado o no está activa.");
+
+  if (isMissionIComplete(current.calibration)) {
+    throw new Error("Nosce Te Ipsum ya está sellado.");
   }
 
   const calibration = {
@@ -184,6 +189,13 @@ export async function saveNosceMissionAnswers(input: {
     where: { id: YO_CORE_ID },
     data: {
       calibration: calibration as Prisma.InputJsonValue,
+      // Si el sello de génesis quedó marcado sin ADN, reabrir consagración.
+      ...(current.genesisCompletedAt
+        ? {
+            genesisCompletedAt: null,
+            operationalStatus: "CALIBRANDO",
+          }
+        : {}),
     },
   });
 

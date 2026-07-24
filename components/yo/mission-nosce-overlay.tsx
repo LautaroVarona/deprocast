@@ -4,8 +4,6 @@ import { completeNosceMissionAction } from "@/app/yo/actions";
 import {
   NOSCE_BINARY_OPTIONS,
   NOSCE_PRIMA_MATERIA_CHIPS,
-  ROMAN_FREE_TEXT_REGEX,
-  ROMAN_WORD_MAX,
   type YoDto,
 } from "@/lib/yo/types";
 import { cn } from "@/lib/utils";
@@ -21,22 +19,6 @@ type MissionNosceOverlayProps = {
 };
 
 type Step = 1 | 2 | 3;
-
-function sanitizeRomanFreeText(raw: string): string {
-  const lettersOnly = raw.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, "");
-  const collapsed = lettersOnly.replace(/\s+/g, " ");
-  return collapsed
-    .split(" ")
-    .map((word) => word.slice(0, ROMAN_WORD_MAX))
-    .join(" ");
-}
-
-function isValidRomanFreeText(value: string): boolean {
-  const trimmed = value.trim();
-  if (!trimmed) return false;
-  if (!ROMAN_FREE_TEXT_REGEX.test(trimmed)) return false;
-  return trimmed.split(/\s+/).every((word) => word.length <= ROMAN_WORD_MAX);
-}
 
 export function MissionNosceOverlay({
   open,
@@ -83,8 +65,10 @@ export function MissionNosceOverlay({
     setStep(3);
   };
 
+  const canFinish = Boolean(binary && chips.length > 0 && freeText.trim());
+
   const handleSubmit = async () => {
-    if (!binary || chips.length === 0 || !isValidRomanFreeText(freeText) || saving) {
+    if (!binary || chips.length === 0 || !freeText.trim() || saving) {
       return;
     }
 
@@ -265,28 +249,23 @@ export function MissionNosceOverlay({
                     <label className="block space-y-2">
                       <textarea
                         value={freeText}
-                        onChange={(event) =>
-                          setFreeText(sanitizeRomanFreeText(event.target.value))
-                        }
+                        onChange={(event) => setFreeText(event.target.value)}
                         rows={5}
-                        placeholder="Sólo letras. Máximo 13 caracteres por palabra."
+                        placeholder="Escribí con libertad lo que esperás del sistema…"
                         className="mission-roman-textarea w-full resize-none px-3 py-3 font-mono text-sm text-legion-bone outline-none placeholder:text-legion-bone/35"
                         autoFocus
                       />
-                      <span className="block font-mono text-[10px] tracking-[0.14em] text-legion-bronze/75 uppercase">
-                        Reglas romanas · letras · máx. {ROMAN_WORD_MAX} / palabra
-                      </span>
                     </label>
                     <button
                       type="button"
-                      disabled={saving || !isValidRomanFreeText(freeText)}
+                      disabled={saving || !canFinish}
                       onClick={() => void handleSubmit()}
                       className="genesis-btn flex min-h-11 w-full items-center justify-center gap-2 px-4 font-display text-sm tracking-[0.14em] uppercase disabled:opacity-40"
                     >
                       {saving ? (
                         <Loader2Icon className="size-4 animate-spin" />
                       ) : null}
-                      Sellar ADN
+                      Finalizar Misión
                     </button>
                   </motion.div>
                 )}

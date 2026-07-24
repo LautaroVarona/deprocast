@@ -63,10 +63,6 @@ export const NOSCE_PRIMA_MATERIA_CHIPS = [
   "Enlaces/Web",
 ] as const;
 
-/** Texto libre romano: sólo letras y espacios; máx. 13 chars por palabra. */
-export const ROMAN_FREE_TEXT_REGEX = /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/;
-export const ROMAN_WORD_MAX = 13;
-
 export const CONSECRATION_PERSONA_TARGET = 3;
 export const CONSECRATION_PROJECT_TARGET = 1;
 

@@ -17,12 +17,19 @@ export function deriveGenesisStatus(input: {
   operatorName: string | null;
   exocortexName: string | null;
   genesisCompletedAt: Date | string | null;
+  calibration?: CalibrationMap;
 }): GenesisStatus {
   const hasNames = Boolean(
     input.operatorName?.trim() && input.exocortexName?.trim(),
   );
   if (!hasNames) return "PENDING_NAMES";
-  if (input.genesisCompletedAt) return "COMPLETED";
+  if (input.genesisCompletedAt) {
+    // Sellado prematuro / legacy sin ADN de Nosce → reabrir consagración.
+    if (input.calibration && !isMissionIComplete(input.calibration)) {
+      return "PENDING_MISSIONS";
+    }
+    return "COMPLETED";
+  }
   return "PENDING_MISSIONS";
 }
 

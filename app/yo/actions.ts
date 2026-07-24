@@ -18,8 +18,6 @@ import {
   DEFAULT_EXOCORTEX_NAME,
   NOSCE_BINARY_OPTIONS,
   NOSCE_PRIMA_MATERIA_CHIPS,
-  ROMAN_FREE_TEXT_REGEX,
-  ROMAN_WORD_MAX,
   baptizeExocortexSchema,
   baptizeOperatorSchema,
   conduitMessageSchema,
@@ -204,17 +202,7 @@ const nosceMissionSchema = z.object({
     .string()
     .trim()
     .min(1, "Escribí qué esperás de Deprocast.")
-    .max(500)
-    .refine((value) => ROMAN_FREE_TEXT_REGEX.test(value), {
-      message: "Sólo letras y espacios. Sin números ni símbolos.",
-    })
-    .refine(
-      (value) =>
-        value.split(/\s+/).every((word) => word.length <= ROMAN_WORD_MAX),
-      {
-        message: `Cada palabra puede tener como máximo ${ROMAN_WORD_MAX} caracteres.`,
-      },
-    ),
+    .max(2000, "Máximo 2000 caracteres."),
 });
 
 export async function completeNosceMissionAction(input: {
