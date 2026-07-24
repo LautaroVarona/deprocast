@@ -3,11 +3,10 @@ import "server-only";
 import { DEFAULT_KG_EDGE_WEIGHT, normalizeKgEdgeWeight } from "@/lib/validations/kg-schema";
 import type { PendingTaskDto } from "@/lib/pendientes/types";
 import { prisma } from "@/lib/prisma";
+import { ensureOperatorPersonaNode } from "@/lib/yo/operator-node";
 import type { Prisma } from "@prisma/client";
 
 const ASALTO_RELATION = "asalto_trinchera";
-const SELF_NODE_NAME = "Observador";
-const SELF_NODE_TYPE = "persona";
 
 async function ensureKgNode(
   primaryName: string,
@@ -63,7 +62,10 @@ async function resolveProjectNodeId(task: PendingTaskDto): Promise<string> {
 }
 
 async function resolveSelfNodeId(): Promise<string> {
-  return ensureKgNode(SELF_NODE_NAME, SELF_NODE_TYPE, { role: "observador" });
+  const operator = await ensureOperatorPersonaNode();
+  if (operator) return operator.id;
+  // Fallback legacy si aún no hay nombre bautizado.
+  return ensureKgNode("Observador", "persona", { role: "observador" });
 }
 
 export type AsaltoMirrorAction = "suggest" | "recognize" | "calibrate" | "reject";

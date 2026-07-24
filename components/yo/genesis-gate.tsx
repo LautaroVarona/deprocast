@@ -1,6 +1,6 @@
 "use client";
 
-import { getYoAction } from "@/app/yo/actions";
+import { useGenesis } from "@/components/yo/genesis-context";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
@@ -9,51 +9,42 @@ type GenesisGateProps = {
 };
 
 /**
- * Bloquea el exoesqueleto hasta completar el Protocolo Génesis en /yo.
+ * Bloquea el exoesqueleto hasta completar el Protocolo Génesis.
+ * PENDING_NAMES / PENDING_MISSIONS → solo /yo.
  */
 export function GenesisGate({ children }: GenesisGateProps) {
   const pathname = usePathname();
   const router = useRouter();
-  const [ready, setReady] = useState(false);
-  const [blocking, setBlocking] = useState(false);
+  const { ready, genesisStatus, refreshGenesis } = useGenesis();
+  const [routed, setRouted] = useState(false);
 
   useEffect(() => {
-    let cancelled = false;
+    if (!ready) return;
 
-    const run = async () => {
-      const onYo = pathname === "/yo" || pathname.startsWith("/yo/");
-      const result = await getYoAction();
-      if (cancelled) return;
+    const onYo = pathname === "/yo" || pathname.startsWith("/yo/");
+    const locked = genesisStatus !== "COMPLETED";
 
-      if (!result.ok) {
-        setReady(true);
-        setBlocking(false);
-        return;
-      }
+    if (locked && !onYo) {
+      setRouted(false);
+      router.replace("/yo");
+      return;
+    }
 
-      const incomplete = !result.data.genesisCompleted;
-      setBlocking(incomplete);
+    setRouted(true);
+  }, [ready, genesisStatus, pathname, router]);
 
-      if (incomplete && !onYo) {
-        router.replace("/yo");
-        return;
-      }
+  // Revalidar al navegar (p.ej. tras sellar misiones).
+  useEffect(() => {
+    if (!ready) return;
+    void refreshGenesis();
+  }, [pathname]); // eslint-disable-line react-hooks/exhaustive-deps
 
-      setReady(true);
-    };
-
-    void run();
-    return () => {
-      cancelled = true;
-    };
-  }, [pathname, router]);
-
-  if (!ready) {
+  if (!ready || !routed) {
     return (
       <div className="flex flex-1 items-center justify-center bg-background px-4">
         <p className="font-mono text-[11px] tracking-[0.28em] text-accent uppercase">
-          {blocking
-            ? "[ REDIRIGIENDO A GÉNESIS… ]"
+          {genesisStatus !== "COMPLETED"
+            ? "[ REDIRIGIENDO AL SANCTA… ]"
             : "[ VERIFICANDO NODO YO… ]"}
         </p>
       </div>

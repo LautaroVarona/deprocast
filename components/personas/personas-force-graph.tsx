@@ -11,6 +11,7 @@ type SimNode = {
   kind: "persona" | "proyecto" | "campo";
   degree: number;
   campoSlug: string | null;
+  isCenter: boolean;
   x: number;
   y: number;
   vx: number;
@@ -142,8 +143,13 @@ export function PersonasForceGraph({
 
     const prev = new Map(nodesRef.current.map((n) => [n.id, n]));
     const count = snapshot.nodes.length;
+    const centerId =
+      snapshot.centerNodeId ??
+      snapshot.nodes.find((node) => node.isCenter)?.id ??
+      null;
     nodesRef.current = snapshot.nodes.map((node, i) => {
       const existing = prev.get(node.id);
+      const isCenter = Boolean(centerId && node.id === centerId);
       const angle = (i / Math.max(1, count)) * Math.PI * 2;
       const radius = Math.min(w, h) / 3;
       return {
@@ -152,11 +158,12 @@ export function PersonasForceGraph({
         kind: node.kind,
         degree: node.degree,
         campoSlug: node.campoSlug ?? null,
-        x: existing?.x ?? w / 2 + Math.cos(angle) * radius,
-        y: existing?.y ?? h / 2 + Math.sin(angle) * radius,
+        isCenter,
+        x: existing?.x ?? (isCenter ? w / 2 : w / 2 + Math.cos(angle) * radius),
+        y: existing?.y ?? (isCenter ? h / 2 : h / 2 + Math.sin(angle) * radius),
         vx: 0,
         vy: 0,
-        fixed: false,
+        fixed: isCenter,
       };
     });
     edgesRef.current = snapshot.edges;
@@ -233,7 +240,16 @@ export function PersonasForceGraph({
 
         const cx = canvas.clientWidth / 2;
         const cy = canvas.clientHeight / 2;
+        const draggingId = dragRef.current.node?.id ?? null;
         for (const n of nodes) {
+          if (n.isCenter && n.id !== draggingId) {
+            n.x = cx;
+            n.y = cy;
+            n.vx = 0;
+            n.vy = 0;
+            n.fixed = true;
+            continue;
+          }
           if (n.fixed) continue;
           n.vx += (cx - n.x) * CENTER_PULL * alpha;
           n.vy += (cy - n.y) * CENTER_PULL * alpha;
@@ -319,7 +335,7 @@ export function PersonasForceGraph({
       const linkTargetId = linkDrag?.targetId ?? null;
 
       for (const n of nodesRef.current) {
-        const r = nodeRadius(n);
+        const r = nodeRadius(n) + (n.isCenter ? 3 : 0);
         const isSel = n.id === selectedNode;
         const isLinkTarget = n.id === linkTargetId;
         context.beginPath();
@@ -330,18 +346,22 @@ export function PersonasForceGraph({
             : n.kind === "campo"
               ? colorForType("concepto")
               : colorForType("persona");
-        context.globalAlpha = isSel || isLinkTarget ? 1 : 0.92;
+        context.globalAlpha = isSel || isLinkTarget || n.isCenter ? 1 : 0.92;
         context.fill();
-        if (isSel || isLinkTarget) {
-          context.lineWidth = isLinkTarget ? 3 : 3;
-          context.strokeStyle = isLinkTarget ? "#10b981" : labelCol;
+        if (isSel || isLinkTarget || n.isCenter) {
+          context.lineWidth = n.isCenter ? 3.5 : 3;
+          context.strokeStyle = isLinkTarget
+            ? "#10b981"
+            : n.isCenter
+              ? "#f59e0b"
+              : labelCol;
           context.stroke();
         }
         context.globalAlpha = 1;
 
-        if (isSel || isLinkTarget || n.degree >= 3 || scale > 1.3) {
+        if (isSel || isLinkTarget || n.isCenter || n.degree >= 3 || scale > 1.3) {
           context.fillStyle = labelCol;
-          context.font = `${isSel || isLinkTarget ? 12 : 10}px ui-sans-serif, system-ui`;
+          context.font = `${isSel || isLinkTarget || n.isCenter ? 12 : 10}px ui-sans-serif, system-ui`;
           const label =
             n.nombrePrincipal.length > 26
               ? `${n.nombrePrincipal.slice(0, 25)}…`
@@ -515,7 +535,7 @@ export function PersonasForceGraph({
         setIsLinking(false);
         canvas.style.cursor = "grab";
       } else if (drag.node) {
-        drag.node.fixed = false;
+        drag.node.fixed = drag.node.isCenter;
         if (!drag.moved) {
           onSelectEdge(null);
           onSelectNode(drag.node.id);

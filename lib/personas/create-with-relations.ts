@@ -10,6 +10,7 @@ import type {
   PersonaConnectionDraft,
 } from "@/lib/personas/model";
 import { prisma } from "@/lib/prisma";
+import { ensureOperatorPersonaNode } from "@/lib/yo/operator-node";
 import { Prisma } from "@prisma/client";
 
 function sanitizeAliases(
@@ -66,6 +67,58 @@ function normalizeConnections(
   return result;
 }
 
+async function linkPersonaToOperator(
+  tx: Prisma.TransactionClient,
+  personId: string,
+  relationContext: string,
+  operator: { id: string; primaryName: string },
+) {
+  if (personId === operator.id) return;
+
+  const relationType = "relacionado_con";
+
+  await tx.personToPerson.upsert({
+    where: {
+      personAId_personBId: {
+        personAId: personId,
+        personBId: operator.id,
+      },
+    },
+    create: {
+      personAId: personId,
+      personBId: operator.id,
+      relationContext,
+      relationType,
+    },
+    update: {
+      relationContext,
+      relationType,
+    },
+  });
+
+  await tx.kgEdge.upsert({
+    where: {
+      sourceNodeId_targetNodeId_relationType: {
+        sourceNodeId: personId,
+        targetNodeId: operator.id,
+        relationType,
+      },
+    },
+    create: {
+      sourceNodeId: personId,
+      targetNodeId: operator.id,
+      relationType,
+      context: relationContext,
+      metadata: {},
+      reconocido: true,
+    },
+    update: {
+      context: relationContext,
+      reconocido: true,
+    },
+  });
+}
+
 /**
  * Alta manual de persona + aliases + vínculos tipados en una sola transacción.
  * Dual-write: PersonTo* (CRM tipado) + KgEdge (grafo existente).
@@ -80,9 +133,21 @@ export async function createPersonaWithRelations(
 
   const aliases = sanitizeAliases(nombrePrincipal, input.aliases ?? []);
   const connections = normalizeConnections(input.connections);
+  const relationToOperator = input.relationToOperator?.trim() || "";
   const metadata = buildPersonaMetadata({
     notasGenerales: input.notasGenerales ?? "",
   });
+
+  const operator =
+    relationToOperator.length > 0
+      ? await ensureOperatorPersonaNode()
+      : null;
+
+  if (relationToOperator && !operator) {
+    throw new Error(
+      "Definí tu nombre en /yo antes de vincular personas al Operador.",
+    );
+  }
 
   return prisma.$transaction(async (tx) => {
     const existing = await tx.kgNode.findUnique({
@@ -130,9 +195,22 @@ export async function createPersonaWithRelations(
       personId = created.id;
     }
 
+    if (operator && relationToOperator) {
+      await linkPersonaToOperator(tx, personId, relationToOperator, operator);
+    }
+
     for (const connection of connections) {
       if (connection.targetId === personId) {
         throw new Error("Una persona no puede vincularse consigo misma.");
+      }
+
+      // Evitar duplicar el vínculo ya creado con el Operador.
+      if (
+        operator &&
+        connection.targetKind === "persona" &&
+        connection.targetId === operator.id
+      ) {
+        continue;
       }
 
       const target = await tx.kgNode.findUnique({

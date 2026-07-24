@@ -13,6 +13,7 @@ export async function GET() {
     return NextResponse.json({
       yo,
       genesisComplete: yo.genesisCompleted,
+      genesisStatus: yo.genesisStatus,
       profile: {
         // compat temporal para clientes legacy
         id: yo.id,

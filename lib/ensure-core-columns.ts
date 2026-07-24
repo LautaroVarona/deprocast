@@ -66,6 +66,32 @@ export function ensureCoreColumnPatches(): void {
       );
     }
 
+    if (
+      tableExists(db, "KgEdge") &&
+      !columnExists(db, "KgEdge", "reconocido")
+    ) {
+      db.exec(
+        `ALTER TABLE "KgEdge" ADD COLUMN "reconocido" BOOLEAN NOT NULL DEFAULT false;`,
+      );
+      db.exec(
+        `CREATE INDEX IF NOT EXISTS "KgEdge_reconocido_idx" ON "KgEdge"("reconocido");`,
+      );
+    }
+
+    if (
+      tableExists(db, "KgNode") &&
+      !columnExists(db, "KgNode", "reconocido")
+    ) {
+      db.exec(
+        `ALTER TABLE "KgNode" ADD COLUMN "reconocido" BOOLEAN NOT NULL DEFAULT false;`,
+      );
+      // Backfill: grafo existente se trata como validado (misma lógica que la migración).
+      db.exec(`UPDATE "KgNode" SET "reconocido" = true;`);
+      db.exec(
+        `CREATE INDEX IF NOT EXISTS "KgNode_reconocido_idx" ON "KgNode"("reconocido");`,
+      );
+    }
+
     if (!tableExists(db, "Yo")) {
       db.exec(`
         CREATE TABLE "Yo" (

@@ -13,6 +13,7 @@ import type {
 import { prisma } from "@/lib/prisma";
 import { listProjects } from "@/lib/projects/service";
 import type { NextRequest } from "next/server";
+import { ensureOperatorPersonaNode } from "@/lib/yo/operator-node";
 
 export type {
   SemanticMapEdge,
@@ -38,7 +39,7 @@ export async function buildCastilloSemanticSnapshot(
       ? await resolveUniverseKgNodeIds(universeSlug)
       : null;
 
-  const [personaNodes, proyectoKgNodes, kgEdges, projects, notebooks] =
+  const [personaNodes, proyectoKgNodes, kgEdges, projects, notebooks, operator] =
     await Promise.all([
       prisma.kgNode.findMany({
         where: {
@@ -76,12 +77,13 @@ export async function buildCastilloSemanticSnapshot(
           kind: true,
         },
       }),
+      ensureOperatorPersonaNode(),
     ]);
 
   const nodes: SemanticMapNode[] = [
     {
       id: YO_ID,
-      label: "YO",
+      label: operator?.primaryName ?? "YO",
       kind: "yo",
       deepLink: "/ludus/castillo",
       degree: 0,
@@ -93,6 +95,8 @@ export async function buildCastilloSemanticSnapshot(
   const nodeIdSet = new Set<string>([YO_ID]);
 
   for (const persona of personaNodes) {
+    // El hub YO ya representa al Operador; no duplicar su persona KG.
+    if (operator && persona.id === operator.id) continue;
     nodes.push({
       id: persona.id,
       label: persona.primaryName,

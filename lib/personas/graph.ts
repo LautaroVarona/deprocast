@@ -6,6 +6,7 @@ import type {
   PersonaGraphViewMode,
 } from "@/lib/personas/model";
 import { prisma } from "@/lib/prisma";
+import { ensureOperatorPersonaNode } from "@/lib/yo/operator-node";
 
 const PERSONA_PROJECT_RELATIONS = [
   "responsable_de",
@@ -36,10 +37,22 @@ function isCampoConcepto(metadata: Record<string, unknown>): boolean {
 export async function buildPersonaGraphSnapshot(
   mode: PersonaGraphViewMode,
 ): Promise<PersonaGraphSnapshot> {
+  const operatorNode = await ensureOperatorPersonaNode();
+  const centerNodeId = operatorNode?.id ?? null;
+
   const personaNodes = await prisma.kgNode.findMany({
     where: { type: "persona", reconocido: true },
     orderBy: { primaryName: "asc" },
   });
+
+  if (
+    centerNodeId &&
+    !personaNodes.some((node) => node.id === centerNodeId)
+  ) {
+    const hub = await prisma.kgNode.findUnique({ where: { id: centerNodeId } });
+    if (hub) personaNodes.unshift(hub);
+  }
+
   const personaIds = new Set(personaNodes.map((node) => node.id));
 
   const personaPersonaEdges = await prisma.kgEdge.findMany({
@@ -129,6 +142,7 @@ export async function buildPersonaGraphSnapshot(
       kind: "persona" as const,
       aliases: parseAliasesJson(node.aliases),
       degree: degree.get(node.id) ?? 0,
+      isCenter: node.id === centerNodeId,
     })),
     ...(mode === "mixed"
       ? [
@@ -175,6 +189,7 @@ export async function buildPersonaGraphSnapshot(
 
   return {
     mode,
+    centerNodeId: personaIds.has(centerNodeId ?? "") ? centerNodeId : null,
     nodes,
     edges: filteredEdges,
   };

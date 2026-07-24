@@ -588,10 +588,16 @@ function MenuSearchRow({
   );
 }
 
-export function useCommandMenu() {
+export function useCommandMenu(options?: { disabled?: boolean }) {
   const [open, setOpen] = useState(false);
+  const disabled = Boolean(options?.disabled);
 
   useEffect(() => {
+    if (disabled) {
+      setOpen(false);
+      return;
+    }
+
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key !== "Escape") {
         if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
@@ -612,7 +618,7 @@ export function useCommandMenu() {
 
     window.addEventListener("keydown", onKeyDown, true);
     return () => window.removeEventListener("keydown", onKeyDown, true);
-  }, [open]);
+  }, [open, disabled]);
 
   return { open, setOpen };
 }

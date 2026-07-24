@@ -13,7 +13,6 @@ import {
 import { cn } from "@/lib/utils";
 import { AnimatePresence, motion } from "framer-motion";
 import { Brain, User } from "lucide-react";
-import { useRouter } from "next/navigation";
 import {
   useEffect,
   useRef,
@@ -210,7 +209,6 @@ function StatusPlaque({
 }
 
 export function YoGenesisTerminal({ yo, onComplete }: YoGenesisTerminalProps) {
-  const router = useRouter();
   const [phase, setPhase] = useState<Phase>("boot");
   const [step, setStep] = useState<GenesisStep>(() =>
     yo.operatorName?.trim() ? "exocortex" : "operator",
@@ -323,7 +321,6 @@ export function YoGenesisTerminal({ yo, onComplete }: YoGenesisTerminalProps) {
     if (!pendingYo || initiating) return;
     setInitiating(true);
     onComplete(pendingYo);
-    router.push("/");
   };
 
   const handleKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
@@ -401,8 +398,8 @@ export function YoGenesisTerminal({ yo, onComplete }: YoGenesisTerminalProps) {
                           className="genesis-btn mx-auto block min-h-12 w-full max-w-[18rem] px-5 font-display text-sm tracking-[0.14em]"
                         >
                           {initiating
-                            ? "Iniciando…"
-                            : "Iniciar Protocolo Deprocast"}
+                            ? "Abriendo Tabula…"
+                            : "Abrir Tabula de Misiones"}
                         </button>
                       </motion.div>
                     ) : step === "decoding" && decodedName ? (

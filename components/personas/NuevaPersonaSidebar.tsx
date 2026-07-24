@@ -31,6 +31,7 @@ const EMPTY_FORM = {
   nombre: "",
   aliases: [] as string[],
   notas: "",
+  relationToOperator: "",
 };
 
 export function NuevaPersonaSidebar({
@@ -41,6 +42,10 @@ export function NuevaPersonaSidebar({
   const [nombre, setNombre] = useState(EMPTY_FORM.nombre);
   const [aliases, setAliases] = useState<string[]>(EMPTY_FORM.aliases);
   const [notas, setNotas] = useState(EMPTY_FORM.notas);
+  const [relationToOperator, setRelationToOperator] = useState(
+    EMPTY_FORM.relationToOperator,
+  );
+  const [operatorName, setOperatorName] = useState<string | null>(null);
   const [connections, setConnections] = useState<DraftConnection[]>([]);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -49,8 +54,32 @@ export function NuevaPersonaSidebar({
     setNombre(EMPTY_FORM.nombre);
     setAliases(EMPTY_FORM.aliases);
     setNotas(EMPTY_FORM.notas);
+    setRelationToOperator(EMPTY_FORM.relationToOperator);
     setConnections([]);
     setIsSaving(false);
+
+    let cancelled = false;
+    void (async () => {
+      try {
+        const res = await fetch("/api/yo");
+        if (!res.ok) return;
+        const data = (await res.json()) as {
+          yo?: { operatorName?: string | null };
+          profile?: { displayName?: string };
+        };
+        const name =
+          data.yo?.operatorName?.trim() ||
+          data.profile?.displayName?.trim() ||
+          null;
+        if (!cancelled) setOperatorName(name);
+      } catch {
+        if (!cancelled) setOperatorName(null);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
   }, [open]);
 
   const excludeIds = useMemo(
@@ -111,6 +140,7 @@ export function NuevaPersonaSidebar({
         nombrePrincipal: trimmedName,
         aliases,
         notasGenerales: notas,
+        relationToOperator: relationToOperator.trim() || undefined,
         connections: connections.map(
           ({ localId: _localId, ...connection }) => connection,
         ),
@@ -128,6 +158,10 @@ export function NuevaPersonaSidebar({
       setIsSaving(false);
     }
   };
+
+  const relationLabel = operatorName
+    ? `Relación con ${operatorName}`
+    : "Relación con el Operador";
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -169,6 +203,26 @@ export function NuevaPersonaSidebar({
 
           <label className="block space-y-1.5">
             <span className="font-mono text-[10px] tracking-wider text-muted-foreground uppercase">
+              {relationLabel}
+            </span>
+            <input
+              value={relationToOperator}
+              onChange={(event) => setRelationToOperator(event.target.value)}
+              placeholder={
+                operatorName
+                  ? `Ej. Amigo de ${operatorName}, jefe, mentor…`
+                  : "Ej. Amigo, jefe, mentor…"
+              }
+              className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+            />
+            <p className="text-[11px] text-muted-foreground">
+              Opcional. Define el vínculo directo con{" "}
+              {operatorName ?? "el Operador"} en el grafo.
+            </p>
+          </label>
+
+          <label className="block space-y-1.5">
+            <span className="font-mono text-[10px] tracking-wider text-muted-foreground uppercase">
               Notas
             </span>
             <textarea
@@ -181,7 +235,7 @@ export function NuevaPersonaSidebar({
 
           <fieldset className="space-y-2">
             <legend className="font-mono text-[10px] tracking-wider text-muted-foreground uppercase">
-              Conexiones
+              Otras conexiones
             </legend>
             <ConnectionEntityPicker
               excludeIds={excludeIds}

@@ -72,6 +72,7 @@ export async function POST(request: NextRequest) {
       personaKind?: string;
       aliases?: string[];
       notasGenerales?: string;
+      relationToOperator?: string;
       campoSlug?: string;
       connections?: unknown;
     };
@@ -94,6 +95,7 @@ export async function POST(request: NextRequest) {
         nombrePrincipal: nombre,
         aliases: Array.isArray(body.aliases) ? body.aliases : undefined,
         notasGenerales: body.notasGenerales,
+        relationToOperator: body.relationToOperator?.trim() || undefined,
         connections,
       };
       const persona = await createPersonaWithRelations(payload);

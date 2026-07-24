@@ -12,6 +12,7 @@ type SimNode = {
   primaryName: string;
   type: string;
   degree: number;
+  isCenter: boolean;
   x: number;
   y: number;
   vx: number;
@@ -110,8 +111,13 @@ export function ForceGraph({ snapshot, selectedId, onSelect }: Props) {
 
     const prev = new Map(nodesRef.current.map((n) => [n.id, n]));
     const count = snapshot.nodes.length;
+    const centerId =
+      snapshot.centerNodeId ??
+      snapshot.nodes.find((node) => node.isCenter)?.id ??
+      null;
     nodesRef.current = snapshot.nodes.map((node, i) => {
       const existing = prev.get(node.id);
+      const isCenter = Boolean(centerId && node.id === centerId);
       const angle = (i / Math.max(1, count)) * Math.PI * 2;
       const radius = Math.min(w, h) / 3;
       return {
@@ -119,11 +125,12 @@ export function ForceGraph({ snapshot, selectedId, onSelect }: Props) {
         primaryName: node.primaryName,
         type: node.type,
         degree: node.degree,
-        x: existing?.x ?? w / 2 + Math.cos(angle) * radius,
-        y: existing?.y ?? h / 2 + Math.sin(angle) * radius,
+        isCenter,
+        x: existing?.x ?? (isCenter ? w / 2 : w / 2 + Math.cos(angle) * radius),
+        y: existing?.y ?? (isCenter ? h / 2 : h / 2 + Math.sin(angle) * radius),
         vx: 0,
         vy: 0,
-        fixed: false,
+        fixed: isCenter,
       };
     });
     edgesRef.current = snapshot.edges;
@@ -203,7 +210,16 @@ export function ForceGraph({ snapshot, selectedId, onSelect }: Props) {
 
         const cx = canvas.clientWidth / 2;
         const cy = canvas.clientHeight / 2;
+        const draggingId = dragRef.current.node?.id ?? null;
         for (const n of nodes) {
+          if (n.isCenter && n.id !== draggingId) {
+            n.x = cx;
+            n.y = cy;
+            n.vx = 0;
+            n.vy = 0;
+            n.fixed = true;
+            continue;
+          }
           if (n.fixed) continue;
           n.vx += (cx - n.x) * CENTER_PULL * alpha;
           n.vy += (cy - n.y) * CENTER_PULL * alpha;
@@ -267,23 +283,23 @@ export function ForceGraph({ snapshot, selectedId, onSelect }: Props) {
 
       const selected = selectedRef.current;
       for (const n of nodesRef.current) {
-        const r = nodeRadius(n);
+        const r = nodeRadius(n) + (n.isCenter ? 3 : 0);
         const isSel = n.id === selected;
         context.beginPath();
         context.arc(n.x, n.y, r, 0, Math.PI * 2);
         context.fillStyle = colorForType(n.type);
-        context.globalAlpha = isSel ? 1 : 0.92;
+        context.globalAlpha = isSel || n.isCenter ? 1 : 0.92;
         context.fill();
-        if (isSel) {
-          context.lineWidth = 3;
-          context.strokeStyle = labelCol;
+        if (isSel || n.isCenter) {
+          context.lineWidth = n.isCenter ? 3.5 : 3;
+          context.strokeStyle = n.isCenter ? "#f59e0b" : labelCol;
           context.stroke();
         }
         context.globalAlpha = 1;
 
-        if (isSel || n.degree >= 4 || scale > 1.6) {
+        if (isSel || n.isCenter || n.degree >= 4 || scale > 1.6) {
           context.fillStyle = labelCol;
-          context.font = `${isSel ? 12 : 10}px ui-sans-serif, system-ui`;
+          context.font = `${isSel || n.isCenter ? 12 : 10}px ui-sans-serif, system-ui`;
           const label =
             n.primaryName.length > 28
               ? `${n.primaryName.slice(0, 27)}…`
@@ -376,7 +392,8 @@ export function ForceGraph({ snapshot, selectedId, onSelect }: Props) {
     function onPointerUp(e: PointerEvent) {
       const drag = dragRef.current;
       if (drag.node) {
-        drag.node.fixed = false;
+        // El hub del Operador vuelve a anclarse al centro.
+        drag.node.fixed = drag.node.isCenter;
         if (!drag.moved) onSelect(drag.node.id);
       } else if (drag.panning && !drag.moved) {
         onSelect(null);

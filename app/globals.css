@@ -805,6 +805,41 @@
   }
 }
 
+/* Tabula de Misiones de Consagración */
+.mission-tabula {
+  border: 1px solid color-mix(in oklch, var(--legion-bronze) 45%, transparent);
+  background:
+    linear-gradient(
+      165deg,
+      color-mix(in oklch, var(--legion-scroll) 55%, transparent) 0%,
+      color-mix(in oklch, var(--legion-leather) 80%, #0a0a0a) 48%,
+      color-mix(in oklch, var(--legion-void) 90%, #000) 100%
+    );
+  box-shadow:
+    0 0 0 1px color-mix(in oklch, var(--legion-gold) 8%, transparent) inset,
+    0 24px 48px -28px rgba(0, 0, 0, 0.65);
+}
+
+.mission-tabula-row {
+  border: 1px solid color-mix(in oklch, var(--legion-patina) 55%, transparent);
+  background: color-mix(in oklch, var(--legion-void) 70%, transparent);
+}
+
+.mission-tabula-row--active {
+  border-color: color-mix(in oklch, var(--legion-bronze) 70%, transparent);
+  background: color-mix(in oklch, var(--legion-bronze) 10%, transparent);
+  box-shadow: 0 0 0 1px color-mix(in oklch, var(--legion-bronze) 20%, transparent) inset;
+}
+
+.mission-tabula-row--done {
+  border-color: color-mix(in oklch, var(--legion-gold) 45%, transparent);
+  background: color-mix(in oklch, var(--legion-gold) 6%, transparent);
+}
+
+.mission-tabula-row:not(:disabled):hover {
+  border-color: color-mix(in oklch, var(--legion-bronze) 80%, transparent);
+}
+
 /* Calendario — Simulador de Turnos Noir */
 .calendario-noir-root {
   position: relative;

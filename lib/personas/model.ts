@@ -47,6 +47,7 @@ export interface PersonaGraphNode {
   aliases: string[];
   degree: number;
   campoSlug?: string | null;
+  isCenter?: boolean;
 }
 
 export type PersonaGraphEdgeKind =
@@ -68,6 +69,7 @@ export interface PersonaGraphSnapshot {
   mode: PersonaGraphViewMode;
   nodes: PersonaGraphNode[];
   edges: PersonaGraphEdge[];
+  centerNodeId: string | null;
 }
 
 export interface CreatePersonaPayload {
@@ -90,6 +92,8 @@ export interface CreatePersonaWithRelationsPayload {
   nombrePrincipal: string;
   aliases?: string[];
   notasGenerales?: string;
+  /** Vínculo explícito con el Operador (centro del grafo). */
+  relationToOperator?: string;
   connections?: PersonaConnectionDraft[];
 }
 

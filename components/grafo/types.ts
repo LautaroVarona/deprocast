@@ -6,6 +6,7 @@ export type SnapshotNode = {
   degree: number;
   aliasesCount: number;
   aliases?: string[];
+  isCenter?: boolean;
 };
 
 export type SnapshotEdge = {
@@ -21,6 +22,7 @@ export type SnapshotEdge = {
 export type GraphSnapshot = {
   nodes: SnapshotNode[];
   edges: SnapshotEdge[];
+  centerNodeId?: string | null;
 };
 
 export type NodeSummary = {

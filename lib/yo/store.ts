@@ -2,6 +2,10 @@ import "server-only";
 
 import { prisma } from "@/lib/prisma";
 import {
+  buildConsecrationProgress,
+  deriveGenesisStatus,
+} from "@/lib/yo/consecration";
+import {
   DEFAULT_EXOCORTEX_NAME,
   YO_CORE_ID,
   type CalibrationMap,
@@ -30,19 +34,7 @@ function parseNamedBy(value: string | null): ExocortexNamedBy | null {
   return null;
 }
 
-function isGenesisComplete(row: {
-  operatorName: string | null;
-  exocortexName: string | null;
-  genesisCompletedAt: Date | null;
-}): boolean {
-  return Boolean(
-    row.operatorName?.trim() &&
-      row.exocortexName?.trim() &&
-      row.genesisCompletedAt,
-  );
-}
-
-function toDto(row: {
+async function toDto(row: {
   id: string;
   operatorName: string | null;
   exocortexName: string | null;
@@ -52,7 +44,11 @@ function toDto(row: {
   calibration: unknown;
   genesisCompletedAt: Date | null;
   updatedAt: Date;
-}): YoDto {
+}): Promise<YoDto> {
+  const calibration = parseCalibration(row.calibration);
+  const genesisStatus = deriveGenesisStatus(row);
+  const consecration = await buildConsecrationProgress(calibration);
+
   return {
     id: row.id,
     operatorName: row.operatorName,
@@ -60,9 +56,11 @@ function toDto(row: {
     exocortexNamedBy: parseNamedBy(row.exocortexNamedBy),
     operationalStatus: row.operationalStatus,
     energyLevel: row.energyLevel,
-    calibration: parseCalibration(row.calibration),
-    genesisCompleted: isGenesisComplete(row),
+    calibration,
+    genesisStatus,
+    genesisCompleted: genesisStatus === "COMPLETED",
     genesisCompletedAt: row.genesisCompletedAt?.toISOString() ?? null,
+    consecration,
     updatedAt: row.updatedAt.toISOString(),
   };
 }
@@ -96,9 +94,18 @@ export async function baptizeOperator(operatorName: string): Promise<YoDto> {
       operationalStatus: "CALIBRANDO",
     },
   });
+
+  // El nombre del Operador ancla el hub de todos los grafos.
+  const { ensureOperatorPersonaNode } = await import("@/lib/yo/operator-node");
+  await ensureOperatorPersonaNode();
+
   return toDto(updated);
 }
 
+/**
+ * Cierra el bautismo de nombres y deja al Operador en PENDING_MISSIONS.
+ * No marca genesisCompletedAt — eso ocurre al cerrar la Misión III.
+ */
 export async function baptizeExocortex(input: {
   exocortexName: string;
   namedBy: ExocortexNamedBy;
@@ -117,18 +124,71 @@ export async function baptizeExocortex(input: {
     data: {
       exocortexName: input.exocortexName.trim() || DEFAULT_EXOCORTEX_NAME,
       exocortexNamedBy: input.namedBy,
-      operationalStatus: "OPERATIVO",
-      genesisCompletedAt: new Date(),
+      // Veteranos ya sellados siguen OPERATIVO; nuevos entran a misiones.
+      operationalStatus: current.genesisCompletedAt
+        ? "OPERATIVO"
+        : "CALIBRANDO",
     },
   });
 
   return toDto(updated);
 }
 
+export async function saveCalibrationEntry(
+  promptId: string,
+  answer: string,
+): Promise<YoDto> {
+  const current = await ensureYoShell();
+  if (current.genesisStatus === "PENDING_NAMES") {
+    throw new Error("Génesis incompleta. Completá el bautismo de nombres.");
+  }
+
+  const calibration = {
+    ...current.calibration,
+    [promptId]: answer.trim(),
+  };
+
+  const updated = await prisma.yo.update({
+    where: { id: YO_CORE_ID },
+    data: {
+      calibration: calibration as Prisma.InputJsonValue,
+    },
+  });
+
+  const yo = await toDto(updated);
+  return maybeCompleteConsecration(yo);
+}
+
 export async function patchYo(input: PatchYoInput): Promise<YoDto> {
   const current = await ensureYoShell();
+
+  // Durante misiones: solo telemetría de energía tras Nosce.
+  if (current.genesisStatus === "PENDING_MISSIONS") {
+    const nosceDone = current.consecration.missions.some(
+      (mission) => mission.id === "nosce" && mission.status === "completed",
+    );
+    if (!nosceDone || input.energyLevel === undefined) {
+      throw new Error(
+        "Génesis incompleta. Completá las Misiones de Consagración en /yo.",
+      );
+    }
+    if (input.operationalStatus !== undefined || input.calibrationEntry) {
+      throw new Error(
+        "Durante la consagración solo podés ajustar energía tras Nosce.",
+      );
+    }
+
+    const updated = await prisma.yo.update({
+      where: { id: YO_CORE_ID },
+      data: { energyLevel: input.energyLevel },
+    });
+    return toDto(updated);
+  }
+
   if (!current.genesisCompleted) {
-    throw new Error("Génesis incompleta. Completá el bautismo en /yo.");
+    throw new Error(
+      "Génesis incompleta. Completá las Misiones de Consagración en /yo.",
+    );
   }
 
   const calibration = { ...current.calibration };
@@ -153,6 +213,66 @@ export async function patchYo(input: PatchYoInput): Promise<YoDto> {
   });
 
   return toDto(updated);
+}
+
+/** Tras un avance de misión, sella génesis si las 3 están completas. */
+export async function maybeCompleteConsecration(
+  yo?: YoDto,
+): Promise<YoDto> {
+  const current = yo ?? (await ensureYoShell());
+  if (current.genesisStatus === "COMPLETED") return current;
+  if (current.genesisStatus === "PENDING_NAMES") return current;
+  if (!current.consecration.allComplete) return current;
+
+  const operator = current.operatorName?.trim() || "Operador";
+  const exocortex = current.exocortexName?.trim() || DEFAULT_EXOCORTEX_NAME;
+
+  const updated = await prisma.yo.update({
+    where: { id: YO_CORE_ID },
+    data: {
+      genesisCompletedAt: new Date(),
+      operationalStatus: "OPERATIVO",
+    },
+  });
+
+  await appendConduitMessage({
+    role: "exocortex",
+    content: `Soporte vital estabilizado. Exocórtex completamente operativo. Bienvenido a la Legión, ${operator}.`,
+  });
+
+  await appendConduitMessage({
+    role: "system",
+    content: `[SELLADO] Protocolo Génesis cerrado. Navegación superior liberada. ${exocortex} asume calibración continua.`,
+  });
+
+  return toDto(updated);
+}
+
+export async function refreshConsecration(): Promise<YoDto> {
+  const yo = await ensureYoShell();
+  return maybeCompleteConsecration(yo);
+}
+
+export async function seedMissionBoardIntro(): Promise<void> {
+  const yo = await ensureYoShell();
+  if (yo.genesisStatus !== "PENDING_MISSIONS") return;
+
+  const existing = await prisma.yoConduitMessage.count({
+    where: { yoId: YO_CORE_ID },
+  });
+  if (existing > 0) return;
+
+  const exocortex = yo.exocortexName ?? DEFAULT_EXOCORTEX_NAME;
+  const operator = yo.operatorName ?? "Operador";
+
+  await appendConduitMessage({
+    role: "exocortex",
+    content: `${operator}. Identidades ancladas. Antes de liberar el exoesqueleto, el Senado exige tres actos de consagración. Consultá la Tabula.`,
+  });
+  await appendConduitMessage({
+    role: "exocortex",
+    content: `Misión I activa: Nosce Te Ipsum. Respondé en este Conducto. ${exocortex} extraerá tu ADN operativo.`,
+  });
 }
 
 export async function listConduitMessages(

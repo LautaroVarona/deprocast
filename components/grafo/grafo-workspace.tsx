@@ -38,7 +38,11 @@ export function GrafoWorkspace() {
   const activeSlug = activeUniverse?.slug;
   const requestIdRef = useRef(0);
   const [tab, setTab] = useState<Tab>("grafo");
-  const [snapshot, setSnapshot] = useState<GraphSnapshot>({ nodes: [], edges: [] });
+  const [snapshot, setSnapshot] = useState<GraphSnapshot>({
+    nodes: [],
+    edges: [],
+    centerNodeId: null,
+  });
   const [excludeCode, setExcludeCode] = useState(true);
   const [enabledTypes, setEnabledTypes] = useState<Set<string>>(new Set());
   const [loadingGraph, setLoadingGraph] = useState(false);
@@ -169,18 +173,30 @@ export function GrafoWorkspace() {
 
   const typeFilteredSnapshot = useMemo<GraphSnapshot>(() => {
     if (enabledTypes.size === 0) return snapshot;
-    const nodes = snapshot.nodes.filter((n) => enabledTypes.has(n.type));
+    const nodes = snapshot.nodes.filter(
+      (n) => enabledTypes.has(n.type) || n.id === snapshot.centerNodeId,
+    );
     const ids = new Set(nodes.map((n) => n.id));
     const edges = snapshot.edges.filter(
       (e) => ids.has(e.source) && ids.has(e.target),
     );
-    return { nodes, edges };
+    return {
+      nodes,
+      edges,
+      centerNodeId: snapshot.centerNodeId ?? null,
+    };
   }, [snapshot, enabledTypes]);
 
-  const { snapshot: filteredSnapshot, matches: searchMatches } = useMemo(
-    () => searchGraphSnapshot(typeFilteredSnapshot, searchQuery),
-    [typeFilteredSnapshot, searchQuery],
-  );
+  const { snapshot: filteredSnapshot, matches: searchMatches } = useMemo(() => {
+    const result = searchGraphSnapshot(typeFilteredSnapshot, searchQuery);
+    return {
+      snapshot: {
+        ...result.snapshot,
+        centerNodeId: typeFilteredSnapshot.centerNodeId ?? null,
+      },
+      matches: result.matches,
+    };
+  }, [typeFilteredSnapshot, searchQuery]);
 
   const projectNodes = useMemo(
     () => snapshot.nodes.filter((n) => n.type === "proyecto"),

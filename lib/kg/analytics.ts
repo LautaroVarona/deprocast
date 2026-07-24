@@ -276,6 +276,7 @@ export type GraphSnapshotNode = {
   degree: number;
   aliasesCount: number;
   aliases: string[];
+  isCenter?: boolean;
 };
 
 export type GraphSnapshotEdge = {
@@ -291,6 +292,7 @@ export type GraphSnapshotEdge = {
 export type GraphSnapshot = {
   nodes: GraphSnapshotNode[];
   edges: GraphSnapshotEdge[];
+  centerNodeId: string | null;
 };
 
 export async function getGraphSnapshot(input: {
@@ -300,8 +302,12 @@ export async function getGraphSnapshot(input: {
   nodeIds?: UniverseIdFilter;
 } = {}): Promise<GraphSnapshot> {
   if (input.nodeIds && input.nodeIds.size === 0) {
-    return { nodes: [], edges: [] };
+    return { nodes: [], edges: [], centerNodeId: null };
   }
+
+  const { ensureOperatorPersonaNode } = await import("@/lib/yo/operator-node");
+  const operatorNode = await ensureOperatorPersonaNode();
+  const centerNodeId = operatorNode?.id ?? null;
 
   const codeTypes = CODE_NODE_TYPES as readonly string[];
   const typeFilter = input.types?.length
@@ -310,15 +316,31 @@ export async function getGraphSnapshot(input: {
       ? { type: { notIn: [...codeTypes] } }
       : {};
 
+  const limit = input.limit ?? 1500;
   const nodes = await prisma.kgNode.findMany({
     where: {
       ...typeFilter,
       reconocido: true,
       ...(input.nodeIds ? { id: { in: [...input.nodeIds] } } : {}),
     },
-    take: input.limit ?? 1500,
+    take: limit,
     orderBy: { updatedAt: "desc" },
   });
+
+  // El Operador siempre entra al snapshot, aunque el limit lo hubiera cortado.
+  if (
+    centerNodeId &&
+    !nodes.some((node) => node.id === centerNodeId) &&
+    (!input.nodeIds || input.nodeIds.has(centerNodeId)) &&
+    (!input.types?.length || input.types.includes("persona"))
+  ) {
+    const hub = await prisma.kgNode.findUnique({ where: { id: centerNodeId } });
+    if (hub && hub.reconocido) {
+      nodes.unshift(hub);
+      if (nodes.length > limit) nodes.pop();
+    }
+  }
+
   const nodeIds = new Set(nodes.map((n) => n.id));
 
   const edges = await prisma.kgEdge.findMany({
@@ -344,6 +366,7 @@ export async function getGraphSnapshot(input: {
   }
 
   return {
+    centerNodeId: nodeIds.has(centerNodeId ?? "") ? centerNodeId : null,
     nodes: nodes.map((node) => {
       const aliases = parseAliasesJson(node.aliases);
       return {
@@ -354,6 +377,7 @@ export async function getGraphSnapshot(input: {
         degree: degree.get(node.id) ?? 0,
         aliasesCount: aliases.length,
         aliases,
+        isCenter: node.id === centerNodeId,
       };
     }),
     edges: filteredEdges.map((edge) => ({

@@ -17,6 +17,43 @@ export type OperationalStatus = (typeof OPERATIONAL_STATUSES)[number];
 export const EXOCORTEX_NAMED_BY = ["operator", "autonomous"] as const;
 export type ExocortexNamedBy = (typeof EXOCORTEX_NAMED_BY)[number];
 
+export const GENESIS_STATUSES = [
+  "PENDING_NAMES",
+  "PENDING_MISSIONS",
+  "COMPLETED",
+] as const;
+
+export type GenesisStatus = (typeof GENESIS_STATUSES)[number];
+
+export const CONSECRATION_MISSION_IDS = ["nosce", "senado", "prima"] as const;
+export type ConsecrationMissionId = (typeof CONSECRATION_MISSION_IDS)[number];
+
+export const MISSION_RUNTIME_STATUSES = [
+  "locked",
+  "active",
+  "completed",
+] as const;
+export type MissionRuntimeStatus = (typeof MISSION_RUNTIME_STATUSES)[number];
+
+/** Misión I — ADN personal vía Conducto. */
+export const CONSECRATION_MISSION_I_PROMPTS = [
+  {
+    id: "consecration_ritmo",
+    question: "¿Cuál es tu ritmo ideal de trabajo?",
+  },
+  {
+    id: "consecration_lineas_rojas",
+    question: "¿Qué líneas rojas no cruzarías?",
+  },
+  {
+    id: "consecration_principio",
+    question: "¿Qué principio guía tus decisiones bajo presión?",
+  },
+] as const;
+
+export const CONSECRATION_PERSONA_TARGET = 3;
+export const CONSECRATION_PROJECT_TARGET = 1;
+
 export const CALIBRATION_PROMPTS = [
   {
     id: "metrica_exito_hoy",
@@ -42,6 +79,22 @@ export const CALIBRATION_PROMPTS = [
 
 export type CalibrationMap = Record<string, string>;
 
+export type ConsecrationMissionState = {
+  id: ConsecrationMissionId;
+  status: MissionRuntimeStatus;
+  progress: number;
+  target: number;
+};
+
+export type ConsecrationProgress = {
+  missions: ConsecrationMissionState[];
+  missionIAnswers: number;
+  personaCount: number;
+  projectCount: number;
+  allComplete: boolean;
+  activeMissionId: ConsecrationMissionId | null;
+};
+
 export type YoDto = {
   id: string;
   operatorName: string | null;
@@ -50,8 +103,10 @@ export type YoDto = {
   operationalStatus: string;
   energyLevel: number;
   calibration: CalibrationMap;
+  genesisStatus: GenesisStatus;
   genesisCompleted: boolean;
   genesisCompletedAt: string | null;
+  consecration: ConsecrationProgress;
   updatedAt: string;
 };
 

@@ -1,12 +1,17 @@
 "use server";
 
-import { runConduitTurn } from "@/lib/yo/conduit";
+import {
+  ensureMissionIPromptEmitted,
+  runConduitTurn,
+} from "@/lib/yo/conduit";
 import {
   baptizeExocortex,
   baptizeOperator,
   ensureYoShell,
   listConduitMessages,
   patchYo,
+  refreshConsecration,
+  seedMissionBoardIntro,
 } from "@/lib/yo/store";
 import {
   DEFAULT_EXOCORTEX_NAME,
@@ -91,30 +96,22 @@ export async function baptizeExocortexAction(
     }
 
     const provided = parsed.data.exocortexName;
-    if (provided) {
-      const yo = await baptizeExocortex({
-        exocortexName: provided,
-        namedBy: "operator",
-      });
-      return {
-        ok: true,
-        data: { yo, resolvedName: provided, namedBy: "operator" },
-      };
-    }
+    const namedBy = provided ? ("operator" as const) : ("autonomous" as const);
+    const resolvedName = provided ?? DEFAULT_EXOCORTEX_NAME;
 
-    // Campo vacío → default canónico estricto (sin LLM que copie el Operador).
     const yo = await baptizeExocortex({
-      exocortexName: DEFAULT_EXOCORTEX_NAME,
-      namedBy: "autonomous",
+      exocortexName: resolvedName,
+      namedBy,
     });
+
+    if (yo.genesisStatus === "PENDING_MISSIONS") {
+      await seedMissionBoardIntro();
+      await ensureMissionIPromptEmitted();
+    }
 
     return {
       ok: true,
-      data: {
-        yo,
-        resolvedName: DEFAULT_EXOCORTEX_NAME,
-        namedBy: "autonomous",
-      },
+      data: { yo, resolvedName, namedBy },
     };
   } catch (error) {
     return {
@@ -152,6 +149,47 @@ export async function patchYoAction(
   }
 }
 
+export async function refreshConsecrationAction(): Promise<
+  YoActionResult<YoDto>
+> {
+  try {
+    await ready();
+    const yo = await refreshConsecration();
+    if (yo.genesisStatus === "PENDING_MISSIONS") {
+      await ensureMissionIPromptEmitted();
+    }
+    return { ok: true, data: yo };
+  } catch (error) {
+    return {
+      ok: false,
+      error:
+        error instanceof Error
+          ? error.message
+          : "No se pudo actualizar la Tabula.",
+    };
+  }
+}
+
+export async function prepareMissionBoardAction(): Promise<
+  YoActionResult<YoDto>
+> {
+  try {
+    await ready();
+    await seedMissionBoardIntro();
+    await ensureMissionIPromptEmitted();
+    const yo = await refreshConsecration();
+    return { ok: true, data: yo };
+  } catch (error) {
+    return {
+      ok: false,
+      error:
+        error instanceof Error
+          ? error.message
+          : "No se pudo preparar la Tabula.",
+    };
+  }
+}
+
 export async function listConduitAction(): Promise<
   YoActionResult<YoConduitMessageDto[]>
 > {
@@ -175,6 +213,7 @@ export async function sendConduitAction(
 ): Promise<
   YoActionResult<{
     messages: YoConduitMessageDto[];
+    yo: YoDto;
   }>
 > {
   try {
@@ -187,8 +226,11 @@ export async function sendConduitAction(
       };
     }
     await runConduitTurn(parsed.data.content);
-    const messages = await listConduitMessages();
-    return { ok: true, data: { messages } };
+    const [messages, yo] = await Promise.all([
+      listConduitMessages(),
+      ensureYoShell(),
+    ]);
+    return { ok: true, data: { messages, yo } };
   } catch (error) {
     return {
       ok: false,

@@ -76,11 +76,17 @@ export async function createPersonaAction(
       };
     }
 
+    const relationToOperator =
+      typeof input.relationToOperator === "string"
+        ? input.relationToOperator.trim()
+        : "";
+
     const persona = await createPersonaWithRelations({
       nombrePrincipal,
       aliases,
       notasGenerales:
         typeof input.notasGenerales === "string" ? input.notasGenerales : "",
+      relationToOperator: relationToOperator || undefined,
       connections,
     });
 

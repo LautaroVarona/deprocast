@@ -10,9 +10,17 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 type YoConduitProps = {
   yo: YoDto;
+  missionMode?: boolean;
+  onYoUpdate?: (yo: YoDto) => void;
+  registerFocus?: (focus: () => void) => void;
 };
 
-export function YoConduit({ yo }: YoConduitProps) {
+export function YoConduit({
+  yo,
+  missionMode = false,
+  onYoUpdate,
+  registerFocus,
+}: YoConduitProps) {
   const [messages, setMessages] = useState<YoConduitMessageDto[]>([]);
   const [draft, setDraft] = useState("");
   const [busy, setBusy] = useState(false);
@@ -30,8 +38,22 @@ export function YoConduit({ yo }: YoConduitProps) {
   }, [load]);
 
   useEffect(() => {
+    // Releer al sellar génesis (mensaje de bienvenida a la Legión).
+    if (yo.genesisStatus === "COMPLETED") {
+      void load();
+    }
+  }, [yo.genesisStatus, yo.updatedAt, load]);
+
+  useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, busy]);
+
+  useEffect(() => {
+    registerFocus?.(() => {
+      inputRef.current?.focus();
+      inputRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+    });
+  }, [registerFocus]);
 
   const send = async () => {
     const content = draft.trim();
@@ -47,8 +69,11 @@ export function YoConduit({ yo }: YoConduitProps) {
       return;
     }
     setMessages(result.data.messages);
+    onYoUpdate?.(result.data.yo);
     inputRef.current?.focus();
   };
+
+  const activeNosce = yo.consecration.activeMissionId === "nosce";
 
   return (
     <section className="yo-noir-panel flex min-h-[22rem] flex-col overflow-hidden">
@@ -58,11 +83,14 @@ export function YoConduit({ yo }: YoConduitProps) {
             Conducto · Canal directo
           </p>
           <p className="mt-1 font-mono text-[11px] text-muted-foreground">
-            {yo.operatorName} ↔ {yo.exocortexName} · sin filtros
+            {yo.operatorName} ↔ {yo.exocortexName}
+            {missionMode ? " · consagración" : " · sin filtros"}
           </p>
         </div>
         <span className="font-mono text-[9px] tracking-[0.18em] text-chart-3 uppercase">
-          [ ENLACE ABIERTO ]
+          {missionMode && activeNosce
+            ? "[ NOSCE ACTIVO ]"
+            : "[ ENLACE ABIERTO ]"}
         </span>
       </header>
 
@@ -100,42 +128,44 @@ export function YoConduit({ yo }: YoConduitProps) {
           })
         )}
         {busy ? (
-          <p className="animate-pulse text-accent">
-            {yo.exocortexName}&gt; procesando…
+          <p className="text-muted-foreground">
+            <span className="text-accent">{yo.exocortexName}&gt;</span> …
           </p>
         ) : null}
         <div ref={endRef} />
       </div>
 
       <div className="border-t border-accent/20 p-3">
-        <div className="flex items-center gap-2 border border-accent/30 bg-black/40 px-3">
-          <span className="shrink-0 font-mono text-accent">{">"}</span>
+        {error ? (
+          <p className="mb-2 font-mono text-[11px] text-destructive">{error}</p>
+        ) : null}
+        <form
+          className="flex gap-2"
+          onSubmit={(event) => {
+            event.preventDefault();
+            void send();
+          }}
+        >
           <input
             ref={inputRef}
             value={draft}
             onChange={(event) => setDraft(event.target.value)}
-            onKeyDown={(event) => {
-              if (event.key === "Enter" && !event.shiftKey) {
-                event.preventDefault();
-                void send();
-              }
-            }}
             disabled={busy}
-            placeholder="comando / consulta al exocórtex…"
-            className="min-h-11 w-full bg-transparent font-mono text-sm text-accent outline-none placeholder:text-muted-foreground disabled:opacity-50"
+            placeholder={
+              missionMode && activeNosce
+                ? "Respondé la pregunta de Nosce…"
+                : "Emití al Conducto…"
+            }
+            className="min-w-0 flex-1 border border-accent/25 bg-black/40 px-3 py-2 font-mono text-[12px] text-foreground outline-none focus:border-accent/55"
           />
           <button
-            type="button"
+            type="submit"
             disabled={busy || !draft.trim()}
-            onClick={() => void send()}
-            className="shrink-0 font-mono text-[10px] tracking-[0.16em] text-accent uppercase disabled:opacity-40"
+            className="border border-accent/40 bg-accent/10 px-3 py-2 font-mono text-[10px] tracking-[0.18em] text-accent uppercase disabled:opacity-40"
           >
             TX
           </button>
-        </div>
-        {error ? (
-          <p className="mt-2 font-mono text-[11px] text-destructive">{error}</p>
-        ) : null}
+        </form>
       </div>
     </section>
   );
