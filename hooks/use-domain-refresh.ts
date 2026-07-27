@@ -16,13 +16,12 @@ export function useDomainRefresh(
   scope: DomainRefreshScope | readonly DomainRefreshScope[] = "all",
 ): number {
   const [refreshKey, setRefreshKey] = useState(0);
-  const scopeKey: string = Array.isArray(scope) ? scope.join("|") : scope;
+  const scopes: DomainRefreshScope[] =
+    typeof scope === "string" ? [scope] : [...scope];
+  const scopeKey = scopes.join("|");
 
   useEffect(() => {
-    const listened: DomainRefreshScope | DomainRefreshScope[] =
-      scopeKey.includes("|")
-        ? (scopeKey.split("|") as DomainRefreshScope[])
-        : (scopeKey as DomainRefreshScope);
+    const listened = scopeKey.split("|") as DomainRefreshScope[];
 
     const handler = (event: Event) => {
       const custom = event as CustomEvent<DomainRefreshDetail>;
