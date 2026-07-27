@@ -47,6 +47,7 @@ export const AGENT_DISPLAY_NAMES: Record<string, string> = {
   enciclopediador: "Enciclopediador",
   "cam-recorder-watcher": "Cam-Recorder-Watcher",
   "meta-meteador": "Meta-Meteador",
+  prosopografo: "Prosopógrafo",
   binauralizer: "Binauralizer",
   ludus: "LudusDirector",
   "extractor-trailing": "Extractor de Comandos Trailing",

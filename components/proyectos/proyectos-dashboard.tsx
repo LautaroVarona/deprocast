@@ -2,9 +2,10 @@
 
 import { useBabel } from "@/components/babel/babel-context";
 import { CamposWorkspace } from "@/components/proyectos/campos-workspace";
+import { IngestaProyectoModal } from "@/components/proyectos/ingesta-proyecto-modal";
 import { ProjectBoard } from "@/components/proyectos/project-board";
 import { ProposalsWorkspace } from "@/components/proyectos/proposals-workspace";
-import { buttonVariants } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import { useDomainRefresh } from "@/hooks/use-domain-refresh";
 import { getDefaultCampo, type CampoInfo } from "@/lib/projects/campos";
 import { isHighPriorityProject } from "@/lib/projects/priority";
@@ -34,6 +35,7 @@ export function ProyectosDashboard() {
   const [isLoading, setIsLoading] = useState(true);
   const [refreshKey, setRefreshKey] = useState(0);
   const [pendingProposals, setPendingProposals] = useState(0);
+  const [ingestaOpen, setIngestaOpen] = useState(false);
   const domainRefreshKey = useDomainRefresh(PROYECTOS_REFRESH_SCOPES);
 
   const loadProjects = useCallback(async () => {
@@ -124,14 +126,22 @@ export function ProyectosDashboard() {
             </h1>
           </div>
         </div>
-        <Link
-          href="/proyectos/nuevo"
-          className={cn(buttonVariants({ size: "sm" }), "shrink-0")}
+        <Button
+          type="button"
+          size="sm"
+          className="shrink-0"
+          onClick={() => setIngestaOpen(true)}
         >
           <InboxIcon />
           Incubar proyecto
-        </Link>
+        </Button>
       </header>
+
+      <IngestaProyectoModal
+        open={ingestaOpen}
+        onOpenChange={setIngestaOpen}
+        onCoagulated={() => setRefreshKey((k) => k + 1)}
+      />
 
       <div className="flex shrink-0 items-center gap-1 border-b border-border px-4 sm:px-6">
         {tabs.map((tab) => (

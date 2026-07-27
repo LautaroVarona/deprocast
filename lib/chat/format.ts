@@ -82,13 +82,33 @@ export function isMentionSegment(
   return segment.type === "mention";
 }
 
+export type MentionPrefix = "@" | "#";
+
+export type DetectedMentionQuery = {
+  prefix: MentionPrefix;
+  query: string;
+};
+
+/** Detecta `@…` o `#…` al final del texto (anclaje predictivo). */
+export function detectMentionQueryWithPrefix(
+  text: string,
+): DetectedMentionQuery | null {
+  const match = text.match(/([@#])([\w\sáéíóúñÁÉÍÓÚÑ.-]*)$/i);
+  if (!match) return null;
+  return {
+    prefix: match[1] as MentionPrefix,
+    query: match[2],
+  };
+}
+
 export function detectMentionQuery(text: string): string | null {
-  const match = text.match(/@([\w\sáéíóúñÁÉÍÓÚÑ.-]*)$/i);
-  return match ? match[1] : null;
+  const detected = detectMentionQueryWithPrefix(text);
+  if (!detected || detected.prefix !== "@") return null;
+  return detected.query;
 }
 
 export function stripMentionQuery(text: string): string {
-  return text.replace(/@([\w\sáéíóúñÁÉÍÓÚÑ.-]*)$/i, "");
+  return text.replace(/[@#]([\w\sáéíóúñÁÉÍÓÚÑ.-]*)$/i, "");
 }
 
 export function formatHistoryForChat(

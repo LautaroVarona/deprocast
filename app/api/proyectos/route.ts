@@ -1,5 +1,5 @@
 import { isCampoSlug } from "@/lib/projects/campos";
-import { PROJECT_STATUSES } from "@/lib/projects/types";
+import { PROJECT_STATUSES, PROJECT_TIPOS } from "@/lib/projects/types";
 import { clampScale } from "@/lib/projects/priority";
 import {
   createProject,
@@ -8,7 +8,7 @@ import {
 } from "@/lib/projects/service";
 import { getUniverseFilterSlugFromRequest } from "@/lib/babel/universe-scope";
 import { filterProjectsForUniverse } from "@/lib/babel/universe-refs";
-import type { CreateProjectInput, ProjectStatus } from "@/lib/projects/types";
+import type { CreateProjectInput, ProjectStatus, ProjectTipo } from "@/lib/projects/types";
 import { ensureRuntimeReady } from "@/lib/runtime-setup";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -54,6 +54,8 @@ export async function POST(request: NextRequest) {
 
     const body = (await request.json()) as Partial<CreateProjectInput> & {
       mode?: string;
+      personIds?: string[];
+      tipo?: ProjectTipo | null;
     };
 
     if (!body.title?.trim()) {
@@ -87,13 +89,25 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const personIds = parseStringArray(body.personIds);
+    let subpersonasCargo = parseStringArray(body.subpersonasCargo);
+    if (personIds.length > 0) {
+      const { resolvePersonaNames } = await import("@/lib/kg/personas");
+      const resolved = await resolvePersonaNames(personIds);
+      subpersonasCargo = [...new Set([...subpersonasCargo, ...resolved])];
+    }
+
+    const tipo =
+      body.tipo && PROJECT_TIPOS.includes(body.tipo) ? body.tipo : body.tipo === null ? null : undefined;
+
     const input: CreateProjectInput = {
       title: body.title,
+      ...(tipo !== undefined ? { tipo } : {}),
       campoSlug: body.campoSlug,
       metaTagsSecundarios: parseStringArray(body.metaTagsSecundarios),
       description: String(body.description ?? ""),
       responsable: String(body.responsable ?? ""),
-      subpersonasCargo: parseStringArray(body.subpersonasCargo),
+      subpersonasCargo,
       fechaInicio: String(body.fechaInicio ?? ""),
       fechaObjetivo: String(body.fechaObjetivo ?? ""),
       prioridad: clampScale(Number(body.prioridad ?? 6)),

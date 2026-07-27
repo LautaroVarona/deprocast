@@ -1,6 +1,7 @@
 "use client";
 
 import { useBabel } from "@/components/babel/babel-context";
+import { ProsopografoModal } from "@/components/agentes/prosopografo-workspace";
 import { PersonaCard } from "@/components/personas/persona-card";
 import { PersonaModularWorkspace } from "@/components/personas/persona-modular-workspace";
 import { PersonaRelationsSheet } from "@/components/personas/persona-relations-sheet";
@@ -17,6 +18,7 @@ import type { PersonaCardDto } from "@/lib/personas/types";
 import { personaSlugFromName } from "@/lib/personas/slug";
 import { cn } from "@/lib/utils";
 import {
+  FileJsonIcon,
   LayoutGridIcon,
   NetworkIcon,
   PlusIcon,
@@ -58,6 +60,7 @@ export function PersonasDashboard() {
   );
   const [showForm, setShowForm] = useState(false);
   const [showCreate, setShowCreate] = useState(false);
+  const [showProsopografo, setShowProsopografo] = useState(false);
   const [showRelations, setShowRelations] = useState(false);
   const [editPersona, setEditPersona] = useState<Persona | null>(null);
   const [editRelations, setEditRelations] = useState<PersonaRelationListItem[]>(
@@ -398,19 +401,40 @@ export function PersonasDashboard() {
       )}
 
       {(tab === "lista" || tab === "candidatas") && (
-        <Button
-          type="button"
-          size="lg"
-          className={cn(
-            "fixed right-6 bottom-6 z-40 shadow-lg shadow-emerald-500/20",
-            "rounded-full px-5",
-          )}
-          onClick={() => setShowCreate(true)}
-        >
-          <PlusIcon />
-          Añadir persona
-        </Button>
+        <div className="fixed right-6 bottom-6 z-40 flex flex-col items-end gap-2">
+          <Button
+            type="button"
+            size="lg"
+            variant="outline"
+            className="rounded-full border-emerald-500/40 bg-background/95 px-5 shadow-lg backdrop-blur"
+            onClick={() => setShowProsopografo(true)}
+          >
+            <FileJsonIcon />
+            Importar JSON
+          </Button>
+          <Button
+            type="button"
+            size="lg"
+            className={cn(
+              "shadow-lg shadow-emerald-500/20",
+              "rounded-full px-5",
+            )}
+            onClick={() => setShowCreate(true)}
+          >
+            <PlusIcon />
+            Añadir persona
+          </Button>
+        </div>
       )}
+
+      <ProsopografoModal
+        open={showProsopografo}
+        onOpenChange={setShowProsopografo}
+        onImported={() => {
+          notifyDomainRefresh("all", "prosopografo-import");
+          void reloadAll();
+        }}
+      />
 
       <PersonaModularWorkspace
         mode="create"

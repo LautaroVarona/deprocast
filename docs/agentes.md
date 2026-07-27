@@ -357,6 +357,28 @@ Agente frontend de modulación cognitiva. El cerebro percibe la diferencia entre
 
 ---
 
+### 🪪 Prosopógrafo
+
+**Funciones:**
+- Emitir un prompt-cuestionario de la Matriz CRM 6×6 para pegar en LLMs externos (Gemini, ChatGPT, etc.).
+- Copiar al portapapeles o descargar el cuestionario como `.md`.
+- Aceptar JSON bruto (pegar o subir `.json`) con una o varias personas.
+- Previsualizar fichas (módulos CRM llenos + warnings de vínculos) antes de importar.
+- Resolver `connectionsByName` contra KgNodes existentes; omitir vínculos sin match.
+- Coagular personas verificadas (`reconocido: true`) vía `createPersonaWithRelations` y sellar Babel.
+
+**Descripción:**  
+Agente HITL de prosopografía. Deprocast no llama al LLM: el Observador exporta el cuestionario, obtiene el JSON afuera e importa de vuelta al CRM de Personas. UI en `/agentes/prosopografo` y modal “Importar JSON” en `/personas`.
+
+**Ubicación:**
+- Dominio: `lib/personas/prosopografo/`
+- API: `app/api/agentes/prosopografo/prompt`, `app/api/agentes/prosopografo/import`
+- UI: `app/agentes/prosopografo/page.tsx`, `components/agentes/prosopografo-workspace.tsx`
+
+**Tecnologías/Dependencias:** Zod, `PersonaCrmModules`, Prisma (`KgNode`), sin LLM interno.
+
+---
+
 ### 🫀 Centinela Somático
 
 **Funciones:**
@@ -724,6 +746,8 @@ Especialista de la astrología y la transformación alquímica de la materia —
 | `/grafo` | Visualización KG |
 | `/calibrador` | Calibrador de Vibe |
 | `/agentes/binauralizer` | Binauralizer |
+| `/agentes/prosopografo` | Prosopógrafo |
+| `/personas` | CRM Personas (+ Importar JSON Prosopógrafo) |
 | `/ludus` | LudusDirector |
 | `/ludus/castillo` | Grafólogo del Castillo (vista Mapa) |
 | `/ludus/mago` | El Mago 22 |
