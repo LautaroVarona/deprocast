@@ -49,8 +49,6 @@ export function normalizeToPersonaList(
   envelope: ProsopografoImportEnvelope,
 ): ProsopografoPersonaRaw[] {
   if (Array.isArray(envelope)) return envelope;
-  if ("personas" in envelope && Array.isArray(envelope.personas)) {
-    return envelope.personas;
-  }
+  if ("personas" in envelope) return envelope.personas;
   return [envelope];
 }
