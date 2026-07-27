@@ -258,6 +258,43 @@ export function ensureCoreColumnPatches(): void {
       }
     }
 
+    if (tableExists(db, "Yo")) {
+      if (!columnExists(db, "Yo", "mago12")) {
+        db.exec(
+          `ALTER TABLE "Yo" ADD COLUMN "mago12" INTEGER NOT NULL DEFAULT 1;`,
+        );
+      }
+      if (!columnExists(db, "Yo", "mago3")) {
+        db.exec(
+          `ALTER TABLE "Yo" ADD COLUMN "mago3" TEXT NOT NULL DEFAULT 'cuerpo';`,
+        );
+      }
+    }
+
+    if (!tableExists(db, "AmazonAResource")) {
+      db.exec(`
+        CREATE TABLE "AmazonAResource" (
+          "id" TEXT NOT NULL PRIMARY KEY,
+          "name" TEXT NOT NULL,
+          "description" TEXT NOT NULL DEFAULT '',
+          "powerIds" JSONB NOT NULL,
+          "kgNodeId" TEXT,
+          "projectId" TEXT,
+          "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          "updatedAt" DATETIME NOT NULL
+        );
+      `);
+      db.exec(
+        `CREATE UNIQUE INDEX IF NOT EXISTS "AmazonAResource_kgNodeId_key" ON "AmazonAResource"("kgNodeId");`,
+      );
+      db.exec(
+        `CREATE INDEX IF NOT EXISTS "AmazonAResource_projectId_idx" ON "AmazonAResource"("projectId");`,
+      );
+      db.exec(
+        `CREATE INDEX IF NOT EXISTS "AmazonAResource_name_idx" ON "AmazonAResource"("name");`,
+      );
+    }
+
     // Migración one-shot desde CandidateEntity legacy.
     if (tableExists(db, "CandidateEntity") && tableExists(db, "EntityCandidate")) {
       db.exec(`

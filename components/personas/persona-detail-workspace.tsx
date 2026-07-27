@@ -2,14 +2,15 @@
 
 import { useBabel } from "@/components/babel/babel-context";
 import { ActivityFeed } from "@/components/personas/activity-feed";
+import { PersonaModularWorkspace } from "@/components/personas/persona-modular-workspace";
 import { PersonaRelationsSheet } from "@/components/personas/persona-relations-sheet";
-import { PersonaFormSheet } from "@/components/personas/persona-form-sheet";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
 import type { Persona } from "@/lib/personas/model";
 import type { PersonaRelationListItem } from "@/lib/personas/model";
 import type { PersonaDetailDto } from "@/lib/personas/types";
 import { cn } from "@/lib/utils";
+import { notifyDomainRefresh } from "@/lib/domain-refresh";
 import {
   ArrowLeftIcon,
   CircleDotIcon,
@@ -387,11 +388,16 @@ export function PersonaDetailWorkspace({ idOrSlug }: PersonaDetailWorkspaceProps
 
       {entity && (
         <>
-          <PersonaFormSheet
+          <PersonaModularWorkspace
+            mode="edit"
             open={showEdit}
             onOpenChange={setShowEdit}
             initialPersona={entity}
-            onSaved={() => void loadPersona()}
+            initialRelations={relations}
+            onSaved={() => {
+              notifyDomainRefresh("personas", "persona-saved");
+              void loadPersona();
+            }}
           />
           <PersonaRelationsSheet
             open={showRelations}

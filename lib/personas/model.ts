@@ -3,11 +3,17 @@
  * Persistido en KgNode (nodos), KgEdge (grafo) y tablas tipadas PersonTo*.
  */
 
+import type { PersonaCrmModules } from "@/lib/personas/crm-modules";
+
+export type { PersonaCrmModules } from "@/lib/personas/crm-modules";
+
 export interface Persona {
   id: string;
   nombrePrincipal: string;
   aliases: string[];
   notasGenerales: string;
+  /** Matriz CRM 6×6 (metadata.crm). */
+  crm?: PersonaCrmModules;
 }
 
 export interface RelacionPersonaPersona {
@@ -95,12 +101,15 @@ export interface CreatePersonaWithRelationsPayload {
   /** Vínculo explícito con el Operador (centro del grafo). */
   relationToOperator?: string;
   connections?: PersonaConnectionDraft[];
+  /** Matriz CRM 6×6 opcional. */
+  crm?: PersonaCrmModules;
 }
 
 export interface UpdatePersonaPayload {
   nombrePrincipal?: string;
   aliases?: string[];
   notasGenerales?: string;
+  crm?: PersonaCrmModules;
 }
 
 export interface CreateRelacionPersonaPersonaPayload {

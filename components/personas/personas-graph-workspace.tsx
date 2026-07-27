@@ -8,6 +8,7 @@ import {
 import { PersonasForceGraph } from "@/components/personas/personas-force-graph";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { notifyDomainRefresh } from "@/lib/domain-refresh";
 import type {
   PersonaGraphEdge,
   PersonaGraphSnapshot,
@@ -20,10 +21,15 @@ import { useCallback, useEffect, useState } from "react";
 
 type Props = {
   mode: PersonaGraphViewMode;
+  refreshKey?: number;
   onStatsChange?: (stats: { nodes: number; edges: number } | null) => void;
 };
 
-export function PersonasGraphWorkspace({ mode, onStatsChange }: Props) {
+export function PersonasGraphWorkspace({
+  mode,
+  refreshKey = 0,
+  onStatsChange,
+}: Props) {
   const { universeFetch } = useBabel();
   const [snapshot, setSnapshot] = useState<PersonaGraphSnapshot | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -61,7 +67,7 @@ export function PersonasGraphWorkspace({ mode, onStatsChange }: Props) {
 
   useEffect(() => {
     void loadGraph(mode);
-  }, [loadGraph, mode]);
+  }, [loadGraph, mode, refreshKey]);
 
   useEffect(() => {
     return () => onStatsChange?.(null);
@@ -189,7 +195,10 @@ export function PersonasGraphWorkspace({ mode, onStatsChange }: Props) {
           setShowLinkForm(open);
           if (!open) setLinkDraft(null);
         }}
-        onCreated={() => void loadGraph(mode)}
+        onCreated={() => {
+          notifyDomainRefresh("all", "persona-graph-link");
+          void loadGraph(mode);
+        }}
       />
     </div>
   );

@@ -7,13 +7,20 @@ import {
   isMissionIComplete,
 } from "@/lib/yo/consecration";
 import {
+  resolveExocortexDisplayName,
+  resolveOperatorDisplayName,
+} from "@/lib/yo/display-names";
+import {
   DEFAULT_EXOCORTEX_NAME,
   YO_CORE_ID,
   type CalibrationMap,
   type ExocortexNamedBy,
+  type Mago3Phase,
+  type OperationalClockInput,
   type PatchYoInput,
   type YoConduitMessageDto,
   type YoDto,
+  isMago3Phase,
 } from "@/lib/yo/types";
 import type { Prisma } from "@prisma/client";
 
@@ -35,6 +42,18 @@ function parseNamedBy(value: string | null): ExocortexNamedBy | null {
   return null;
 }
 
+function parseMago3(value: unknown): Mago3Phase {
+  if (typeof value === "string" && isMago3Phase(value)) return value;
+  return "cuerpo";
+}
+
+function parseMago12(value: unknown): number {
+  if (typeof value === "number" && Number.isInteger(value)) {
+    return Math.min(12, Math.max(1, value));
+  }
+  return 1;
+}
+
 async function toDto(row: {
   id: string;
   operatorName: string | null;
@@ -42,6 +61,8 @@ async function toDto(row: {
   exocortexNamedBy: string | null;
   operationalStatus: string;
   energyLevel: number;
+  mago12?: number | null;
+  mago3?: string | null;
   calibration: unknown;
   genesisCompletedAt: Date | null;
   updatedAt: Date;
@@ -57,6 +78,8 @@ async function toDto(row: {
     exocortexNamedBy: parseNamedBy(row.exocortexNamedBy),
     operationalStatus: row.operationalStatus,
     energyLevel: row.energyLevel,
+    mago12: parseMago12(row.mago12),
+    mago3: parseMago3(row.mago3),
     calibration,
     genesisStatus,
     genesisCompleted: genesisStatus === "COMPLETED",
@@ -117,7 +140,7 @@ export async function baptizeExocortex(input: {
   });
 
   if (!current.operatorName?.trim()) {
-    throw new Error("Primero debe bautizarse el Operador.");
+    throw new Error("Primero debe bautizarse tu nombre.");
   }
 
   const updated = await prisma.yo.update({
@@ -209,7 +232,7 @@ export async function saveNosceMissionAnswers(input: {
   return maybeCompleteConsecration(yo);
 }
 
-/** Sella la Misión III (Prima Materia) creando la propuesta y marcando calibration. */
+/** Sella la Misión III (Prima Materia) creando el proyecto real y marcando calibration. */
 export async function savePrimaMissionObjective(input: {
   title: string;
   why?: string;
@@ -228,16 +251,13 @@ export async function savePrimaMissionObjective(input: {
     throw new Error("Completá El Senado (Misión II) antes de Prima Materia.");
   }
 
-  const description = input.why?.trim()
-    ? `Horizonte 90 días: ${input.why.trim()}`
-    : "Primer fuego · Consagración Prima Materia.";
-
-  const { createProposal } = await import("@/lib/projects/proposal-store");
-  await createProposal({
+  const { bootstrapGenesisProject } = await import(
+    "@/lib/projects/genesis-bootstrap"
+  );
+  await bootstrapGenesisProject({
     title,
-    description,
-    originType: "quick_create",
-    originContext: `Consagración · Prima Materia · ${title}`,
+    why: input.why,
+    operatorName: current.operatorName,
   });
 
   const { CONSECRATION_MISSION_III_KEY } = await import("@/lib/yo/types");
@@ -287,6 +307,11 @@ export async function patchYo(input: PatchYoInput): Promise<YoDto> {
         "Durante la consagración solo podés ajustar energía tras Nosce.",
       );
     }
+    if (input.mago12 !== undefined || input.mago3 !== undefined) {
+      throw new Error(
+        "Durante la consagración no podés ajustar el reloj Magos.",
+      );
+    }
 
     const updated = await prisma.yo.update({
       where: { id: YO_CORE_ID },
@@ -316,9 +341,33 @@ export async function patchYo(input: PatchYoInput): Promise<YoDto> {
       ...(input.energyLevel !== undefined
         ? { energyLevel: input.energyLevel }
         : {}),
+      ...(input.mago12 !== undefined ? { mago12: input.mago12 } : {}),
+      ...(input.mago3 !== undefined ? { mago3: input.mago3 } : {}),
       ...(input.calibrationEntry
         ? { calibration: calibration as Prisma.InputJsonValue }
         : {}),
+    },
+  });
+
+  return toDto(updated);
+}
+
+/** Actualiza el reloj operativo Mago12 / Mago3 (post-génesis). */
+export async function setOperationalClock(
+  input: OperationalClockInput,
+): Promise<YoDto> {
+  const current = await ensureYoShell();
+  if (!current.genesisCompleted) {
+    throw new Error(
+      "Génesis incompleta. Completá las Misiones de Consagración en /yo.",
+    );
+  }
+
+  const updated = await prisma.yo.update({
+    where: { id: YO_CORE_ID },
+    data: {
+      ...(input.mago12 !== undefined ? { mago12: input.mago12 } : {}),
+      ...(input.mago3 !== undefined ? { mago3: input.mago3 } : {}),
     },
   });
 
@@ -334,8 +383,8 @@ export async function maybeCompleteConsecration(
   if (current.genesisStatus === "PENDING_NAMES") return current;
   if (!current.consecration.allComplete) return current;
 
-  const operator = current.operatorName?.trim() || "Operador";
-  const exocortex = current.exocortexName?.trim() || DEFAULT_EXOCORTEX_NAME;
+  const operator = resolveOperatorDisplayName(current.operatorName);
+  const exocortex = resolveExocortexDisplayName(current.exocortexName);
 
   const updated = await prisma.yo.update({
     where: { id: YO_CORE_ID },
@@ -347,7 +396,7 @@ export async function maybeCompleteConsecration(
 
   await appendConduitMessage({
     role: "exocortex",
-    content: `Soporte vital estabilizado. Exocórtex completamente operativo. Bienvenido a la Legión, ${operator}.`,
+    content: `Soporte vital estabilizado. ${exocortex} completamente operativo. Bienvenido a la Legión, ${operator}.`,
   });
 
   await appendConduitMessage({
@@ -372,12 +421,12 @@ export async function seedMissionBoardIntro(): Promise<void> {
   });
   if (existing > 0) return;
 
-  const exocortex = yo.exocortexName ?? DEFAULT_EXOCORTEX_NAME;
-  const operator = yo.operatorName ?? "Operador";
+  const exocortex = resolveExocortexDisplayName(yo.exocortexName);
+  const operator = resolveOperatorDisplayName(yo.operatorName);
 
   await appendConduitMessage({
     role: "exocortex",
-    content: `${operator}. Identidades ancladas. Antes de liberar el exoesqueleto, el Senado exige tres actos de consagración. Consultá la Tabula.`,
+    content: `${operator}. Identidades ancladas. Antes de liberar a ${exocortex}, el Senado exige tres actos de consagración. Consultá la Tabula.`,
   });
   await appendConduitMessage({
     role: "exocortex",

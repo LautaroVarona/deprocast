@@ -17,6 +17,7 @@ import {
   PROJECT_TIPOS,
   type ProjectProposal,
 } from "@/lib/projects/types";
+import { notifyDomainRefresh } from "@/lib/domain-refresh";
 import { cn } from "@/lib/utils";
 import { Loader2Icon } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -287,6 +288,7 @@ export function ProposalsWorkspace({
       }
 
       toast.success(`Proyecto activado: ${data.project.title}`);
+      notifyDomainRefresh("all", "proposal-activated");
       removeProposalLocally(proposal.id);
       onProposalActivated?.();
       void loadProposals({ silent: true });

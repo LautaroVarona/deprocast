@@ -13,7 +13,7 @@ export const JOURNAL_WAVE_TABS: {
     icon: "📓",
     shortLabel: "Diario",
     placeholder:
-      "¿Qué resonó hoy en el Observador? Pensamientos, micro-avances, fricciones, gratitud...",
+      "¿Qué resonó hoy? Pensamientos, micro-avances, fricciones, gratitud...",
   },
   {
     id: "SUEÑO_NOCTURNO",

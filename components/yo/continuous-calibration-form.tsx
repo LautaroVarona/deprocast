@@ -5,6 +5,7 @@ import {
   type CalibrationMap,
   type YoDto,
 } from "@/lib/yo/types";
+import { resolveExocortexDisplayName } from "@/lib/yo/display-names";
 import { cn } from "@/lib/utils";
 import { useMemo, useState } from "react";
 
@@ -40,7 +41,7 @@ export function ContinuousCalibrationForm({
     Boolean(calibration[prompt.id]),
   ).length;
 
-  const exocortex = yo.exocortexName ?? "Exocórtex";
+  const exocortex = resolveExocortexDisplayName(yo.exocortexName);
 
   const handleSubmit = async () => {
     const trimmed = answer.trim();

@@ -1,6 +1,7 @@
 "use client";
 
 import { MentionBadge } from "@/components/chat/mention-badge";
+import { useYoNames } from "@/hooks/use-yo-names";
 import { cn } from "@/lib/utils";
 import type { ChatMessageDto } from "@/lib/chat/types";
 import { BotIcon, UserIcon } from "lucide-react";
@@ -49,6 +50,7 @@ export function MessageList({
   className,
 }: MessageListProps) {
   const bottomRef = useRef<HTMLDivElement>(null);
+  const { exocortexName } = useYoNames();
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -59,7 +61,7 @@ export function MessageList({
       <div className="mx-auto flex max-w-3xl flex-col gap-4">
         {messages.length === 0 && !isLoading ? (
           <div className="rounded-xl border border-dashed border-border px-6 py-10 text-center">
-            <p className="text-sm font-medium">Exocórtex listo</p>
+            <p className="text-sm font-medium">{exocortexName} listo</p>
             <p className="mt-2 font-mono text-[10px] text-muted-foreground">
               Mencioná entidades con @ para anclar contexto de proyectos,
               retos, áreas y personas antes de enviar tu pregunta.

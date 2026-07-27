@@ -192,10 +192,13 @@ export async function updatePersonaEntity(
     nombrePrincipal,
     input.aliases ?? parseAliasesJson(node.aliases),
   );
+  // crm del Observador reemplaza metadata.crm (permite vaciar campos);
+  // el resto del metadata (stub, campoSlug, etc.) se preserva.
   const metadata = buildPersonaMetadata({
     existing: existingMeta,
     notasGenerales:
       input.notasGenerales !== undefined ? input.notasGenerales : undefined,
+    crm: input.crm,
   });
 
   try {
@@ -205,6 +208,7 @@ export async function updatePersonaEntity(
         primaryName: nombrePrincipal,
         aliases,
         metadata: metadata as Prisma.InputJsonValue,
+        reconocido: true,
       },
     });
     return kgNodeToPersona(updated);

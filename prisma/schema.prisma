@@ -173,7 +173,8 @@ model EntityCandidate {
   status         String   @default("PENDING")
   /// Id del KgNode resultante tras APPROVED / MERGED
   resolvedNodeId String?
-  metadata       Json     @default("{}")
+  // dbgenerated: Prisma emite DEFAULT {} sin comillas en SQLite (inválido).
+  metadata       Json     @default(dbgenerated("'{}'"))
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
@@ -192,12 +193,34 @@ model Yo {
   exocortexNamedBy   String? // operator | autonomous
   operationalStatus  String    @default("STANDBY")
   energyLevel        Int       @default(5)
-  calibration        Json      @default("{}")
+  /// Reloj operativo Mago 12 — ciclo/turno 1–12 (no es la matriz Ludus).
+  mago12             Int       @default(1)
+  /// Reloj operativo Mago 3 — fase: cuerpo | mente | alma.
+  mago3              String    @default("cuerpo")
+  // dbgenerated: evita DEFAULT {} inválido en SQLite (Prisma db push).
+  calibration        Json      @default(dbgenerated("'{}'"))
   genesisCompletedAt DateTime?
   createdAt          DateTime  @default(now())
   updatedAt          DateTime  @updatedAt
 
   conduitMessages YoConduitMessage[]
+}
+
+/// Inventario Lista AmazonA — herramientas/recursos con tags de los 72 Poderes.
+model AmazonAResource {
+  id          String   @id @default(uuid())
+  name        String
+  description String   @default("")
+  /// Json array de PowerId: ["P01","P12",...]
+  powerIds    Json
+  kgNodeId    String?  @unique
+  /// Asignación opcional a proyecto Atanor (id filesystem / KgNode proyecto)
+  projectId   String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([projectId])
+  @@index([name])
 }
 
 // Conducto: canal sin filtros entre Operador y Exocórtex.
@@ -256,7 +279,7 @@ model Quantomo {
   id                  String   @id @default(uuid())
   titleSugerido       String
   content             String
-  tagsSemanticos      Json     @default("[]")
+  tagsSemanticos      Json     @default(dbgenerated("'[]'"))
   universo            String
   createdAt           DateTime @default(now())
   originAttributionId String
@@ -487,7 +510,7 @@ model BabelRecord {
   contextSeal    String
   campoSlug      String?
   channel        String?
-  metadata       Json     @default("{}")
+  metadata       Json     @default(dbgenerated("'{}'"))
   createdAt      DateTime @default(now())
 
   universe Universe @relation(fields: [contextSeal], references: [slug])
@@ -736,7 +759,7 @@ model XBookmark {
   author         String
   handle         String
   text           String
-  mediaUrls      Json      @default("[]")
+  mediaUrls      Json      @default(dbgenerated("'[]'"))
   tweetUrl       String?
   bookmarkedAt   String?
   weight         Int?
@@ -829,8 +852,8 @@ model CastleCard {
   title      String
   subtitle   String?
   accent     String?
-  tags       Json     @default("[]")
-  metadata   Json     @default("{}")
+  tags       Json     @default(dbgenerated("'[]'"))
+  metadata   Json     @default(dbgenerated("'{}'"))
   layout     Json
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
@@ -846,7 +869,7 @@ model CastleCard {
 model LudusState {
   id                 String   @id @default("singleton")
   signalPoints       Int      @default(0)
-  unlockedStatues    Json     @default("[]")
+  unlockedStatues    Json     @default(dbgenerated("'[]'"))
   assaultStreakToday Int      @default(0)
   lastAssaultDate    String?
   updatedAt          DateTime @updatedAt

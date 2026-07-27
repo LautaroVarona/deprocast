@@ -12,6 +12,7 @@ export const NODE_TYPES = [
   "archivo",
   "modulo",
   "area",
+  "recurso",
 ] as const;
 
 export const PERSONA_KINDS = ["fisica", "juridica"] as const;
@@ -33,6 +34,7 @@ export const RELATION_TYPES = [
   "define",
   "documenta",
   "relevante_para",
+  "posee",
 ] as const;
 
 export const MENTION_SOURCE_TYPES = [

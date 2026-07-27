@@ -21,6 +21,7 @@ type WeekGridProps = {
   ) => Promise<void>;
   onSlotClick?: (day: Date) => void;
   activeSlotDay?: string | null;
+  onAssignAmazona?: (resourceId: string, day: Date) => Promise<void> | void;
 };
 
 export function WeekGrid({
@@ -33,6 +34,7 @@ export function WeekGrid({
   onRescheduleEvent,
   onSlotClick,
   activeSlotDay,
+  onAssignAmazona,
 }: WeekGridProps) {
   const grouped = weekDays.map((day) => {
     const key = toIsoDayKey(day);
@@ -64,6 +66,9 @@ export function WeekGrid({
             }
             if (kind === "card" && onSlotClick) {
               onSlotClick(day.date);
+            }
+            if (kind === "amazona_resource" && id && onAssignAmazona) {
+              void onAssignAmazona(id, day.date);
             }
           }}
           onClick={() => onSlotClick?.(day.date)}

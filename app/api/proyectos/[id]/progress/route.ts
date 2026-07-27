@@ -26,9 +26,11 @@ export async function POST(request: Request, context: RouteContext) {
     });
 
     // Hook KG no bloqueante: re-ingiere el proyecto con el nuevo progreso.
-    void ingestSingleProject(project, { force: true }).catch((error) => {
-      console.error("KG project progress hook error:", error);
-    });
+    void ingestSingleProject(project, { force: true, reconocido: true }).catch(
+      (error) => {
+        console.error("KG project progress hook error:", error);
+      },
+    );
 
     return NextResponse.json({ project });
   } catch (error) {

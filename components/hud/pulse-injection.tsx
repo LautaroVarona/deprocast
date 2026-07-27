@@ -1,12 +1,13 @@
 "use client";
 
+import { useBabel } from "@/components/babel/babel-context";
 import {
   buildCaptureGravity,
   postIngestaCapture,
 } from "@/components/ingesta/capture-client";
-import { useBabel } from "@/components/babel/babel-context";
 import { useVoiceRecorder } from "@/components/salud/hooks/use-voice-recorder";
 import { Button } from "@/components/ui/button";
+import { useYoNames } from "@/hooks/use-yo-names";
 import { withUniverseFetchInit } from "@/lib/babel/universe-fetch";
 import { CAPTURE_SUCCESS_TOAST } from "@/lib/purifier/constants";
 import { cn } from "@/lib/utils";
@@ -51,6 +52,7 @@ async function waitForTranscript(
 
 export function PulseInjection() {
   const { activeUniverse } = useBabel();
+  const { operatorName } = useYoNames();
   const [text, setText] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [successFlash, setSuccessFlash] = useState(false);
@@ -250,7 +252,7 @@ export function PulseInjection() {
           }}
           rows={3}
           disabled={isSubmitting || isRecording}
-          placeholder="¿Qué llevas en la mente, Operador?"
+          placeholder={`¿Qué llevas en la mente, ${operatorName}?`}
           className="min-h-[5.5rem] flex-1 resize-none bg-transparent px-3 py-3 text-lg leading-snug text-foreground placeholder:text-muted-foreground outline-none disabled:opacity-50 md:text-xl"
         />
 

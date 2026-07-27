@@ -149,16 +149,7 @@ export function MissionSenadoGraph({
               letterSpacing: "0.08em",
             }}
           >
-            {truncateLabel(operatorName || "Operador", 12)}
-          </text>
-          <text
-            x={CX}
-            y={CY + 12}
-            textAnchor="middle"
-            className="fill-legion-bronze/80"
-            style={{ fontSize: 8, fontFamily: "ui-monospace, monospace" }}
-          >
-            OPERADOR
+            {truncateLabel(operatorName, 14)}
           </text>
         </g>
 

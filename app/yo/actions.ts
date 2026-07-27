@@ -73,7 +73,7 @@ export async function baptizeOperatorAction(
       error:
         error instanceof Error
           ? error.message
-          : "No se pudo bautizar al Operador.",
+          : "No se pudo bautizar tu nombre.",
     };
   }
 }
@@ -99,7 +99,7 @@ export async function baptizeExocortexAction(
 
     const shell = await ensureYoShell();
     if (!shell.operatorName?.trim()) {
-      return { ok: false, error: "Primero identificá al Operador." };
+      return { ok: false, error: "Primero identificá tu nombre." };
     }
 
     const provided = parsed.data.exocortexName;
@@ -126,7 +126,7 @@ export async function baptizeExocortexAction(
       error:
         error instanceof Error
           ? error.message
-          : "No se pudo bautizar al Exocórtex.",
+          : "No se pudo bautizar el nombre del sistema.",
     };
   }
 }

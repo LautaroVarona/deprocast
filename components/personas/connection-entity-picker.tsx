@@ -7,12 +7,17 @@ import { useEffect, useId, useRef, useState } from "react";
 
 type ConnectionEntityPickerProps = {
   excludeIds?: string[];
+  /** Filtra kinds a buscar. Default: persona + proyecto. */
+  kinds?: Array<"persona" | "proyecto">;
+  placeholder?: string;
   onSelect: (target: PersonaLinkTarget) => void;
   className?: string;
 };
 
 export function ConnectionEntityPicker({
   excludeIds = [],
+  kinds = ["persona", "proyecto"],
+  placeholder,
   onSelect,
   className,
 }: ConnectionEntityPickerProps) {
@@ -34,6 +39,7 @@ export function ConnectionEntityPicker({
   }, []);
 
   const excludeKey = excludeIds.join("|");
+  const kindsKey = kinds.join("|");
 
   useEffect(() => {
     const trimmed = query.trim();
@@ -49,28 +55,36 @@ export function ConnectionEntityPicker({
       setIsLoading(true);
       try {
         const params = new URLSearchParams({ q: trimmed });
-        const [personasRes, proyectosRes] = await Promise.all([
-          fetch(`/api/personas/link-targets?kind=persona&${params}`, {
-            signal: controller.signal,
-            cache: "no-store",
-          }),
-          fetch(`/api/personas/link-targets?kind=proyecto&${params}`, {
-            signal: controller.signal,
-            cache: "no-store",
-          }),
-        ]);
+        const fetches: Promise<Response>[] = [];
+        if (kinds.includes("persona")) {
+          fetches.push(
+            fetch(`/api/personas/link-targets?kind=persona&${params}`, {
+              signal: controller.signal,
+              cache: "no-store",
+            }),
+          );
+        }
+        if (kinds.includes("proyecto")) {
+          fetches.push(
+            fetch(`/api/personas/link-targets?kind=proyecto&${params}`, {
+              signal: controller.signal,
+              cache: "no-store",
+            }),
+          );
+        }
 
-        const personasData = personasRes.ok
-          ? ((await personasRes.json()) as { targets?: PersonaLinkTarget[] })
-          : { targets: [] };
-        const proyectosData = proyectosRes.ok
-          ? ((await proyectosRes.json()) as { targets?: PersonaLinkTarget[] })
-          : { targets: [] };
+        const responses = await Promise.all(fetches);
+        const chunks = await Promise.all(
+          responses.map(async (res) =>
+            res.ok
+              ? ((await res.json()) as { targets?: PersonaLinkTarget[] })
+              : { targets: [] },
+          ),
+        );
 
-        const merged = [
-          ...(personasData.targets ?? []),
-          ...(proyectosData.targets ?? []),
-        ].filter((target) => !exclude.has(target.id));
+        const merged = chunks
+          .flatMap((chunk) => chunk.targets ?? [])
+          .filter((target) => !exclude.has(target.id));
 
         setResults(merged);
         setIsOpen(true);
@@ -86,9 +100,16 @@ export function ConnectionEntityPicker({
       controller.abort();
       window.clearTimeout(timer);
     };
-    // excludeIds se serializa en excludeKey para evitar re-fetch por identidad de array.
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- excludeKey es la dependencia estable
-  }, [excludeKey, query]);
+    // excludeIds / kinds se serializan en keys estables.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- excludeKey/kindsKey son las deps estables
+  }, [excludeKey, kindsKey, query]);
+
+  const defaultPlaceholder =
+    kinds.length === 1 && kinds[0] === "persona"
+      ? "Buscar persona…"
+      : kinds.length === 1 && kinds[0] === "proyecto"
+        ? "Buscar proyecto…"
+        : "Buscar persona o proyecto…";
 
   return (
     <div ref={rootRef} className={cn("relative", className)}>
@@ -104,7 +125,7 @@ export function ConnectionEntityPicker({
           aria-expanded={isOpen}
           aria-controls={listId}
           aria-autocomplete="list"
-          placeholder="Buscar persona o proyecto…"
+          placeholder={placeholder ?? defaultPlaceholder}
           className="w-full rounded-lg border border-input bg-background py-2 pr-3 pl-9 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
         />
         {isLoading && (

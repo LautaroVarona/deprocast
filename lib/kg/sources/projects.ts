@@ -113,7 +113,12 @@ function buildBody(project: Project): string {
 /** Ingesta un unico proyecto al grafo (usado por hooks y por el backfill). */
 export async function ingestSingleProject(
   project: Project,
-  options: { model?: string; force?: boolean } = {},
+  options: {
+    model?: string;
+    force?: boolean;
+    reconocido?: boolean;
+    structuredOnly?: boolean;
+  } = {},
 ): Promise<SourceIngestSummary> {
   const relativePath = path
     .relative(process.cwd(), project.filePath)
@@ -138,6 +143,8 @@ export async function ingestSingleProject(
     sourceMetadata: { campoSlug: project.campoSlug, projectId: project.id },
     model: options.model,
     force: options.force,
+    reconocido: options.reconocido,
+    structuredOnly: options.structuredOnly,
   });
 
   return {

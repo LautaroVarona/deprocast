@@ -76,6 +76,7 @@ export async function POST(request: NextRequest) {
       relationToOperator?: string;
       campoSlug?: string;
       connections?: unknown;
+      crm?: CreatePersonaWithRelationsPayload["crm"];
     };
 
     const nombre =
@@ -100,6 +101,7 @@ export async function POST(request: NextRequest) {
         notasGenerales: body.notasGenerales,
         relationToOperator: body.relationToOperator?.trim() || undefined,
         connections,
+        crm: body.crm,
       };
       const persona = await createPersonaWithRelations(payload);
       await sealKgNodeInUniverse(persona.id, universeSlug, persona.nombrePrincipal);

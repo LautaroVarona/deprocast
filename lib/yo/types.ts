@@ -39,7 +39,7 @@ export type MissionRuntimeStatus = (typeof MISSION_RUNTIME_STATUSES)[number];
 export const CONSECRATION_MISSION_I_PROMPTS = [
   {
     id: "consecration_exoesqueleto",
-    question: "¿Has operado un Exoesqueleto Cognitivo antes?",
+    question: "¿Has operado un sistema cognitivo como el tuyo antes?",
   },
   {
     id: "consecration_prima_materia",
@@ -110,6 +110,20 @@ export type ConsecrationProgress = {
   activeMissionId: ConsecrationMissionId | null;
 };
 
+/** Fases del reloj operativo Mago 3 (no es la matriz Ludus). */
+export const MAGO3_PHASES = ["cuerpo", "mente", "alma"] as const;
+export type Mago3Phase = (typeof MAGO3_PHASES)[number];
+
+export const MAGO3_PHASE_LABELS: Record<Mago3Phase, string> = {
+  cuerpo: "Cuerpo",
+  mente: "Mente",
+  alma: "Alma",
+};
+
+export function isMago3Phase(value: string): value is Mago3Phase {
+  return (MAGO3_PHASES as readonly string[]).includes(value);
+}
+
 export type YoDto = {
   id: string;
   operatorName: string | null;
@@ -117,6 +131,10 @@ export type YoDto = {
   exocortexNamedBy: ExocortexNamedBy | null;
   operationalStatus: string;
   energyLevel: number;
+  /** Reloj operativo Mago 12 — ciclo/turno 1–12. */
+  mago12: number;
+  /** Reloj operativo Mago 3 — cuerpo | mente | alma. */
+  mago3: Mago3Phase;
   calibration: CalibrationMap;
   genesisStatus: GenesisStatus;
   genesisCompleted: boolean;
@@ -173,6 +191,8 @@ export const baptizeExocortexSchema = z.object({
 export const patchYoSchema = z.object({
   operationalStatus: z.enum(OPERATIONAL_STATUSES).optional(),
   energyLevel: z.number().int().min(1).max(12).optional(),
+  mago12: z.number().int().min(1).max(12).optional(),
+  mago3: z.enum(MAGO3_PHASES).optional(),
   calibrationEntry: z
     .object({
       promptId: z.string().trim().min(1).max(80),
@@ -180,6 +200,16 @@ export const patchYoSchema = z.object({
     })
     .optional(),
 });
+
+/** PATCH dedicado al reloj operativo (calendario / HUD). */
+export const operationalClockSchema = z.object({
+  mago12: z.number().int().min(1).max(12).optional(),
+  mago3: z.enum(MAGO3_PHASES).optional(),
+}).refine((v) => v.mago12 !== undefined || v.mago3 !== undefined, {
+  message: "Indicá mago12 y/o mago3.",
+});
+
+export type OperationalClockInput = z.infer<typeof operationalClockSchema>;
 
 export type PatchYoInput = z.infer<typeof patchYoSchema>;
 

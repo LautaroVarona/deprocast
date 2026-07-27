@@ -6,6 +6,7 @@ import { IncubationLab } from "@/components/agentes/incubation-lab";
 import { MetaMeteadorPanel } from "@/components/agentes/meta-meteador-panel";
 import { SubprocessorsSection } from "@/components/agentes/subprocessors-section";
 import { Button } from "@/components/ui/button";
+import { useYoNames } from "@/hooks/use-yo-names";
 import {
   CARTOGRAPHY_ECOSYSTEM_AGENT_IDS,
   ECOSYSTEM_STATS,
@@ -35,6 +36,7 @@ type ViewMode = "cards" | "list";
 type ToneFilter = "all" | OperationalAgent["badgeTone"];
 
 export function AgentesWorkspace() {
+  const { exocortexName } = useYoNames();
   const [viewMode, setViewMode] = useState<ViewMode>("cards");
   const [searchQuery, setSearchQuery] = useState("");
   const [toneFilter, setToneFilter] = useState<ToneFilter>("all");
@@ -131,7 +133,7 @@ export function AgentesWorkspace() {
               Mapa de Agentes
             </h1>
             <p className="mt-2 max-w-3xl text-sm leading-relaxed text-muted-foreground">
-              Monitor interactivo del exoesqueleto cognitivo local-first.
+              Monitor interactivo de {exocortexName} (local-first).
               Proveedor LLM unificado:{" "}
               <code className="rounded bg-card px-1.5 py-0.5 text-primary/90">
                 {ECOSYSTEM_STATS.llmProvider}

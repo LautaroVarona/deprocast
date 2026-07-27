@@ -2,9 +2,9 @@ import { YoCommandCenter } from "@/components/yo/yo-command-center";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Yo · Exocórtex · DeProcast",
+  title: "Yo · DeProcast",
   description:
-    "Nodo gravitacional: identidad dual Operador/Exocórtex, conducto directo y calibración vital.",
+    "Nodo gravitacional: identidad, conducto directo y calibración vital.",
 };
 
 export default function YoPage() {

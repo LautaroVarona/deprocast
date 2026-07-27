@@ -1,6 +1,7 @@
 "use client";
 
 import { completeNosceMissionAction } from "@/app/yo/actions";
+import { useYoNames } from "@/hooks/use-yo-names";
 import {
   NOSCE_BINARY_OPTIONS,
   NOSCE_PRIMA_MATERIA_CHIPS,
@@ -25,6 +26,7 @@ export function MissionNosceOverlay({
   onOpenChange,
   onCompleted,
 }: MissionNosceOverlayProps) {
+  const { exocortexName } = useYoNames();
   const [step, setStep] = useState<Step>(1);
   const [binary, setBinary] = useState<(typeof NOSCE_BINARY_OPTIONS)[number] | null>(
     null,
@@ -174,7 +176,7 @@ export function MissionNosceOverlay({
                     transition={{ duration: 0.22 }}
                   >
                     <p className="font-display text-lg leading-snug text-legion-bone md:text-xl">
-                      ¿Has operado un Exoesqueleto Cognitivo antes?
+                      ¿Has operado un sistema como {exocortexName} antes?
                     </p>
                     <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                       {NOSCE_BINARY_OPTIONS.map((option) => (

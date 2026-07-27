@@ -3,6 +3,7 @@
 import { LUDUS_AREAS } from "@/lib/ludus/constants";
 import type { LudusWorldStats } from "@/lib/ludus/types";
 import { cn } from "@/lib/utils";
+import { useYoNames } from "@/hooks/use-yo-names";
 import {
   CastleIcon,
   LockIcon,
@@ -44,11 +45,13 @@ type LudusWorldMapProps = {
 };
 
 export function LudusWorldMap({ stats, isLoading }: LudusWorldMapProps) {
+  const { operatorName } = useYoNames();
+
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-col gap-10 px-4 py-10 sm:px-6">
       <header className="space-y-3 text-center">
         <p className="font-mono text-[10px] uppercase tracking-[0.28em] text-muted-foreground">
-          El mundo del Observador
+          El mundo de {operatorName}
         </p>
         <h1 className="bg-gradient-to-r from-foreground via-foreground/85 to-accent/70 bg-clip-text text-3xl font-semibold tracking-tight text-transparent sm:text-4xl">
           Elegí tu área

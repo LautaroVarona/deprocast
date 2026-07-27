@@ -585,3 +585,4 @@ Prompt sugerido:
 ---
 
 *Fin de reporte2107 — generado 2026-07-21 a partir del código en `c:\Dev\deprocast`.*
+

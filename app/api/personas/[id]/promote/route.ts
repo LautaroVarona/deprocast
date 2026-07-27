@@ -1,4 +1,6 @@
+import { getUniverseFilterSlugFromRequest } from "@/lib/babel/universe-scope";
 import { promotePersona } from "@/lib/personas/service";
+import { sealKgNodeInUniverse } from "@/lib/personas/universe-seal";
 import { ensureRuntimeReady } from "@/lib/runtime-setup";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -8,7 +10,7 @@ type RouteContext = {
   params: Promise<{ id: string }>;
 };
 
-export async function POST(_request: NextRequest, context: RouteContext) {
+export async function POST(request: NextRequest, context: RouteContext) {
   try {
     await ensureRuntimeReady();
 
@@ -21,6 +23,13 @@ export async function POST(_request: NextRequest, context: RouteContext) {
     }
 
     const persona = await promotePersona(id.trim());
+    const universeSlug = getUniverseFilterSlugFromRequest(request);
+    await sealKgNodeInUniverse(
+      persona.id,
+      universeSlug,
+      persona.nombrePrincipal,
+    );
+
     return NextResponse.json({ persona });
   } catch (error) {
     console.error("Persona promote error:", error);

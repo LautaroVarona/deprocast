@@ -40,6 +40,7 @@ export const EVENT_LINK_ENTITY_TYPES = [
   "chat_message",
   "campo",
   "transcript",
+  "amazona_resource",
 ] as const;
 export type EventLinkEntityType = (typeof EVENT_LINK_ENTITY_TYPES)[number];
 

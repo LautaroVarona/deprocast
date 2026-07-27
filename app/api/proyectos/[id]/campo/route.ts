@@ -26,9 +26,11 @@ export async function PATCH(request: Request, context: RouteContext) {
 
     const project = await assignProjectToCampo(id, body.campoSlug);
 
-    void ingestSingleProject(project, { force: true }).catch((error) => {
-      console.error("KG project campo hook error:", error);
-    });
+    void ingestSingleProject(project, { force: true, reconocido: true }).catch(
+      (error) => {
+        console.error("KG project campo hook error:", error);
+      },
+    );
 
     return NextResponse.json({ project });
   } catch (error) {

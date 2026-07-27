@@ -1,16 +1,18 @@
 "use client";
 
 import { useBabel } from "@/components/babel/babel-context";
-import { NuevaPersonaSidebar } from "@/components/personas/NuevaPersonaSidebar";
-import { PersonaFormSheet } from "@/components/personas/persona-form-sheet";
 import { PersonaCard } from "@/components/personas/persona-card";
+import { PersonaModularWorkspace } from "@/components/personas/persona-modular-workspace";
 import { PersonaRelationsSheet } from "@/components/personas/persona-relations-sheet";
 import { PersonasGraphWorkspace } from "@/components/personas/personas-graph-workspace";
 import { PersonasTable } from "@/components/personas/personas-table";
 import { TriageWorkspace } from "@/components/triage/triage-workspace";
 import { Button } from "@/components/ui/button";
 import type { Persona } from "@/lib/personas/model";
-import type { PersonaGraphViewMode } from "@/lib/personas/model";
+import type {
+  PersonaGraphViewMode,
+  PersonaRelationListItem,
+} from "@/lib/personas/model";
 import type { PersonaCardDto } from "@/lib/personas/types";
 import { personaSlugFromName } from "@/lib/personas/slug";
 import { cn } from "@/lib/utils";
@@ -22,11 +24,15 @@ import {
   SparklesIcon,
   TableIcon,
 } from "lucide-react";
+import { useDomainRefresh } from "@/hooks/use-domain-refresh";
+import { notifyDomainRefresh } from "@/lib/domain-refresh";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 type DashboardTab = "lista" | "candidatas" | "grafo";
 type ListView = "cards" | "table";
+
+const PERSONAS_REFRESH_SCOPES = ["personas", "kg"] as const;
 
 function tabFromSearch(value: string | null): DashboardTab {
   if (value === "grafo") return "grafo";
@@ -54,10 +60,14 @@ export function PersonasDashboard() {
   const [showCreate, setShowCreate] = useState(false);
   const [showRelations, setShowRelations] = useState(false);
   const [editPersona, setEditPersona] = useState<Persona | null>(null);
+  const [editRelations, setEditRelations] = useState<PersonaRelationListItem[]>(
+    [],
+  );
   const [linkPersona, setLinkPersona] = useState<{
     id: string;
     nombrePrincipal: string;
   } | null>(null);
+  const domainRefreshKey = useDomainRefresh(PERSONAS_REFRESH_SCOPES);
 
   const loadPersonas = useCallback(async () => {
     setIsLoading(true);
@@ -108,7 +118,7 @@ export function PersonasDashboard() {
   useEffect(() => {
     if (isUniverseLoading) return;
     void reloadAll();
-  }, [reloadAll, universeSlug, isUniverseLoading]);
+  }, [reloadAll, universeSlug, isUniverseLoading, domainRefreshKey]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -122,6 +132,7 @@ export function PersonasDashboard() {
   }, [personas, query]);
 
   const handleCreated = (persona: Persona) => {
+    notifyDomainRefresh("all", "persona-created");
     void reloadAll();
     router.push(`/personas/${personaSlugFromName(persona.nombrePrincipal)}`);
   };
@@ -134,6 +145,11 @@ export function PersonasDashboard() {
       const data = await response.json();
       if (response.ok && data.entity) {
         setEditPersona(data.entity as Persona);
+        setEditRelations(
+          Array.isArray(data.relations)
+            ? (data.relations as PersonaRelationListItem[])
+            : [],
+        );
         setShowForm(true);
       }
     } catch {
@@ -364,6 +380,7 @@ export function PersonasDashboard() {
         <div className="min-h-0 flex-1 overflow-hidden">
           <TriageWorkspace
             onChanged={() => {
+              notifyDomainRefresh("all", "triage-changed");
               void reloadAll();
             }}
           />
@@ -374,6 +391,7 @@ export function PersonasDashboard() {
         <div className="min-h-0 flex-1">
           <PersonasGraphWorkspace
             mode={graphMode}
+            refreshKey={domainRefreshKey}
             onStatsChange={setGraphStats}
           />
         </div>
@@ -394,21 +412,28 @@ export function PersonasDashboard() {
         </Button>
       )}
 
-      <NuevaPersonaSidebar
+      <PersonaModularWorkspace
+        mode="create"
         open={showCreate}
         onOpenChange={setShowCreate}
         onCreated={handleCreated}
       />
 
       {editPersona && (
-        <PersonaFormSheet
+        <PersonaModularWorkspace
+          mode="edit"
           open={showForm}
           onOpenChange={(open) => {
             setShowForm(open);
-            if (!open) setEditPersona(null);
+            if (!open) {
+              setEditPersona(null);
+              setEditRelations([]);
+            }
           }}
           initialPersona={editPersona}
+          initialRelations={editRelations}
           onSaved={() => {
+            notifyDomainRefresh("personas", "persona-saved");
             void reloadAll();
           }}
         />
@@ -421,7 +446,10 @@ export function PersonasDashboard() {
           setShowRelations(open);
           if (!open) setLinkPersona(null);
         }}
-        onCreated={() => void reloadAll()}
+        onCreated={() => {
+          notifyDomainRefresh("all", "persona-linked");
+          void reloadAll();
+        }}
       />
     </div>
   );

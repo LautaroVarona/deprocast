@@ -20,6 +20,8 @@ export async function GET() {
         displayName: yo.operatorName ?? "",
         operationalStatus: yo.operationalStatus,
         energyLevel: yo.energyLevel,
+        mago12: yo.mago12,
+        mago3: yo.mago3,
         calibration: yo.calibration,
         updatedAt: yo.updatedAt,
       },

@@ -170,7 +170,7 @@ export async function activateProposal(input: ActivateProposalInput): Promise<Pr
   void (async () => {
     try {
       const { ingestSingleProject } = await import("@/lib/kg/sources");
-      await ingestSingleProject(project);
+      await ingestSingleProject(project, { reconocido: true });
     } catch (error) {
       console.error("KG project hook error (activate proposal):", error);
     }

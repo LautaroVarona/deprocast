@@ -15,6 +15,7 @@ import {
 } from "@/lib/projects/incubation/schema";
 import type { IncubationReadiness } from "@/lib/projects/incubation/readiness";
 import { evaluateReadiness } from "@/lib/projects/incubation/readiness";
+import { notifyDomainRefresh } from "@/lib/domain-refresh";
 import { cn } from "@/lib/utils";
 import { ArrowLeftIcon, FlaskConicalIcon, Loader2Icon } from "lucide-react";
 import Link from "next/link";
@@ -161,6 +162,7 @@ export function IncubationWorkspace({ className }: { className?: string }) {
       toast.success(`Proyecto consolidado: ${data.project.title}`, {
         description: "Markdown escrito en el Atanor e ingesta al grafo iniciada.",
       });
+      notifyDomainRefresh("all", "incubation-consolidated");
       router.push("/proyectos");
     } catch (error) {
       toast.error(

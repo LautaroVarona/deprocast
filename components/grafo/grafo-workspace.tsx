@@ -1,9 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { toast } from "sonner";
-
 import { useBabel } from "@/components/babel/babel-context";
+import { useDomainRefresh } from "@/hooks/use-domain-refresh";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { fetchWithUniverse } from "@/lib/babel/universe-fetch";
@@ -19,8 +17,12 @@ import {
   type StatsResponse,
 } from "@/components/grafo/types";
 import { searchGraphSnapshot } from "@/lib/kg/graph-search";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { toast } from "sonner";
 
 type Tab = "grafo" | "proyectos" | "stats" | "duplicados";
+
+const KG_REFRESH_SCOPES = ["kg", "personas", "proyectos"] as const;
 
 type ProjectPeopleItem = {
   person: NodeSummary;
@@ -36,6 +38,7 @@ type RelatedProjectItem = {
 export function GrafoWorkspace() {
   const { activeUniverse, isLoading: isUniverseLoading } = useBabel();
   const activeSlug = activeUniverse?.slug;
+  const domainRefreshKey = useDomainRefresh(KG_REFRESH_SCOPES);
   const requestIdRef = useRef(0);
   const [tab, setTab] = useState<Tab>("grafo");
   const [snapshot, setSnapshot] = useState<GraphSnapshot>({
@@ -133,12 +136,12 @@ export function GrafoWorkspace() {
 
   useEffect(() => {
     void loadGraph();
-  }, [loadGraph]);
+  }, [loadGraph, domainRefreshKey]);
 
   useEffect(() => {
     void loadStats();
     void loadDuplicates();
-  }, [loadStats, loadDuplicates]);
+  }, [loadStats, loadDuplicates, domainRefreshKey]);
 
   useEffect(() => {
     if (!selectedId) {

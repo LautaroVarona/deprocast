@@ -340,7 +340,7 @@ export function YoGenesisTerminal({ yo, onComplete }: YoGenesisTerminalProps) {
       : "— pendiente";
 
   const welcomeOperator =
-    operatorName.trim() || pendingYo?.operatorName?.trim() || "Operador";
+    operatorName.trim() || pendingYo?.operatorName?.trim() || "Tu nombre";
 
   return (
     <div className="genesis-void-root overflow-x-hidden">
@@ -388,8 +388,11 @@ export function YoGenesisTerminal({ yo, onComplete }: YoGenesisTerminalProps) {
                           <span className="text-legion-gold">
                             {welcomeOperator}
                           </span>
-                          . Mi objetivo es convertirme en tu Exoesqueleto
-                          Cognitivo.
+                          . Mi objetivo es convertirme en{" "}
+                          <span className="text-legion-gold">
+                            {exocortexName?.trim() || DEFAULT_EXOCORTEX_NAME}
+                          </span>
+                          .
                         </p>
                         <button
                           type="button"
@@ -443,7 +446,7 @@ export function YoGenesisTerminal({ yo, onComplete }: YoGenesisTerminalProps) {
                         <p className="font-display text-base leading-relaxed text-legion-bone/90 md:text-lg">
                           {step === "operator"
                             ? "¿Cómo quieres ser llamado?"
-                            : "Asigna un identificador para tu Exocórtex."}
+                            : "¿Cómo querés llamar a tu sistema?"}
                         </p>
 
                         <div className="genesis-input flex min-h-12 items-center px-4">
@@ -504,14 +507,14 @@ export function YoGenesisTerminal({ yo, onComplete }: YoGenesisTerminalProps) {
               >
                 <StatusPlaque
                   index="01"
-                  label="Operador"
+                  label="Vos"
                   value={operatorLabel}
                   flash={operatorFlash}
                   icon={<User className="size-3.5" strokeWidth={1.75} />}
                 />
                 <StatusPlaque
                   index="02"
-                  label="Exocórtex"
+                  label="Sistema"
                   value={exocortexLabel}
                   flash={exocortexFlash}
                   icon={<Brain className="size-3.5" strokeWidth={1.75} />}

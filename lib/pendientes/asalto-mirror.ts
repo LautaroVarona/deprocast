@@ -64,8 +64,8 @@ async function resolveProjectNodeId(task: PendingTaskDto): Promise<string> {
 async function resolveSelfNodeId(): Promise<string> {
   const operator = await ensureOperatorPersonaNode();
   if (operator) return operator.id;
-  // Fallback legacy si aún no hay nombre bautizado.
-  return ensureKgNode("Observador", "persona", { role: "observador" });
+  // Sin bautismo aún: no inventar un nodo "Observador" paralelo al hub.
+  throw new Error("Definí tu nombre en /yo antes de espejar asaltos al grafo.");
 }
 
 export type AsaltoMirrorAction = "suggest" | "recognize" | "calibrate" | "reject";
@@ -95,7 +95,7 @@ export async function syncAsaltoMirrorFromTask(
   }
 
   const selfNodeId = await resolveSelfNodeId();
-  // Observador is always part of the validated graph surface
+  // El hub bautizado siempre forma parte de la superficie validada del grafo.
   await prisma.kgNode.updateMany({
     where: { id: selfNodeId, reconocido: false },
     data: { reconocido: true },

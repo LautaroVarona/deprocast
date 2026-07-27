@@ -4,7 +4,7 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "Grafo de Conocimiento · DeProcast",
   description:
-    "Red viva de personas, proyectos, ideas, documentos y código del exoesqueleto cognitivo.",
+    "Red viva de personas, proyectos, ideas, documentos y código del grafo cognitivo.",
 };
 
 export default function GrafoPage() {

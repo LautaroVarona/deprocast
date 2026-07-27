@@ -5,6 +5,7 @@ import { CamposWorkspace } from "@/components/proyectos/campos-workspace";
 import { ProjectBoard } from "@/components/proyectos/project-board";
 import { ProposalsWorkspace } from "@/components/proyectos/proposals-workspace";
 import { buttonVariants } from "@/components/ui/button";
+import { useDomainRefresh } from "@/hooks/use-domain-refresh";
 import { getDefaultCampo, type CampoInfo } from "@/lib/projects/campos";
 import { isHighPriorityProject } from "@/lib/projects/priority";
 import type { Project } from "@/lib/projects/types";
@@ -15,6 +16,8 @@ import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 type DashboardView = "activos" | "campos" | "propuestas" | "archivo";
+
+const PROYECTOS_REFRESH_SCOPES = ["proyectos", "kg"] as const;
 
 function parseView(value: string | null): DashboardView {
   if (value === "campos" || value === "propuestas" || value === "archivo") return value;
@@ -31,6 +34,7 @@ export function ProyectosDashboard() {
   const [isLoading, setIsLoading] = useState(true);
   const [refreshKey, setRefreshKey] = useState(0);
   const [pendingProposals, setPendingProposals] = useState(0);
+  const domainRefreshKey = useDomainRefresh(PROYECTOS_REFRESH_SCOPES);
 
   const loadProjects = useCallback(async () => {
     setIsLoading(true);
@@ -70,7 +74,7 @@ export function ProyectosDashboard() {
     if (isUniverseLoading) return;
     void loadProjects();
     void loadPendingCount();
-  }, [loadProjects, loadPendingCount, refreshKey, universeSlug, isUniverseLoading]);
+  }, [loadProjects, loadPendingCount, refreshKey, domainRefreshKey, universeSlug, isUniverseLoading]);
 
   const stats = useMemo(() => {
     const critical = projects.filter((p) =>

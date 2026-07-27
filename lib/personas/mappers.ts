@@ -2,7 +2,12 @@ import {
   parseAliasesJson,
   parseMetadataJson,
 } from "@/lib/kg/normalize";
-import type { KgEdge, KgNode } from "@prisma/client";
+import {
+  CRM_KEY,
+  extractCrmFromMetadata,
+  serializePersonaCrm,
+  type PersonaCrmModules,
+} from "@/lib/personas/crm-modules";
 import type {
   Persona,
   PersonaGraphEdge,
@@ -11,6 +16,7 @@ import type {
   RelacionPersonaPersona,
   RelacionPersonaProyecto,
 } from "@/lib/personas/model";
+import type { KgEdge, KgNode } from "@prisma/client";
 
 const NOTAS_KEY = "notas";
 const ROL_PRINCIPAL_KEY = "rolPrincipal";
@@ -22,11 +28,13 @@ export function extractNotas(metadata: Record<string, unknown>): string {
 
 export function kgNodeToPersona(node: KgNode): Persona {
   const metadata = parseMetadataJson(node.metadata);
+  const crm = extractCrmFromMetadata(metadata);
   return {
     id: node.id,
     nombrePrincipal: node.primaryName,
     aliases: parseAliasesJson(node.aliases),
     notasGenerales: extractNotas(metadata),
+    crm: Object.keys(crm).length > 0 ? crm : undefined,
   };
 }
 
@@ -169,12 +177,29 @@ export function buildEdgeMetadata(input: {
 
 export function buildPersonaMetadata(input: {
   notasGenerales?: string;
+  crm?: PersonaCrmModules;
   existing?: Record<string, unknown>;
 }): Record<string, unknown> {
-  return {
-    ...(input.existing ?? {}),
-    ...(input.notasGenerales !== undefined
-      ? { [NOTAS_KEY]: input.notasGenerales }
-      : {}),
-  };
+  const existing = { ...(input.existing ?? {}) };
+  const next: Record<string, unknown> = { ...existing };
+
+  if (input.notasGenerales !== undefined) {
+    next[NOTAS_KEY] = input.notasGenerales;
+  }
+
+  if (input.crm !== undefined) {
+    const packed = serializePersonaCrm(input.crm);
+    if (packed) {
+      next[CRM_KEY] = packed;
+    } else {
+      delete next[CRM_KEY];
+    }
+
+    const tipo = input.crm.identity?.tipoPersona;
+    if (tipo === "fisica" || tipo === "juridica") {
+      next.personaKind = tipo;
+    }
+  }
+
+  return next;
 }

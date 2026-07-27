@@ -302,7 +302,38 @@ export async function getGraphSnapshot(input: {
   nodeIds?: UniverseIdFilter;
 } = {}): Promise<GraphSnapshot> {
   if (input.nodeIds && input.nodeIds.size === 0) {
-    return { nodes: [], edges: [], centerNodeId: null };
+    const { ensureOperatorPersonaNode } = await import("@/lib/yo/operator-node");
+    const operatorNode = await ensureOperatorPersonaNode();
+    if (!operatorNode) {
+      return { nodes: [], edges: [], centerNodeId: null };
+    }
+    const hub = await prisma.kgNode.findUnique({ where: { id: operatorNode.id } });
+    if (!hub) {
+      return { nodes: [], edges: [], centerNodeId: null };
+    }
+    if (!hub.reconocido) {
+      await prisma.kgNode.update({
+        where: { id: hub.id },
+        data: { reconocido: true },
+      });
+      hub.reconocido = true;
+    }
+    return {
+      centerNodeId: hub.id,
+      nodes: [
+        {
+          id: hub.id,
+          primaryName: hub.primaryName,
+          type: hub.type,
+          confidence: hub.confidence,
+          degree: 0,
+          aliasesCount: 0,
+          aliases: [],
+          isCenter: true,
+        },
+      ],
+      edges: [],
+    };
   }
 
   const { ensureOperatorPersonaNode } = await import("@/lib/yo/operator-node");
@@ -327,15 +358,18 @@ export async function getGraphSnapshot(input: {
     orderBy: { updatedAt: "desc" },
   });
 
-  // El Operador siempre entra al snapshot, aunque el limit lo hubiera cortado.
-  if (
-    centerNodeId &&
-    !nodes.some((node) => node.id === centerNodeId) &&
-    (!input.nodeIds || input.nodeIds.has(centerNodeId)) &&
-    (!input.types?.length || input.types.includes("persona"))
-  ) {
+  // Hub del Operador: siempre presente en el grafo semántico (también si el
+  // filtro de tipos/universo lo hubiera dejado fuera).
+  if (centerNodeId && !nodes.some((node) => node.id === centerNodeId)) {
     const hub = await prisma.kgNode.findUnique({ where: { id: centerNodeId } });
-    if (hub && hub.reconocido) {
+    if (hub) {
+      if (!hub.reconocido) {
+        await prisma.kgNode.update({
+          where: { id: hub.id },
+          data: { reconocido: true },
+        });
+        hub.reconocido = true;
+      }
       nodes.unshift(hub);
       if (nodes.length > limit) nodes.pop();
     }

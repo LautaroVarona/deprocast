@@ -173,7 +173,7 @@ export async function consolidateIncubation(
   void (async () => {
     try {
       const { ingestSingleProject } = await import("@/lib/kg/sources/projects");
-      await ingestSingleProject(project);
+      await ingestSingleProject(project, { reconocido: true });
     } catch (error) {
       console.error("KG project hook error (incubation):", error);
     }

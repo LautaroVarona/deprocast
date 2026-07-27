@@ -6,6 +6,7 @@ import {
   DynamicGraph,
   type DynamicGraphMember,
 } from "@/components/yo/mission-senado-graph";
+import { notifyDomainRefresh } from "@/lib/domain-refresh";
 import { Loader2Icon, XIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -95,6 +96,7 @@ export function MissionPersonaOverlay({
       });
 
       toast.success(`${result.data.nombrePrincipal} registrada en el Senado.`);
+      notifyDomainRefresh("all", "senado-persona");
       setNombre("");
       setRol("");
       await onCreated();
@@ -142,7 +144,7 @@ export function MissionPersonaOverlay({
             ) : null}
           </header>
           <DynamicGraph
-            operatorName={resolvedOperatorName || "Operador"}
+            operatorName={resolvedOperatorName}
             members={members}
             className="relative flex min-h-0 flex-1 items-center justify-center overflow-hidden px-2 py-2"
           />

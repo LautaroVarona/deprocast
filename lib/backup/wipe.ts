@@ -64,7 +64,7 @@ async function removeDirectoryContents(dirPath: string): Promise<void> {
   );
 }
 
-async function unlinkWithRetry(filePath: string, attempts = 5): Promise<void> {
+async function unlinkWithRetry(filePath: string, attempts = 12): Promise<void> {
   for (let attempt = 0; attempt < attempts; attempt += 1) {
     try {
       if (!fs.existsSync(filePath)) {
@@ -77,12 +77,16 @@ async function unlinkWithRetry(filePath: string, attempts = 5): Promise<void> {
       if (code === "ENOENT") {
         return;
       }
-      if (code !== "EBUSY" || attempt === attempts - 1) {
+      // Windows: EBUSY/EPERM/EACCES mientras better-sqlite3 / antivirus sueltan el handle.
+      if (
+        (code !== "EBUSY" && code !== "EPERM" && code !== "EACCES") ||
+        attempt === attempts - 1
+      ) {
         throw error;
       }
 
       await new Promise((resolve) => {
-        setTimeout(resolve, 100 * (attempt + 1));
+        setTimeout(resolve, 200 * (attempt + 1));
       });
     }
   }
@@ -132,10 +136,13 @@ export async function factoryResetSystem(): Promise<FactoryResetResult> {
   assertLocalBackupAllowed();
   // Force: no bloquear por ingesta STT — se aborta la cola y se borra todo.
   await processingQueue.forceAbortAll();
-  // Breve margen para que handlers de cancelación suelten locks de archivos.
-  await new Promise((resolve) => setTimeout(resolve, 250));
+  // Margen para que handlers / better-sqlite3 suelten locks (Windows EBUSY).
+  await new Promise((resolve) => setTimeout(resolve, 800));
 
   await wipeCurrentState();
+  // Segunda desconexión + espera: el wipe puede haber reabierto handles vía ensure*.
+  await disconnectPrismaClient();
+  await new Promise((resolve) => setTimeout(resolve, 400));
 
   const dbPath = getDatabaseFilePath();
   await fs.promises.mkdir(path.dirname(dbPath), { recursive: true });

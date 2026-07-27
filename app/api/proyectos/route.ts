@@ -112,7 +112,7 @@ export async function POST(request: NextRequest) {
     void (async () => {
       try {
         const { ingestSingleProject } = await import("@/lib/kg/sources");
-        await ingestSingleProject(project);
+        await ingestSingleProject(project, { reconocido: true });
       } catch (error) {
         console.error("KG project hook error:", error);
       }

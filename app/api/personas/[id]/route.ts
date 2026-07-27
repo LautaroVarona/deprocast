@@ -5,6 +5,7 @@ import {
   updatePersonaEntity,
 } from "@/lib/personas/service";
 import { getPersonaByIdOrSlug } from "@/lib/personas/queries";
+import type { PersonaCrmModules } from "@/lib/personas/crm-modules";
 import { sealKgNodeInUniverse } from "@/lib/personas/universe-seal";
 import { getUniverseFilterSlugFromRequest } from "@/lib/babel/universe-scope";
 import { ensureRuntimeReady } from "@/lib/runtime-setup";
@@ -57,6 +58,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       nombrePrincipal?: string;
       aliases?: string[];
       notasGenerales?: string;
+      crm?: PersonaCrmModules;
     };
 
     const existing = await getPersonaEntity(id);
@@ -68,6 +70,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       nombrePrincipal: body.nombrePrincipal,
       aliases: Array.isArray(body.aliases) ? body.aliases : undefined,
       notasGenerales: body.notasGenerales,
+      crm: body.crm,
     });
 
     return NextResponse.json({ persona });

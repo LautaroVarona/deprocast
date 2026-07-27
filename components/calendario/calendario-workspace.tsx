@@ -1,7 +1,9 @@
 "use client";
 
 import { useBabel } from "@/components/babel/babel-context";
+import { AmazonAInventory } from "@/components/amazona/amazon-a-inventory";
 import { useCalendarioKeyboard } from "@/components/calendario/calendario-keyboard";
+import { MagoClockHud } from "@/components/calendario/mago-clock-hud";
 import { DayTrinchera } from "@/components/temporal/day-trinchera";
 import { MonthBoard } from "@/components/temporal/month-board";
 import { SuggestionDeck } from "@/components/temporal/suggestion-deck";
@@ -11,8 +13,10 @@ import {
 } from "@/components/temporal/view-mode-switch";
 import { WeekGrid } from "@/components/temporal/week-grid";
 import { useTemporalData } from "@/hooks/use-temporal-data";
+import type { AmazonAResourceDto } from "@/lib/amazona/types";
 import type { EcosystemArea } from "@/lib/calendario/constants";
 import type { MissionCardDto } from "@/lib/calendario/types";
+import { notifyDomainRefresh } from "@/lib/domain-refresh";
 import type { TemporalBlock } from "@/lib/temporal/types";
 import {
   addDays,
@@ -44,6 +48,8 @@ export function CalendarioWorkspace() {
   const [deckLoading, setDeckLoading] = useState(true);
   const [selectedCard, setSelectedCard] = useState<MissionCardDto | null>(null);
   const [selectedBlock, setSelectedBlock] = useState<TemporalBlock | null>(null);
+  const [selectedAmazona, setSelectedAmazona] =
+    useState<AmazonAResourceDto | null>(null);
   const [activeSlotDay, setActiveSlotDay] = useState<string | null>(null);
   const [coagulating, setCoagulating] = useState(false);
 
@@ -230,6 +236,44 @@ export function CalendarioWorkspace() {
     }
   };
 
+  const handleAssignAmazona = useCallback(
+    async (resourceId: string, day: Date) => {
+      try {
+        const body =
+          selectedBlock?.kind === "event"
+            ? { resourceId, eventId: selectedBlock.id }
+            : {
+                resourceId,
+                occurredAt: setTimeOnDay(day, 10).toISOString(),
+                durationMin: 30,
+              };
+
+        const response = await universeFetch("/api/amazona/assign", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        });
+        const data = (await response.json()) as { error?: string };
+        if (!response.ok) throw new Error(data.error ?? "Asignación fallida.");
+        notifyDomainRefresh("all", "amazona-assign");
+        bumpTemporal();
+        await refresh();
+        toast.success(
+          selectedBlock?.kind === "event"
+            ? "Recurso AmazonA anclado al bloque."
+            : "Recurso AmazonA coagulado en el día.",
+        );
+      } catch (error) {
+        toast.error(
+          error instanceof Error
+            ? error.message
+            : "No se pudo asignar el recurso.",
+        );
+      }
+    },
+    [selectedBlock, universeFetch, bumpTemporal, refresh],
+  );
+
   useCalendarioKeyboard({
     viewMode,
     onViewModeChange: setViewMode,
@@ -260,6 +304,7 @@ export function CalendarioWorkspace() {
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-2">
+            <MagoClockHud />
             <ViewModeSwitch mode={viewMode} onChange={setViewMode} skin="noir" />
             <Link
               href="/ludus/campamento"
@@ -302,7 +347,10 @@ export function CalendarioWorkspace() {
               onSlotClick={(day) => {
                 setActiveSlotDay(toIsoDayKey(day));
                 if (selectedCard) void handleCoagulate(day);
+                else if (selectedAmazona)
+                  void handleAssignAmazona(selectedAmazona.id, day);
               }}
+              onAssignAmazona={handleAssignAmazona}
             />
           ) : (
             <DayTrinchera
@@ -318,15 +366,23 @@ export function CalendarioWorkspace() {
           )}
         </div>
 
-        <SuggestionDeck
-          cards={deckCards}
-          isLoading={deckLoading || coagulating}
-          selectedCardId={selectedCard?.id ?? null}
-          areaFilter={areaFilter}
-          onAreaFilterChange={setAreaFilter}
-          onSelectCard={setSelectedCard}
-          skin="noir"
-        />
+        <div className="flex w-full shrink-0 flex-col gap-3 overflow-y-auto lg:w-64">
+          <AmazonAInventory
+            skin="noir"
+            selectedResourceId={selectedAmazona?.id ?? null}
+            onSelectResource={setSelectedAmazona}
+            className="min-h-[12rem] lg:max-h-[45%]"
+          />
+          <SuggestionDeck
+            cards={deckCards}
+            isLoading={deckLoading || coagulating}
+            selectedCardId={selectedCard?.id ?? null}
+            areaFilter={areaFilter}
+            onAreaFilterChange={setAreaFilter}
+            onSelectCard={setSelectedCard}
+            skin="noir"
+          />
+        </div>
       </div>
     </div>
   );

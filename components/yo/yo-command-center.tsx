@@ -130,7 +130,7 @@ export function YoCommandCenter() {
             consecration={yo.consecration}
             nosceOpen={nosceOpen}
             onNosceOpenChange={setNosceOpen}
-            operatorName={yo.operatorName?.trim() || "Operador"}
+            operatorName={yo.operatorName?.trim() || ""}
             onSenadoOpenChange={setSenadoOpen}
             onNosceCompleted={(next) => {
               syncYo(next);

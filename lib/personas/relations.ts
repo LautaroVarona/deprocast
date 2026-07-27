@@ -257,9 +257,11 @@ export async function createRelacionPersonaPersona(
       relationType: tipoRelacion,
       context: input.contexto?.trim() ?? "",
       metadata: {},
+      reconocido: true,
     },
     update: {
       context: input.contexto?.trim() ?? "",
+      reconocido: true,
     },
     include: { sourceNode: true, targetNode: true },
   });
@@ -299,10 +301,12 @@ export async function createRelacionPersonaProyecto(
       relationType,
       context: input.contexto?.trim() ?? "",
       metadata: metadata as Prisma.InputJsonValue,
+      reconocido: true,
     },
     update: {
       context: input.contexto?.trim() ?? "",
       metadata: metadata as Prisma.InputJsonValue,
+      reconocido: true,
     },
     include: { sourceNode: true, targetNode: true },
   });
@@ -337,9 +341,11 @@ export async function createRelacionPersonaCampo(
       relationType,
       context: input.contexto?.trim() ?? "",
       metadata: {},
+      reconocido: true,
     },
     update: {
       context: input.contexto?.trim() ?? "",
+      reconocido: true,
     },
     include: { sourceNode: true, targetNode: true },
   });

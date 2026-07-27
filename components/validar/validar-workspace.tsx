@@ -11,6 +11,7 @@ import { ProjectLinkCombobox } from "@/components/validar/project-link-combobox"
 import { StrictMetaTagsEditor } from "@/components/validar/strict-meta-tags-editor";
 
 import { Button } from "@/components/ui/button";
+import { useYoNames } from "@/hooks/use-yo-names";
 import {
   Accordion,
   AccordionContent,
@@ -254,6 +255,7 @@ export function ValidarWorkspace() {
   const searchParams = useSearchParams();
 
   const { universeSlug, universeFetch, isLoading: isUniverseLoading } = useBabel();
+  const { operatorName } = useYoNames();
 
   const selectedId = searchParams.get("id");
 
@@ -1007,7 +1009,7 @@ export function ValidarWorkspace() {
                           options={POSICION_OPTIONS}
                         />
                         <p className="font-mono text-[9px] text-muted-foreground">
-                          Rol activo del Observador al trabajar esta materia.
+                          Rol activo de {operatorName} al trabajar esta materia.
                         </p>
                       </div>
                     </AccordionContent>

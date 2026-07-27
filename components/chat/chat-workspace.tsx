@@ -3,29 +3,18 @@
 
 
 import { useBabel } from "@/components/babel/babel-context";
-
 import { MentionInput } from "@/components/chat/mention-input";
-
 import { MessageList } from "@/components/chat/message-list";
-
 import { ProposalCards } from "@/components/chat/proposal-cards";
-
 import { SessionSidebar } from "@/components/chat/session-sidebar";
-
+import { useYoNames } from "@/hooks/use-yo-names";
 import type {
-
   ChatMessageDto,
-
   ChatSegment,
-
   ChatSessionSummary,
-
 } from "@/lib/chat/types";
-
 import type { ContextEventDto } from "@/lib/events/types";
-
 import { useCallback, useEffect, useState } from "react";
-
 import { toast } from "sonner";
 
 
@@ -33,6 +22,7 @@ import { toast } from "sonner";
 export function ChatWorkspace() {
 
   const { universeSlug, universeFetch, isLoading: isUniverseLoading } = useBabel();
+  const { exocortexName } = useYoNames();
 
   const [sessions, setSessions] = useState<ChatSessionSummary[]>([]);
 
@@ -490,7 +480,7 @@ export function ChatWorkspace() {
 
         <div className="border-b border-border px-4 py-3">
 
-          <h1 className="text-sm font-semibold">Chat Exocórtex</h1>
+          <h1 className="text-sm font-semibold">Chat {exocortexName}</h1>
 
           <p className="font-mono text-[10px] text-muted-foreground">
 

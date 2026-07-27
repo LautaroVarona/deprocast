@@ -2,6 +2,7 @@
 
 import { completePrimaMissionAction } from "@/app/yo/actions";
 import { Sheet, SheetBody, SheetHeader } from "@/components/ui/sheet";
+import { notifyDomainRefresh } from "@/lib/domain-refresh";
 import type { YoDto } from "@/lib/yo/types";
 import { Loader2Icon } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -47,9 +48,10 @@ export function MissionProjectOverlay({
 
       toast.success(
         result.data.genesisStatus === "COMPLETED"
-          ? "Génesis completa. El exoesqueleto está libre."
-          : "Prima Materia inyectada en el Atanor.",
+          ? "Génesis completa. El proyecto ya vive en Atanor y en el grafo."
+          : "Prima Materia fijada: proyecto coagulado en Atanor y grafo.",
       );
+      notifyDomainRefresh("all", "prima-materia");
       onCompleted(result.data);
       onOpenChange(false);
     } finally {
@@ -61,7 +63,7 @@ export function MissionProjectOverlay({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetHeader
         title="Prima Materia · Primer fuego"
-        description="Inyectá tu gran objetivo a 90 días. Al sellarlo, liberás la app."
+        description="Fijá tu gran objetivo a 90 días. Se crea ya como proyecto en Atanor y aparece en el grafo."
         onClose={() => onOpenChange(false)}
       />
       <SheetBody>

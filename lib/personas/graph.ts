@@ -61,7 +61,16 @@ export async function buildPersonaGraphSnapshot(
     !personaNodes.some((node) => node.id === centerNodeId)
   ) {
     const hub = await prisma.kgNode.findUnique({ where: { id: centerNodeId } });
-    if (hub) personaNodes.unshift(hub);
+    if (hub) {
+      if (!hub.reconocido) {
+        await prisma.kgNode.update({
+          where: { id: hub.id },
+          data: { reconocido: true },
+        });
+        hub.reconocido = true;
+      }
+      personaNodes.unshift(hub);
+    }
   }
 
   const personaIds = new Set(personaNodes.map((node) => node.id));

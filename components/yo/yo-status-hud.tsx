@@ -2,7 +2,10 @@
 
 import { HermeticScale } from "@/components/pendientes/hermetic-scale";
 import {
-  DEFAULT_EXOCORTEX_NAME,
+  resolveExocortexDisplayName,
+  resolveOperatorDisplayName,
+} from "@/lib/yo/display-names";
+import {
   OPERATIONAL_STATUSES,
   type OperationalStatus,
   type YoDto,
@@ -29,6 +32,8 @@ export function YoStatusHud({
   onEnergyChange,
 }: YoStatusHudProps) {
   const [energyDraft, setEnergyDraft] = useState(yo.energyLevel);
+  const operatorName = resolveOperatorDisplayName(yo.operatorName);
+  const exocortexName = resolveExocortexDisplayName(yo.exocortexName);
 
   useEffect(() => {
     setEnergyDraft(yo.energyLevel);
@@ -39,20 +44,10 @@ export function YoStatusHud({
       <section className="flex shrink-0 flex-wrap items-start justify-between gap-3">
         <div className="flex flex-wrap gap-2.5">
           <div className="border border-amber-100/15 bg-black/40 px-3 py-2">
-            <p className="font-mono text-[9px] tracking-[0.2em] text-amber-100/45 uppercase">
-              Operador
-            </p>
-            <p className="mt-1 font-mono text-sm text-amber-100">
-              {yo.operatorName ?? "—"}
-            </p>
+            <p className="font-mono text-sm text-amber-100">{operatorName}</p>
           </div>
           <div className="border border-amber-100/15 bg-black/40 px-3 py-2">
-            <p className="font-mono text-[9px] tracking-[0.2em] text-amber-100/45 uppercase">
-              Exocórtex
-            </p>
-            <p className="mt-1 font-mono text-sm text-amber-100">
-              {yo.exocortexName ?? DEFAULT_EXOCORTEX_NAME}
-            </p>
+            <p className="font-mono text-sm text-amber-100">{exocortexName}</p>
           </div>
         </div>
         <div className="animate-pulse border border-amber-100/30 px-2.5 py-1.5 font-mono text-[10px] tracking-[0.2em] text-amber-100/90 uppercase">
@@ -71,19 +66,13 @@ export function YoStatusHud({
           </p>
           <div className="mt-3 grid gap-3 sm:grid-cols-2">
             <div className="border border-accent/20 bg-black/25 px-3 py-2">
-              <p className="font-mono text-[9px] tracking-[0.2em] text-muted-foreground uppercase">
-                Operador
-              </p>
-              <p className="mt-1 font-mono text-xl text-accent">
-                {yo.operatorName}
+              <p className="mt-0.5 font-mono text-xl text-accent">
+                {operatorName}
               </p>
             </div>
             <div className="border border-accent/20 bg-black/25 px-3 py-2">
-              <p className="font-mono text-[9px] tracking-[0.2em] text-muted-foreground uppercase">
-                Exocórtex
-              </p>
-              <p className="mt-1 font-mono text-xl text-accent">
-                {yo.exocortexName ?? DEFAULT_EXOCORTEX_NAME}
+              <p className="mt-0.5 font-mono text-xl text-accent">
+                {exocortexName}
               </p>
               {yo.exocortexNamedBy === "autonomous" ? (
                 <p className="mt-1 font-mono text-[9px] tracking-[0.16em] text-muted-foreground uppercase">

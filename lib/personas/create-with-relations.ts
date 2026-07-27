@@ -134,9 +134,13 @@ export async function createPersonaWithRelations(
 
   const aliases = sanitizeAliases(nombrePrincipal, input.aliases ?? []);
   const connections = normalizeConnections(input.connections);
-  const relationToOperator = input.relationToOperator?.trim() || "";
+  const relationToOperator =
+    input.relationToOperator?.trim() ||
+    input.crm?.identity?.vinculoOperador?.trim() ||
+    "";
   const metadata = buildPersonaMetadata({
     notasGenerales: input.notasGenerales ?? "",
+    crm: input.crm,
   });
 
   let operator: { id: string; primaryName: string } | null = null;
@@ -157,7 +161,7 @@ export async function createPersonaWithRelations(
       throw new Error(
         operatorName
           ? `No se pudo anclar el vínculo a ${operatorName}. Recargá /yo e intentá de nuevo.`
-          : "Definí tu nombre en /yo antes de vincular personas al Operador.",
+          : "Definí tu nombre en /yo antes de vincular personas.",
       );
     }
   }
@@ -182,6 +186,7 @@ export async function createPersonaWithRelations(
       const mergedMeta = buildPersonaMetadata({
         existing: parseMetadataJson(existing.metadata),
         notasGenerales: input.notasGenerales ?? "",
+        crm: input.crm,
       });
 
       const updated = await tx.kgNode.update({

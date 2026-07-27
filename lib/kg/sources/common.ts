@@ -34,6 +34,13 @@ export type IngestDocumentParams = {
   /** Conectar el nodo documento con las entidades halladas (default true). */
   connectDocument?: boolean;
   confidence?: number;
+  /**
+   * Si true, coagula nodos/aristas al instante (acción del Observador).
+   * Default false: extracciones automáticas quedan pendientes de HITL.
+   */
+  reconocido?: boolean;
+  /** Si true, no llama al LLM: solo structured + nodo documento. */
+  structuredOnly?: boolean;
 };
 
 /**
@@ -60,6 +67,8 @@ export async function ingestDocumentSource(
     force,
     connectDocument = true,
     confidence,
+    reconocido = false,
+    structuredOnly = false,
   } = params;
 
   const signatureBasis = JSON.stringify({
@@ -72,9 +81,10 @@ export async function ingestDocumentSource(
     { sourceType, sourceId },
     signatureBasis,
     async () => {
-      const llm = body.trim()
-        ? await extractKgFromText(body, model)
-        : { entities: [], relations: [] };
+      const llm =
+        !structuredOnly && body.trim()
+          ? await extractKgFromText(body, model)
+          : { entities: [], relations: [] };
 
       const docEntity: LlmEntity = {
         name: documentPath,
@@ -97,6 +107,7 @@ export async function ingestDocumentSource(
           metadata: sourceMetadata,
           confidence,
         },
+        reconocido,
       });
 
       if (connectDocument) {
