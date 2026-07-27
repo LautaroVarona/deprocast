@@ -16,7 +16,7 @@ export function useDomainRefresh(
   scope: DomainRefreshScope | readonly DomainRefreshScope[] = "all",
 ): number {
   const [refreshKey, setRefreshKey] = useState(0);
-  const scopeKey = Array.isArray(scope) ? scope.join("|") : scope;
+  const scopeKey: string = Array.isArray(scope) ? scope.join("|") : scope;
 
   useEffect(() => {
     const listened: DomainRefreshScope | DomainRefreshScope[] =
