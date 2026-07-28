@@ -107,26 +107,28 @@ function parseMapeadorJson(raw: string): {
     return { nodes: [], edges: [] };
   }
 
-  const nodes: StructuralNodeProposal[] = validated.data.nodes
-    .map((node) => {
+  const nodes: StructuralNodeProposal[] = validated.data.nodes.flatMap(
+    (node) => {
       const name = node.name.trim();
-      if (!name) return null;
-      return {
-        localId: randomUUID(),
-        name,
-        type: mapLegacyEntityType(node.type),
-        confidence: node.confidence,
-      } satisfies StructuralNodeProposal;
-    })
-    .filter((n): n is StructuralNodeProposal => n !== null);
+      if (!name) return [];
+      return [
+        {
+          localId: randomUUID(),
+          name,
+          type: mapLegacyEntityType(node.type),
+          confidence: node.confidence,
+        } satisfies StructuralNodeProposal,
+      ];
+    },
+  );
 
   const knownNames = new Set(nodes.map((n) => n.name.toLowerCase()));
 
-  const edges: StructuralEdgeProposal[] = validated.data.edges
-    .map((edge) => {
+  const edges: StructuralEdgeProposal[] = validated.data.edges.flatMap(
+    (edge) => {
       const fromName = edge.fromName.trim();
       const toName = edge.toName.trim();
-      if (!fromName || !toName) return null;
+      if (!fromName || !toName) return [];
       if (
         !knownNames.has(fromName.toLowerCase()) ||
         !knownNames.has(toName.toLowerCase())
@@ -138,19 +140,21 @@ function parseMapeadorJson(raw: string): {
         const hasTo = nodes.some(
           (n) => n.name.toLowerCase() === toName.toLowerCase(),
         );
-        if (!hasFrom || !hasTo) return null;
+        if (!hasFrom || !hasTo) return [];
       }
-      return {
-        localId: randomUUID(),
-        fromName,
-        toName,
-        relationType: normalizeRelationType(edge.relationType),
-        context:
-          (edge.context ?? "").trim() ||
-          `Relación visual detectada: ${fromName} → ${toName}`,
-      } satisfies StructuralEdgeProposal;
-    })
-    .filter((e): e is StructuralEdgeProposal => e !== null);
+      return [
+        {
+          localId: randomUUID(),
+          fromName,
+          toName,
+          relationType: normalizeRelationType(edge.relationType),
+          context:
+            (edge.context ?? "").trim() ||
+            `Relación visual detectada: ${fromName} → ${toName}`,
+        } satisfies StructuralEdgeProposal,
+      ];
+    },
+  );
 
   return { nodes, edges };
 }
