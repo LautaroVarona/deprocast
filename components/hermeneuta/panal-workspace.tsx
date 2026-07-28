@@ -753,12 +753,7 @@ export function PanalWorkspace() {
                 ) : (
                   <button
                     type="button"
-                    disabled={
-                      isBusy ||
-                      !semanticText.trim() ||
-                      phase === "error" ||
-                      phase === "idle"
-                    }
+                    disabled={isBusy || !semanticText.trim()}
                     onClick={() => void handleCoagulate()}
                     className={cn(
                       "flex w-full items-center justify-center gap-2 rounded-sm border px-4 py-3.5 font-mono text-xs uppercase tracking-[0.18em] transition-all",
