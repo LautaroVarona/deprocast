@@ -178,7 +178,7 @@ export function ensureCoreColumnPatches(): void {
           legacy.displayName.trim().toLowerCase() !== "lautaro"
         ) {
           db.prepare(
-            `UPDATE "Yo" SET operatorName = ?, operationalStatus = ?, energyLevel = ?, calibration = ?, genesisCompletedAt = CURRENT_TIMESTAMP, updatedAt = CURRENT_TIMESTAMP WHERE id = 'core'`,
+            `UPDATE "Yo" SET operatorName = ?, operationalStatus = ?, energyLevel = ?, calibration = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = 'core'`,
           ).run(
             legacy.displayName.trim(),
             legacy.operationalStatus || "OPERATIVO",

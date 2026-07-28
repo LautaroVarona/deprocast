@@ -11,6 +11,7 @@ import {
   resolveOperatorDisplayName,
 } from "@/lib/yo/display-names";
 import {
+  CONSECRATION_PERSONA_TARGET,
   DEFAULT_EXOCORTEX_NAME,
   YO_CORE_ID,
   type CalibrationMap,
@@ -68,8 +69,17 @@ async function toDto(row: {
   updatedAt: Date;
 }): Promise<YoDto> {
   const calibration = parseCalibration(row.calibration);
-  const genesisStatus = deriveGenesisStatus({ ...row, calibration });
+  // Hub YO siempre en KG si hay nombre (cuenta como Persona).
+  if (row.operatorName?.trim()) {
+    const { ensureOperatorPersonaNode } = await import("@/lib/yo/operator-node");
+    await ensureOperatorPersonaNode(row.operatorName);
+  }
   const consecration = await buildConsecrationProgress(calibration);
+  const genesisStatus = deriveGenesisStatus({
+    ...row,
+    calibration,
+    senadoComplete: consecration.personaCount >= CONSECRATION_PERSONA_TARGET,
+  });
 
   return {
     id: row.id,
@@ -91,18 +101,36 @@ async function toDto(row: {
 
 export async function ensureYoShell(): Promise<YoDto> {
   const existing = await prisma.yo.findUnique({ where: { id: YO_CORE_ID } });
-  if (existing) return toDto(existing);
+  if (!existing) {
+    const created = await prisma.yo.create({
+      data: {
+        id: YO_CORE_ID,
+        operationalStatus: "STANDBY",
+        energyLevel: 5,
+        calibration: {},
+      },
+    });
+    return toDto(created);
+  }
 
-  const created = await prisma.yo.create({
-    data: {
-      id: YO_CORE_ID,
-      operationalStatus: "STANDBY",
-      energyLevel: 5,
-      calibration: {} as Prisma.InputJsonValue,
-    },
-  });
+  const dto = await toDto(existing);
 
-  return toDto(created);
+  // Sellado prematuro (p.ej. migración legacy sin Senado): reabrir Tabula.
+  if (
+    existing.genesisCompletedAt &&
+    dto.genesisStatus === "PENDING_MISSIONS"
+  ) {
+    const reopened = await prisma.yo.update({
+      where: { id: YO_CORE_ID },
+      data: {
+        genesisCompletedAt: null,
+        operationalStatus: "STANDBY",
+      },
+    });
+    return toDto(reopened);
+  }
+
+  return dto;
 }
 
 export async function getYo(): Promise<YoDto> {

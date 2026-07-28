@@ -11,6 +11,7 @@ import { createPersona } from "@/lib/personas/service";
 import type { PersonaListStatus } from "@/lib/personas/types";
 import { sealKgNodeInUniverse } from "@/lib/personas/universe-seal";
 import { ensureRuntimeReady } from "@/lib/runtime-setup";
+import { withGenesisCoreNodeIds } from "@/lib/yo/genesis-core";
 import { NextRequest, NextResponse } from "next/server";
 
 export const runtime = "nodejs";
@@ -38,7 +39,9 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    const nodeIds = await resolveUniverseKgNodeIds(universeSlug);
+    const nodeIds = await withGenesisCoreNodeIds(
+      await resolveUniverseKgNodeIds(universeSlug),
+    );
     if (nodeIds && nodeIds.size === 0) {
       return NextResponse.json({
         personas: [],

@@ -202,12 +202,16 @@ export function PensaderoWorkspace() {
       </header>
 
       {!hasResults || !zone ? (
-        <div className="flex flex-1 flex-col items-center justify-center gap-2 px-6 text-center">
-          <p className="text-sm text-[#FFB000]/80">Zona de Impacto en espera</p>
-          <p className="max-w-md text-[11px] text-zinc-600">
-            El motor vectoriza tu query con Cohere, localiza los 5 Quántomos
-            más afines y viaja por KgEdge (reconocido · weight&gt;8).
-          </p>
+        <div className="flex min-h-0 flex-1 flex-col">
+          <div className="shrink-0 border-b border-[#FFB000]/20 px-4 py-2 text-center">
+            <p className="text-[11px] text-[#FFB000]/70">
+              Universo base · Operador + Senado + Prima (vista clásica). Escribí
+              una query para iluminar Quántomos.
+            </p>
+          </div>
+          <div className="min-h-0 flex-1">
+            <GrafoWorkspace />
+          </div>
         </div>
       ) : (
         <div className="grid min-h-0 flex-1 grid-cols-1 divide-y divide-[#FFB000]/20 lg:grid-cols-2 lg:divide-x lg:divide-y-0">

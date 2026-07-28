@@ -19,17 +19,20 @@ export function deriveGenesisStatus(input: {
   exocortexName: string | null;
   genesisCompletedAt: Date | string | null;
   calibration?: CalibrationMap;
+  /** false → Senado incompleto (faltan las 3 personas vinculadas al Operador). */
+  senadoComplete?: boolean;
 }): GenesisStatus {
   const hasNames = Boolean(
     input.operatorName?.trim() && input.exocortexName?.trim(),
   );
   if (!hasNames) return "PENDING_NAMES";
   if (input.genesisCompletedAt) {
-    // Sellado prematuro / incompleto → seguir en Tabula hasta Nosce + Prima.
+    // Sellado prematuro / incompleto → Tabula hasta Nosce + Senado + Prima.
     if (
       !input.calibration ||
       !isMissionIComplete(input.calibration) ||
-      !isMissionIIIComplete(input.calibration)
+      !isMissionIIIComplete(input.calibration) ||
+      input.senadoComplete === false
     ) {
       return "PENDING_MISSIONS";
     }

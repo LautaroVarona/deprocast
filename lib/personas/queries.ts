@@ -229,6 +229,10 @@ export async function listPersonas(
     await sealLegacyCrmPersonas();
   }
 
+  // YO (Operador) siempre es Persona verificada si el bautismo ocurrió.
+  const { ensureOperatorPersonaNode } = await import("@/lib/yo/operator-node");
+  await ensureOperatorPersonaNode();
+
   const nodes = await prisma.kgNode.findMany({
     where: {
       type: "persona",

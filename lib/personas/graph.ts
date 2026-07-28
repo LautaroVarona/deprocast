@@ -7,6 +7,7 @@ import type {
   PersonaGraphViewMode,
 } from "@/lib/personas/model";
 import { prisma } from "@/lib/prisma";
+import { withGenesisCoreNodeIds } from "@/lib/yo/genesis-core";
 import { ensureOperatorPersonaNode } from "@/lib/yo/operator-node";
 
 const PERSONA_PROJECT_RELATIONS = [
@@ -41,6 +42,7 @@ export async function buildPersonaGraphSnapshot(
 ): Promise<PersonaGraphSnapshot> {
   const operatorNode = await ensureOperatorPersonaNode();
   const centerNodeId = operatorNode?.id ?? null;
+  const scopedIds = await withGenesisCoreNodeIds(universeNodeIds);
 
   const personaNodesRaw = await prisma.kgNode.findMany({
     where: { type: "persona", reconocido: true },
@@ -48,11 +50,11 @@ export async function buildPersonaGraphSnapshot(
   });
 
   const personaNodes =
-    universeNodeIds === null
+    scopedIds === null
       ? personaNodesRaw
       : personaNodesRaw.filter(
           (node) =>
-            universeNodeIds.has(node.id) ||
+            scopedIds.has(node.id) ||
             (centerNodeId !== null && node.id === centerNodeId),
         );
 
@@ -130,8 +132,8 @@ export async function buildPersonaGraphSnapshot(
     });
     projectNodes = projectNodesRaw.filter((node) => {
       if (linkedProjectIds.has(node.id)) return true;
-      if (universeNodeIds === null) return true;
-      return universeNodeIds.has(node.id);
+      if (scopedIds === null) return true;
+      return scopedIds.has(node.id);
     });
 
     const linkedCampoIds = new Set<string>();
@@ -162,8 +164,8 @@ export async function buildPersonaGraphSnapshot(
       .filter((node): node is NonNullable<typeof node> => node !== undefined)
       .filter((node) => {
         if (linkedCampoIds.has(node.id)) return true;
-        if (universeNodeIds === null) return true;
-        return universeNodeIds.has(node.id);
+        if (scopedIds === null) return true;
+        return scopedIds.has(node.id);
       });
   }
 

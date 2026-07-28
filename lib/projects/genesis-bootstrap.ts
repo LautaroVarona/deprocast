@@ -156,9 +156,19 @@ export async function bootstrapGenesisProject(input: {
   const operator = await ensureOperatorPersonaNode(operatorName);
   const projectNodeId = await findProjectKgNode(project);
 
-  if (operator && projectNodeId) {
-    await linkOperatorToProject(operator.id, projectNodeId, title);
+  if (!projectNodeId) {
+    throw new Error(
+      "El proyecto Génesis se creó en Atanor pero no coaguló en el KG. Reintentá Prima Materia.",
+    );
   }
+
+  if (!operator) {
+    throw new Error(
+      "No hay hub Operador en el KG. Completá el bautismo en /yo antes de Prima Materia.",
+    );
+  }
+
+  await linkOperatorToProject(operator.id, projectNodeId, title);
 
   return { project, projectNodeId };
 }

@@ -2,6 +2,7 @@
 
 import { createPersonaAction } from "@/app/personas/actions";
 import { getSenadoGraphAction } from "@/app/yo/actions";
+import { useBabel } from "@/components/babel/babel-context";
 import {
   DynamicGraph,
   type DynamicGraphMember,
@@ -28,6 +29,7 @@ export function MissionPersonaOverlay({
   target,
   operatorName,
 }: MissionPersonaOverlayProps) {
+  const { universeSlug } = useBabel();
   const [nombre, setNombre] = useState("");
   const [rol, setRol] = useState("");
   const [saving, setSaving] = useState(false);
@@ -74,6 +76,7 @@ export function MissionPersonaOverlay({
         notasGenerales: "",
         relationToOperator: trimmedRol,
         connections: [],
+        universeSlug,
       });
 
       if (!result.ok) {

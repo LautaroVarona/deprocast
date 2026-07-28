@@ -309,8 +309,21 @@ export function PersonasDashboard() {
               <p>
                 {query
                   ? "Ninguna persona coincide con la búsqueda."
-                  : "Todavía no hay personas verificadas en este universo."}
+                  : "El núcleo Génesis debería incluir al Operador (YO) y al menos 3 personas del Senado."}
               </p>
+              {!query && (
+                <p className="max-w-sm text-xs text-muted-foreground">
+                  Completá o repará el Protocolo Génesis en{" "}
+                  <button
+                    type="button"
+                    className="underline underline-offset-2"
+                    onClick={() => router.push("/yo")}
+                  >
+                    /yo
+                  </button>
+                  . Las candidatas de ingesta IA viven en otra pestaña.
+                </p>
+              )}
               {!query && pendingCount > 0 ? (
                 <Button
                   type="button"
@@ -322,19 +335,6 @@ export function PersonasDashboard() {
                   {pendingCount === 1 ? "" : "s"} de la carga
                 </Button>
               ) : null}
-              {!query && pendingCount === 0 ? (
-                <p className="max-w-sm text-xs text-muted-foreground">
-                  Tras una ingesta, las entidades aparecen primero en{" "}
-                  <button
-                    type="button"
-                    className="underline underline-offset-2"
-                    onClick={() => selectTab("candidatas")}
-                  >
-                    Candidatas
-                  </button>{" "}
-                  hasta que las apruebes.
-                </p>
-              ) : null}
               {!query && (
                 <Button
                   type="button"
@@ -342,7 +342,7 @@ export function PersonasDashboard() {
                   onClick={() => setShowCreate(true)}
                 >
                   <PlusIcon />
-                  Añadir la primera persona
+                  Añadir persona
                 </Button>
               )}
             </div>

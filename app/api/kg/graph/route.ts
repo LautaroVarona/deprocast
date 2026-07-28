@@ -4,6 +4,7 @@ import {
   shouldFilterByUniverse,
 } from "@/lib/babel/context-seal";
 import { resolveUniverseKgNodeIds } from "@/lib/babel/universe-refs";
+import { withGenesisCoreNodeIds } from "@/lib/yo/genesis-core";
 import { NextRequest, NextResponse } from "next/server";
 
 export const runtime = "nodejs";
@@ -19,7 +20,9 @@ export async function GET(request: NextRequest) {
     const limitRaw = Number.parseInt(searchParams.get("limit") ?? "1500", 10);
     const universeSlug = resolveContextSealFromRequest(request);
     const nodeIds = shouldFilterByUniverse(universeSlug)
-      ? await resolveUniverseKgNodeIds(universeSlug)
+      ? await withGenesisCoreNodeIds(
+          await resolveUniverseKgNodeIds(universeSlug),
+        )
       : null;
 
     const snapshot = await getGraphSnapshot({
