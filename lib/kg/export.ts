@@ -17,7 +17,7 @@ export type GraphExportJson = {
     target: string;
     relationType: string;
     context: string;
-    weight: number | null;
+    weight: number;
     confidence: number;
   }[];
 };

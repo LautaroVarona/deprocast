@@ -15,7 +15,7 @@ export type SnapshotEdge = {
   target: string;
   relationType: string;
   context: string;
-  weight: number | null;
+  weight: number;
   confidence: number;
 };
 
@@ -40,7 +40,7 @@ export type NeighborhoodEdge = {
   id: string;
   relationType: string;
   context: string;
-  weight: number | null;
+  weight: number;
   direction: "outgoing" | "incoming" | "self";
   neighbor: NodeSummary;
 };

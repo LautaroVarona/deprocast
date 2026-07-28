@@ -51,6 +51,7 @@ export const MENTION_SOURCE_TYPES = [
   "health_event",
   "document_meta",
   "encyclopedia_entry",
+  "hermeneuta",
 ] as const;
 
 // Tipos de nodo que pertenecen al subgrafo de codigo.

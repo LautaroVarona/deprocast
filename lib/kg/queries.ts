@@ -85,7 +85,7 @@ export type NeighborhoodEdge = {
   id: string;
   relationType: string;
   context: string;
-  weight: number | null;
+  weight: number;
   direction: "outgoing" | "incoming" | "self";
   neighbor: KgNodeSummary;
 };

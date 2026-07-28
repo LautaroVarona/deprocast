@@ -1,12 +1,13 @@
 "use client";
 
-import { LUDUS_AREAS } from "@/lib/ludus/constants";
+import { LUDUS_AREAS, TRITURADORA_HREF } from "@/lib/ludus/constants";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 export function LudusAreaNav() {
   const pathname = usePathname();
+  const trituradoraActive = pathname.startsWith(TRITURADORA_HREF);
 
   return (
     <nav
@@ -32,6 +33,18 @@ export function LudusAreaNav() {
           </Link>
         );
       })}
+      <Link
+        href={TRITURADORA_HREF}
+        className={cn(
+          "rounded-full px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.16em] transition-colors",
+          trituradoraActive
+            ? "bg-[#FFB000]/15 text-[#FFB000]"
+            : "text-muted-foreground hover:bg-muted hover:text-foreground",
+        )}
+        aria-current={trituradoraActive ? "page" : undefined}
+      >
+        Trituradora
+      </Link>
     </nav>
   );
 }

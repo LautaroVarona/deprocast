@@ -25,6 +25,7 @@ import {
   WandSparklesIcon,
   WrenchIcon,
   WalletIcon,
+  CogIcon,
 } from "lucide-react";
 
 /** Categorías semánticas del Portal de navegación (⌘K / ESC). */
@@ -87,7 +88,7 @@ export const COMMAND_ROUTES: CommandRoute[] = [
     id: "calendario",
     href: "/calendario",
     label: "Calendario",
-    description: "Simulador de turnos / draft de misiones",
+    description: "Tablero del Tiempo · Castillo / Campamento / Trinchera",
     hotkey: "Y",
     category: "nucleo",
     icon: CalendarIcon,
@@ -124,8 +125,8 @@ export const COMMAND_ROUTES: CommandRoute[] = [
   {
     id: "watcher",
     href: "/cam-recorder",
-    label: "Watcher",
-    description: "Grabación y observación",
+    label: "Hermeneuta",
+    description: "Panal de ingesta visual · cuadernos",
     hotkey: "W",
     category: "captura",
     icon: VideoIcon,
@@ -145,7 +146,7 @@ export const COMMAND_ROUTES: CommandRoute[] = [
     id: "validar",
     href: "/validar",
     label: "Validar",
-    description: "Revisión HITL del Purifier",
+    description: "Triage HITL · cola de entropía",
     hotkey: "V",
     category: "cortex",
     icon: ShieldCheckIcon,
@@ -250,6 +251,15 @@ export const COMMAND_ROUTES: CommandRoute[] = [
     hotkey: "4",
     category: "ludus",
     icon: WandSparklesIcon,
+  },
+  {
+    id: "trituradora",
+    href: "/ludus/trituradora",
+    label: "Trituradora",
+    description: "Task-Breaker · Boss → microtareas",
+    hotkey: "5",
+    category: "ludus",
+    icon: CogIcon,
   },
 
   // ── SISTEMA & TELEMETRÍA ────────────────────────────────

@@ -111,3 +111,26 @@ export type LudusStatue = {
   cost: number;
   description: string;
 };
+
+export type TaskBreakerEntity = {
+  id?: string;
+  kind: "persona" | "concepto" | "contexto";
+  label: string;
+};
+
+export type TaskBreakerMicrotask = {
+  localId: string;
+  title: string;
+  description: string;
+  estimatedMinutes: number;
+  gravityWeight: number;
+  projectId: string | null;
+  sequence: number;
+};
+
+export type TaskBreakerResult = {
+  microtasks: TaskBreakerMicrotask[];
+  projectId: string | null;
+  projectTitle: string | null;
+  source: "llm" | "fallback";
+};

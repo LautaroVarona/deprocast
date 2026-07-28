@@ -1,5 +1,6 @@
 import "server-only";
 
+import { assertNoImmutableCollision } from "@/lib/calendario/collision";
 import { previewSignalPoints } from "@/lib/calendario/deck";
 import type { CoagulateInput, CoagulateResult } from "@/lib/calendario/types";
 import { coagulateInputSchema } from "@/lib/calendario/types";
@@ -77,6 +78,8 @@ export async function coagulateMissionCard(
   const endsAt = addMinutes(input.occurredAt, meta.durationMin);
   const actionCost = Math.min(12, Math.max(1, meta.actionCost));
 
+  await assertNoImmutableCollision(input.occurredAt, meta.durationMin);
+
   if (input.cardSource === "proposed_event") {
     const existing = await prisma.contextEvent.findUnique({
       where: { id: input.cardId },
@@ -143,6 +146,13 @@ export async function coagulateMissionCard(
     await prisma.pendingTask.update({
       where: { id: input.cardId },
       data: { targetDay: input.occurredAt },
+    });
+  }
+
+  if (input.cardSource === "microtask") {
+    await prisma.ludusMicrotask.update({
+      where: { id: input.cardId },
+      data: { status: "scheduled" },
     });
   }
 

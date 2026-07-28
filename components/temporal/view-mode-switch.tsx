@@ -12,7 +12,7 @@ type ViewModeSwitchProps = {
 
 const MODES: { id: CalendarViewMode; label: string; hint: string }[] = [
   { id: "month", label: "Castillo", hint: "1" },
-  { id: "week", label: "Campaña", hint: "2" },
+  { id: "week", label: "Campamento", hint: "2" },
   { id: "day", label: "Trinchera", hint: "3" },
 ];
 
@@ -21,11 +21,16 @@ export function ViewModeSwitch({
   onChange,
   skin = "noir",
 }: ViewModeSwitchProps) {
+  const panelClass =
+    skin === "noir"
+      ? "border-zinc-800 bg-zinc-950/90"
+      : "border-border bg-muted/40";
+
   return (
     <div
       className={cn(
         "inline-flex rounded-lg border p-0.5",
-        skin === "noir" ? "border-border bg-card/80" : "border-border bg-muted/40",
+        panelClass,
       )}
       role="tablist"
     >
@@ -39,8 +44,12 @@ export function ViewModeSwitch({
           className={cn(
             "rounded-md px-3 py-1.5 font-mono text-[10px] uppercase tracking-wider transition-colors",
             mode === item.id
-              ? "bg-primary/20 text-primary"
-              : "text-muted-foreground hover:text-foreground",
+              ? skin === "noir"
+                ? "bg-[#FFB000]/15 text-[#FFB000]"
+                : "bg-primary/20 text-primary"
+              : skin === "noir"
+                ? "text-zinc-500 hover:text-zinc-200"
+                : "text-muted-foreground hover:text-foreground",
           )}
         >
           {item.label}

@@ -40,17 +40,22 @@ export type CreatePendingTaskInput = {
   listadorConfidence?: number;
   status?: PendingTaskStatus;
   universeSlug?: string;
+  weight?: number;
+  recognizedAt?: Date;
+  calibratedAt?: Date;
 };
 
 export async function createPendingTask(
   input: CreatePendingTaskInput,
 ): Promise<PendingTaskDto> {
   const targetDay = normalizeDayStart(input.targetDay ?? new Date());
+  const status = input.status ?? "suggested";
+  const now = new Date();
   const row = await prisma.pendingTask.create({
     data: {
       title: input.title.trim(),
       description: input.description?.trim() || null,
-      status: input.status ?? "suggested",
+      status,
       source: input.source,
       sourceRef: input.sourceRef ?? null,
       targetDay,
@@ -59,6 +64,13 @@ export async function createPendingTask(
       reviewId: input.reviewId ?? null,
       listadorConfidence: input.listadorConfidence ?? null,
       universeSlug: input.universeSlug ?? null,
+      weight:
+        typeof input.weight === "number" ? clampWeight(input.weight) : null,
+      recognizedAt:
+        input.recognizedAt ??
+        (status === "recognized" || status === "calibrated" ? now : null),
+      calibratedAt:
+        input.calibratedAt ?? (status === "calibrated" ? now : null),
     },
   });
   return mapPendingTask(row);

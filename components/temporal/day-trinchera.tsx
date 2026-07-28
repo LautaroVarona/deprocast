@@ -36,7 +36,7 @@ function DayColumn({
 }) {
   const panelClass =
     skin === "noir"
-      ? "calendario-noir-panel border-border"
+      ? "border-zinc-800 bg-zinc-950/90"
       : "border-border bg-card/80";
 
   return (
@@ -48,12 +48,12 @@ function DayColumn({
         emphasis === "muted" && "opacity-80",
       )}
     >
-      <h3 className="mb-3 font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+      <h3 className="mb-3 font-mono text-[10px] uppercase tracking-[0.2em] text-zinc-500">
         {label}
       </h3>
       <div className="min-h-0 flex-1 space-y-2 overflow-y-auto">
         {blocks.length === 0 ? (
-          <p className="text-xs text-muted-foreground">Sin bloques</p>
+          <p className="text-xs text-zinc-600">Sin bloques</p>
         ) : (
           blocks.map((block) => (
             <div key={`${block.kind}-${block.id}`} className="space-y-1">

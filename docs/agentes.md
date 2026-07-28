@@ -298,6 +298,23 @@ Módulo **HITL de calibración atencional**, no usa LLM. El Observador asigna pe
 
 ---
 
+### ⚙️ Task-Breaker (Trituradora)
+
+**Funciones:**
+- Recibir un Project, entidades (personas/contextos) y un objetivo narrativo.
+- Fragmentar el Boss vía Cohere en JSON estricto de micro-tareas secuenciales (15–40 min, óptimo 15–25).
+- Proponer en memoria; coagulación HITL hacia `PendingTask` reconocida/calibrada en SQLite.
+- Vincular `projectId` y espejo de asalto para Trinchera y Campamento.
+
+**Ubicación:**
+- Lógica: `lib/ludus/task-breaker.ts`
+- API: `app/api/ludus/task-breaker/`, `app/api/ludus/task-breaker/coagulate/`
+- UI: `app/ludus/trituradora/page.tsx`, `components/ludus/trituradora/`
+
+**Tecnologías/Dependencias:** Cohere Command R+ (JSON), Prisma (`PendingTask`, `LudusMicrotask`), HITL.
+
+---
+
 ### ⚛️ Quantador
 
 **Funciones:**
@@ -739,6 +756,7 @@ Especialista de la astrología y la transformación alquímica de la materia —
 | `/` | Grid Home (Trinchera / Asaltos) |
 | `/cortex` | Córtex Dashboard |
 | `/pendientes` | El Listador + Calibrador de Tareas |
+| `/ludus/trituradora` | Task-Breaker (Trituradora de Fricción) |
 | `/calendario` | Eventos del día |
 | `/chat` | Exocórtex Interactivo |
 | `/ingesta` | Captura → Purifier / Visión |

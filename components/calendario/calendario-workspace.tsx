@@ -2,11 +2,15 @@
 
 import { useBabel } from "@/components/babel/babel-context";
 import { AmazonAInventory } from "@/components/amazona/amazon-a-inventory";
+import { coagulateTaskToTime } from "@/app/calendario/actions";
 import { useCalendarioKeyboard } from "@/components/calendario/calendario-keyboard";
 import { MagoClockHud } from "@/components/calendario/mago-clock-hud";
 import { DayTrinchera } from "@/components/temporal/day-trinchera";
 import { MonthBoard } from "@/components/temporal/month-board";
-import { SuggestionDeck } from "@/components/temporal/suggestion-deck";
+import {
+  MissionCardDragOverlay,
+  SuggestionDeck,
+} from "@/components/temporal/suggestion-deck";
 import {
   ViewModeSwitch,
   type CalendarViewMode,
@@ -15,6 +19,10 @@ import { WeekGrid } from "@/components/temporal/week-grid";
 import { useTemporalData } from "@/hooks/use-temporal-data";
 import type { AmazonAResourceDto } from "@/lib/amazona/types";
 import type { EcosystemArea } from "@/lib/calendario/constants";
+import {
+  isMissionDragData,
+  type MissionDragData,
+} from "@/lib/calendario/dnd";
 import type { MissionCardDto } from "@/lib/calendario/types";
 import { notifyDomainRefresh } from "@/lib/domain-refresh";
 import type { TemporalBlock } from "@/lib/temporal/types";
@@ -24,6 +32,15 @@ import {
   toIsoDayKey,
   weekRangeForDate,
 } from "@/lib/temporal/ranges";
+import {
+  DndContext,
+  DragOverlay,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+  type DragStartEvent,
+} from "@dnd-kit/core";
 import { CalendarIcon, Loader2Icon } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -52,6 +69,12 @@ export function CalendarioWorkspace() {
     useState<AmazonAResourceDto | null>(null);
   const [activeSlotDay, setActiveSlotDay] = useState<string | null>(null);
   const [coagulating, setCoagulating] = useState(false);
+  const [activeDrag, setActiveDrag] = useState<MissionDragData | null>(null);
+  const [bounceKey, setBounceKey] = useState(0);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
+  );
 
   const weekRange = weekRangeForDate(weekAnchor);
   const month = monthRange(monthAnchor.year, monthAnchor.month);
@@ -121,38 +144,34 @@ export function CalendarioWorkspace() {
     void refreshDeck();
   }, [refreshDeck]);
 
-  const handleCoagulate = useCallback(
-    async (slotDay?: Date) => {
-      if (!selectedCard) {
-        toast.message("Seleccioná una carta del mazo primero.");
-        return;
-      }
-      const day =
-        slotDay ??
-        (activeSlotDay ? new Date(`${activeSlotDay}T10:00:00`) : setTimeOnDay(new Date(), 10));
+  const runCoagulate = useCallback(
+    async (card: MissionCardDto, target: Date) => {
       setCoagulating(true);
       try {
-        const response = await universeFetch("/api/calendario/coagulate", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            cardSource: selectedCard.source,
-            cardId: selectedCard.sourceId,
-            occurredAt: day.toISOString(),
-            durationMin: selectedCard.durationMin,
-            ecosystemArea: selectedCard.ecosystemArea ?? undefined,
-          }),
+        const outcome = await coagulateTaskToTime({
+          taskId: card.sourceId,
+          cardSource: card.source,
+          targetDate: target.toISOString(),
+          durationMin: card.durationMin,
+          ecosystemArea: card.ecosystemArea ?? undefined,
         });
-        const data = (await response.json()) as {
-          error?: string;
-          result?: { signalPreview: number };
-        };
-        if (!response.ok) throw new Error(data.error ?? "Coagulación fallida.");
+
+        if (!outcome.ok) {
+          if (outcome.collision) {
+            setBounceKey((k) => k + 1);
+            toast.error(outcome.error, {
+              description: `Inmutable: ${outcome.collision.blockTitle}`,
+            });
+            return;
+          }
+          throw new Error(outcome.error);
+        }
+
         bumpTemporal();
         await Promise.all([refresh(), refreshDeck()]);
         setSelectedCard(null);
         toast.success(
-          `Misión coagulada · +${data.result?.signalPreview ?? "?"} Señal (preview)`,
+          `Misión coagulada · +${outcome.result.signalPreview} Señal (preview)`,
         );
       } catch (error) {
         toast.error(
@@ -162,8 +181,54 @@ export function CalendarioWorkspace() {
         setCoagulating(false);
       }
     },
-    [selectedCard, activeSlotDay, universeFetch, bumpTemporal, refresh, refreshDeck],
+    [bumpTemporal, refresh, refreshDeck],
   );
+
+  const handleCoagulate = useCallback(
+    async (slotDay?: Date, hour = 10) => {
+      if (!selectedCard) {
+        toast.message("Seleccioná una carta del mazo primero.");
+        return;
+      }
+      const day =
+        slotDay ??
+        (activeSlotDay
+          ? setTimeOnDay(new Date(`${activeSlotDay}T12:00:00`), hour)
+          : setTimeOnDay(new Date(), hour));
+      const target = setTimeOnDay(day, hour);
+      await runCoagulate(selectedCard, target);
+    },
+    [selectedCard, activeSlotDay, runCoagulate],
+  );
+
+  const handleDragStart = useCallback((event: DragStartEvent) => {
+    if (isMissionDragData(event.active.data.current)) {
+      setActiveDrag(event.active.data.current);
+      setSelectedCard(event.active.data.current.card);
+    }
+  }, []);
+
+  const handleDragEnd = useCallback(
+    async (event: DragEndEvent) => {
+      const dragData = event.active.data.current;
+      const overData = event.over?.data.current;
+      setActiveDrag(null);
+
+      if (!isMissionDragData(dragData) || !overData || overData.type !== "time-slot") {
+        return;
+      }
+
+      const { dayKey, hour } = overData as { dayKey: string; hour: number };
+      const target = setTimeOnDay(new Date(`${dayKey}T12:00:00`), hour);
+      setActiveSlotDay(dayKey);
+      await runCoagulate(dragData.card, target);
+    },
+    [runCoagulate],
+  );
+
+  const handleDragCancel = useCallback(() => {
+    setActiveDrag(null);
+  }, []);
 
   const patchExecution = useCallback(
     async (block: TemporalBlock, executionStatus: string) => {
@@ -291,99 +356,145 @@ export function CalendarioWorkspace() {
   });
 
   return (
-    <div className="calendario-noir-root flex h-full min-h-0 flex-col overflow-hidden">
-      <header className="shrink-0 border-b border-border px-4 py-3">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-2">
-            <CalendarIcon className="size-5 text-primary" />
-            <div>
-              <p className="font-mono text-[10px] uppercase tracking-[0.24em] text-primary/70">
-                Simulador de turnos
-              </p>
-              <h1 className="text-lg font-semibold text-foreground">Calendario</h1>
+    <DndContext
+      sensors={sensors}
+      onDragStart={handleDragStart}
+      onDragEnd={(e) => void handleDragEnd(e)}
+      onDragCancel={handleDragCancel}
+    >
+      <div
+        data-bounce={bounceKey % 2 === 1 ? "1" : undefined}
+        className="calendario-noir-root flex h-full min-h-0 flex-col overflow-hidden bg-zinc-950 text-zinc-100"
+        style={
+          bounceKey > 0
+            ? { animation: "tablero-bounce 0.45s ease-in-out" }
+            : undefined
+        }
+      >
+        <header className="shrink-0 border-b border-zinc-800 px-4 py-3">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <CalendarIcon className="size-5 text-[#FFB000]" />
+              <div>
+                <p className="font-mono text-[10px] uppercase tracking-[0.24em] text-[#FFB000]/70">
+                  Tablero del Tiempo
+                </p>
+                <h1 className="text-lg font-semibold text-zinc-100">
+                  Castillo · Campamento · Trinchera
+                </h1>
+              </div>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <MagoClockHud />
+              <ViewModeSwitch mode={viewMode} onChange={setViewMode} skin="noir" />
+              <Link
+                href="/ludus/campamento"
+                className="font-mono text-[10px] uppercase tracking-wider text-zinc-500 hover:text-[#FFB000]"
+              >
+                Campamento Ludus →
+              </Link>
             </div>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <MagoClockHud />
-            <ViewModeSwitch mode={viewMode} onChange={setViewMode} skin="noir" />
-            <Link
-              href="/ludus/campamento"
-              className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground hover:text-primary"
-            >
-              Campamento →
-            </Link>
-          </div>
-        </div>
-        <p className="mt-2 font-mono text-[10px] text-muted-foreground">
-          1·2·3 vistas · Enter coagular · C confirmar rutina · S saltear · Shift+área filtrar
-        </p>
-      </header>
+          <p className="mt-2 font-mono text-[10px] text-zinc-500">
+            1·2·3 dimensiones · Arrastrá del Mazo al grid · Enter coagular · C/S rutinas
+          </p>
+        </header>
 
-      <div className="flex min-h-0 flex-1 gap-3 overflow-hidden p-3">
-        <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-3">
-          {isLoading ? (
-            <div className="flex flex-1 items-center justify-center gap-2 text-sm text-muted-foreground">
-              <Loader2Icon className="size-4 animate-spin" />
-              Cargando tablero…
+        <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-hidden p-3 lg:flex-row">
+          {viewMode === "week" ? (
+            <div className="order-2 flex w-full shrink-0 flex-col gap-3 overflow-y-auto lg:order-1 lg:w-72">
+              <SuggestionDeck
+                cards={deckCards}
+                isLoading={deckLoading || coagulating}
+                selectedCardId={selectedCard?.id ?? null}
+                areaFilter={areaFilter}
+                onAreaFilterChange={setAreaFilter}
+                onSelectCard={setSelectedCard}
+                skin="noir"
+                draggingCardId={activeDrag?.card.id ?? null}
+              />
+              <AmazonAInventory
+                skin="noir"
+                selectedResourceId={selectedAmazona?.id ?? null}
+                onSelectResource={setSelectedAmazona}
+                className="min-h-[10rem] lg:max-h-[35%]"
+              />
             </div>
-          ) : viewMode === "month" ? (
-            <MonthBoard
-              year={monthAnchor.year}
-              month={monthAnchor.month}
-              blocks={filteredBlocks}
-              skin="noir"
-              onMonthChange={(y, m) => setMonthAnchor({ year: y, month: m })}
-            />
-          ) : viewMode === "week" ? (
-            <WeekGrid
-              weekDays={weekDays}
-              blocks={filteredBlocks}
-              skin="noir"
-              selectedBlockId={selectedBlock?.id}
-              onSelectBlock={setSelectedBlock}
-              onRescheduleTask={handleRescheduleTask}
-              onRescheduleEvent={handleRescheduleEvent}
-              activeSlotDay={activeSlotDay}
-              onSlotClick={(day) => {
-                setActiveSlotDay(toIsoDayKey(day));
-                if (selectedCard) void handleCoagulate(day);
-                else if (selectedAmazona)
-                  void handleAssignAmazona(selectedAmazona.id, day);
-              }}
-              onAssignAmazona={handleAssignAmazona}
-            />
-          ) : (
-            <DayTrinchera
-              yesterday={dayBlocks.yesterday}
-              today={dayBlocks.today}
-              tomorrow={dayBlocks.tomorrow}
-              skin="noir"
-              selectedBlockId={selectedBlock?.id}
-              onSelectBlock={setSelectedBlock}
-              onConfirmRoutine={(b) => void patchExecution(b, "confirmed_day")}
-              onSkipRoutine={(b) => void patchExecution(b, "skipped")}
-            />
-          )}
-        </div>
+          ) : null}
 
-        <div className="flex w-full shrink-0 flex-col gap-3 overflow-y-auto lg:w-64">
-          <AmazonAInventory
-            skin="noir"
-            selectedResourceId={selectedAmazona?.id ?? null}
-            onSelectResource={setSelectedAmazona}
-            className="min-h-[12rem] lg:max-h-[45%]"
-          />
-          <SuggestionDeck
-            cards={deckCards}
-            isLoading={deckLoading || coagulating}
-            selectedCardId={selectedCard?.id ?? null}
-            areaFilter={areaFilter}
-            onAreaFilterChange={setAreaFilter}
-            onSelectCard={setSelectedCard}
-            skin="noir"
-          />
+          <div className="order-1 flex min-h-0 min-w-0 flex-1 flex-col gap-3 lg:order-2">
+            {isLoading ? (
+              <div className="flex flex-1 items-center justify-center gap-2 text-sm text-zinc-500">
+                <Loader2Icon className="size-4 animate-spin" />
+                Cargando tablero…
+              </div>
+            ) : viewMode === "month" ? (
+              <MonthBoard
+                year={monthAnchor.year}
+                month={monthAnchor.month}
+                blocks={filteredBlocks}
+                skin="noir"
+                onMonthChange={(y, m) => setMonthAnchor({ year: y, month: m })}
+              />
+            ) : viewMode === "week" ? (
+              <WeekGrid
+                weekDays={weekDays}
+                blocks={filteredBlocks}
+                skin="noir"
+                hourGrid
+                selectedBlockId={selectedBlock?.id}
+                onSelectBlock={setSelectedBlock}
+                onRescheduleTask={handleRescheduleTask}
+                onRescheduleEvent={handleRescheduleEvent}
+                activeSlotDay={activeSlotDay}
+                onSlotClick={(day, hour) => {
+                  setActiveSlotDay(toIsoDayKey(day));
+                  if (selectedCard) void handleCoagulate(day, hour ?? 10);
+                  else if (selectedAmazona)
+                    void handleAssignAmazona(selectedAmazona.id, day);
+                }}
+                onAssignAmazona={handleAssignAmazona}
+              />
+            ) : (
+              <DayTrinchera
+                yesterday={dayBlocks.yesterday}
+                today={dayBlocks.today}
+                tomorrow={dayBlocks.tomorrow}
+                skin="noir"
+                selectedBlockId={selectedBlock?.id}
+                onSelectBlock={setSelectedBlock}
+                onConfirmRoutine={(b) => void patchExecution(b, "confirmed_day")}
+                onSkipRoutine={(b) => void patchExecution(b, "skipped")}
+              />
+            )}
+          </div>
+
+          {viewMode !== "week" ? (
+            <div className="order-3 flex w-full shrink-0 flex-col gap-3 overflow-y-auto lg:w-64">
+              <AmazonAInventory
+                skin="noir"
+                selectedResourceId={selectedAmazona?.id ?? null}
+                onSelectResource={setSelectedAmazona}
+                className="min-h-[12rem] lg:max-h-[45%]"
+              />
+              <SuggestionDeck
+                cards={deckCards}
+                isLoading={deckLoading || coagulating}
+                selectedCardId={selectedCard?.id ?? null}
+                areaFilter={areaFilter}
+                onAreaFilterChange={setAreaFilter}
+                onSelectCard={setSelectedCard}
+                skin="noir"
+                draggingCardId={activeDrag?.card.id ?? null}
+              />
+            </div>
+          ) : null}
         </div>
       </div>
-    </div>
+
+      <DragOverlay dropAnimation={null}>
+        {activeDrag ? <MissionCardDragOverlay card={activeDrag.card} /> : null}
+      </DragOverlay>
+    </DndContext>
   );
 }

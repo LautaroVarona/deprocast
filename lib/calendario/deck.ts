@@ -40,17 +40,36 @@ export async function buildMissionDeck(input: {
   const limit = input.limit ?? 24;
   const now = new Date();
   const horizon = new Date(now);
-  horizon.setDate(horizon.getDate() + 14);
+  horizon.setDate(horizon.getDate() + 21);
+
+  // Cartas ya coaguladas en el calendario → fuera del mazo.
+  const coagulatedEvents = await prisma.contextEvent.findMany({
+    where: {
+      executionStatus: "coagulated",
+      sourceRef: { not: null },
+    },
+    select: { sourceRef: true },
+    take: 500,
+  });
+  const coagulatedRefs = new Set(
+    coagulatedEvents
+      .map((e) => e.sourceRef)
+      .filter((ref): ref is string => typeof ref === "string"),
+  );
 
   const [tasks, microtasks, proposedEvents, markerCards] = await Promise.all([
     prisma.pendingTask.findMany({
       where: {
         status: { in: ["suggested", "recognized", "calibrated"] },
-        targetDay: { gte: now, lt: horizon },
+        OR: [
+          // Sin coagular aún — horizonte amplio o sin ancla temporal futura.
+          { targetDay: { lt: now } },
+          { targetDay: { gte: now, lt: horizon } },
+        ],
         ...buildPendingTaskUniverseFilter(input.universeSlug),
       },
       orderBy: [{ weight: "desc" }, { targetDay: "asc" }],
-      take: limit,
+      take: limit * 2,
     }),
     prisma.ludusMicrotask.findMany({
       where: { status: "pending" },
@@ -76,6 +95,7 @@ export async function buildMissionDeck(input: {
   const cards: MissionCardDto[] = [];
 
   for (const task of tasks) {
+    if (coagulatedRefs.has(`pending_task:${task.id}`)) continue;
     const durationMin = 15;
     const area: EcosystemArea | null = null;
     if (input.area && area !== input.area) continue;
@@ -92,6 +112,7 @@ export async function buildMissionDeck(input: {
   }
 
   for (const micro of microtasks) {
+    if (coagulatedRefs.has(`microtask:${micro.id}`)) continue;
     const durationMin = Math.min(micro.estimatedMin, MICROTASK_MAX_MIN);
     const area: EcosystemArea = "tecnologia";
     if (input.area && area !== input.area) continue;

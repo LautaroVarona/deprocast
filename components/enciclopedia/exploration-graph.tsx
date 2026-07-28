@@ -32,7 +32,7 @@ export function ExplorationGraph() {
         target: edge.toEntryId,
         relationType: edge.triggerTerm,
         context: `Exploración enciclopédica vía «${edge.triggerTerm}»`,
-        weight: null,
+        weight: 6,
         confidence: 1,
       })),
     };

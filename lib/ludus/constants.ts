@@ -39,6 +39,9 @@ export const LUDUS_AREAS: LudusArea[] = [
   },
 ];
 
+/** Acceso directo a la Trituradora (Task-Breaker) — fuera del eje Alpha/Beta/Gamma. */
+export const TRITURADORA_HREF = "/ludus/trituradora";
+
 export const FOG_THRESHOLD_DAYS = 7;
 export const FOG_LIGHT_DAYS = 5;
 

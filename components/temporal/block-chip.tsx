@@ -5,6 +5,7 @@ import {
   BLOCK_KIND_LABELS,
   ECOSYSTEM_AREA_LABELS,
 } from "@/lib/calendario/constants";
+import { hermeticDensity } from "@/lib/calendario/gravity";
 import { cn } from "@/lib/utils";
 
 export type TemporalSkin = "noir" | "ludus";
@@ -14,6 +15,7 @@ type BlockChipProps = {
   draggable?: boolean;
   selected?: boolean;
   coagulated?: boolean;
+  compact?: boolean;
   skin?: TemporalSkin;
   onClick?: () => void;
 };
@@ -21,13 +23,13 @@ type BlockChipProps = {
 const KIND_STYLES = {
   noir: {
     IMMUTABLE:
-      "border-primary/50 bg-primary/15 text-primary shadow-[0_0_12px_color-mix(in_oklch,var(--primary)_15%,transparent)]",
-    ROUTINE: "border-border bg-muted/40 text-muted-foreground opacity-75",
-    SUGGESTION: "border-accent/35 bg-accent/15 text-foreground",
-    default: "border-border bg-card/80 text-foreground",
+      "border-zinc-600 bg-zinc-800 text-zinc-300",
+    ROUTINE: "border-zinc-800 bg-zinc-900/80 text-zinc-400 opacity-75",
+    SUGGESTION: "border-[#FFB000]/35 bg-[#FFB000]/10 text-zinc-100",
+    default: "border-zinc-800 bg-zinc-900 text-zinc-100",
     coagulated:
-      "border-chart-3/60 bg-chart-3/20 text-chart-3 shadow-[0_0_16px_color-mix(in_oklch,var(--chart-3)_35%,transparent)] animate-pulse",
-    task: "border-chart-3/25 bg-chart-3/10 text-chart-3",
+      "border-[#FFB000]/70 bg-[#FFB000]/20 text-[#FFB000] opacity-100 shadow-[0_0_12px_rgba(255,176,0,0.25)]",
+    task: "border-emerald-500/25 bg-emerald-500/10 text-emerald-300",
   },
   ludus: {
     IMMUTABLE:
@@ -54,6 +56,7 @@ export function BlockChip({
   draggable = false,
   selected = false,
   coagulated = false,
+  compact = false,
   skin = "ludus",
   onClick,
 }: BlockChipProps) {
@@ -63,6 +66,8 @@ export function BlockChip({
   const isCoagulated =
     coagulated || block.executionStatus === "coagulated";
   const isSkipped = block.executionStatus === "skipped";
+  const gravity = block.actionCost ?? block.weight;
+  const density = hermeticDensity(gravity);
 
   let className: SkinClassName =
     block.kind === "task" ? styles.task : styles.default;
@@ -76,27 +81,48 @@ export function BlockChip({
       draggable={draggable && !isImmutable}
       data-block-id={block.id}
       data-block-kind={block.kind}
-      onClick={onClick}
+      data-gravity={gravity ?? undefined}
+      onClick={(e) => {
+        e.stopPropagation();
+        onClick?.();
+      }}
       className={cn(
-        "rounded-md border px-2.5 py-1.5 text-xs transition-all",
+        "rounded-md px-2 py-1 text-xs transition-all",
         className,
-        selected && "ring-2 ring-primary/60",
+        density.borderWidth,
+        density.glow,
+        density.inverted &&
+          !isImmutable &&
+          !isCoagulated &&
+          "border-[#FFB000] bg-[#FFB000] text-zinc-950",
+        selected && "ring-2 ring-[#FFB000]/60",
         isSkipped && "line-through opacity-40",
+        isCoagulated && "opacity-100",
+        !isCoagulated && blockKind === "SUGGESTION" && "opacity-90",
         onClick && "cursor-pointer",
+        compact && "mb-0.5 px-1.5 py-0.5 text-[10px]",
       )}
+      style={{ opacity: isSkipped ? 0.4 : isCoagulated ? 1 : density.opacity }}
     >
-      <p className="line-clamp-2">{block.title}</p>
-      <div className="mt-1 flex flex-wrap items-center gap-1.5 font-mono text-[10px] uppercase tracking-wider opacity-70">
-        {blockKind ? (
-          <span>{BLOCK_KIND_LABELS[blockKind]}</span>
-        ) : (
-          <span>{block.kind}</span>
-        )}
-        {block.actionCost != null ? <span>· G{block.actionCost}</span> : null}
-        {block.ecosystemArea ? (
-          <span>· {ECOSYSTEM_AREA_LABELS[block.ecosystemArea]}</span>
-        ) : null}
-      </div>
+      <p className={cn("line-clamp-2", compact && "line-clamp-1")}>
+        {block.title}
+      </p>
+      {!compact ? (
+        <div className="mt-1 flex flex-wrap items-center gap-1.5 font-mono text-[10px] uppercase tracking-wider opacity-70">
+          {blockKind ? (
+            <span>{BLOCK_KIND_LABELS[blockKind]}</span>
+          ) : (
+            <span>{block.kind}</span>
+          )}
+          {gravity != null ? <span>· G{gravity}</span> : null}
+          {block.ecosystemArea ? (
+            <span>· {ECOSYSTEM_AREA_LABELS[block.ecosystemArea]}</span>
+          ) : null}
+          {isCoagulated ? <span>· sólido</span> : null}
+        </div>
+      ) : gravity != null ? (
+        <span className="font-mono text-[9px] opacity-60">G{gravity}</span>
+      ) : null}
     </div>
   );
 }

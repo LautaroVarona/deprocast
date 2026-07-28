@@ -39,7 +39,8 @@ export const kgEdgeSchema = z.object({
   targetNodeId: z.string().min(1),
   relationType: z.string().min(1),
   context: z.string().min(1),
-  weight: kgEdgeWeightSchema.optional(),
+  /** Escala Hermética de Gravedad — obligatoria (1–12). */
+  weight: kgEdgeWeightSchema,
   reconocido: z.boolean().optional(),
   confidence: z.number().min(0).max(1).optional(),
   metadata: z.record(z.unknown()).optional(),

@@ -1,12 +1,12 @@
-import { CamRecorderWorkspace } from "@/components/cam-recorder/cam-recorder-workspace";
+import { PanalWorkspace } from "@/components/hermeneuta/panal-workspace";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Cam-Recorder-Watcher · DeProcast",
+  title: "Hermeneuta de Cuadernos · DeProcast",
   description:
-    "Agente de ingesta de screen recordings — indexación cronológica de contexto visual para auditoría y Variable X.",
+    "Panal de Ingesta Visual — digitaliza notas manuscritas y diagramas hacia el Knowledge Graph con HITL.",
 };
 
 export default function CamRecorderPage() {
-  return <CamRecorderWorkspace />;
+  return <PanalWorkspace />;
 }

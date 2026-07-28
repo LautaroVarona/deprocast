@@ -9,6 +9,21 @@ export {
   createDualNatureEdges,
 } from "@/lib/kg/identity";
 export { createEdgesFromExtraction } from "@/lib/kg/edges";
+export { runGraphRagSearch } from "@/lib/kg/graphrag";
+export type {
+  GraphRagCoreHit,
+  GraphRagImpactZone,
+  GraphRagOrbitConfirmed,
+  GraphRagOrbitSuggested,
+} from "@/lib/kg/graphrag-types";
+export {
+  coagulateKgEdge,
+  proposeSemanticEdgeBetweenQuantomos,
+  rejectSuggestedEdge,
+  similarityToHermeticWeight,
+  HIGH_GRAVITY_WEIGHT,
+  SEMANTIC_EDGE_THRESHOLD,
+} from "@/lib/kg/quantomo-gravity";
 export { createMentionsFromExtraction } from "@/lib/kg/mentions";
 export { extractKgFromText } from "@/lib/kg/extract";
 export { ingestKgExtraction } from "@/lib/kg/ingest";

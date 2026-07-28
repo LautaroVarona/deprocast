@@ -1,12 +1,12 @@
-import { GrafoWorkspace } from "@/components/grafo/grafo-workspace";
+import { PensaderoWorkspace } from "@/components/grafo/pensadero-workspace";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Grafo de Conocimiento · DeProcast",
+  title: "Pensadero · GraphRAG · DeProcast",
   description:
-    "Red viva de personas, proyectos, ideas, documentos y código del grafo cognitivo.",
+    "Motor GraphRAG: Quántomos semánticos + órbita borgeana por gravedad hermética.",
 };
 
 export default function GrafoPage() {
-  return <GrafoWorkspace />;
+  return <PensaderoWorkspace />;
 }

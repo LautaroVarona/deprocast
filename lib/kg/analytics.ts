@@ -285,7 +285,7 @@ export type GraphSnapshotEdge = {
   target: string;
   relationType: string;
   context: string;
-  weight: number | null;
+  weight: number;
   confidence: number;
 };
 

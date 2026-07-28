@@ -1,6 +1,8 @@
 import "server-only";
 
 import { cohereGenerateJson } from "@/lib/cohere/chat";
+import { cohereEmbedDocuments } from "@/lib/cohere/embed";
+import { getCohereModelName } from "@/lib/cohere/config";
 import {
   createPendingTask,
   findDuplicateTask,
@@ -131,6 +133,132 @@ export async function segmentarTexto(
   return fallbackSegment(trimmed, input.universoDefault);
 }
 
+async function mirrorQuantomoAsKgNode(input: {
+  title: string;
+  content: string;
+  universo: string;
+  quantomoId: string;
+}): Promise<string> {
+  // Nombre único por Quántomo para no colisionar en primaryName+type.
+  const primaryName = `${input.title.slice(0, 100)} · ${input.quantomoId.slice(0, 8)}`;
+
+  const current = await prisma.quantomo.findUnique({
+    where: { id: input.quantomoId },
+    select: { kgNodeId: true },
+  });
+
+  if (current?.kgNodeId) {
+    await prisma.kgNode.update({
+      where: { id: current.kgNodeId },
+      data: {
+        primaryName,
+        metadata: {
+          quantomoId: input.quantomoId,
+          universo: input.universo,
+          preview: input.content.slice(0, 280),
+        },
+      },
+    });
+    return current.kgNodeId;
+  }
+
+  const existing = await prisma.kgNode.findUnique({
+    where: {
+      primaryName_type: { primaryName, type: "quantomo" },
+    },
+  });
+
+  if (existing) {
+    await prisma.kgNode.update({
+      where: { id: existing.id },
+      data: {
+        metadata: {
+          quantomoId: input.quantomoId,
+          universo: input.universo,
+          preview: input.content.slice(0, 280),
+        },
+      },
+    });
+    return existing.id;
+  }
+
+  const node = await prisma.kgNode.create({
+    data: {
+      id: randomUUID(),
+      primaryName,
+      type: "quantomo",
+      aliases: [input.title],
+      metadata: {
+        quantomoId: input.quantomoId,
+        universo: input.universo,
+        preview: input.content.slice(0, 280),
+      },
+      confidence: 0.7,
+      reconocido: false,
+    },
+  });
+
+  return node.id;
+}
+
+/**
+ * Indexa embeddings Cohere + espejo KgNode para Quántomos ya persistidos.
+ */
+export async function indexQuantomoEmbeddings(
+  quantomoIds: string[],
+): Promise<{ indexed: number }> {
+  if (quantomoIds.length === 0) return { indexed: 0 };
+
+  const rows = await prisma.quantomo.findMany({
+    where: { id: { in: quantomoIds } },
+  });
+
+  if (rows.length === 0) return { indexed: 0 };
+
+  const texts = rows.map(
+    (row) => `${row.titleSugerido}\n\n${row.content}`.trim(),
+  );
+
+  let vectors: number[][] = [];
+  try {
+    vectors = await cohereEmbedDocuments(texts);
+  } catch (error) {
+    console.warn("Quantador embed error:", error);
+    return { indexed: 0 };
+  }
+
+  const embedModel = getCohereModelName("embed");
+  let indexed = 0;
+
+  for (let i = 0; i < rows.length; i += 1) {
+    const row = rows[i]!;
+    const vector = vectors[i];
+    if (!vector || vector.length === 0) continue;
+
+    const kgNodeId =
+      row.kgNodeId ??
+      (await mirrorQuantomoAsKgNode({
+        title: row.titleSugerido,
+        content: row.content,
+        universo: row.universo,
+        quantomoId: row.id,
+      }));
+
+    await prisma.quantomo.update({
+      where: { id: row.id },
+      data: {
+        embedding: JSON.stringify(vector),
+        embedModel,
+        dimensions: vector.length,
+        kgNodeId,
+      },
+    });
+    indexed += 1;
+  }
+
+  return { indexed };
+}
+
 export async function vincularOrigen(
   quantomos: QuantomoDraft[],
   originAttributionId: string,
@@ -151,6 +279,10 @@ export async function vincularOrigen(
     ids.push(row.id);
   }
 
+  if (ids.length > 0) {
+    await indexQuantomoEmbeddings(ids);
+  }
+
   return ids;
 }
 
@@ -163,20 +295,31 @@ export type QuantadorPipelineInput = {
 
 export async function runQuantadorPipeline(
   input: QuantadorPipelineInput,
-): Promise<{ quantomoIds: string[]; taskIds: string[] }> {
+): Promise<{
+  quantomoIds: string[];
+  taskIds: string[];
+  embeddingsIndexed: number;
+}> {
   const segmented = await segmentarTexto({
     rawText: input.rawText,
     universoDefault: input.universoSlug ?? "babel",
   });
 
   if (segmented.quantomos.length === 0) {
-    return { quantomoIds: [], taskIds: [] };
+    return { quantomoIds: [], taskIds: [], embeddingsIndexed: 0 };
   }
 
   const quantomoIds = await vincularOrigen(
     segmented.quantomos,
     input.originAttributionId,
   );
+
+  const indexed = await prisma.quantomo.count({
+    where: {
+      id: { in: quantomoIds },
+      embedding: { not: null },
+    },
+  });
 
   const taskIds: string[] = [];
 
@@ -206,7 +349,7 @@ export async function runQuantadorPipeline(
     taskIds.push(task.id);
   }
 
-  return { quantomoIds, taskIds };
+  return { quantomoIds, taskIds, embeddingsIndexed: indexed };
 }
 
 export async function enqueueQuantadorPipeline(

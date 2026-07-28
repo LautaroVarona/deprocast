@@ -78,6 +78,32 @@ export function ensureCoreColumnPatches(): void {
       );
     }
 
+    // Escala Hermética: backfill de pesos nulos → 6 (neutro) antes de NOT NULL.
+    if (tableExists(db, "KgEdge")) {
+      db.exec(`UPDATE "KgEdge" SET "weight" = 6 WHERE "weight" IS NULL;`);
+      db.exec(
+        `CREATE INDEX IF NOT EXISTS "KgEdge_weight_idx" ON "KgEdge"("weight");`,
+      );
+    }
+
+    if (tableExists(db, "Quantomo")) {
+      if (!columnExists(db, "Quantomo", "embedding")) {
+        db.exec(`ALTER TABLE "Quantomo" ADD COLUMN "embedding" TEXT;`);
+      }
+      if (!columnExists(db, "Quantomo", "embedModel")) {
+        db.exec(`ALTER TABLE "Quantomo" ADD COLUMN "embedModel" TEXT;`);
+      }
+      if (!columnExists(db, "Quantomo", "dimensions")) {
+        db.exec(`ALTER TABLE "Quantomo" ADD COLUMN "dimensions" INTEGER;`);
+      }
+      if (!columnExists(db, "Quantomo", "kgNodeId")) {
+        db.exec(`ALTER TABLE "Quantomo" ADD COLUMN "kgNodeId" TEXT;`);
+        db.exec(
+          `CREATE UNIQUE INDEX IF NOT EXISTS "Quantomo_kgNodeId_key" ON "Quantomo"("kgNodeId");`,
+        );
+      }
+    }
+
     if (
       tableExists(db, "KgNode") &&
       !columnExists(db, "KgNode", "reconocido")

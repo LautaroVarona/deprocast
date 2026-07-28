@@ -110,6 +110,7 @@ model KgNode {
   outgoingEdges KgEdge[]    @relation("KgEdgeSource")
   incomingEdges KgEdge[]    @relation("KgEdgeTarget")
   mentions      KgMention[]
+  quantomo      Quantomo?
 
   // CRM tipado: vínculos con contexto (complementa KgEdge del grafo).
   personLinksAsA     PersonToPerson[]  @relation("PersonToPersonA")
@@ -236,13 +237,17 @@ model YoConduitMessage {
   @@index([yoId, createdAt])
 }
 
+// Arista del Knowledge Graph.
+// weight: Escala Hermética de Gravedad (1–12) — validación Zod en lib/validations/kg-schema.ts
+// reconocido: HITL — solo aristas coaguladas alimentan el motor GraphRAG.
 model KgEdge {
   id           String   @id @default(uuid())
   sourceNodeId String
   targetNodeId String
   relationType String
   context      String
-  weight       Int?
+  /// Escala Hermética 1–12 (obligatorio; default 6 = neutro).
+  weight       Int      @default(6)
   reconocido   Boolean  @default(false)
   confidence   Float    @default(0.6)
   metadata     Json
@@ -256,6 +261,7 @@ model KgEdge {
   @@index([targetNodeId])
   @@index([relationType])
   @@index([reconocido])
+  @@index([weight])
 }
 
 // Linaje ambiental de captura — metadata contextual y actores tipados.
@@ -274,17 +280,25 @@ model OriginAttribution {
   @@index([timestampExacto])
 }
 
-// Partícula mínima de conocimiento (fragmento atómico de ingesta).
+// Partícula mínima de conocimiento (fragmento molecular estricto).
+// embedding: JSON del vector float[] de Cohere (similitud en memoria, soberanía local).
 model Quantomo {
   id                  String   @id @default(uuid())
   titleSugerido       String
   content             String
   tagsSemanticos      Json     @default(dbgenerated("'[]'"))
   universo            String
+  /// JSON string del array vectorial Cohere (embed-v4).
+  embedding           String?
+  embedModel          String?
+  dimensions          Int?
+  /// Espejo opcional en el KG para viajar por KgEdge (GraphRAG).
+  kgNodeId            String?  @unique
   createdAt           DateTime @default(now())
   originAttributionId String
 
   originAttribution OriginAttribution @relation(fields: [originAttributionId], references: [id], onDelete: Cascade)
+  kgNode            KgNode?           @relation(fields: [kgNodeId], references: [id], onDelete: SetNull)
 
   @@index([universo])
   @@index([originAttributionId])

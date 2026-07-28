@@ -882,28 +882,50 @@
   border-color: color-mix(in srgb, #c9a66b 85%, #8b6d43);
 }
 
-/* Calendario — Simulador de Turnos Noir */
+/* Calendario — Tablero del Tiempo Noir */
 .calendario-noir-root {
   position: relative;
   background:
-    radial-gradient(ellipse 70% 45% at 15% -10%, color-mix(in oklch, var(--primary) 10%, transparent), transparent),
-    radial-gradient(ellipse 50% 35% at 95% 90%, color-mix(in oklch, var(--chart-4) 8%, transparent), transparent),
-    var(--background);
-  color: var(--foreground);
+    radial-gradient(ellipse 70% 45% at 15% -10%, rgba(255, 176, 0, 0.07), transparent),
+    radial-gradient(ellipse 50% 35% at 95% 90%, rgba(255, 176, 0, 0.04), transparent),
+    #09090b;
+  color: #fafafa;
   min-height: calc(100dvh - 3.5rem);
 }
 
 .calendario-noir-panel {
-  border: 1px solid color-mix(in oklch, var(--primary) 22%, var(--border));
+  border: 1px solid #27272a;
   background: linear-gradient(
     155deg,
-    color-mix(in oklch, var(--primary) 6%, var(--card)) 0%,
-    var(--card) 50%,
-    color-mix(in oklch, var(--muted) 85%, var(--card)) 100%
+    rgba(24, 24, 27, 0.95) 0%,
+    rgba(9, 9, 11, 0.98) 100%
   );
   box-shadow:
-    0 0 0 1px color-mix(in oklch, var(--foreground) 2%, transparent) inset,
-    0 20px 48px -28px color-mix(in oklch, var(--foreground) 14%, transparent);
+    0 0 0 1px rgba(255, 255, 255, 0.02) inset,
+    0 20px 48px -28px rgba(0, 0, 0, 0.55);
+}
+
+@keyframes tablero-bounce {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  20% {
+    transform: translateX(-6px);
+  }
+  40% {
+    transform: translateX(6px);
+  }
+  60% {
+    transform: translateX(-4px);
+  }
+  80% {
+    transform: translateX(4px);
+  }
+}
+
+.calendario-noir-root[data-bounce="1"] {
+  animation: tablero-bounce 0.45s ease-in-out;
 }
 
 /* HUD Táctico — home noir/ámbar */
