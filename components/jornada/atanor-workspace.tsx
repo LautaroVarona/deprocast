@@ -14,7 +14,7 @@ import { ThreadChat } from "@/components/jornada/thread-chat";
 import { ContextInspector } from "@/components/jornada/context-inspector";
 
 type Props = {
-  initialSession: DailySessionFull;
+  initialSession: NonNullable<DailySessionFull>;
 };
 
 const panelVariants = {
