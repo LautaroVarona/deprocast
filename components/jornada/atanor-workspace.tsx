@@ -21,12 +21,12 @@ const panelVariants = {
   open: (width: number) => ({
     width,
     opacity: 1,
-    transition: { type: "spring", stiffness: 300, damping: 30 },
+    transition: { type: "spring" as const, stiffness: 300, damping: 30 },
   }),
   closed: {
     width: 0,
     opacity: 0,
-    transition: { type: "spring", stiffness: 300, damping: 30 },
+    transition: { type: "spring" as const, stiffness: 300, damping: 30 },
   },
 };
 
