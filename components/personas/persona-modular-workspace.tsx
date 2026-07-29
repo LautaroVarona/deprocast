@@ -30,7 +30,6 @@ import type {
   PersonaLinkTarget,
   PersonaRelationListItem,
 } from "@/lib/personas/model";
-import { cachePersonaEntity } from "@/lib/personas/client-cache";
 import { cn } from "@/lib/utils";
 import { useYoNames } from "@/hooks/use-yo-names";
 import {
