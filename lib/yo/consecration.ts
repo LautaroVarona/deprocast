@@ -19,20 +19,24 @@ export function deriveGenesisStatus(input: {
   exocortexName: string | null;
   genesisCompletedAt: Date | string | null;
   calibration?: CalibrationMap;
-  /** false → Senado incompleto (faltan las 3 personas vinculadas al Operador). */
+  /**
+   * Reservado: el Senado se valida al sellar (maybeCompleteConsecration),
+   * no al derivar status de un sello ya cerrado.
+   */
   senadoComplete?: boolean;
 }): GenesisStatus {
+  void input.senadoComplete;
   const hasNames = Boolean(
     input.operatorName?.trim() && input.exocortexName?.trim(),
   );
   if (!hasNames) return "PENDING_NAMES";
   if (input.genesisCompletedAt) {
-    // Sellado prematuro / incompleto → Tabula hasta Nosce + Senado + Prima.
+    // El sello es la fuente de verdad. Solo invalidar por Nosce/Prima rotos;
+    // el conteo de Senado no debe degradar un sellado ya cerrado.
     if (
-      !input.calibration ||
-      !isMissionIComplete(input.calibration) ||
-      !isMissionIIIComplete(input.calibration) ||
-      input.senadoComplete === false
+      input.calibration &&
+      (!isMissionIComplete(input.calibration) ||
+        !isMissionIIIComplete(input.calibration))
     ) {
       return "PENDING_MISSIONS";
     }

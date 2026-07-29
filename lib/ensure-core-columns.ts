@@ -321,6 +321,76 @@ export function ensureCoreColumnPatches(): void {
       );
     }
 
+    // Atanor Temporal (Jornada): sesión diaria + hilos.
+    if (!tableExists(db, "DailySession")) {
+      db.exec(`
+        CREATE TABLE "DailySession" (
+          "id" TEXT NOT NULL PRIMARY KEY,
+          "date" TEXT NOT NULL,
+          "isClosed" BOOLEAN NOT NULL DEFAULT false,
+          "summaryMarkdown" TEXT,
+          "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          "updatedAt" DATETIME NOT NULL
+        );
+      `);
+      db.exec(
+        `CREATE UNIQUE INDEX IF NOT EXISTS "DailySession_date_key" ON "DailySession"("date");`,
+      );
+    }
+
+    if (!tableExists(db, "SessionThread")) {
+      db.exec(`
+        CREATE TABLE "SessionThread" (
+          "id" TEXT NOT NULL PRIMARY KEY,
+          "dailySessionId" TEXT NOT NULL,
+          "title" TEXT NOT NULL,
+          "topic" TEXT,
+          "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          "updatedAt" DATETIME NOT NULL,
+          CONSTRAINT "SessionThread_dailySessionId_fkey" FOREIGN KEY ("dailySessionId") REFERENCES "DailySession" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+        );
+      `);
+      db.exec(
+        `CREATE INDEX IF NOT EXISTS "SessionThread_dailySessionId_idx" ON "SessionThread"("dailySessionId");`,
+      );
+    }
+
+    if (!tableExists(db, "ThreadContext")) {
+      db.exec(`
+        CREATE TABLE "ThreadContext" (
+          "id" TEXT NOT NULL PRIMARY KEY,
+          "threadId" TEXT NOT NULL,
+          "tagType" TEXT NOT NULL,
+          "tagId" TEXT NOT NULL,
+          "tagLabel" TEXT NOT NULL,
+          "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          CONSTRAINT "ThreadContext_threadId_fkey" FOREIGN KEY ("threadId") REFERENCES "SessionThread" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+        );
+      `);
+      db.exec(
+        `CREATE INDEX IF NOT EXISTS "ThreadContext_threadId_idx" ON "ThreadContext"("threadId");`,
+      );
+      db.exec(
+        `CREATE UNIQUE INDEX IF NOT EXISTS "ThreadContext_threadId_tagType_tagId_key" ON "ThreadContext"("threadId", "tagType", "tagId");`,
+      );
+    }
+
+    if (!tableExists(db, "ThreadMessage")) {
+      db.exec(`
+        CREATE TABLE "ThreadMessage" (
+          "id" TEXT NOT NULL PRIMARY KEY,
+          "threadId" TEXT NOT NULL,
+          "role" TEXT NOT NULL,
+          "content" TEXT NOT NULL,
+          "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          CONSTRAINT "ThreadMessage_threadId_fkey" FOREIGN KEY ("threadId") REFERENCES "SessionThread" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+        );
+      `);
+      db.exec(
+        `CREATE INDEX IF NOT EXISTS "ThreadMessage_threadId_createdAt_idx" ON "ThreadMessage"("threadId", "createdAt");`,
+      );
+    }
+
     // Migración one-shot desde CandidateEntity legacy.
     if (tableExists(db, "CandidateEntity") && tableExists(db, "EntityCandidate")) {
       db.exec(`

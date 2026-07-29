@@ -5,11 +5,16 @@ import {
   buildConsecrationProgress,
   deriveGenesisStatus,
   isMissionIComplete,
+  isMissionIIIComplete,
 } from "@/lib/yo/consecration";
 import {
   resolveExocortexDisplayName,
   resolveOperatorDisplayName,
 } from "@/lib/yo/display-names";
+import {
+  persistYoIdentitySnapshot,
+  readYoIdentitySnapshot,
+} from "@/lib/yo/identity-snapshot";
 import {
   CONSECRATION_PERSONA_TARGET,
   DEFAULT_EXOCORTEX_NAME,
@@ -55,7 +60,7 @@ function parseMago12(value: unknown): number {
   return 1;
 }
 
-async function toDto(row: {
+type YoRow = {
   id: string;
   operatorName: string | null;
   exocortexName: string | null;
@@ -67,7 +72,9 @@ async function toDto(row: {
   calibration: unknown;
   genesisCompletedAt: Date | null;
   updatedAt: Date;
-}): Promise<YoDto> {
+};
+
+async function toDto(row: YoRow): Promise<YoDto> {
   const calibration = parseCalibration(row.calibration);
   // Hub YO siempre en KG si hay nombre (cuenta como Persona).
   if (row.operatorName?.trim()) {
@@ -81,7 +88,7 @@ async function toDto(row: {
     senadoComplete: consecration.personaCount >= CONSECRATION_PERSONA_TARGET,
   });
 
-  return {
+  const dto: YoDto = {
     id: row.id,
     operatorName: row.operatorName,
     exocortexName: row.exocortexName,
@@ -97,37 +104,116 @@ async function toDto(row: {
     consecration,
     updatedAt: row.updatedAt.toISOString(),
   };
+
+  // Ancla en disco: el bautismo no debe depender solo de SQLite.
+  if (dto.operatorName?.trim() && dto.exocortexName?.trim()) {
+    await persistYoIdentitySnapshot({
+      operatorName: dto.operatorName,
+      exocortexName: dto.exocortexName,
+      exocortexNamedBy: dto.exocortexNamedBy,
+      operationalStatus: dto.operationalStatus,
+      energyLevel: dto.energyLevel,
+      mago12: dto.mago12,
+      mago3: dto.mago3,
+      calibration: dto.calibration,
+      genesisCompletedAt: dto.genesisCompletedAt,
+      updatedAt: dto.updatedAt,
+    });
+  }
+
+  return dto;
+}
+
+/**
+ * Si SQLite perdió los nombres (reseed, carrera, tabla recreada) pero el
+ * ancla en data/memory/yo-identity.json sigue, rehidrata el singleton.
+ */
+async function restoreYoFromSnapshotIfNeeded(row: YoRow): Promise<YoRow> {
+  const hasNames = Boolean(
+    row.operatorName?.trim() && row.exocortexName?.trim(),
+  );
+  if (hasNames) return row;
+
+  const snap = await readYoIdentitySnapshot();
+  if (!snap) return row;
+
+  const calibration = {
+    ...snap.calibration,
+    ...parseCalibration(row.calibration),
+  };
+
+  return prisma.yo.update({
+    where: { id: YO_CORE_ID },
+    data: {
+      operatorName: snap.operatorName,
+      exocortexName: snap.exocortexName,
+      exocortexNamedBy: snap.exocortexNamedBy,
+      operationalStatus: snap.operationalStatus || row.operationalStatus,
+      energyLevel: snap.energyLevel || row.energyLevel,
+      mago12: snap.mago12,
+      mago3: snap.mago3,
+      calibration: calibration as Prisma.InputJsonValue,
+      genesisCompletedAt: snap.genesisCompletedAt
+        ? new Date(snap.genesisCompletedAt)
+        : null,
+    },
+  });
 }
 
 export async function ensureYoShell(): Promise<YoDto> {
-  const existing = await prisma.yo.findUnique({ where: { id: YO_CORE_ID } });
+  let existing = await prisma.yo.findUnique({ where: { id: YO_CORE_ID } });
   if (!existing) {
+    const snap = await readYoIdentitySnapshot();
     const created = await prisma.yo.create({
-      data: {
-        id: YO_CORE_ID,
-        operationalStatus: "STANDBY",
-        energyLevel: 5,
-        calibration: {},
-      },
+      data: snap
+        ? {
+            id: YO_CORE_ID,
+            operatorName: snap.operatorName,
+            exocortexName: snap.exocortexName,
+            exocortexNamedBy: snap.exocortexNamedBy,
+            operationalStatus: snap.operationalStatus || "CALIBRANDO",
+            energyLevel: snap.energyLevel,
+            mago12: snap.mago12,
+            mago3: snap.mago3,
+            calibration: snap.calibration as Prisma.InputJsonValue,
+            genesisCompletedAt: snap.genesisCompletedAt
+              ? new Date(snap.genesisCompletedAt)
+              : null,
+          }
+        : {
+            id: YO_CORE_ID,
+            operationalStatus: "STANDBY",
+            energyLevel: 5,
+            calibration: {},
+          },
     });
-    return toDto(created);
+    existing = created;
+  } else {
+    existing = await restoreYoFromSnapshotIfNeeded(existing);
   }
 
   const dto = await toDto(existing);
 
-  // Sellado prematuro (p.ej. migración legacy sin Senado): reabrir Tabula.
+  // Solo reabrir si el sellado es claramente inválido por calibration
+  // (Nosce/Prima). No tocar el sello por conteo de Senado: ese check es
+  // frágil ante hubs/operador renombrados y metía al Operador en un loop /yo.
   if (
     existing.genesisCompletedAt &&
     dto.genesisStatus === "PENDING_MISSIONS"
   ) {
-    const reopened = await prisma.yo.update({
-      where: { id: YO_CORE_ID },
-      data: {
-        genesisCompletedAt: null,
-        operationalStatus: "STANDBY",
-      },
-    });
-    return toDto(reopened);
+    const calibration = parseCalibration(existing.calibration);
+    const missionsBroken =
+      !isMissionIComplete(calibration) || !isMissionIIIComplete(calibration);
+    if (missionsBroken) {
+      const reopened = await prisma.yo.update({
+        where: { id: YO_CORE_ID },
+        data: {
+          genesisCompletedAt: null,
+          operationalStatus: "STANDBY",
+        },
+      });
+      return toDto(reopened);
+    }
   }
 
   return dto;

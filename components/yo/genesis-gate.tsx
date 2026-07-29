@@ -2,7 +2,7 @@
 
 import { useGenesis } from "@/components/yo/genesis-context";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef } from "react";
 
 type GenesisGateProps = {
   children: React.ReactNode;
@@ -15,37 +15,42 @@ type GenesisGateProps = {
 export function GenesisGate({ children }: GenesisGateProps) {
   const pathname = usePathname();
   const router = useRouter();
-  const { ready, genesisStatus, refreshGenesis } = useGenesis();
-  const [routed, setRouted] = useState(false);
+  const { ready, genesisStatus, navigationUnlocked, refreshGenesis } =
+    useGenesis();
+  const lastPathRef = useRef<string | null>(null);
+  const onYo = pathname === "/yo" || pathname.startsWith("/yo/");
+  const locked = !navigationUnlocked;
 
   useEffect(() => {
     if (!ready) return;
-
-    const onYo = pathname === "/yo" || pathname.startsWith("/yo/");
-    const locked = genesisStatus !== "COMPLETED";
-
     if (locked && !onYo) {
-      setRouted(false);
       router.replace("/yo");
-      return;
     }
+  }, [ready, locked, onYo, router]);
 
-    setRouted(true);
-  }, [ready, genesisStatus, pathname, router]);
-
-  // Revalidar al navegar (p.ej. tras sellar misiones).
+  // Revalidar en cambio de ruta, sin bloquear la UI (anti-regresión en provider).
   useEffect(() => {
     if (!ready) return;
+    if (lastPathRef.current === pathname) return;
+    lastPathRef.current = pathname;
     void refreshGenesis();
-  }, [pathname]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [pathname, ready, refreshGenesis]);
 
-  if (!ready || !routed) {
+  if (!ready) {
     return (
       <div className="flex flex-1 items-center justify-center bg-background px-4">
         <p className="font-mono text-[11px] tracking-[0.28em] text-accent uppercase">
-          {genesisStatus !== "COMPLETED"
-            ? "[ REDIRIGIENDO AL SANCTA… ]"
-            : "[ VERIFICANDO NODO YO… ]"}
+          [ VERIFICANDO NODO YO… ]
+        </p>
+      </div>
+    );
+  }
+
+  if (locked && !onYo) {
+    return (
+      <div className="flex flex-1 items-center justify-center bg-background px-4">
+        <p className="font-mono text-[11px] tracking-[0.28em] text-accent uppercase">
+          [ REDIRIGIENDO AL SANCTA… ]
         </p>
       </div>
     );

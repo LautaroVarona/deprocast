@@ -27,6 +27,48 @@ type GenesisContextValue = {
 
 const GenesisContext = createContext<GenesisContextValue | null>(null);
 
+const GENESIS_RANK: Record<GenesisStatus, number> = {
+  PENDING_NAMES: 0,
+  PENDING_MISSIONS: 1,
+  COMPLETED: 2,
+};
+
+function hasBaptismNames(yo: YoDto | null | undefined): boolean {
+  return Boolean(yo?.operatorName?.trim() && yo?.exocortexName?.trim());
+}
+
+/** Elige la lectura más avanzada / con identidad (nunca preferir shell vacío). */
+function pickPreferredYo(a: YoDto | null, b: YoDto | null): YoDto | null {
+  if (!a) return b;
+  if (!b) return a;
+
+  const aNames = hasBaptismNames(a);
+  const bNames = hasBaptismNames(b);
+  if (aNames && !bNames) return a;
+  if (bNames && !aNames) return b;
+
+  const aRank = GENESIS_RANK[a.genesisStatus];
+  const bRank = GENESIS_RANK[b.genesisStatus];
+  if (bRank !== aRank) return bRank > aRank ? b : a;
+
+  return b.updatedAt > a.updatedAt ? b : a;
+}
+
+/**
+ * Nunca regresar a bautismo si ya hay nombres en memoria.
+ * Tampoco bajar de COMPLETED por una revalidación intermitente (Senado, API).
+ * Solo un wipe (o PC nuevo) debe volver a PENDING_NAMES.
+ */
+function shouldKeepPrevious(prev: YoDto | null, next: YoDto): boolean {
+  if (!prev) return false;
+  if (!hasBaptismNames(prev)) return false;
+  if (!hasBaptismNames(next)) return true;
+  if (prev.genesisStatus === "COMPLETED" && next.genesisStatus !== "COMPLETED") {
+    return true;
+  }
+  return next.genesisStatus === "PENDING_NAMES";
+}
+
 async function fetchYoFromApi(): Promise<YoDto | null> {
   try {
     const res = await fetch("/api/yo", { cache: "no-store" });
@@ -42,17 +84,28 @@ export function GenesisProvider({ children }: { children: ReactNode }) {
   const [ready, setReady] = useState(false);
   const [yo, setYo] = useState<YoDto | null>(null);
   const [navRevealToken, setNavRevealToken] = useState(0);
+  const [everCompleted, setEverCompleted] = useState(false);
   const wasCompletedRef = useRef(false);
+  const yoRef = useRef<YoDto | null>(null);
 
   const applyYo = useCallback((next: YoDto) => {
     setYo((prev) => {
+      if (shouldKeepPrevious(prev, next)) {
+        yoRef.current = prev;
+        return prev;
+      }
+
       const wasComplete =
         wasCompletedRef.current || prev?.genesisStatus === "COMPLETED";
       const nowComplete = next.genesisStatus === "COMPLETED";
       if (!wasComplete && nowComplete) {
         setNavRevealToken((token) => token + 1);
       }
-      if (nowComplete) wasCompletedRef.current = true;
+      if (nowComplete) {
+        wasCompletedRef.current = true;
+        setEverCompleted(true);
+      }
+      yoRef.current = next;
       return next;
     });
   }, []);
@@ -61,35 +114,25 @@ export function GenesisProvider({ children }: { children: ReactNode }) {
     const result = await getYoAction();
     let next = result.ok ? result.data : null;
 
-    // Contrastar con REST: en Vercel server action y API pueden ver DBs distintas.
+    // Contrastar con REST por si action/API ven estados distintos.
     const apiYo = await fetchYoFromApi();
-    if (apiYo) {
-      if (!next) {
-        next = apiYo;
-      } else if (
-        next.genesisStatus === "COMPLETED" &&
-        apiYo.genesisStatus !== "COMPLETED"
-      ) {
-        // Action vio sellado fantasma; el API (lista/grafo) está vacío.
-        next = apiYo;
-      } else if (
-        apiYo.genesisStatus === "COMPLETED" &&
-        next.genesisStatus !== "COMPLETED"
-      ) {
-        next = apiYo;
-      }
-    }
+    next = pickPreferredYo(next, apiYo);
 
     if (!next) {
       setReady(true);
-      return null;
+      return yoRef.current;
+    }
+
+    if (shouldKeepPrevious(yoRef.current, next)) {
+      setReady(true);
+      return yoRef.current;
     }
 
     if (next.genesisStatus === "COMPLETED") {
       wasCompletedRef.current = true;
-    } else {
-      wasCompletedRef.current = false;
+      setEverCompleted(true);
     }
+    // No bajar wasCompletedRef a false por una lectura vacía/intermitente.
     applyYo(next);
     setReady(true);
     return next;
@@ -106,12 +149,20 @@ export function GenesisProvider({ children }: { children: ReactNode }) {
       ready,
       yo,
       genesisStatus,
-      navigationUnlocked: genesisStatus === "COMPLETED",
+      navigationUnlocked: everCompleted || genesisStatus === "COMPLETED",
       navRevealToken,
       refreshGenesis,
       applyYo,
     }),
-    [ready, yo, genesisStatus, navRevealToken, refreshGenesis, applyYo],
+    [
+      ready,
+      yo,
+      genesisStatus,
+      everCompleted,
+      navRevealToken,
+      refreshGenesis,
+      applyYo,
+    ],
   );
 
   return (

@@ -18,7 +18,12 @@ let setupPromise: Promise<void> | null = null;
 const SQLITE_MAGIC = "SQLite format 3";
 const SCHEMA_MARKER = "AudioAsset";
 const PARTIAL_META_MARKER = "_deprocast_export_meta";
-const LOCAL_PUSH_TABLES = ["PendingTask", "LudusState", "ActivityLog"] as const;
+const LOCAL_PUSH_TABLES = [
+  "PendingTask",
+  "LudusState",
+  "ActivityLog",
+  "DailySession",
+] as const;
 
 function sqliteTableExists(dbPath: string, tableName: string): boolean {
   if (!fs.existsSync(dbPath)) {

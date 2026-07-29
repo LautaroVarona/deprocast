@@ -151,6 +151,9 @@ export async function factoryResetSystem(): Promise<FactoryResetResult> {
   resetPrismaClient();
   resetRuntimeSetupCache();
 
+  const { clearYoIdentitySnapshot } = await import("@/lib/yo/identity-snapshot");
+  await clearYoIdentitySnapshot();
+
   await ensureRuntimeReady();
   await disconnectPrismaClient();
   getPrismaClient();
