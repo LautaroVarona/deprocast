@@ -3,6 +3,7 @@
 import { useBabel } from "@/components/babel/babel-context";
 import { importProjectFromJson } from "@/lib/proyectos/actions";
 import { PROJECT_JSON_TEMPLATE } from "@/lib/proyectos/json-codex";
+import { cacheProjectEntity } from "@/lib/personas/client-cache";
 import { cn } from "@/lib/utils";
 import { notifyDomainRefresh } from "@/lib/domain-refresh";
 import { AnimatePresence, motion } from "framer-motion";
@@ -82,6 +83,7 @@ export function JsonInjector({ open, onOpenChange, onImported }: JsonInjectorPro
       toast.success("Proyecto materializado", {
         description: result.project.title,
       });
+      cacheProjectEntity(result.project);
       notifyDomainRefresh("all", "json-codex-import");
       onOpenChange(false);
       onImported?.();

@@ -7,6 +7,10 @@ import { JsonInjector } from "@/components/proyectos/json-injector";
 import { ProjectBoard } from "@/components/proyectos/project-board";
 import { ProposalsWorkspace } from "@/components/proyectos/proposals-workspace";
 import { useDomainRefresh } from "@/hooks/use-domain-refresh";
+import {
+  cacheProjectEntity,
+  mergeCachedProjects,
+} from "@/lib/personas/client-cache";
 import { getDefaultCampo, type CampoInfo } from "@/lib/projects/campos";
 import { isHighPriorityProject } from "@/lib/projects/priority";
 import type { Project } from "@/lib/projects/types";
@@ -43,13 +47,20 @@ export function ProyectosDashboard() {
     setIsLoading(true);
     try {
       const response = await universeFetch("/api/proyectos", { cache: "no-store" });
-      if (!response.ok) return;
+      if (!response.ok) {
+        setProjects((prev) => mergeCachedProjects(prev));
+        return;
+      }
       const data: { projects: Project[]; campos?: CampoInfo[] } =
         await response.json();
-      setProjects(data.projects);
+      const merged = mergeCachedProjects(data.projects ?? []);
+      for (const project of data.projects ?? []) {
+        cacheProjectEntity(project);
+      }
+      setProjects(merged);
       setCampos(data.campos?.length ? data.campos : [getDefaultCampo()]);
     } catch {
-      setProjects([]);
+      setProjects((prev) => mergeCachedProjects(prev));
     } finally {
       setIsLoading(false);
     }

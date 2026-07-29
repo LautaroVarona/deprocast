@@ -1,10 +1,10 @@
 "use server";
 
-import { registerBabelRecord } from "@/lib/babel/record-store";
 import { shouldFilterByUniverse } from "@/lib/babel/context-seal";
 import { DEFAULT_CAMPO_SLUG, isCampoSlug } from "@/lib/projects/campos";
 import { clampScale } from "@/lib/projects/priority";
 import { createProject, listCampos } from "@/lib/projects/service";
+import { sealProjectInUniverse } from "@/lib/projects/universe-seal";
 import {
   PROJECT_STATUSES,
   PROJECT_TIPOS,
@@ -160,17 +160,12 @@ export async function importProjectFromJson(
 
     const project = await createProject(input);
 
-    if (universeSlug && shouldFilterByUniverse(universeSlug)) {
-      await registerBabelRecord({
-        kind: "capture",
-        physicalRef: project.id,
-        contextSeal: universeSlug,
-        contentPreview: project.title,
-        channel: "proyectos",
-        campoSlug: project.campoSlug,
-        metadata: { sealedVia: "json-codex" },
-      });
-    }
+    await sealProjectInUniverse(
+      project.id,
+      universeSlug,
+      project.title,
+      project.campoSlug,
+    );
 
     try {
       const { ingestSingleProject } = await import("@/lib/kg/sources");

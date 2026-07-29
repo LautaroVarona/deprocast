@@ -8,7 +8,10 @@ import {
 } from "@/lib/projects/service";
 import { getUniverseFilterSlugFromRequest } from "@/lib/babel/universe-scope";
 import { filterProjectsForUniverse } from "@/lib/babel/universe-refs";
-import type { CreateProjectInput, ProjectStatus, ProjectTipo } from "@/lib/projects/types";
+import { PROJECT_CACHE_HEADER } from "@/lib/personas/client-cache";
+import { applyClientProjectSnapshots } from "@/lib/projects/atanor-store";
+import { sealProjectInUniverse } from "@/lib/projects/universe-seal";
+import type { CreateProjectInput, Project, ProjectStatus, ProjectTipo } from "@/lib/projects/types";
 import { ensureRuntimeReady } from "@/lib/runtime-setup";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -26,9 +29,44 @@ function parseStatus(value: unknown): ProjectStatus {
     : "Idea";
 }
 
+function parseProjectCacheHeader(raw: string | null): Array<
+  Partial<Project> & { id: string; title: string; campoSlug: string }
+> {
+  if (!raw?.trim()) return [];
+  try {
+    const parsed = JSON.parse(decodeURIComponent(raw)) as unknown;
+    if (!Array.isArray(parsed)) return [];
+    const out: Array<Partial<Project> & { id: string; title: string; campoSlug: string }> = [];
+    for (const item of parsed) {
+      if (!item || typeof item !== "object") continue;
+      const row = item as Record<string, unknown>;
+      if (
+        typeof row.id !== "string" ||
+        typeof row.title !== "string" ||
+        typeof row.campoSlug !== "string"
+      ) {
+        continue;
+      }
+      out.push(row as Partial<Project> & { id: string; title: string; campoSlug: string });
+    }
+    return out;
+  } catch {
+    return [];
+  }
+}
+
 export async function GET(request: NextRequest) {
   try {
     await ensureRuntimeReady();
+
+    const cached = parseProjectCacheHeader(
+      request.headers.get(PROJECT_CACHE_HEADER),
+    );
+    if (cached.length) {
+      await applyClientProjectSnapshots(cached).catch((error) => {
+        console.warn("[proyectos] client rehydrate skipped:", error);
+      });
+    }
 
     const universeSlug = getUniverseFilterSlugFromRequest(request);
     const [allProjects, campos] = await Promise.all([
@@ -51,6 +89,8 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     await ensureRuntimeReady();
+
+    const universeSlug = getUniverseFilterSlugFromRequest(request);
 
     const body = (await request.json()) as Partial<CreateProjectInput> & {
       mode?: string;
@@ -123,14 +163,23 @@ export async function POST(request: NextRequest) {
 
     const project = await createProject(input);
 
-    void (async () => {
-      try {
-        const { ingestSingleProject } = await import("@/lib/kg/sources");
-        await ingestSingleProject(project, { reconocido: true });
-      } catch (error) {
-        console.error("KG project hook error:", error);
-      }
-    })();
+    await sealProjectInUniverse(
+      project.id,
+      universeSlug,
+      project.title,
+      project.campoSlug,
+    );
+
+    try {
+      const { ingestSingleProject } = await import("@/lib/kg/sources");
+      await ingestSingleProject(project, {
+        reconocido: true,
+        structuredOnly: true,
+        force: true,
+      });
+    } catch (error) {
+      console.error("KG project hook error:", error);
+    }
 
     return NextResponse.json({ project }, { status: 201 });
   } catch (error) {

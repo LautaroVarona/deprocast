@@ -35,23 +35,57 @@ function groupByCampo(
   return groups;
 }
 
+/** Campos de la API + slugs huérfanos presentes en proyectos. */
+function resolveBoardCampos(
+  projects: Project[],
+  campos: CampoInfo[],
+): CampoInfo[] {
+  const bySlug = new Map(campos.map((c) => [c.slug, c]));
+  for (const project of projects) {
+    if (bySlug.has(project.campoSlug)) continue;
+    bySlug.set(project.campoSlug, {
+      slug: project.campoSlug,
+      label: project.campo || project.campoSlug,
+      count: 0,
+    });
+  }
+  const list = [...bySlug.values()];
+  return list.sort((a, b) => {
+    if (a.slug === DEFAULT_CAMPO_SLUG) return -1;
+    if (b.slug === DEFAULT_CAMPO_SLUG) return 1;
+    return a.label.localeCompare(b.label, "es");
+  });
+}
+
 export function ProjectBoard({
   projects,
   campos,
   isLoading,
   onRefresh,
 }: ProjectBoardProps) {
-  const grouped = useMemo(() => groupByCampo(projects, campos), [projects, campos]);
+  const boardCampos = useMemo(
+    () => resolveBoardCampos(projects, campos),
+    [projects, campos],
+  );
+  const grouped = useMemo(
+    () => groupByCampo(projects, boardCampos),
+    [projects, boardCampos],
+  );
   const [activeCampo, setActiveCampo] = useState(DEFAULT_CAMPO_SLUG);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
 
   useEffect(() => {
-    if (campos.some((campo) => campo.slug === activeCampo)) return;
-    setActiveCampo(campos[0]?.slug ?? DEFAULT_CAMPO_SLUG);
-  }, [campos, activeCampo]);
+    if (boardCampos.some((campo) => campo.slug === activeCampo)) return;
+    const withProjects = boardCampos.find(
+      (c) => (grouped.get(c.slug)?.length ?? 0) > 0,
+    );
+    setActiveCampo(
+      withProjects?.slug ?? boardCampos[0]?.slug ?? DEFAULT_CAMPO_SLUG,
+    );
+  }, [boardCampos, activeCampo, grouped]);
 
-  const activeCampoInfo = campos.find((campo) => campo.slug === activeCampo);
+  const activeCampoInfo = boardCampos.find((campo) => campo.slug === activeCampo);
   const activeProjects = grouped.get(activeCampo) ?? [];
   const criticalCount = activeProjects.filter((project) =>
     isHighPriorityProject(project.prioridad, project.impacto),
@@ -75,7 +109,7 @@ export function ProjectBoard({
     <>
       <div className="flex min-h-0 flex-1 flex-col gap-3">
         <div className="flex shrink-0 flex-wrap gap-1.5" role="tablist" aria-label="Campos">
-          {campos.map((campo) => {
+          {boardCampos.map((campo) => {
             const count = grouped.get(campo.slug)?.length ?? 0;
             const isActive = activeCampo === campo.slug;
 

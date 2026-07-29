@@ -18,6 +18,7 @@ import { personaSlugFromName } from "@/lib/personas/slug";
 import { GitBranchIcon, Loader2Icon, NetworkIcon } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
+import { toast } from "sonner";
 
 type Props = {
   mode: PersonaGraphViewMode;
@@ -33,6 +34,7 @@ export function PersonasGraphWorkspace({
   const { universeFetch } = useBabel();
   const [snapshot, setSnapshot] = useState<PersonaGraphSnapshot | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [selectedEdge, setSelectedEdge] = useState<PersonaGraphEdge | null>(null);
   const [linkDraft, setLinkDraft] = useState<PersonaRelationDraft | null>(null);
@@ -41,12 +43,23 @@ export function PersonasGraphWorkspace({
   const loadGraph = useCallback(
     async (viewMode: PersonaGraphViewMode) => {
       setIsLoading(true);
+      setLoadError(null);
       try {
         const response = await universeFetch(
           `/api/personas/graph?mode=${encodeURIComponent(viewMode)}`,
           { cache: "no-store" },
         );
-        if (!response.ok) return;
+        if (!response.ok) {
+          const data = await response.json().catch(() => ({}));
+          const message =
+            (data as { error?: string }).error ??
+            "No se pudo cargar el grafo de personas.";
+          setLoadError(message);
+          toast.error(message);
+          setSnapshot(null);
+          onStatsChange?.(null);
+          return;
+        }
         const data: { snapshot: PersonaGraphSnapshot } = await response.json();
         setSnapshot(data.snapshot);
         onStatsChange?.({
@@ -56,6 +69,9 @@ export function PersonasGraphWorkspace({
         setSelectedNodeId(null);
         setSelectedEdge(null);
       } catch {
+        const message = "Error de red al cargar el grafo.";
+        setLoadError(message);
+        toast.error(message);
         setSnapshot(null);
         onStatsChange?.(null);
       } finally {
@@ -113,7 +129,20 @@ export function PersonasGraphWorkspace({
         ) : (
           <div className="flex h-full flex-col items-center justify-center gap-2 text-sm text-muted-foreground">
             <NetworkIcon className="size-8 opacity-40" />
-            <p>Sin nodos verificados en este universo.</p>
+            <p>
+              {loadError ??
+                "Sin nodos verificados en este universo."}
+            </p>
+            {loadError && (
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                onClick={() => void loadGraph(mode)}
+              >
+                Reintentar
+              </Button>
+            )}
           </div>
         )}
       </div>

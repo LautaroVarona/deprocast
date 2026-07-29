@@ -394,6 +394,20 @@ model ProjectProposal {
   @@index([createdAt])
 }
 
+// SSOT de proyectos Atanor en SQLite (sobrevive /tmp vacío si la DB es durable).
+model AtanorProject {
+  id        String   @id
+  campoSlug String
+  title     String
+  payload   Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([campoSlug])
+  @@index([title])
+  @@index([updatedAt])
+}
+
 // Incubador conversacional de proyectos (/proyectos/nuevo).
 model ProjectIncubationSession {
   id              String   @id @default(uuid())

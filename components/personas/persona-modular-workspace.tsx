@@ -305,6 +305,7 @@ async function syncRelations(params: {
   initialRelations: PersonaRelationListItem[];
   rolProyecto: string;
   naturaleza: string;
+  fetchFn: typeof fetch;
 }) {
   const {
     personaId,
@@ -314,6 +315,7 @@ async function syncRelations(params: {
     initialRelations,
     rolProyecto,
     naturaleza,
+    fetchFn,
   } = params;
 
   const initialProjectIds = new Set(
@@ -330,12 +332,12 @@ async function syncRelations(params: {
 
   for (const rel of initialRelations) {
     if (rel.kind === "proyecto" && !nextProjectIds.has(rel.targetId)) {
-      await fetch(`/api/personas/relations/${encodeURIComponent(rel.id)}`, {
+      await fetchFn(`/api/personas/relations/${encodeURIComponent(rel.id)}`, {
         method: "DELETE",
       });
     }
     if (rel.kind === "persona" && !nextPeopleIds.has(rel.targetId)) {
-      await fetch(`/api/personas/relations/${encodeURIComponent(rel.id)}`, {
+      await fetchFn(`/api/personas/relations/${encodeURIComponent(rel.id)}`, {
         method: "DELETE",
       });
     }
@@ -343,7 +345,7 @@ async function syncRelations(params: {
 
   for (const project of projects) {
     if (initialProjectIds.has(project.targetId)) continue;
-    const response = await fetch("/api/personas/relations", {
+    const response = await fetchFn("/api/personas/relations", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -366,7 +368,7 @@ async function syncRelations(params: {
 
   for (const person of people) {
     if (initialPeopleIds.has(person.targetId)) continue;
-    const response = await fetch("/api/personas/relations", {
+    const response = await fetchFn("/api/personas/relations", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -398,7 +400,7 @@ export function PersonaModularWorkspace({
   onCreated,
   onSaved,
 }: PersonaModularWorkspaceProps) {
-  const { universeSlug } = useBabel();
+  const { universeSlug, universeFetch } = useBabel();
   const { operatorName } = useYoNames();
   const [moduleId, setModuleId] = useState<ModuleId>("identidad");
   const [form, setForm] = useState<FormState>(() => emptyForm(universeSlug));
@@ -534,7 +536,7 @@ export function PersonaModularWorkspace({
 
       if (!initialPersona) return;
 
-      const response = await fetch(
+      const response = await universeFetch(
         `/api/personas/${encodeURIComponent(initialPersona.id)}`,
         {
           method: "PATCH",
@@ -560,6 +562,7 @@ export function PersonaModularWorkspace({
         initialRelations: initialRelations ?? [],
         rolProyecto: form.rolProyecto,
         naturaleza: form.naturalezaVinculo,
+        fetchFn: universeFetch,
       });
 
       toast.success("Persona actualizada.");

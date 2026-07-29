@@ -4,13 +4,25 @@ import path from "node:path";
 import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
 import { PrismaClient } from "@prisma/client";
 
-import { getDatabaseFilePath, getDatabaseUrl } from "@/lib/runtime-paths";
+import {
+  getDatabaseFilePath,
+  getDatabaseUrl,
+  isRemoteDatabaseUrl,
+} from "@/lib/runtime-paths";
 
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
 };
 
 function createPrismaClient() {
+  if (isRemoteDatabaseUrl()) {
+    throw new Error(
+      "DATABASE_URL remota detectada, pero el cliente Prisma de Deprocast usa better-sqlite3. " +
+        "Configurá DEPROCAST_DATA_ROOT a un volumen persistente o usá file: SQLite. " +
+        "Turso/Postgres requieren adapter libSQL (pendiente).",
+    );
+  }
+
   // better-sqlite3 exige que el directorio padre exista (si no: "Cannot open database…").
   fs.mkdirSync(path.dirname(getDatabaseFilePath()), { recursive: true });
 

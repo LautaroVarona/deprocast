@@ -175,7 +175,7 @@ export function IngestaProyectoModal({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           title: capture.title.trim(),
-          campoSlug: DEFAULT_CAMPO_SLUG,
+          campoSlug: campos[0]?.slug ?? DEFAULT_CAMPO_SLUG,
           description: "",
           metaTagsSecundarios: [],
           responsable: "",
@@ -203,6 +203,10 @@ export function IngestaProyectoModal({
 
       notifyDomainRefresh("all", "project-coagulated");
       toast.success("Proyecto vacío coagulado.");
+      if (data.project) {
+        const { cacheProjectEntity } = await import("@/lib/personas/client-cache");
+        cacheProjectEntity(data.project);
+      }
       onCoagulated?.();
       onOpenChange(false);
     } catch (error) {

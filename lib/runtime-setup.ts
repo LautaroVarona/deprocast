@@ -10,6 +10,7 @@ import {
   getDatabaseFilePath,
   getDatabaseSeedPath,
   getDatabaseUrl,
+  isRemoteDatabaseUrl,
   isVercelRuntime,
 } from "@/lib/runtime-paths";
 
@@ -152,11 +153,17 @@ async function copySeedDatabase(targetPath: string, seedPath: string): Promise<v
 }
 
 async function ensureDatabase(): Promise<void> {
+  // DB remota (Turso/Postgres): no seed a /tmp ni better-sqlite3.
+  if (isRemoteDatabaseUrl()) {
+    return;
+  }
+
   if (!isVercelRuntime()) {
     return;
   }
 
   const targetPath = getDatabaseFilePath();
+  // Nunca pisar una DB que ya tiene esquema (datos de sesión / mount persistente).
   if (databaseHasAppSchema(targetPath)) {
     return;
   }

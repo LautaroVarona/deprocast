@@ -1,8 +1,10 @@
+import { getUniverseFilterSlugFromRequest } from "@/lib/babel/universe-scope";
 import {
   createRelacionPersonaCampo,
   createRelacionPersonaPersona,
   createRelacionPersonaProyecto,
 } from "@/lib/personas/relations";
+import { sealKgNodeInUniverse } from "@/lib/personas/universe-seal";
 import { ensureRuntimeReady } from "@/lib/runtime-setup";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -11,6 +13,8 @@ export const runtime = "nodejs";
 export async function POST(request: NextRequest) {
   try {
     await ensureRuntimeReady();
+
+    const universeSlug = getUniverseFilterSlugFromRequest(request);
 
     const body = (await request.json()) as {
       kind?: string;
@@ -22,7 +26,6 @@ export async function POST(request: NextRequest) {
       proyectoId?: string;
       rolPrincipal?: string;
       campoSlug?: string;
-      /** Nombre para rehidratar persona si SQLite perdió el nodo. */
       personaNombre?: string;
       origenNombre?: string;
       destinoNombre?: string;
@@ -41,6 +44,12 @@ export async function POST(request: NextRequest) {
         contexto: body.contexto,
         personaNombre: body.personaNombre,
       });
+      await sealKgNodeInUniverse(
+        relation.personaId,
+        universeSlug,
+        body.personaNombre,
+      );
+      await sealKgNodeInUniverse(relation.campoNodeId, universeSlug);
       return NextResponse.json({ relation }, { status: 201 });
     }
 
@@ -58,6 +67,12 @@ export async function POST(request: NextRequest) {
         contexto: body.contexto,
         personaNombre: body.personaNombre,
       });
+      await sealKgNodeInUniverse(
+        relation.personaId,
+        universeSlug,
+        body.personaNombre,
+      );
+      await sealKgNodeInUniverse(relation.proyectoId, universeSlug);
       return NextResponse.json({ relation }, { status: 201 });
     }
 
@@ -76,6 +91,17 @@ export async function POST(request: NextRequest) {
       origenNombre: body.origenNombre ?? body.personaNombre,
       destinoNombre: body.destinoNombre,
     });
+
+    await sealKgNodeInUniverse(
+      relation.origenId,
+      universeSlug,
+      body.origenNombre ?? body.personaNombre,
+    );
+    await sealKgNodeInUniverse(
+      relation.destinoId,
+      universeSlug,
+      body.destinoNombre,
+    );
 
     return NextResponse.json({ relation }, { status: 201 });
   } catch (error) {

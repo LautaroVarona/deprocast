@@ -214,6 +214,31 @@ export async function createPersonaWithRelations(
     }
   }
 
+  const { ensurePersonaNode, ensureProyectoNode } = await import(
+    "@/lib/personas/relations"
+  );
+  const resolvedConnections: PersonaConnectionDraft[] = [];
+  for (const connection of connections) {
+    if (connection.targetKind === "persona") {
+      const node = await ensurePersonaNode(
+        connection.targetId,
+        connection.targetLabel,
+      );
+      resolvedConnections.push({
+        ...connection,
+        targetId: node.id,
+        targetLabel: node.primaryName || connection.targetLabel,
+      });
+    } else {
+      const node = await ensureProyectoNode(connection.targetId);
+      resolvedConnections.push({
+        ...connection,
+        targetId: node.id,
+        targetLabel: node.primaryName || connection.targetLabel,
+      });
+    }
+  }
+
   return prisma.$transaction(async (tx) => {
     const existing = await tx.kgNode.findUnique({
       where: {
@@ -265,7 +290,7 @@ export async function createPersonaWithRelations(
       await linkPersonaToOperator(tx, personId, relationToOperator, operator);
     }
 
-    for (const connection of connections) {
+    for (const connection of resolvedConnections) {
       if (connection.targetId === personId) {
         throw new Error("Una persona no puede vincularse consigo misma.");
       }

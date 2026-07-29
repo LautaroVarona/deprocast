@@ -420,6 +420,28 @@ export function ensureCoreColumnPatches(): void {
         FROM "CandidateEntity";
       `);
     }
+
+    if (!tableExists(db, "AtanorProject")) {
+      db.exec(`
+        CREATE TABLE "AtanorProject" (
+          "id" TEXT NOT NULL PRIMARY KEY,
+          "campoSlug" TEXT NOT NULL,
+          "title" TEXT NOT NULL,
+          "payload" JSONB NOT NULL,
+          "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          "updatedAt" DATETIME NOT NULL
+        );
+      `);
+      db.exec(
+        `CREATE INDEX IF NOT EXISTS "AtanorProject_campoSlug_idx" ON "AtanorProject"("campoSlug");`,
+      );
+      db.exec(
+        `CREATE INDEX IF NOT EXISTS "AtanorProject_title_idx" ON "AtanorProject"("title");`,
+      );
+      db.exec(
+        `CREATE INDEX IF NOT EXISTS "AtanorProject_updatedAt_idx" ON "AtanorProject"("updatedAt");`,
+      );
+    }
   } finally {
     db.close();
   }

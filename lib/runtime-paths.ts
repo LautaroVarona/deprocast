@@ -78,7 +78,38 @@ export function resolveUploadPath(fileUrl: string): string {
   return path.join(APP_ROOT, "public", relativePath);
 }
 
+/**
+ * True when DATABASE_URL apunta a un host remoto (Turso/libSQL, Postgres, etc.).
+ * En ese caso no se usa better-sqlite3 ni seed a /tmp.
+ */
+export function isRemoteDatabaseUrl(url = process.env.DATABASE_URL?.trim()): boolean {
+  if (!url) return false;
+  if (url.startsWith("file:")) return false;
+  return /^(libsql|https?|postgres(ql)?|prisma\+postgres|mysql):\/\//i.test(url);
+}
+
+/** SQLite en /tmp de Vercel sin DEPROCAST_DATA_ROOT — no sobrevive cold starts. */
+export function usesEphemeralSqlite(): boolean {
+  if (isRemoteDatabaseUrl()) return false;
+  if (process.env.DEPROCAST_DATA_ROOT?.trim()) return false;
+  return isVercelRuntime();
+}
+
+/**
+ * True when Atanor debe tratar SQLite (AtanorProject) como SSOT de lectura,
+ * no solo los .md del filesystem (efímero en Vercel).
+ */
+export function prefersSqliteProjectStore(): boolean {
+  return isVercelRuntime() || Boolean(process.env.DEPROCAST_DATA_ROOT?.trim());
+}
+
 export function getDatabaseFilePath(): string {
+  if (isRemoteDatabaseUrl()) {
+    throw new Error(
+      "DATABASE_URL remota detectada: getDatabaseFilePath solo aplica a SQLite file:. Usá getDatabaseUrl().",
+    );
+  }
+
   const envUrl = process.env.DATABASE_URL?.trim();
 
   if (envUrl?.startsWith("file:")) {
@@ -88,7 +119,8 @@ export function getDatabaseFilePath(): string {
     }
 
     if (isVercelRuntime()) {
-      return path.join(getWritableBase(), "deprocast.db");
+      // Con DEPROCAST_DATA_ROOT el path relativo cae en el mount persistente.
+      return path.join(getWritableBase(), filePath.replace(/^\.\//, ""));
     }
 
     return path.join(APP_ROOT, filePath);
@@ -102,6 +134,11 @@ export function getDatabaseFilePath(): string {
 }
 
 export function getDatabaseUrl(): string {
+  const envUrl = process.env.DATABASE_URL?.trim();
+  if (envUrl && isRemoteDatabaseUrl(envUrl)) {
+    return envUrl;
+  }
+
   // Forward slashes: URI file: estable en Windows para el adapter better-sqlite3.
   return `file:${getDatabaseFilePath().replace(/\\/g, "/")}`;
 }
@@ -134,8 +171,11 @@ export async function ensureRuntimeDirs(): Promise<void> {
     getDataPath("memory", "sessions"),
     getDataPath("memory", "knowledge"),
     getDataPath("memory", "knowledge", "translators"),
-    path.dirname(getDatabaseFilePath()),
   ];
+
+  if (!isRemoteDatabaseUrl()) {
+    dirs.push(path.dirname(getDatabaseFilePath()));
+  }
 
   await Promise.all(
     dirs.map(async (dir) => {

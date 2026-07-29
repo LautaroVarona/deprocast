@@ -6,6 +6,7 @@ import type {
   PersonaGraphSnapshot,
   PersonaGraphViewMode,
 } from "@/lib/personas/model";
+import { sealLegacyCrmPersonas } from "@/lib/personas/queries";
 import { prisma } from "@/lib/prisma";
 import { withGenesisCoreNodeIds } from "@/lib/yo/genesis-core";
 import { ensureOperatorPersonaNode } from "@/lib/yo/operator-node";
@@ -40,6 +41,8 @@ export async function buildPersonaGraphSnapshot(
   mode: PersonaGraphViewMode,
   universeNodeIds: UniverseIdFilter = null,
 ): Promise<PersonaGraphSnapshot> {
+  await sealLegacyCrmPersonas();
+
   const operatorNode = await ensureOperatorPersonaNode();
   const centerNodeId = operatorNode?.id ?? null;
   const scopedIds = await withGenesisCoreNodeIds(universeNodeIds);
@@ -127,7 +130,7 @@ export async function buildPersonaGraphSnapshot(
     }
 
     const projectNodesRaw = await prisma.kgNode.findMany({
-      where: { type: "proyecto" },
+      where: { type: "proyecto", reconocido: true },
       orderBy: { primaryName: "asc" },
     });
     projectNodes = projectNodesRaw.filter((node) => {

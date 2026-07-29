@@ -1,12 +1,17 @@
 import { getUniverseFilterSlugFromRequest } from "@/lib/babel/universe-scope";
 import { resolveUniverseKgNodeIds } from "@/lib/babel/universe-refs";
 import { isPersonaKind } from "@/lib/kg/types";
+import { PERSONA_CACHE_HEADER } from "@/lib/personas/client-cache";
 import { createPersonaWithRelations } from "@/lib/personas/create-with-relations";
 import type {
   CreatePersonaWithRelationsPayload,
   PersonaConnectionDraft,
 } from "@/lib/personas/model";
 import { listPersonas } from "@/lib/personas/queries";
+import {
+  applyClientPersonaSnapshot,
+  parsePersonaCacheHeader,
+} from "@/lib/personas/rehydrate-client";
 import { createPersona } from "@/lib/personas/service";
 import type { PersonaListStatus } from "@/lib/personas/types";
 import { sealKgNodeInUniverse } from "@/lib/personas/universe-seal";
@@ -26,6 +31,15 @@ function parseStatus(value: string | null): PersonaListStatus {
 export async function GET(request: NextRequest) {
   try {
     await ensureRuntimeReady();
+
+    const hints = parsePersonaCacheHeader(
+      request.headers.get(PERSONA_CACHE_HEADER),
+    );
+    if (hints?.length) {
+      await applyClientPersonaSnapshot(hints).catch((error) => {
+        console.warn("[personas] client rehydrate skipped:", error);
+      });
+    }
 
     const status = parseStatus(request.nextUrl.searchParams.get("status"));
     const universeSlug = getUniverseFilterSlugFromRequest(request);

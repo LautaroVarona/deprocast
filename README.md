@@ -65,5 +65,10 @@ Los audios subidos en Vercel se sirven por `/api/uploads/[filename]` (en local s
 
 ### Limitaciones en Vercel
 
-- Los datos (SQLite, journal, documentos, uploads) viven en `/tmp` y **no persisten** entre cold starts ni entre instancias. Es adecuado para demo; para producción conviene Turso/Postgres y almacenamiento externo (S3, Vercel Blob).
+- Sin volumen persistente, SQLite y archivos viven en `/tmp` y **no persisten** entre cold starts ni entre instancias.
+- **Recomendado:** montá almacenamiento durable y configurá:
+  - `DEPROCAST_DATA_ROOT=/var/data/deprocast`
+  - `DATABASE_URL=file:/var/data/deprocast/deprocast.db`
+- Los proyectos Atanor también se guardan en la tabla SQLite `AtanorProject` (dual-write con `.md`).
+- El navegador rehidrata personas/proyectos vía headers de caché tras cold starts.
 - Las rutas de API con procesamiento largo requieren plan **Pro** (`maxDuration: 120`).

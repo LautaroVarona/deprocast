@@ -2,6 +2,7 @@
 
 import { useBabel } from "@/components/babel/babel-context";
 import type { PersonaLinkTarget } from "@/lib/personas/model";
+import { mergePersonaLinkTargets } from "@/lib/personas/client-cache";
 import { cn } from "@/lib/utils";
 import { Loader2Icon, SearchIcon } from "lucide-react";
 import { useEffect, useId, useRef, useState } from "react";
@@ -83,7 +84,22 @@ export function ConnectionEntityPicker({
           .flatMap((chunk) => chunk.targets ?? [])
           .filter((target) => !exclude.has(target.id));
 
-        setResults(merged);
+        const withCache =
+          kinds.includes("persona")
+            ? mergePersonaLinkTargets(merged, {
+                excludeIds,
+                q: trimmed || undefined,
+              })
+            : merged;
+
+        setResults(
+          withCache.filter((target) => {
+            if (!kinds.includes(target.kind as "persona" | "proyecto")) {
+              return false;
+            }
+            return !exclude.has(target.id);
+          }),
+        );
       } catch (error) {
         if ((error as Error).name === "AbortError") return;
         setResults([]);

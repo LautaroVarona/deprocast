@@ -12,6 +12,7 @@ import type {
   PersonaLinkTarget,
   PersonaLinkTargetKind,
 } from "@/lib/personas/model";
+import { mergePersonaLinkTargets } from "@/lib/personas/client-cache";
 import { cn } from "@/lib/utils";
 import { Loader2Icon, LinkIcon } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
@@ -107,7 +108,14 @@ export function PersonaRelationsSheet({
       if (!response.ok) {
         throw new Error(data.error ?? "No se pudieron cargar destinos.");
       }
-      setTargets(data.targets ?? []);
+      setTargets(
+        linkKind === "persona"
+          ? mergePersonaLinkTargets(data.targets ?? [], {
+              excludeIds: [source.id],
+              q: query.trim() || undefined,
+            })
+          : (data.targets ?? []),
+      );
     } catch (error) {
       setTargets([]);
       toast.error(

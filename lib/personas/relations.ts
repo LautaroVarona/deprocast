@@ -33,7 +33,7 @@ import { Prisma, type KgEdge, type KgNode } from "@prisma/client";
  * Si el id no está en SQLite (cold start / caché cliente) pero llega el nombre,
  * recrea el nodo con el mismo id para que los vínculos sigan funcionando.
  */
-async function ensurePersonaNode(id: string, nombrePrincipal?: string) {
+export async function ensurePersonaNode(id: string, nombrePrincipal?: string) {
   const existing = await prisma.kgNode.findFirst({
     where: { id, type: "persona" },
   });
@@ -105,7 +105,7 @@ async function findProyectoNodeForProject(
 }
 
 /** Resuelve KgNode proyecto desde id de grafo o id de archivo Atanor. */
-async function ensureProyectoNode(idOrRef: string): Promise<KgNode> {
+export async function ensureProyectoNode(idOrRef: string): Promise<KgNode> {
   const byId = await prisma.kgNode.findFirst({
     where: { id: idOrRef, type: "proyecto" },
   });
@@ -294,11 +294,28 @@ export async function listPersonaLinkTargets(input: {
   kind: PersonaLinkTargetKind;
   q?: string;
   excludePersonaId?: string;
+  /** Filtro de universo (null = Babel / sin filtro). */
+  nodeIds?: Set<string> | null;
 }): Promise<PersonaLinkTarget[]> {
   const query = input.q?.trim() ?? "";
+  const universeFilter =
+    input.nodeIds && input.nodeIds.size > 0 ? input.nodeIds : undefined;
+  // Universo hijo vacío → no inventar destinos fuera de scope.
+  if (input.nodeIds && input.nodeIds.size === 0) {
+    if (input.kind === "campo") {
+      // campos siguen siendo globales del filesystem
+    } else {
+      return [];
+    }
+  }
 
   if (input.kind === "persona") {
-    const nodes = await searchNodes({ type: "persona", q: query, limit: 40 });
+    const nodes = await searchNodes({
+      type: "persona",
+      q: query,
+      limit: 40,
+      nodeIds: universeFilter,
+    });
     return nodes
       .filter((node) => node.id !== input.excludePersonaId)
       .map((node) => ({
@@ -312,9 +329,19 @@ export async function listPersonaLinkTargets(input: {
 
   if (input.kind === "proyecto") {
     const [nodes, fileProjects, proyectoNodes] = await Promise.all([
-      searchNodes({ type: "proyecto", q: query, limit: 80 }),
+      searchNodes({
+        type: "proyecto",
+        q: query,
+        limit: 80,
+        nodeIds: universeFilter,
+      }),
       listProjects(),
-      prisma.kgNode.findMany({ where: { type: "proyecto" } }),
+      prisma.kgNode.findMany({
+        where: {
+          type: "proyecto",
+          ...(universeFilter ? { id: { in: [...universeFilter] } } : {}),
+        },
+      }),
     ]);
 
     const fileIdToNodeId = new Map<string, string>();
@@ -362,6 +389,20 @@ export async function listPersonaLinkTargets(input: {
         fileIdToNodeId.get(project.id) ??
         titleToNodeId.get(project.title.toLowerCase()) ??
         project.id;
+
+      // En universo hijo: solo proyectos ya mapeados a nodos del scope
+      // o todos si no hay filtro (Babel).
+      if (universeFilter && !universeFilter.has(targetId) && !fileIdToNodeId.has(project.id)) {
+        // Permitir listar proyectos Atanor aún no coagulados (se crean al vincular).
+        // Solo filtrar si el targetId es un kg node fuera del universo.
+        if (fileIdToNodeId.has(project.id) || titleToNodeId.has(project.title.toLowerCase())) {
+          const mapped =
+            fileIdToNodeId.get(project.id) ??
+            titleToNodeId.get(project.title.toLowerCase());
+          if (mapped && !universeFilter.has(mapped)) continue;
+        }
+      }
+
       if (byId.has(targetId)) continue;
 
       byId.set(targetId, {
@@ -441,6 +482,25 @@ export async function createRelacionPersonaPersona(
       reconocido: true,
     },
     include: { sourceNode: true, targetNode: true },
+  });
+
+  await prisma.personToPerson.upsert({
+    where: {
+      personAId_personBId: {
+        personAId: origen.id,
+        personBId: destino.id,
+      },
+    },
+    create: {
+      personAId: origen.id,
+      personBId: destino.id,
+      relationContext: input.contexto?.trim() || tipoRelacion,
+      relationType: tipoRelacion,
+    },
+    update: {
+      relationContext: input.contexto?.trim() || tipoRelacion,
+      relationType: tipoRelacion,
+    },
   });
 
   const relation = kgEdgeToRelacionPersonaPersona(

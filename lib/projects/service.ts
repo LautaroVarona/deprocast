@@ -23,6 +23,12 @@ import {
   updatePrioridadInMarkdown,
 } from "@/lib/projects/markdown";
 import {
+  findAtanorProjectInDb,
+  listAtanorProjectsFromDb,
+  mergeProjectSources,
+  upsertAtanorProjectRow,
+} from "@/lib/projects/atanor-store";
+import {
   getProjectDir,
   getProjectFilePath,
   PROJECTS_ROOT_DIR,
@@ -33,7 +39,7 @@ import type {
   Project,
 } from "@/lib/projects/types";
 import { randomUUID } from "node:crypto";
-import { access, mkdir, readdir, readFile, unlink, writeFile } from "node:fs/promises";
+import { mkdir, readdir, readFile, unlink, writeFile } from "node:fs/promises";
 import path from "node:path";
 
 async function readProjectsFromDir(dir: string): Promise<Project[]> {
@@ -57,7 +63,7 @@ async function readProjectsFromDir(dir: string): Promise<Project[]> {
   return projects;
 }
 
-export async function listProjects(): Promise<Project[]> {
+async function listProjectsFromFilesystem(): Promise<Project[]> {
   await mkdir(PROJECTS_ROOT_DIR, { recursive: true });
 
   const projects: Project[] = [];
@@ -72,11 +78,16 @@ export async function listProjects(): Promise<Project[]> {
     projects.push(...(await readProjectsFromDir(dir)));
   }
 
-  return projects.sort((a, b) => {
-    const priorityDiff = Math.max(b.prioridad, b.impacto) - Math.max(a.prioridad, a.impacto);
-    if (priorityDiff !== 0) return priorityDiff;
-    return a.title.localeCompare(b.title, "es");
-  });
+  return projects;
+}
+
+export async function listProjects(): Promise<Project[]> {
+  const [fileProjects, dbProjects] = await Promise.all([
+    listProjectsFromFilesystem(),
+    listAtanorProjectsFromDb(),
+  ]);
+
+  return mergeProjectSources(fileProjects, dbProjects);
 }
 
 const PROJECT_CACHE_TTL_MS = 30_000;
@@ -300,6 +311,8 @@ export async function assignProjectToCampo(
     throw new Error("No se pudo reasignar el proyecto al Campo.");
   }
 
+  await upsertAtanorProjectRow(updated).catch(() => undefined);
+  invalidateProjectCache();
   return updated;
 }
 
@@ -315,16 +328,24 @@ export async function createProject(input: CreateProjectInput): Promise<Project>
 
   await ensureCampoExists(input.campoSlug);
   await writeFile(filePath, buildProjectMarkdown(projectData), "utf8");
-  invalidateProjectCache();
 
-  return {
+  const project: Project = {
     ...projectData,
     filename: path.basename(filePath),
     filePath,
   };
+
+  await upsertAtanorProjectRow(project).catch((error) => {
+    console.error("[atanor] upsertAtanorProjectRow after create:", error);
+  });
+  invalidateProjectCache();
+
+  return project;
 }
 
 export async function findProjectById(projectId: string): Promise<Project | null> {
+  const fromDb = await findAtanorProjectInDb(projectId);
+  if (fromDb) return fromDb;
   const projects = await getCachedProjects();
   return projects.find((project) => project.id === projectId) ?? null;
 }
@@ -352,6 +373,7 @@ export async function updateProjectPriority(
     throw new Error("No se pudo actualizar la prioridad del proyecto.");
   }
 
+  await upsertAtanorProjectRow(updated).catch(() => undefined);
   return updated;
 }
 
@@ -380,6 +402,7 @@ export async function addProgressEntry(input: AddProgressInput): Promise<Project
     throw new Error("No se pudo actualizar la bitácora del proyecto.");
   }
 
+  await upsertAtanorProjectRow(updated).catch(() => undefined);
   return updated;
 }
 

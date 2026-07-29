@@ -174,12 +174,31 @@ export async function filterProjectsForUniverse(
     projectIndex,
   });
 
-  const campos = await listCampos(universeSlug);
+  const [campos, sealedProjects] = await Promise.all([
+    listCampos(universeSlug),
+    prisma.babelRecord.findMany({
+      where: {
+        contextSeal: universeSlug,
+        OR: [{ channel: "proyectos" }, { kind: "capture" }],
+      },
+      select: { physicalRef: true, channel: true },
+    }),
+  ]);
   const campoSlugs = new Set(campos.map((campo) => campo.slug));
+  const sealedIds = new Set(
+    sealedProjects
+      .filter((row) => row.channel === "proyectos" || documentIds.has(row.physicalRef))
+      .map((row) => row.physicalRef),
+  );
+  // También aceptar cualquier physicalRef que coincida con un project id.
+  for (const row of sealedProjects) {
+    sealedIds.add(row.physicalRef);
+  }
 
   return projects.filter(
     (project) =>
       documentIds.has(project.id) ||
+      sealedIds.has(project.id) ||
       (project.campoSlug && campoSlugs.has(project.campoSlug)),
   );
 }
