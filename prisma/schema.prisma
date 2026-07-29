@@ -1081,3 +1081,53 @@ model FeedbackSignal {
   @@index([targetKind, targetId])
   @@index([channel])
 }
+
+// ── Atanor Temporal (Workspace Diario Unificado) ──────────────────────
+
+model DailySession {
+  id              String          @id @default(uuid())
+  date            String          @unique
+  isClosed        Boolean         @default(false)
+  summaryMarkdown String?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  threads         SessionThread[]
+}
+
+model SessionThread {
+  id             String          @id @default(uuid())
+  dailySessionId String
+  title          String
+  topic          String?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  dailySession   DailySession    @relation(fields: [dailySessionId], references: [id], onDelete: Cascade)
+  messages       ThreadMessage[]
+  contexts       ThreadContext[]
+
+  @@index([dailySessionId])
+}
+
+model ThreadContext {
+  id        String        @id @default(uuid())
+  threadId  String
+  tagType   String
+  tagId     String
+  tagLabel  String
+  createdAt DateTime      @default(now())
+  thread    SessionThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+
+  @@index([threadId])
+  @@unique([threadId, tagType, tagId])
+}
+
+model ThreadMessage {
+  id        String        @id @default(uuid())
+  threadId  String
+  role      String
+  content   String
+  createdAt DateTime      @default(now())
+  thread    SessionThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+
+  @@index([threadId, createdAt])
+}
