@@ -7,10 +7,20 @@ import { personaSlugFromName } from "@/lib/personas/slug";
 const PERSONA_PREFIX = "deprocast:persona:";
 const PERSONA_INDEX_KEY = "deprocast:persona-index";
 
-function readIndex(): string[] {
-  if (typeof window === "undefined") return [];
+function storage(): Storage | null {
+  if (typeof window === "undefined") return null;
   try {
-    const raw = sessionStorage.getItem(PERSONA_INDEX_KEY);
+    return window.localStorage;
+  } catch {
+    return null;
+  }
+}
+
+function readIndex(): string[] {
+  const store = storage();
+  if (!store) return [];
+  try {
+    const raw = store.getItem(PERSONA_INDEX_KEY);
     if (!raw) return [];
     const parsed = JSON.parse(raw) as unknown;
     return Array.isArray(parsed)
@@ -22,21 +32,20 @@ function readIndex(): string[] {
 }
 
 function writeIndex(ids: string[]) {
-  if (typeof window === "undefined") return;
+  const store = storage();
+  if (!store) return;
   const unique = [...new Set(ids)].slice(0, 40);
-  sessionStorage.setItem(PERSONA_INDEX_KEY, JSON.stringify(unique));
+  store.setItem(PERSONA_INDEX_KEY, JSON.stringify(unique));
 }
 
 export function cachePersonaEntity(persona: Persona): void {
-  if (typeof window === "undefined") return;
+  const store = storage();
+  if (!store) return;
   try {
-    sessionStorage.setItem(
-      `${PERSONA_PREFIX}${persona.id}`,
-      JSON.stringify(persona),
-    );
+    store.setItem(`${PERSONA_PREFIX}${persona.id}`, JSON.stringify(persona));
     const slug = personaSlugFromName(persona.nombrePrincipal);
     if (slug) {
-      sessionStorage.setItem(`${PERSONA_PREFIX}slug:${slug}`, persona.id);
+      store.setItem(`${PERSONA_PREFIX}slug:${slug}`, persona.id);
     }
     writeIndex([persona.id, ...readIndex()]);
   } catch {
@@ -45,16 +54,15 @@ export function cachePersonaEntity(persona: Persona): void {
 }
 
 export function readCachedPersona(idOrSlug: string): Persona | null {
-  if (typeof window === "undefined") return null;
+  const store = storage();
+  if (!store) return null;
   try {
-    const direct = sessionStorage.getItem(`${PERSONA_PREFIX}${idOrSlug}`);
+    const direct = store.getItem(`${PERSONA_PREFIX}${idOrSlug}`);
     if (direct) return JSON.parse(direct) as Persona;
 
-    const mappedId = sessionStorage.getItem(
-      `${PERSONA_PREFIX}slug:${idOrSlug}`,
-    );
+    const mappedId = store.getItem(`${PERSONA_PREFIX}slug:${idOrSlug}`);
     if (!mappedId) return null;
-    const byId = sessionStorage.getItem(`${PERSONA_PREFIX}${mappedId}`);
+    const byId = store.getItem(`${PERSONA_PREFIX}${mappedId}`);
     return byId ? (JSON.parse(byId) as Persona) : null;
   } catch {
     return null;

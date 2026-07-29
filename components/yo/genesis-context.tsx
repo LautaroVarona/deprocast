@@ -1,6 +1,13 @@
 "use client";
 
-import { getYoAction } from "@/app/yo/actions";
+import {
+  getYoAction,
+  hydrateYoFromClientSnapshotAction,
+} from "@/app/yo/actions";
+import {
+  readClientYoSnapshot,
+  writeClientYoSnapshot,
+} from "@/lib/yo/client-snapshot";
 import type { GenesisStatus, YoDto } from "@/lib/yo/types";
 import {
   createContext,
@@ -87,11 +94,13 @@ export function GenesisProvider({ children }: { children: ReactNode }) {
   const [everCompleted, setEverCompleted] = useState(false);
   const wasCompletedRef = useRef(false);
   const yoRef = useRef<YoDto | null>(null);
+  const hydratedRef = useRef(false);
 
   const applyYo = useCallback((next: YoDto) => {
     setYo((prev) => {
       if (shouldKeepPrevious(prev, next)) {
         yoRef.current = prev;
+        if (prev) writeClientYoSnapshot(prev);
         return prev;
       }
 
@@ -106,11 +115,30 @@ export function GenesisProvider({ children }: { children: ReactNode }) {
         setEverCompleted(true);
       }
       yoRef.current = next;
+      writeClientYoSnapshot(next);
       return next;
     });
   }, []);
 
   const refreshGenesis = useCallback(async () => {
+    // Primero: empujar ancla del navegador si el servidor está vacío.
+    if (!hydratedRef.current) {
+      hydratedRef.current = true;
+      const local = readClientYoSnapshot();
+      if (local?.operatorName && local.exocortexName) {
+        if (local.genesisCompletedAt) {
+          wasCompletedRef.current = true;
+          setEverCompleted(true);
+        }
+        const hydrated = await hydrateYoFromClientSnapshotAction(local);
+        if (hydrated.ok) {
+          applyYo(hydrated.data);
+          setReady(true);
+          return hydrated.data;
+        }
+      }
+    }
+
     const result = await getYoAction();
     let next = result.ok ? result.data : null;
 
@@ -132,7 +160,6 @@ export function GenesisProvider({ children }: { children: ReactNode }) {
       wasCompletedRef.current = true;
       setEverCompleted(true);
     }
-    // No bajar wasCompletedRef a false por una lectura vacía/intermitente.
     applyYo(next);
     setReady(true);
     return next;

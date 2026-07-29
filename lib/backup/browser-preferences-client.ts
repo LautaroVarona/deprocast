@@ -50,6 +50,23 @@ export function clearBrowserPreferences(): void {
   for (const key of BROWSER_PREFERENCE_KEYS) {
     window.localStorage.removeItem(key);
   }
+
+  // Ancla de Génesis + cache de personas (no listadas en preferencias UI).
+  const extraKeys = [
+    "deprocast:yo-identity-v2",
+    "deprocast:persona-index",
+  ];
+  for (const key of extraKeys) {
+    window.localStorage.removeItem(key);
+  }
+  const toRemove: string[] = [];
+  for (let i = 0; i < window.localStorage.length; i += 1) {
+    const key = window.localStorage.key(i);
+    if (key?.startsWith("deprocast:persona:")) toRemove.push(key);
+  }
+  for (const key of toRemove) {
+    window.localStorage.removeItem(key);
+  }
 }
 
 function formatBytes(bytes: number): string {

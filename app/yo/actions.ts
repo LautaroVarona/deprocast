@@ -7,6 +7,7 @@ import {
 import { getSenadoGraphSnapshot } from "@/lib/yo/senado-graph";
 import type { SenadoGraphSnapshot } from "@/lib/yo/senado-types";
 import {
+  applyClientYoSnapshot,
   baptizeExocortex,
   baptizeOperator,
   ensureYoShell,
@@ -49,6 +50,25 @@ export async function getYoAction(): Promise<YoActionResult<YoDto>> {
       ok: false,
       error:
         error instanceof Error ? error.message : "No se pudo leer el nodo Yo.",
+    };
+  }
+}
+
+/** Rehidrata SQLite vacío desde el ancla del navegador (Vercel cold start). */
+export async function hydrateYoFromClientSnapshotAction(
+  snapshot: unknown,
+): Promise<YoActionResult<YoDto>> {
+  try {
+    await ready();
+    const yo = await applyClientYoSnapshot(snapshot);
+    return { ok: true, data: yo };
+  } catch (error) {
+    return {
+      ok: false,
+      error:
+        error instanceof Error
+          ? error.message
+          : "No se pudo rehidratar el nodo Yo.",
     };
   }
 }

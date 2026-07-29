@@ -14,7 +14,9 @@ import {
 import {
   persistYoIdentitySnapshot,
   readYoIdentitySnapshot,
+  type YoIdentitySnapshot,
 } from "@/lib/yo/identity-snapshot";
+import { rehydrateGenesisGraphFromSnapshot } from "@/lib/yo/rehydrate-genesis";
 import {
   CONSECRATION_PERSONA_TARGET,
   DEFAULT_EXOCORTEX_NAME,
@@ -119,6 +121,10 @@ async function toDto(row: YoRow): Promise<YoDto> {
       calibration: dto.calibration,
       genesisCompletedAt: dto.genesisCompletedAt,
       updatedAt: dto.updatedAt,
+      mergeGraph: true,
+      prima: dto.calibration.consecration_prima_objetivo
+        ? { title: dto.calibration.consecration_prima_objetivo }
+        : undefined,
     });
   }
 
@@ -190,8 +196,19 @@ export async function ensureYoShell(): Promise<YoDto> {
             calibration: {},
           },
     });
+    if (snap) {
+      await rehydrateGenesisGraphFromSnapshot(snap).catch((error) => {
+        console.warn("[yo] rehydrate after create skipped:", error);
+      });
+    }
   } else {
     row = await restoreYoFromSnapshotIfNeeded(found);
+    const snap = await readYoIdentitySnapshot();
+    if (snap) {
+      await rehydrateGenesisGraphFromSnapshot(snap).catch((error) => {
+        console.warn("[yo] rehydrate skipped:", error);
+      });
+    }
   }
 
   const dto = await toDto(row);
@@ -216,6 +233,107 @@ export async function ensureYoShell(): Promise<YoDto> {
   }
 
   return dto;
+}
+
+/**
+ * Aplica un ancla enviada por el navegador (localStorage) cuando el
+ * SQLite de Vercel nace vacío. Fusiona con el snapshot de disco.
+ */
+export async function applyClientYoSnapshot(
+  raw: unknown,
+): Promise<YoDto> {
+  const { normalizeClientYoSnapshot } = await import(
+    "@/lib/yo/identity-snapshot"
+  );
+  const incoming = normalizeClientYoSnapshot(raw);
+  if (!incoming) {
+    return ensureYoShell();
+  }
+
+  const disk = await readYoIdentitySnapshot();
+  const merged: YoIdentitySnapshot = {
+    ...incoming,
+    senado: mergeSenadoLists(disk?.senado ?? [], incoming.senado),
+    prima: incoming.prima ?? disk?.prima ?? null,
+    genesisCompletedAt:
+      incoming.genesisCompletedAt ?? disk?.genesisCompletedAt ?? null,
+    calibration: {
+      ...(disk?.calibration ?? {}),
+      ...incoming.calibration,
+    },
+  };
+
+  await persistYoIdentitySnapshot({
+    ...merged,
+    mergeGraph: false,
+    senado: merged.senado,
+    prima: merged.prima,
+  });
+
+  const existing = await prisma.yo.findUnique({ where: { id: YO_CORE_ID } });
+  if (!existing) {
+    await prisma.yo.create({
+      data: {
+        id: YO_CORE_ID,
+        operatorName: merged.operatorName,
+        exocortexName: merged.exocortexName,
+        exocortexNamedBy: merged.exocortexNamedBy,
+        operationalStatus: merged.operationalStatus || "CALIBRANDO",
+        energyLevel: merged.energyLevel,
+        mago12: merged.mago12,
+        mago3: merged.mago3,
+        calibration: merged.calibration as Prisma.InputJsonValue,
+        genesisCompletedAt: merged.genesisCompletedAt
+          ? new Date(merged.genesisCompletedAt)
+          : null,
+      },
+    });
+  } else if (
+    !existing.operatorName?.trim() ||
+    !existing.exocortexName?.trim() ||
+    (!existing.genesisCompletedAt && merged.genesisCompletedAt)
+  ) {
+    await prisma.yo.update({
+      where: { id: YO_CORE_ID },
+      data: {
+        operatorName: merged.operatorName,
+        exocortexName: merged.exocortexName,
+        exocortexNamedBy: merged.exocortexNamedBy,
+        operationalStatus: merged.operationalStatus || existing.operationalStatus,
+        energyLevel: merged.energyLevel,
+        mago12: merged.mago12,
+        mago3: merged.mago3,
+        calibration: {
+          ...parseCalibration(existing.calibration),
+          ...merged.calibration,
+        } as Prisma.InputJsonValue,
+        genesisCompletedAt: merged.genesisCompletedAt
+          ? new Date(merged.genesisCompletedAt)
+          : existing.genesisCompletedAt,
+      },
+    });
+  }
+
+  await rehydrateGenesisGraphFromSnapshot(merged).catch((error) => {
+    console.warn("[yo] client rehydrate skipped:", error);
+  });
+
+  return ensureYoShell();
+}
+
+function mergeSenadoLists(
+  a: Array<{ name: string; vinculo: string }>,
+  b: Array<{ name: string; vinculo: string }>,
+): Array<{ name: string; vinculo: string }> {
+  const map = new Map<string, { name: string; vinculo: string }>();
+  for (const member of [...a, ...b]) {
+    if (!member.name.trim() || !member.vinculo.trim()) continue;
+    map.set(member.name.toLowerCase(), {
+      name: member.name.trim(),
+      vinculo: member.vinculo.trim(),
+    });
+  }
+  return [...map.values()].slice(0, 12);
 }
 
 export async function getYo(): Promise<YoDto> {
@@ -350,10 +468,30 @@ export async function savePrimaMissionObjective(input: {
   title: string;
   why?: string;
 }): Promise<YoDto> {
-  const current = await ensureYoShell();
+  let current = await ensureYoShell();
   const title = input.title.trim();
   if (!title) {
     throw new Error("El objetivo a 90 días es obligatorio.");
+  }
+
+  if (!current.operatorName?.trim() || !current.exocortexName?.trim()) {
+    // Último intento: rehidratar desde ancla de disco antes de fallar.
+    const snap = await readYoIdentitySnapshot();
+    if (snap?.operatorName && snap.exocortexName) {
+      await prisma.yo.update({
+        where: { id: YO_CORE_ID },
+        data: {
+          operatorName: snap.operatorName,
+          exocortexName: snap.exocortexName,
+          exocortexNamedBy: snap.exocortexNamedBy,
+          calibration: {
+            ...current.calibration,
+            ...snap.calibration,
+          } as Prisma.InputJsonValue,
+        },
+      });
+      current = await ensureYoShell();
+    }
   }
 
   if (!current.operatorName?.trim() || !current.exocortexName?.trim()) {
@@ -383,13 +521,22 @@ export async function savePrimaMissionObjective(input: {
     where: { id: YO_CORE_ID },
     data: {
       calibration: calibration as Prisma.InputJsonValue,
-      ...(current.genesisCompletedAt
-        ? {
-            genesisCompletedAt: null,
-            operationalStatus: "CALIBRANDO",
-          }
-        : {}),
     },
+  });
+
+  await persistYoIdentitySnapshot({
+    operatorName: current.operatorName,
+    exocortexName: current.exocortexName,
+    exocortexNamedBy: current.exocortexNamedBy,
+    operationalStatus: current.operationalStatus,
+    energyLevel: current.energyLevel,
+    mago12: current.mago12,
+    mago3: current.mago3,
+    calibration,
+    genesisCompletedAt: current.genesisCompletedAt,
+    updatedAt: new Date().toISOString(),
+    prima: { title, why: input.why?.trim() || undefined },
+    mergeGraph: true,
   });
 
   const exocortex = current.exocortexName ?? DEFAULT_EXOCORTEX_NAME;

@@ -8,6 +8,9 @@ import {
   type DynamicGraphMember,
 } from "@/components/yo/mission-senado-graph";
 import { notifyDomainRefresh } from "@/lib/domain-refresh";
+import { cachePersonaEntity } from "@/lib/personas/client-cache";
+import { writeClientYoSnapshot } from "@/lib/yo/client-snapshot";
+import { useGenesis } from "@/components/yo/genesis-context";
 import { Loader2Icon, XIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -30,6 +33,7 @@ export function MissionPersonaOverlay({
   operatorName,
 }: MissionPersonaOverlayProps) {
   const { universeSlug } = useBabel();
+  const { yo, applyYo, refreshGenesis } = useGenesis();
   const [nombre, setNombre] = useState("");
   const [rol, setRol] = useState("");
   const [saving, setSaving] = useState(false);
@@ -84,6 +88,18 @@ export function MissionPersonaOverlay({
         return;
       }
 
+      cachePersonaEntity(result.data);
+      if (yo) {
+        writeClientYoSnapshot(yo, {
+          senado: [
+            {
+              name: result.data.nombrePrincipal,
+              vinculo: trimmedRol,
+            },
+          ],
+        });
+      }
+
       const nextMember: DynamicGraphMember = {
         id: result.data.id,
         name: result.data.nombrePrincipal,
@@ -103,6 +119,8 @@ export function MissionPersonaOverlay({
       setNombre("");
       setRol("");
       await onCreated();
+      const refreshed = await refreshGenesis();
+      if (refreshed) applyYo(refreshed);
 
       const nextProgress = progress + 1;
       if (nextProgress >= target) {

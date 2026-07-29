@@ -51,7 +51,7 @@ export function PersonasDashboard() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { universeSlug, universeFetch, isLoading: isUniverseLoading } = useBabel();
-  const { refreshGenesis } = useGenesis();
+  const { refreshGenesis, navigationUnlocked, genesisStatus } = useGenesis();
   const [tab, setTab] = useState<DashboardTab>(() =>
     tabFromSearch(searchParams.get("tab")),
   );
@@ -132,9 +132,12 @@ export function PersonasDashboard() {
     void reloadAll();
   }, [reloadAll, universeSlug, isUniverseLoading, domainRefreshKey]);
 
-  // Si el CRM está vacío, contrastar con /api/yo (SQLite efímero en Vercel).
+  // Solo redirigir a /yo si el bautismo ni siquiera empezó.
+  // Si ya hay navegación liberada o misiones en curso, no expulsar:
+  // en Vercel el CRM puede nacer vacío un instante hasta rehidratar.
   useEffect(() => {
     if (isLoading || personas.length > 0) return;
+    if (navigationUnlocked || genesisStatus !== "PENDING_NAMES") return;
     let cancelled = false;
     void (async () => {
       try {
@@ -145,7 +148,7 @@ export function PersonasDashboard() {
           yo?: { genesisStatus?: string };
         };
         const status = data.genesisStatus ?? data.yo?.genesisStatus;
-        if (status && status !== "COMPLETED") {
+        if (status === "PENDING_NAMES") {
           await refreshGenesis();
           if (!cancelled) router.replace("/yo");
         }
@@ -156,7 +159,14 @@ export function PersonasDashboard() {
     return () => {
       cancelled = true;
     };
-  }, [isLoading, personas.length, refreshGenesis, router]);
+  }, [
+    isLoading,
+    personas.length,
+    refreshGenesis,
+    router,
+    navigationUnlocked,
+    genesisStatus,
+  ]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();

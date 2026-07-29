@@ -2,7 +2,9 @@
 
 import { completePrimaMissionAction } from "@/app/yo/actions";
 import { Sheet, SheetBody, SheetHeader } from "@/components/ui/sheet";
+import { useGenesis } from "@/components/yo/genesis-context";
 import { notifyDomainRefresh } from "@/lib/domain-refresh";
+import { writeClientYoSnapshot } from "@/lib/yo/client-snapshot";
 import type { YoDto } from "@/lib/yo/types";
 import { Loader2Icon } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -19,6 +21,7 @@ export function MissionProjectOverlay({
   onOpenChange,
   onCompleted,
 }: MissionProjectOverlayProps) {
+  const { applyYo } = useGenesis();
   const [title, setTitle] = useState("");
   const [horizon, setHorizon] = useState("");
   const [saving, setSaving] = useState(false);
@@ -45,6 +48,14 @@ export function MissionProjectOverlay({
         toast.error(result.error);
         return;
       }
+
+      writeClientYoSnapshot(result.data, {
+        prima: {
+          title: trimmed,
+          why: horizon.trim() || undefined,
+        },
+      });
+      applyYo(result.data);
 
       toast.success(
         result.data.genesisStatus === "COMPLETED"

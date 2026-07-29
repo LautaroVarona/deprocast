@@ -8,6 +8,7 @@ import type {
 } from "@/lib/personas/model";
 import { sealKgNodeInUniverse } from "@/lib/personas/universe-seal";
 import { ensureRuntimeReady } from "@/lib/runtime-setup";
+import { appendSenadoMemberToSnapshot } from "@/lib/yo/identity-snapshot";
 import { ensureYoShell } from "@/lib/yo/store";
 import { ensureOperatorPersonaNode } from "@/lib/yo/operator-node";
 
@@ -121,6 +122,13 @@ export async function createPersonaAction(
         input.universeSlug,
         operator.primaryName,
       );
+    }
+
+    if (relationToOperator) {
+      await appendSenadoMemberToSnapshot({
+        name: persona.nombrePrincipal,
+        vinculo: relationToOperator,
+      });
     }
 
     return { ok: true, data: persona };
