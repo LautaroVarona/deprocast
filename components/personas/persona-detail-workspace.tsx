@@ -9,6 +9,8 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import type { Persona } from "@/lib/personas/model";
 import type { PersonaRelationListItem } from "@/lib/personas/model";
 import type { PersonaDetailDto } from "@/lib/personas/types";
+import { readCachedPersona } from "@/lib/personas/client-cache";
+import { personaSlugFromName } from "@/lib/personas/slug";
 import { cn } from "@/lib/utils";
 import { notifyDomainRefresh } from "@/lib/domain-refresh";
 import {
@@ -66,6 +68,33 @@ export function PersonaDetailWorkspace({ idOrSlug }: PersonaDetailWorkspaceProps
         { cache: "no-store" },
       );
       if (response.status === 404) {
+        const cached = readCachedPersona(idOrSlug);
+        if (cached) {
+          setEntity(cached);
+          setPersona({
+            id: cached.id,
+            slug: personaSlugFromName(cached.nombrePrincipal),
+            primaryName: cached.nombrePrincipal,
+            aliases: cached.aliases ?? [],
+            personaKind: null,
+            role: null,
+            campoSlug: null,
+            confidence: 1,
+            mentionCount: 0,
+            lastMentionAt: null,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+            projects: [],
+            openLoops: [],
+            activity: [],
+          });
+          setRelations([]);
+          toast.message("Ficha desde caché local", {
+            description:
+              "El servidor aún no ve esta persona (SQLite efímero en Vercel). Seguirá en tu lista de esta sesión.",
+          });
+          return;
+        }
         setNotFound(true);
         setPersona(null);
         setEntity(null);
@@ -81,6 +110,29 @@ export function PersonaDetailWorkspace({ idOrSlug }: PersonaDetailWorkspaceProps
       setEntity(data.entity);
       setRelations(data.relations ?? []);
     } catch {
+      const cached = readCachedPersona(idOrSlug);
+      if (cached) {
+        setEntity(cached);
+        setPersona({
+          id: cached.id,
+          slug: personaSlugFromName(cached.nombrePrincipal),
+          primaryName: cached.nombrePrincipal,
+          aliases: cached.aliases ?? [],
+          personaKind: null,
+          role: null,
+          campoSlug: null,
+          confidence: 1,
+          mentionCount: 0,
+          lastMentionAt: null,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          projects: [],
+          openLoops: [],
+          activity: [],
+        });
+        setRelations([]);
+        return;
+      }
       setPersona(null);
       setEntity(null);
     } finally {

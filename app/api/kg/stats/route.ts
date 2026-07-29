@@ -8,16 +8,25 @@ import {
   shouldFilterByUniverse,
 } from "@/lib/babel/context-seal";
 import { resolveUniverseKgNodeIds } from "@/lib/babel/universe-refs";
+import { ensureRuntimeReady } from "@/lib/runtime-setup";
+import { withGenesisCoreNodeIds } from "@/lib/yo/genesis-core";
 import { NextRequest, NextResponse } from "next/server";
 
 export const runtime = "nodejs";
 
 export async function GET(request: NextRequest) {
   try {
+    await ensureRuntimeReady();
+
     const universeSlug = resolveContextSealFromRequest(request);
-    const nodeIds = shouldFilterByUniverse(universeSlug)
+    let nodeIds = shouldFilterByUniverse(universeSlug)
       ? await resolveUniverseKgNodeIds(universeSlug)
       : null;
+    try {
+      nodeIds = await withGenesisCoreNodeIds(nodeIds);
+    } catch {
+      // optional enrich
+    }
 
     const [stats, centrality, repeatedIdeas] = await Promise.all([
       getKgStats({ nodeIds }),

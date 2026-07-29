@@ -27,6 +27,17 @@ type GenesisContextValue = {
 
 const GenesisContext = createContext<GenesisContextValue | null>(null);
 
+async function fetchYoFromApi(): Promise<YoDto | null> {
+  try {
+    const res = await fetch("/api/yo", { cache: "no-store" });
+    if (!res.ok) return null;
+    const data = (await res.json()) as { yo?: YoDto };
+    return data.yo ?? null;
+  } catch {
+    return null;
+  }
+}
+
 export function GenesisProvider({ children }: { children: ReactNode }) {
   const [ready, setReady] = useState(false);
   const [yo, setYo] = useState<YoDto | null>(null);
@@ -48,16 +59,40 @@ export function GenesisProvider({ children }: { children: ReactNode }) {
 
   const refreshGenesis = useCallback(async () => {
     const result = await getYoAction();
-    if (!result.ok) {
+    let next = result.ok ? result.data : null;
+
+    // Contrastar con REST: en Vercel server action y API pueden ver DBs distintas.
+    const apiYo = await fetchYoFromApi();
+    if (apiYo) {
+      if (!next) {
+        next = apiYo;
+      } else if (
+        next.genesisStatus === "COMPLETED" &&
+        apiYo.genesisStatus !== "COMPLETED"
+      ) {
+        // Action vio sellado fantasma; el API (lista/grafo) está vacío.
+        next = apiYo;
+      } else if (
+        apiYo.genesisStatus === "COMPLETED" &&
+        next.genesisStatus !== "COMPLETED"
+      ) {
+        next = apiYo;
+      }
+    }
+
+    if (!next) {
       setReady(true);
       return null;
     }
-    if (result.data.genesisStatus === "COMPLETED") {
+
+    if (next.genesisStatus === "COMPLETED") {
       wasCompletedRef.current = true;
+    } else {
+      wasCompletedRef.current = false;
     }
-    applyYo(result.data);
+    applyYo(next);
     setReady(true);
-    return result.data;
+    return next;
   }, [applyYo]);
 
   useEffect(() => {

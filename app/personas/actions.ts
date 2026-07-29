@@ -88,16 +88,14 @@ export async function createPersonaAction(
 
     // Asegurar shell Yo + nodo Operador antes del vínculo (Misión II / Senado).
     const yo = await ensureYoShell();
-    if (relationToOperator) {
-      const operator = await ensureOperatorPersonaNode(yo.operatorName);
-      if (!operator) {
-        return {
-          ok: false,
-          error: yo.operatorName?.trim()
-            ? `No se pudo anclar el vínculo a ${yo.operatorName}. Recargá /yo.`
-            : "Definí tu nombre en /yo antes de vincular personas.",
-        };
-      }
+    const operator = await ensureOperatorPersonaNode(yo.operatorName);
+    if (relationToOperator && !operator) {
+      return {
+        ok: false,
+        error: yo.operatorName?.trim()
+          ? `No se pudo anclar el vínculo a ${yo.operatorName}. Recargá /yo.`
+          : "Definí tu nombre en /yo antes de vincular personas.",
+      };
     }
 
     const persona = await createPersonaWithRelations({
@@ -105,7 +103,9 @@ export async function createPersonaAction(
       aliases,
       notasGenerales:
         typeof input.notasGenerales === "string" ? input.notasGenerales : "",
-      relationToOperator: relationToOperator || undefined,
+      relationToOperator:
+        relationToOperator ||
+        (operator ? "vínculo con el Operador" : undefined),
       connections,
       crm: input.crm,
     });
@@ -115,6 +115,13 @@ export async function createPersonaAction(
       input.universeSlug,
       persona.nombrePrincipal,
     );
+    if (operator) {
+      await sealKgNodeInUniverse(
+        operator.id,
+        input.universeSlug,
+        operator.primaryName,
+      );
+    }
 
     return { ok: true, data: persona };
   } catch (error) {

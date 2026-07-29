@@ -4,6 +4,7 @@ import {
   shouldFilterByUniverse,
 } from "@/lib/babel/context-seal";
 import { resolveUniverseKgNodeIds } from "@/lib/babel/universe-refs";
+import { ensureRuntimeReady } from "@/lib/runtime-setup";
 import { withGenesisCoreNodeIds } from "@/lib/yo/genesis-core";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -11,6 +12,8 @@ export const runtime = "nodejs";
 
 export async function GET(request: NextRequest) {
   try {
+    await ensureRuntimeReady();
+
     const { searchParams } = request.nextUrl;
     const typesParam = searchParams.get("types");
     const types = typesParam
@@ -19,11 +22,16 @@ export async function GET(request: NextRequest) {
     const excludeCode = searchParams.get("excludeCode") === "true";
     const limitRaw = Number.parseInt(searchParams.get("limit") ?? "1500", 10);
     const universeSlug = resolveContextSealFromRequest(request);
-    const nodeIds = shouldFilterByUniverse(universeSlug)
-      ? await withGenesisCoreNodeIds(
-          await resolveUniverseKgNodeIds(universeSlug),
-        )
+
+    let nodeIds = shouldFilterByUniverse(universeSlug)
+      ? await resolveUniverseKgNodeIds(universeSlug)
       : null;
+
+    try {
+      nodeIds = await withGenesisCoreNodeIds(nodeIds);
+    } catch (error) {
+      console.warn("Genesis core enrich skipped:", error);
+    }
 
     const snapshot = await getGraphSnapshot({
       types,

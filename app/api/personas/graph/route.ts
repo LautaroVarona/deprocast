@@ -3,6 +3,7 @@ import { resolveUniverseKgNodeIds } from "@/lib/babel/universe-refs";
 import { buildPersonaGraphSnapshot } from "@/lib/personas/graph";
 import type { PersonaGraphViewMode } from "@/lib/personas/model";
 import { ensureRuntimeReady } from "@/lib/runtime-setup";
+import { withGenesisCoreNodeIds } from "@/lib/yo/genesis-core";
 import { NextRequest, NextResponse } from "next/server";
 
 export const runtime = "nodejs";
@@ -17,9 +18,14 @@ export async function GET(request: NextRequest) {
 
     const mode = parseMode(request.nextUrl.searchParams.get("mode"));
     const universeSlug = getUniverseFilterSlugFromRequest(request);
-    const universeNodeIds = universeSlug
+    let universeNodeIds = universeSlug
       ? await resolveUniverseKgNodeIds(universeSlug)
       : null;
+    try {
+      universeNodeIds = await withGenesisCoreNodeIds(universeNodeIds);
+    } catch (error) {
+      console.warn("Personas graph genesis enrich skipped:", error);
+    }
     const snapshot = await buildPersonaGraphSnapshot(mode, universeNodeIds);
     return NextResponse.json({
       snapshot,

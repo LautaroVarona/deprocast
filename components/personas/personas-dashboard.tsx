@@ -9,13 +9,18 @@ import { PersonasGraphWorkspace } from "@/components/personas/personas-graph-wor
 import { PersonasTable } from "@/components/personas/personas-table";
 import { TriageWorkspace } from "@/components/triage/triage-workspace";
 import { Button } from "@/components/ui/button";
+import { useGenesis } from "@/components/yo/genesis-context";
 import type { Persona } from "@/lib/personas/model";
 import type {
   PersonaGraphViewMode,
   PersonaRelationListItem,
 } from "@/lib/personas/model";
 import type { PersonaCardDto } from "@/lib/personas/types";
-import { personaSlugFromName } from "@/lib/personas/slug";
+import {
+  cachePersonaEntity,
+  mergeCachedPersonaCards,
+  personaToCardDto,
+} from "@/lib/personas/client-cache";
 import { cn } from "@/lib/utils";
 import {
   FileJsonIcon,
@@ -46,6 +51,7 @@ export function PersonasDashboard() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { universeSlug, universeFetch, isLoading: isUniverseLoading } = useBabel();
+  const { refreshGenesis } = useGenesis();
   const [tab, setTab] = useState<DashboardTab>(() =>
     tabFromSearch(searchParams.get("tab")),
   );
@@ -78,11 +84,14 @@ export function PersonasDashboard() {
       const response = await universeFetch("/api/personas?status=verified", {
         cache: "no-store",
       });
-      if (!response.ok) return;
+      if (!response.ok) {
+        setPersonas((prev) => mergeCachedPersonaCards(prev));
+        return;
+      }
       const data: { personas: PersonaCardDto[] } = await response.json();
-      setPersonas(data.personas);
+      setPersonas(mergeCachedPersonaCards(data.personas ?? []));
     } catch {
-      setPersonas([]);
+      setPersonas((prev) => mergeCachedPersonaCards(prev));
     } finally {
       setIsLoading(false);
     }
@@ -123,6 +132,32 @@ export function PersonasDashboard() {
     void reloadAll();
   }, [reloadAll, universeSlug, isUniverseLoading, domainRefreshKey]);
 
+  // Si el CRM está vacío, contrastar con /api/yo (SQLite efímero en Vercel).
+  useEffect(() => {
+    if (isLoading || personas.length > 0) return;
+    let cancelled = false;
+    void (async () => {
+      try {
+        const res = await fetch("/api/yo", { cache: "no-store" });
+        if (!res.ok || cancelled) return;
+        const data = (await res.json()) as {
+          genesisStatus?: string;
+          yo?: { genesisStatus?: string };
+        };
+        const status = data.genesisStatus ?? data.yo?.genesisStatus;
+        if (status && status !== "COMPLETED") {
+          await refreshGenesis();
+          if (!cancelled) router.replace("/yo");
+        }
+      } catch {
+        // ignore
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [isLoading, personas.length, refreshGenesis, router]);
+
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q) return personas;
@@ -135,9 +170,18 @@ export function PersonasDashboard() {
   }, [personas, query]);
 
   const handleCreated = (persona: Persona) => {
+    cachePersonaEntity(persona);
+    setPersonas((prev) => {
+      const card = personaToCardDto(persona);
+      if (prev.some((item) => item.id === card.id)) {
+        return prev.map((item) => (item.id === card.id ? card : item));
+      }
+      return [card, ...prev];
+    });
     notifyDomainRefresh("all", "persona-created");
     void reloadAll();
-    router.push(`/personas/${personaSlugFromName(persona.nombrePrincipal)}`);
+    // Navegar por id (estable); el slug fallaba si otra instancia no veía el alta.
+    router.push(`/personas/${encodeURIComponent(persona.id)}`);
   };
 
   const openEdit = async (card: PersonaCardDto) => {
@@ -321,7 +365,9 @@ export function PersonasDashboard() {
                   >
                     /yo
                   </button>
-                  . Las candidatas de ingesta IA viven en otra pestaña.
+                  . En Vercel el SQLite de demo se borra entre reinicios: usá{" "}
+                  <span className="font-mono">npm run dev</span> en local para
+                  datos persistentes.
                 </p>
               )}
               {!query && pendingCount > 0 ? (

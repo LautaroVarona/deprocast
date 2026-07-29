@@ -4,6 +4,7 @@ import { createPersonaAction } from "@/app/personas/actions";
 import { useBabel } from "@/components/babel/babel-context";
 import { AliasTagInput } from "@/components/personas/alias-tag-input";
 import { ConnectionEntityPicker } from "@/components/personas/connection-entity-picker";
+import { cachePersonaEntity } from "@/lib/personas/client-cache";
 import { Button } from "@/components/ui/button";
 import {
   WorkspaceModal,
@@ -29,6 +30,7 @@ import type {
   PersonaLinkTarget,
   PersonaRelationListItem,
 } from "@/lib/personas/model";
+import { cachePersonaEntity } from "@/lib/personas/client-cache";
 import { cn } from "@/lib/utils";
 import { useYoNames } from "@/hooks/use-yo-names";
 import {
@@ -497,6 +499,7 @@ export function PersonaModularWorkspace({
         }
 
         toast.success(`${result.data.nombrePrincipal} indexada.`);
+        cachePersonaEntity(result.data);
         onCreated?.(result.data);
         onOpenChange(false);
         return;

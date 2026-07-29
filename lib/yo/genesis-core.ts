@@ -15,24 +15,29 @@ export async function getGenesisCoreNodeIds(): Promise<Set<string>> {
 
   ids.add(operator.id);
 
-  const [personLinks, projectLinks] = await Promise.all([
-    prisma.personToPerson.findMany({
-      where: {
-        OR: [{ personAId: operator.id }, { personBId: operator.id }],
-      },
-      select: { personAId: true, personBId: true },
-    }),
-    prisma.personToProject.findMany({
-      where: { personId: operator.id },
-      select: { projectId: true },
-    }),
-  ]);
+  try {
+    const [personLinks, projectLinks] = await Promise.all([
+      prisma.personToPerson.findMany({
+        where: {
+          OR: [{ personAId: operator.id }, { personBId: operator.id }],
+        },
+        select: { personAId: true, personBId: true },
+      }),
+      prisma.personToProject.findMany({
+        where: { personId: operator.id },
+        select: { projectId: true },
+      }),
+    ]);
 
-  for (const link of personLinks) {
-    ids.add(link.personAId === operator.id ? link.personBId : link.personAId);
-  }
-  for (const link of projectLinks) {
-    ids.add(link.projectId);
+    for (const link of personLinks) {
+      ids.add(link.personAId === operator.id ? link.personBId : link.personAId);
+    }
+    for (const link of projectLinks) {
+      ids.add(link.projectId);
+    }
+  } catch (error) {
+    // Tablas CRM tipadas pueden faltar en seeds viejos antes del patch.
+    console.warn("getGenesisCoreNodeIds CRM links skipped:", error);
   }
 
   return ids;
