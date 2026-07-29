@@ -71,6 +71,7 @@ type YoRow = {
   mago3?: string | null;
   calibration: unknown;
   genesisCompletedAt: Date | null;
+  createdAt: Date;
   updatedAt: Date;
 };
 
@@ -161,10 +162,12 @@ async function restoreYoFromSnapshotIfNeeded(row: YoRow): Promise<YoRow> {
 }
 
 export async function ensureYoShell(): Promise<YoDto> {
-  let existing = await prisma.yo.findUnique({ where: { id: YO_CORE_ID } });
-  if (!existing) {
+  const found = await prisma.yo.findUnique({ where: { id: YO_CORE_ID } });
+  let row: YoRow;
+
+  if (!found) {
     const snap = await readYoIdentitySnapshot();
-    const created = await prisma.yo.create({
+    row = await prisma.yo.create({
       data: snap
         ? {
             id: YO_CORE_ID,
@@ -187,21 +190,17 @@ export async function ensureYoShell(): Promise<YoDto> {
             calibration: {},
           },
     });
-    existing = created;
   } else {
-    existing = await restoreYoFromSnapshotIfNeeded(existing);
+    row = await restoreYoFromSnapshotIfNeeded(found);
   }
 
-  const dto = await toDto(existing);
+  const dto = await toDto(row);
 
   // Solo reabrir si el sellado es claramente inválido por calibration
   // (Nosce/Prima). No tocar el sello por conteo de Senado: ese check es
   // frágil ante hubs/operador renombrados y metía al Operador en un loop /yo.
-  if (
-    existing.genesisCompletedAt &&
-    dto.genesisStatus === "PENDING_MISSIONS"
-  ) {
-    const calibration = parseCalibration(existing.calibration);
+  if (row.genesisCompletedAt && dto.genesisStatus === "PENDING_MISSIONS") {
+    const calibration = parseCalibration(row.calibration);
     const missionsBroken =
       !isMissionIComplete(calibration) || !isMissionIIIComplete(calibration);
     if (missionsBroken) {
