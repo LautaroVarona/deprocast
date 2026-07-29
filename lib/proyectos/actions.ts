@@ -1,8 +1,10 @@
 "use server";
 
+import { registerBabelRecord } from "@/lib/babel/record-store";
+import { shouldFilterByUniverse } from "@/lib/babel/context-seal";
 import { DEFAULT_CAMPO_SLUG, isCampoSlug } from "@/lib/projects/campos";
 import { clampScale } from "@/lib/projects/priority";
-import { createProject } from "@/lib/projects/service";
+import { createProject, listCampos } from "@/lib/projects/service";
 import {
   PROJECT_STATUSES,
   PROJECT_TIPOS,
@@ -18,6 +20,10 @@ import { revalidatePath } from "next/cache";
 export type ImportProjectResult =
   | { ok: true; project: Project }
   | { ok: false; error: string };
+
+export type ImportProjectOptions = {
+  universeSlug?: string;
+};
 
 const STATUS_ALIASES: Record<string, ProjectStatus> = {
   ACTIVE: "Desarrollo",
@@ -68,10 +74,11 @@ function buildNotasIniciales(
 
 /**
  * Inyecta un proyecto desde JSON (IA externa / plantilla).
- * Persiste en el SSOT markdown (`data/projects/`), no en Prisma.
+ * Persiste en el SSOT markdown (`data/projects/`) y coagula en el KG.
  */
 export async function importProjectFromJson(
   jsonString: string,
+  options: ImportProjectOptions = {},
 ): Promise<ImportProjectResult> {
   try {
     await ensureRuntimeReady();
@@ -99,10 +106,24 @@ export async function importProjectFromJson(
     }
 
     const data = result.data;
-    const campoSlug =
-      data.campoSlug && isCampoSlug(data.campoSlug)
-        ? data.campoSlug
-        : DEFAULT_CAMPO_SLUG;
+    const universeSlug = options.universeSlug?.trim() || undefined;
+    const universeCampos = await listCampos(
+      universeSlug && shouldFilterByUniverse(universeSlug)
+        ? universeSlug
+        : undefined,
+    );
+
+    let campoSlug = DEFAULT_CAMPO_SLUG;
+    if (data.campoSlug && isCampoSlug(data.campoSlug)) {
+      const allowed =
+        !universeSlug ||
+        !shouldFilterByUniverse(universeSlug) ||
+        universeCampos.some((campo) => campo.slug === data.campoSlug);
+      if (allowed) campoSlug = data.campoSlug;
+      else if (universeCampos[0]?.slug) campoSlug = universeCampos[0].slug;
+    } else if (universeCampos[0]?.slug) {
+      campoSlug = universeCampos[0].slug;
+    }
 
     const g = data.gravityMetrics;
     const prioridad = clampScale(
@@ -139,14 +160,28 @@ export async function importProjectFromJson(
 
     const project = await createProject(input);
 
-    void (async () => {
-      try {
-        const { ingestSingleProject } = await import("@/lib/kg/sources");
-        await ingestSingleProject(project, { reconocido: true });
-      } catch (error) {
-        console.error("KG project hook error (JSON import):", error);
-      }
-    })();
+    if (universeSlug && shouldFilterByUniverse(universeSlug)) {
+      await registerBabelRecord({
+        kind: "capture",
+        physicalRef: project.id,
+        contextSeal: universeSlug,
+        contentPreview: project.title,
+        channel: "proyectos",
+        campoSlug: project.campoSlug,
+        metadata: { sealedVia: "json-codex" },
+      });
+    }
+
+    try {
+      const { ingestSingleProject } = await import("@/lib/kg/sources");
+      await ingestSingleProject(project, {
+        reconocido: true,
+        structuredOnly: true,
+        force: true,
+      });
+    } catch (error) {
+      console.error("KG project hook error (JSON import):", error);
+    }
 
     revalidatePath("/proyectos");
 

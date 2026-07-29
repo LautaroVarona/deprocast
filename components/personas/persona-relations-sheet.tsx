@@ -1,5 +1,6 @@
 "use client";
 
+import { useBabel } from "@/components/babel/babel-context";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -49,6 +50,7 @@ export function PersonaRelationsSheet({
   draft,
   onCreated,
 }: PersonaRelationsSheetProps) {
+  const { universeFetch } = useBabel();
   const [linkKind, setLinkKind] = useState<PersonaLinkTargetKind>("persona");
   const [query, setQuery] = useState("");
   const [targets, setTargets] = useState<PersonaLinkTarget[]>([]);
@@ -97,7 +99,10 @@ export function PersonaRelationsSheet({
       if (query.trim()) params.set("q", query.trim());
       if (linkKind === "persona") params.set("excludePersonaId", source.id);
 
-      const response = await fetch(`/api/personas/link-targets?${params}`);
+      const response = await universeFetch(
+        `/api/personas/link-targets?${params}`,
+        { cache: "no-store" },
+      );
       const data = await response.json();
       if (!response.ok) {
         throw new Error(data.error ?? "No se pudieron cargar destinos.");
@@ -111,7 +116,7 @@ export function PersonaRelationsSheet({
     } finally {
       setIsLoadingTargets(false);
     }
-  }, [source, linkKind, query, draft]);
+  }, [source, linkKind, query, draft, universeFetch]);
 
   useEffect(() => {
     if (!open || !source || draft) return;
@@ -137,6 +142,9 @@ export function PersonaRelationsSheet({
           destinoId: selectedTarget.id,
           tipoRelacion,
           contexto: contexto.trim() || undefined,
+          origenNombre: source.nombrePrincipal,
+          destinoNombre: selectedTarget.label,
+          personaNombre: source.nombrePrincipal,
         };
       } else if (linkKind === "proyecto") {
         body = {
@@ -145,6 +153,7 @@ export function PersonaRelationsSheet({
           proyectoId: selectedTarget.id,
           rolPrincipal: rolPrincipal.trim(),
           contexto: contexto.trim() || undefined,
+          personaNombre: source.nombrePrincipal,
         };
       } else {
         const campoSlug = selectedTarget.campoSlug ?? selectedTarget.sublabel;
@@ -154,10 +163,11 @@ export function PersonaRelationsSheet({
           personaId: source.id,
           campoSlug,
           contexto: contexto.trim() || undefined,
+          personaNombre: source.nombrePrincipal,
         };
       }
 
-      const response = await fetch("/api/personas/relations", {
+      const response = await universeFetch("/api/personas/relations", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
@@ -236,7 +246,11 @@ export function PersonaRelationsSheet({
                 <p className="p-2 text-xs text-muted-foreground">Buscando…</p>
               ) : targets.length === 0 ? (
                 <p className="p-2 text-xs text-muted-foreground">
-                  Sin resultados.
+                  {linkKind === "proyecto"
+                    ? "Sin proyectos en el Atanor. Creá uno en /proyectos o importá JSON."
+                    : linkKind === "persona"
+                      ? "No hay otras personas en el grafo. Creá o importá más personas primero."
+                      : "Sin resultados."}
                 </p>
               ) : (
                 targets.map((target) => (

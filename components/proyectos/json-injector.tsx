@@ -1,8 +1,10 @@
 "use client";
 
+import { useBabel } from "@/components/babel/babel-context";
 import { importProjectFromJson } from "@/lib/proyectos/actions";
 import { PROJECT_JSON_TEMPLATE } from "@/lib/proyectos/json-codex";
 import { cn } from "@/lib/utils";
+import { notifyDomainRefresh } from "@/lib/domain-refresh";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   BracesIcon,
@@ -26,6 +28,7 @@ type TabId = "import" | "export";
 const TEMPLATE_JSON = JSON.stringify(PROJECT_JSON_TEMPLATE, null, 2);
 
 export function JsonInjector({ open, onOpenChange, onImported }: JsonInjectorProps) {
+  const { universeSlug } = useBabel();
   const [tab, setTab] = useState<TabId>("import");
   const [payload, setPayload] = useState("");
   const [copied, setCopied] = useState(false);
@@ -71,7 +74,7 @@ export function JsonInjector({ open, onOpenChange, onImported }: JsonInjectorPro
     }
 
     startTransition(async () => {
-      const result = await importProjectFromJson(trimmed);
+      const result = await importProjectFromJson(trimmed, { universeSlug });
       if (!result.ok) {
         toast.error("Fallo de inyección", { description: result.error });
         return;
@@ -79,6 +82,7 @@ export function JsonInjector({ open, onOpenChange, onImported }: JsonInjectorPro
       toast.success("Proyecto materializado", {
         description: result.project.title,
       });
+      notifyDomainRefresh("all", "json-codex-import");
       onOpenChange(false);
       onImported?.();
     });

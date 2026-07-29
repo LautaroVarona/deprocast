@@ -19,24 +19,141 @@ import type {
   UpdateRelacionPayload,
 } from "@/lib/personas/model";
 import { getCampoLabel, isCampoSlug } from "@/lib/projects/campos";
-import { listCampos } from "@/lib/projects/service";
+import {
+  findProjectById,
+  listCampos,
+  listProjects,
+} from "@/lib/projects/service";
+import type { Project } from "@/lib/projects/types";
 import { prisma } from "@/lib/prisma";
 import { Prisma, type KgEdge, type KgNode } from "@prisma/client";
 
-async function assertPersonaNode(id: string) {
-  const node = await prisma.kgNode.findFirst({
+/**
+ * Resuelve o rehidrata un nodo persona.
+ * Si el id no está en SQLite (cold start / caché cliente) pero llega el nombre,
+ * recrea el nodo con el mismo id para que los vínculos sigan funcionando.
+ */
+async function ensurePersonaNode(id: string, nombrePrincipal?: string) {
+  const existing = await prisma.kgNode.findFirst({
     where: { id, type: "persona" },
   });
-  if (!node) throw new Error("Persona no encontrada.");
-  return node;
+  if (existing) return existing;
+
+  const name = nombrePrincipal?.trim();
+  if (!name) throw new Error("Persona no encontrada.");
+
+  const byName = await prisma.kgNode.findUnique({
+    where: { primaryName_type: { primaryName: name, type: "persona" } },
+  });
+  if (byName) return byName;
+
+  return prisma.kgNode.create({
+    data: {
+      id,
+      primaryName: name,
+      type: "persona",
+      aliases: [],
+      metadata: {
+        rehydrated: true,
+        source: "persona-relations",
+      } as Prisma.InputJsonValue,
+      confidence: 0.7,
+      reconocido: true,
+    },
+  });
 }
 
-async function assertProyectoNode(id: string) {
-  const node = await prisma.kgNode.findFirst({
-    where: { id, type: "proyecto" },
+async function findProyectoNodeForProject(
+  project: Project,
+): Promise<KgNode | null> {
+  const byName = await prisma.kgNode.findUnique({
+    where: {
+      primaryName_type: {
+        primaryName: project.title,
+        type: "proyecto",
+      },
+    },
   });
-  if (!node) throw new Error("Proyecto no encontrado en el grafo.");
-  return node;
+  if (byName) {
+    const meta = parseMetadataJson(byName.metadata);
+    if (!meta.projectId || meta.projectId === project.id) {
+      if (meta.projectId !== project.id) {
+        return prisma.kgNode.update({
+          where: { id: byName.id },
+          data: {
+            metadata: {
+              ...meta,
+              projectId: project.id,
+              campoSlug: project.campoSlug,
+              estado: project.estado,
+            } as Prisma.InputJsonValue,
+          },
+        });
+      }
+      return byName;
+    }
+  }
+
+  const candidates = await prisma.kgNode.findMany({
+    where: { type: "proyecto" },
+  });
+  for (const node of candidates) {
+    const meta = parseMetadataJson(node.metadata);
+    if (meta.projectId === project.id) return node;
+  }
+  return null;
+}
+
+/** Resuelve KgNode proyecto desde id de grafo o id de archivo Atanor. */
+async function ensureProyectoNode(idOrRef: string): Promise<KgNode> {
+  const byId = await prisma.kgNode.findFirst({
+    where: { id: idOrRef, type: "proyecto" },
+  });
+  if (byId) return byId;
+
+  const project = await findProjectById(idOrRef);
+  if (project) {
+    const existing = await findProyectoNodeForProject(project);
+    if (existing) return existing;
+
+    try {
+      const { ingestSingleProject } = await import("@/lib/kg/sources/projects");
+      await ingestSingleProject(project, {
+        reconocido: true,
+        structuredOnly: true,
+        force: true,
+      });
+    } catch (error) {
+      console.error("ensureProyectoNode ingest error:", error);
+    }
+
+    const afterIngest = await findProyectoNodeForProject(project);
+    if (afterIngest) return afterIngest;
+
+    return prisma.kgNode.create({
+      data: {
+        primaryName: project.title,
+        type: "proyecto",
+        aliases: [],
+        metadata: {
+          projectId: project.id,
+          campoSlug: project.campoSlug,
+          estado: project.estado,
+        } as Prisma.InputJsonValue,
+        confidence: 0.9,
+        reconocido: true,
+      },
+    });
+  }
+
+  const byName = await prisma.kgNode.findUnique({
+    where: {
+      primaryName_type: { primaryName: idOrRef, type: "proyecto" },
+    },
+  });
+  if (byName) return byName;
+
+  throw new Error("Proyecto no encontrado en el Atanor ni en el grafo.");
 }
 
 async function assertCampoSlug(slug: string) {
@@ -153,8 +270,9 @@ function edgeToRelationListItem(
 
 export async function listPersonaRelations(
   personaId: string,
+  nombrePrincipal?: string,
 ): Promise<PersonaRelationListItem[]> {
-  await assertPersonaNode(personaId);
+  await ensurePersonaNode(personaId, nombrePrincipal);
 
   const edges = await prisma.kgEdge.findMany({
     where: {
@@ -193,15 +311,71 @@ export async function listPersonaLinkTargets(input: {
   }
 
   if (input.kind === "proyecto") {
-    const nodes = await searchNodes({ type: "proyecto", q: query, limit: 40 });
-    return nodes.map((node) => ({
-      id: node.id,
-      kind: "proyecto" as const,
-      label: node.primaryName,
-      sublabel:
-        typeof node.metadata.estado === "string" ? node.metadata.estado : null,
-      campoSlug: null,
-    }));
+    const [nodes, fileProjects, proyectoNodes] = await Promise.all([
+      searchNodes({ type: "proyecto", q: query, limit: 80 }),
+      listProjects(),
+      prisma.kgNode.findMany({ where: { type: "proyecto" } }),
+    ]);
+
+    const fileIdToNodeId = new Map<string, string>();
+    const titleToNodeId = new Map<string, string>();
+    for (const node of proyectoNodes) {
+      titleToNodeId.set(node.primaryName.toLowerCase(), node.id);
+      const meta = parseMetadataJson(node.metadata);
+      if (typeof meta.projectId === "string") {
+        fileIdToNodeId.set(meta.projectId, node.id);
+      }
+    }
+
+    const byId = new Map<string, PersonaLinkTarget>();
+
+    for (const node of nodes) {
+      byId.set(node.id, {
+        id: node.id,
+        kind: "proyecto",
+        label: node.primaryName,
+        sublabel:
+          typeof node.metadata.estado === "string"
+            ? node.metadata.estado
+            : typeof node.metadata.projectId === "string"
+              ? node.metadata.projectId
+              : null,
+        campoSlug:
+          typeof node.metadata.campoSlug === "string"
+            ? node.metadata.campoSlug
+            : null,
+      });
+    }
+
+    const queryLower = query.toLowerCase();
+    for (const project of fileProjects) {
+      if (
+        query &&
+        !`${project.title} ${project.id} ${project.campoSlug}`
+          .toLowerCase()
+          .includes(queryLower)
+      ) {
+        continue;
+      }
+
+      const targetId =
+        fileIdToNodeId.get(project.id) ??
+        titleToNodeId.get(project.title.toLowerCase()) ??
+        project.id;
+      if (byId.has(targetId)) continue;
+
+      byId.set(targetId, {
+        id: targetId,
+        kind: "proyecto",
+        label: project.title,
+        sublabel: project.estado || project.campoSlug,
+        campoSlug: project.campoSlug,
+      });
+    }
+
+    return [...byId.values()]
+      .sort((a, b) => a.label.localeCompare(b.label, "es"))
+      .slice(0, 40);
   }
 
   const campos = await listCampos();
@@ -231,14 +405,17 @@ export async function listPersonaLinkTargets(input: {
 }
 
 export async function createRelacionPersonaPersona(
-  input: CreateRelacionPersonaPersonaPayload,
+  input: CreateRelacionPersonaPersonaPayload & {
+    origenNombre?: string;
+    destinoNombre?: string;
+  },
 ): Promise<RelacionPersonaPersona> {
   if (input.origenId === input.destinoId) {
     throw new Error("Una persona no puede relacionarse consigo misma.");
   }
 
-  await assertPersonaNode(input.origenId);
-  await assertPersonaNode(input.destinoId);
+  const origen = await ensurePersonaNode(input.origenId, input.origenNombre);
+  const destino = await ensurePersonaNode(input.destinoId, input.destinoNombre);
 
   const tipoRelacion = input.tipoRelacion.trim();
   if (!tipoRelacion) throw new Error("El tipo de relación es obligatorio.");
@@ -246,14 +423,14 @@ export async function createRelacionPersonaPersona(
   const edge = await prisma.kgEdge.upsert({
     where: {
       sourceNodeId_targetNodeId_relationType: {
-        sourceNodeId: input.origenId,
-        targetNodeId: input.destinoId,
+        sourceNodeId: origen.id,
+        targetNodeId: destino.id,
         relationType: tipoRelacion,
       },
     },
     create: {
-      sourceNodeId: input.origenId,
-      targetNodeId: input.destinoId,
+      sourceNodeId: origen.id,
+      targetNodeId: destino.id,
       relationType: tipoRelacion,
       context: input.contexto?.trim() ?? "",
       metadata: {},
@@ -276,10 +453,10 @@ export async function createRelacionPersonaPersona(
 }
 
 export async function createRelacionPersonaProyecto(
-  input: CreateRelacionPersonaProyectoPayload,
+  input: CreateRelacionPersonaProyectoPayload & { personaNombre?: string },
 ): Promise<RelacionPersonaProyecto> {
-  await assertPersonaNode(input.personaId);
-  await assertProyectoNode(input.proyectoId);
+  const persona = await ensurePersonaNode(input.personaId, input.personaNombre);
+  const proyecto = await ensureProyectoNode(input.proyectoId);
 
   const rolPrincipal = input.rolPrincipal.trim();
   if (!rolPrincipal) throw new Error("El rol principal es obligatorio.");
@@ -290,14 +467,14 @@ export async function createRelacionPersonaProyecto(
   const edge = await prisma.kgEdge.upsert({
     where: {
       sourceNodeId_targetNodeId_relationType: {
-        sourceNodeId: input.personaId,
-        targetNodeId: input.proyectoId,
+        sourceNodeId: persona.id,
+        targetNodeId: proyecto.id,
         relationType,
       },
     },
     create: {
-      sourceNodeId: input.personaId,
-      targetNodeId: input.proyectoId,
+      sourceNodeId: persona.id,
+      targetNodeId: proyecto.id,
       relationType,
       context: input.contexto?.trim() ?? "",
       metadata: metadata as Prisma.InputJsonValue,
@@ -321,22 +498,22 @@ export async function createRelacionPersonaProyecto(
 }
 
 export async function createRelacionPersonaCampo(
-  input: CreateRelacionPersonaCampoPayload,
+  input: CreateRelacionPersonaCampoPayload & { personaNombre?: string },
 ): Promise<RelacionPersonaCampo> {
-  await assertPersonaNode(input.personaId);
+  const persona = await ensurePersonaNode(input.personaId, input.personaNombre);
   const campoNode = await ensureCampoConceptoNode(input.campoSlug.trim());
   const relationType = "pertenece_a";
 
   const edge = await prisma.kgEdge.upsert({
     where: {
       sourceNodeId_targetNodeId_relationType: {
-        sourceNodeId: input.personaId,
+        sourceNodeId: persona.id,
         targetNodeId: campoNode.id,
         relationType,
       },
     },
     create: {
-      sourceNodeId: input.personaId,
+      sourceNodeId: persona.id,
       targetNodeId: campoNode.id,
       relationType,
       context: input.contexto?.trim() ?? "",

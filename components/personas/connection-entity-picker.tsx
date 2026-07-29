@@ -1,5 +1,6 @@
 "use client";
 
+import { useBabel } from "@/components/babel/babel-context";
 import type { PersonaLinkTarget } from "@/lib/personas/model";
 import { cn } from "@/lib/utils";
 import { Loader2Icon, SearchIcon } from "lucide-react";
@@ -21,6 +22,7 @@ export function ConnectionEntityPicker({
   onSelect,
   className,
 }: ConnectionEntityPickerProps) {
+  const { universeFetch } = useBabel();
   const listId = useId();
   const rootRef = useRef<HTMLDivElement>(null);
   const [query, setQuery] = useState("");
@@ -43,22 +45,17 @@ export function ConnectionEntityPicker({
 
   useEffect(() => {
     const trimmed = query.trim();
-    if (trimmed.length < 1) {
-      setResults([]);
-      setIsLoading(false);
-      return;
-    }
-
     const exclude = new Set(excludeIds);
     const controller = new AbortController();
     const timer = window.setTimeout(async () => {
       setIsLoading(true);
       try {
-        const params = new URLSearchParams({ q: trimmed });
+        const params = new URLSearchParams();
+        if (trimmed) params.set("q", trimmed);
         const fetches: Promise<Response>[] = [];
         if (kinds.includes("persona")) {
           fetches.push(
-            fetch(`/api/personas/link-targets?kind=persona&${params}`, {
+            universeFetch(`/api/personas/link-targets?kind=persona&${params}`, {
               signal: controller.signal,
               cache: "no-store",
             }),
@@ -66,7 +63,7 @@ export function ConnectionEntityPicker({
         }
         if (kinds.includes("proyecto")) {
           fetches.push(
-            fetch(`/api/personas/link-targets?kind=proyecto&${params}`, {
+            universeFetch(`/api/personas/link-targets?kind=proyecto&${params}`, {
               signal: controller.signal,
               cache: "no-store",
             }),
@@ -87,7 +84,6 @@ export function ConnectionEntityPicker({
           .filter((target) => !exclude.has(target.id));
 
         setResults(merged);
-        setIsOpen(true);
       } catch (error) {
         if ((error as Error).name === "AbortError") return;
         setResults([]);
@@ -102,7 +98,7 @@ export function ConnectionEntityPicker({
     };
     // excludeIds / kinds se serializan en keys estables.
     // eslint-disable-next-line react-hooks/exhaustive-deps -- excludeKey/kindsKey son las deps estables
-  }, [excludeKey, kindsKey, query]);
+  }, [excludeKey, kindsKey, query, universeFetch]);
 
   const defaultPlaceholder =
     kinds.length === 1 && kinds[0] === "persona"
@@ -119,7 +115,7 @@ export function ConnectionEntityPicker({
           value={query}
           onChange={(event) => setQuery(event.target.value)}
           onFocus={() => {
-            if (results.length > 0) setIsOpen(true);
+            setIsOpen(true);
           }}
           role="combobox"
           aria-expanded={isOpen}
@@ -163,9 +159,11 @@ export function ConnectionEntityPicker({
         </ul>
       )}
 
-      {isOpen && !isLoading && query.trim() && results.length === 0 && (
+      {isOpen && !isLoading && results.length === 0 && (
         <div className="absolute z-20 mt-1 w-full rounded-lg border border-border bg-popover px-3 py-2 text-xs text-muted-foreground shadow-md">
-          Sin resultados en el grafo.
+          {kinds.includes("proyecto") && !kinds.includes("persona")
+            ? "Sin proyectos en el Atanor. Creá uno en /proyectos."
+            : "Sin resultados en el grafo."}
         </div>
       )}
     </div>

@@ -22,6 +22,10 @@ export async function POST(request: NextRequest) {
       proyectoId?: string;
       rolPrincipal?: string;
       campoSlug?: string;
+      /** Nombre para rehidratar persona si SQLite perdió el nodo. */
+      personaNombre?: string;
+      origenNombre?: string;
+      destinoNombre?: string;
     };
 
     if (body.kind === "persona-campo" || body.kind === "campo") {
@@ -35,6 +39,7 @@ export async function POST(request: NextRequest) {
         personaId: body.personaId,
         campoSlug: body.campoSlug,
         contexto: body.contexto,
+        personaNombre: body.personaNombre,
       });
       return NextResponse.json({ relation }, { status: 201 });
     }
@@ -51,6 +56,7 @@ export async function POST(request: NextRequest) {
         proyectoId: body.proyectoId,
         rolPrincipal: body.rolPrincipal,
         contexto: body.contexto,
+        personaNombre: body.personaNombre,
       });
       return NextResponse.json({ relation }, { status: 201 });
     }
@@ -67,6 +73,8 @@ export async function POST(request: NextRequest) {
       destinoId: body.destinoId,
       tipoRelacion: body.tipoRelacion,
       contexto: body.contexto,
+      origenNombre: body.origenNombre ?? body.personaNombre,
+      destinoNombre: body.destinoNombre,
     });
 
     return NextResponse.json({ relation }, { status: 201 });

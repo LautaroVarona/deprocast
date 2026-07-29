@@ -299,14 +299,22 @@ function relationsToDrafts(
 
 async function syncRelations(params: {
   personaId: string;
+  personaNombre: string;
   projects: DraftConnection[];
   people: DraftConnection[];
   initialRelations: PersonaRelationListItem[];
   rolProyecto: string;
   naturaleza: string;
 }) {
-  const { personaId, projects, people, initialRelations, rolProyecto, naturaleza } =
-    params;
+  const {
+    personaId,
+    personaNombre,
+    projects,
+    people,
+    initialRelations,
+    rolProyecto,
+    naturaleza,
+  } = params;
 
   const initialProjectIds = new Set(
     initialRelations
@@ -335,7 +343,7 @@ async function syncRelations(params: {
 
   for (const project of projects) {
     if (initialProjectIds.has(project.targetId)) continue;
-    await fetch("/api/personas/relations", {
+    const response = await fetch("/api/personas/relations", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -344,13 +352,21 @@ async function syncRelations(params: {
         proyectoId: project.targetId,
         rolPrincipal: rolProyecto || project.relationType || "colaborador",
         contexto: project.relationContext || "Proyecto asignado",
+        personaNombre,
       }),
     });
+    if (!response.ok) {
+      const data = await response.json().catch(() => ({}));
+      throw new Error(
+        (data as { error?: string }).error ??
+          `No se pudo vincular el proyecto ${project.targetLabel}.`,
+      );
+    }
   }
 
   for (const person of people) {
     if (initialPeopleIds.has(person.targetId)) continue;
-    await fetch("/api/personas/relations", {
+    const response = await fetch("/api/personas/relations", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -358,8 +374,18 @@ async function syncRelations(params: {
         destinoId: person.targetId,
         tipoRelacion: naturaleza || person.relationType || "relacionado_con",
         contexto: person.relationContext || "Vinculada",
+        origenNombre: personaNombre,
+        destinoNombre: person.targetLabel,
+        personaNombre,
       }),
     });
+    if (!response.ok) {
+      const data = await response.json().catch(() => ({}));
+      throw new Error(
+        (data as { error?: string }).error ??
+          `No se pudo vincular a ${person.targetLabel}.`,
+      );
+    }
   }
 }
 
@@ -528,6 +554,7 @@ export function PersonaModularWorkspace({
 
       await syncRelations({
         personaId: initialPersona.id,
+        personaNombre: trimmedName,
         projects: projectLinks,
         people: peopleLinks,
         initialRelations: initialRelations ?? [],
