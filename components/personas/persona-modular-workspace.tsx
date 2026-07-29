@@ -305,7 +305,10 @@ async function syncRelations(params: {
   initialRelations: PersonaRelationListItem[];
   rolProyecto: string;
   naturaleza: string;
-  fetchFn: typeof fetch;
+  fetchFn: (
+    path: string,
+    init?: RequestInit,
+  ) => Promise<Response>;
 }) {
   const {
     personaId,
