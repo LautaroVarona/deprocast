@@ -39,7 +39,7 @@ import type {
   Project,
 } from "@/lib/projects/types";
 import { randomUUID } from "node:crypto";
-import { mkdir, readdir, readFile, unlink, writeFile } from "node:fs/promises";
+import { access, mkdir, readdir, readFile, unlink, writeFile } from "node:fs/promises";
 import path from "node:path";
 
 async function readProjectsFromDir(dir: string): Promise<Project[]> {
