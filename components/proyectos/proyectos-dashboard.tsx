@@ -3,15 +3,15 @@
 import { useBabel } from "@/components/babel/babel-context";
 import { CamposWorkspace } from "@/components/proyectos/campos-workspace";
 import { IngestaProyectoModal } from "@/components/proyectos/ingesta-proyecto-modal";
+import { JsonInjector } from "@/components/proyectos/json-injector";
 import { ProjectBoard } from "@/components/proyectos/project-board";
 import { ProposalsWorkspace } from "@/components/proyectos/proposals-workspace";
-import { Button } from "@/components/ui/button";
 import { useDomainRefresh } from "@/hooks/use-domain-refresh";
 import { getDefaultCampo, type CampoInfo } from "@/lib/projects/campos";
 import { isHighPriorityProject } from "@/lib/projects/priority";
 import type { Project } from "@/lib/projects/types";
 import { cn } from "@/lib/utils";
-import { InboxIcon, TerminalIcon } from "lucide-react";
+import { BracesIcon, InboxIcon, TerminalIcon } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -36,6 +36,7 @@ export function ProyectosDashboard() {
   const [refreshKey, setRefreshKey] = useState(0);
   const [pendingProposals, setPendingProposals] = useState(0);
   const [ingestaOpen, setIngestaOpen] = useState(false);
+  const [jsonIoOpen, setJsonIoOpen] = useState(false);
   const domainRefreshKey = useDomainRefresh(PROYECTOS_REFRESH_SCOPES);
 
   const loadProjects = useCallback(async () => {
@@ -104,46 +105,74 @@ export function ProyectosDashboard() {
     { id: "archivo", label: "Archivo", href: "/proyectos?view=archivo" },
   ];
 
+  const bumpRefresh = () => setRefreshKey((key) => key + 1);
+
   return (
-    <div className="flex h-[calc(100dvh-3.5rem)] flex-col overflow-hidden bg-background text-foreground">
-      <header className="flex shrink-0 items-center justify-between gap-4 border-b border-border px-4 py-2.5 sm:px-6">
+    <div className="flex h-[calc(100dvh-3.5rem)] flex-col overflow-hidden bg-zinc-950 text-zinc-100">
+      <header className="flex shrink-0 items-center justify-between gap-4 border-b border-zinc-800 px-4 py-2.5 sm:px-6">
         <div className="flex min-w-0 items-center gap-3">
-          <span className="flex size-7 shrink-0 items-center justify-center rounded-md border border-border bg-muted text-muted-foreground">
+          <span className="flex size-7 shrink-0 items-center justify-center rounded-sm border border-zinc-800 bg-zinc-900 text-amber-500">
             <TerminalIcon className="size-3.5" aria-hidden />
           </span>
           <div className="min-w-0">
-            <p className="font-mono text-[10px] tracking-[0.2em] text-muted-foreground uppercase">
-              Atanor · Proyectos
+            <p className="font-mono text-[10px] tracking-[0.22em] text-amber-500/70 uppercase">
+              Atanor · Command Center
             </p>
-            <h1 className="truncate text-sm font-semibold">
+            <h1 className="truncate font-mono text-sm font-semibold tracking-tight text-zinc-100">
               {view === "campos"
                 ? "Gestión de Campos"
                 : view === "propuestas"
                   ? "Incubadora de propuestas"
                   : view === "archivo"
                     ? "Ideas archivadas"
-                    : "Tablero por Campos"}
+                    : "Tablero táctico"}
             </h1>
           </div>
         </div>
-        <Button
-          type="button"
-          size="sm"
-          className="shrink-0"
-          onClick={() => setIngestaOpen(true)}
-        >
-          <InboxIcon />
-          Incubar proyecto
-        </Button>
+
+        <div className="flex shrink-0 items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setJsonIoOpen(true)}
+            className={cn(
+              "inline-flex items-center gap-1.5 rounded-sm border border-amber-500/40 bg-amber-500/15",
+              "px-2.5 py-1.5 font-mono text-[10px] tracking-[0.12em] text-amber-400 uppercase",
+              "transition-colors hover:bg-amber-500/25",
+            )}
+          >
+            <BracesIcon className="size-3.5" aria-hidden />
+            <span className="hidden sm:inline">{"{ }"} I/O Códice JSON</span>
+            <span className="sm:hidden">{"{ }"} I/O</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setIngestaOpen(true)}
+            className={cn(
+              "inline-flex items-center gap-1.5 rounded-sm border border-zinc-700 bg-zinc-900",
+              "px-2.5 py-1.5 font-mono text-[10px] tracking-[0.12em] text-zinc-300 uppercase",
+              "transition-colors hover:border-zinc-600 hover:text-zinc-100",
+            )}
+          >
+            <InboxIcon className="size-3.5" aria-hidden />
+            <span className="hidden sm:inline">Nuevo Proyecto</span>
+            <span className="sm:hidden">Nuevo</span>
+          </button>
+        </div>
       </header>
 
       <IngestaProyectoModal
         open={ingestaOpen}
         onOpenChange={setIngestaOpen}
-        onCoagulated={() => setRefreshKey((k) => k + 1)}
+        onCoagulated={bumpRefresh}
       />
 
-      <div className="flex shrink-0 items-center gap-1 border-b border-border px-4 sm:px-6">
+      <JsonInjector
+        open={jsonIoOpen}
+        onOpenChange={setJsonIoOpen}
+        onImported={bumpRefresh}
+      />
+
+      <div className="flex shrink-0 items-center gap-1 border-b border-zinc-800 px-4 sm:px-6">
         {tabs.map((tab) => (
           <Link
             key={tab.id}
@@ -151,13 +180,13 @@ export function ProyectosDashboard() {
             className={cn(
               "relative inline-flex items-center gap-1.5 border-b-2 px-3 py-2 font-mono text-[10px] tracking-wide uppercase transition-colors",
               view === tab.id
-                ? "border-primary text-foreground"
-                : "border-transparent text-muted-foreground hover:text-foreground",
+                ? "border-amber-500 text-amber-400"
+                : "border-transparent text-zinc-500 hover:text-zinc-300",
             )}
           >
             {tab.label}
             {tab.badge !== undefined && tab.badge > 0 && (
-              <span className="rounded-full bg-primary px-1.5 py-0.5 text-[10px] font-semibold text-primary-foreground tabular-nums">
+              <span className="rounded-sm bg-amber-500/20 px-1.5 py-0.5 text-[10px] font-semibold text-amber-400 tabular-nums">
                 {tab.badge}
               </span>
             )}
@@ -167,23 +196,23 @@ export function ProyectosDashboard() {
 
       {view === "activos" && (
         <>
-          <div className="flex shrink-0 items-center gap-4 border-b border-border px-4 py-2 font-mono text-[10px] text-muted-foreground sm:px-6">
+          <div className="flex shrink-0 items-center gap-4 border-b border-zinc-800 px-4 py-2 font-mono text-[10px] text-zinc-500 sm:px-6">
             <span>
-              <span className="text-foreground">{stats.total}</span> proyectos
+              <span className="text-amber-500">{stats.total}</span> proyectos
             </span>
-            <span className="text-border">│</span>
+            <span className="text-zinc-800">│</span>
             <span>
-              <span className="text-destructive">{stats.critical}</span> críticos
+              <span className="text-amber-400">{stats.critical}</span> críticos
             </span>
-            <span className="text-border">│</span>
+            <span className="text-zinc-800">│</span>
             <span>
-              <span className="text-foreground">{stats.campos}</span> campos
+              <span className="text-zinc-200">{stats.campos}</span> campos
             </span>
-            <span className="text-border">│</span>
+            <span className="text-zinc-800">│</span>
             <span>
-              avance medio <span className="text-foreground">{stats.avgProgress}%</span>
+              avance medio <span className="text-zinc-200">{stats.avgProgress}%</span>
             </span>
-            <span className="ml-auto hidden text-muted-foreground/70 md:inline">
+            <span className="ml-auto hidden text-zinc-600 md:inline">
               data/projects/&lt;campo&gt;/&lt;id&gt;.md
             </span>
           </div>
@@ -193,7 +222,7 @@ export function ProyectosDashboard() {
               projects={projects}
               campos={campos}
               isLoading={isLoading}
-              onRefresh={() => setRefreshKey((key) => key + 1)}
+              onRefresh={bumpRefresh}
             />
           </div>
         </>
@@ -203,7 +232,7 @@ export function ProyectosDashboard() {
         <div className="flex min-h-0 flex-1 flex-col px-4 py-3 sm:px-6">
           <CamposWorkspace
             refreshKey={refreshKey}
-            onRefresh={() => setRefreshKey((key) => key + 1)}
+            onRefresh={bumpRefresh}
           />
         </div>
       )}
@@ -213,7 +242,7 @@ export function ProyectosDashboard() {
           <ProposalsWorkspace
             status="pending"
             onPendingCountChange={setPendingProposals}
-            onProposalActivated={() => setRefreshKey((key) => key + 1)}
+            onProposalActivated={bumpRefresh}
           />
         </div>
       )}

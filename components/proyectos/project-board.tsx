@@ -64,9 +64,9 @@ export function ProjectBoard({
 
   if (isLoading) {
     return (
-      <div className="flex flex-1 flex-col items-center justify-center gap-3 text-muted-foreground">
-        <Loader2Icon className="size-6 animate-spin" aria-hidden />
-        <p className="font-mono text-[11px]">Cargando tablero...</p>
+      <div className="flex flex-1 flex-col items-center justify-center gap-3 text-zinc-500">
+        <Loader2Icon className="size-5 animate-spin text-amber-500/70" aria-hidden />
+        <p className="font-mono text-[11px] tracking-wide">Cargando command center…</p>
       </div>
     );
   }
@@ -87,33 +87,33 @@ export function ProjectBoard({
                 aria-selected={isActive}
                 onClick={() => setActiveCampo(campo.slug)}
                 className={cn(
-                  "inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1 font-mono text-[10px] transition-colors",
+                  "inline-flex items-center gap-1.5 rounded-sm border px-2.5 py-1 font-mono text-[10px] tracking-wide uppercase transition-colors",
                   isActive
-                    ? "border-primary bg-primary text-primary-foreground"
-                    : "border-border bg-muted/50 text-muted-foreground hover:border-ring hover:text-foreground",
+                    ? "border-amber-500/50 bg-amber-500/15 text-amber-400"
+                    : "border-zinc-800 bg-zinc-950/60 text-zinc-500 hover:border-zinc-700 hover:text-zinc-300",
                 )}
               >
                 <FolderKanbanIcon className="size-3" aria-hidden />
                 {campo.label}
-                <span className="tabular-nums opacity-70">{count}</span>
+                <span className="tabular-nums text-amber-500/80">{count}</span>
               </button>
             );
           })}
         </div>
 
-        <div className="flex shrink-0 items-center justify-between gap-3 border-b border-border pb-2">
+        <div className="flex shrink-0 items-center justify-between gap-3 border-b border-zinc-800 pb-2">
           <div className="min-w-0">
-            <h2 className="truncate font-mono text-xs font-semibold">
+            <h2 className="truncate font-mono text-xs font-semibold tracking-wide text-zinc-100">
               {activeCampoInfo?.label}
             </h2>
-            <p className="font-mono text-[10px] text-muted-foreground">
+            <p className="font-mono text-[10px] text-zinc-500">
               {activeProjects.length === 0
                 ? "sin proyectos"
                 : `${activeProjects.length} activos · ${criticalCount} críticos`}
             </p>
           </div>
           {criticalCount > 0 && (
-            <span className="inline-flex items-center gap-1 rounded border border-destructive/40 bg-destructive/10 px-2 py-0.5 font-mono text-[10px] text-destructive">
+            <span className="inline-flex items-center gap-1 rounded-sm border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 font-mono text-[10px] text-amber-400">
               <SkullIcon className="size-3" />
               {criticalCount} boss
             </span>
@@ -122,9 +122,11 @@ export function ProjectBoard({
 
         <div className="min-h-0 flex-1 overflow-y-auto pr-1">
           {activeProjects.length === 0 ? (
-            <div className="flex h-full min-h-[120px] flex-col items-center justify-center rounded-md border border-dashed border-border text-center">
-              <FolderKanbanIcon className="mb-2 size-5 text-muted-foreground" aria-hidden />
-              <p className="font-mono text-[10px] text-muted-foreground">Campo vacío</p>
+            <div className="flex h-full min-h-[120px] flex-col items-center justify-center rounded-sm border border-dashed border-zinc-800 text-center">
+              <FolderKanbanIcon className="mb-2 size-5 text-zinc-600" aria-hidden />
+              <p className="font-mono text-[10px] tracking-wide text-zinc-500 uppercase">
+                Campo vacío
+              </p>
             </div>
           ) : (
             <div className="flex flex-col gap-1">

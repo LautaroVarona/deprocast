@@ -10,8 +10,8 @@ export default function ProyectosPage() {
   return (
     <Suspense
       fallback={
-        <div className="flex h-[calc(100dvh-3.5rem)] items-center justify-center font-mono text-[10px] text-muted-foreground">
-          Cargando proyectos…
+        <div className="flex h-[calc(100dvh-3.5rem)] items-center justify-center bg-zinc-950 font-mono text-[10px] tracking-wide text-zinc-500">
+          Cargando command center…
         </div>
       }
     >
