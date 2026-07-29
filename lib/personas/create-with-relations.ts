@@ -14,6 +14,58 @@ import { ensureOperatorPersonaNode } from "@/lib/yo/operator-node";
 import { YO_CORE_ID } from "@/lib/yo/types";
 import { Prisma } from "@prisma/client";
 
+/**
+ * Resuelve el nombre del Operador desde SQLite o el ancla en disco.
+ * No llama a ensureYoShell (evitar ciclo con rehydrate → createPersona).
+ */
+async function resolveOperatorNameForLink(): Promise<string | null> {
+  const yo = await prisma.yo.findUnique({
+    where: { id: YO_CORE_ID },
+    select: { operatorName: true, exocortexName: true },
+  });
+  const fromDb = yo?.operatorName?.trim() || null;
+  if (fromDb) return fromDb;
+
+  const { readYoIdentitySnapshot } = await import("@/lib/yo/identity-snapshot");
+  const snap = await readYoIdentitySnapshot();
+  if (!snap?.operatorName?.trim()) return null;
+
+  // Restaurar en SQLite para lecturas siguientes en la misma instancia.
+  try {
+    if (yo) {
+      await prisma.yo.update({
+        where: { id: YO_CORE_ID },
+        data: {
+          operatorName: snap.operatorName,
+          exocortexName: snap.exocortexName,
+          exocortexNamedBy: snap.exocortexNamedBy,
+        },
+      });
+    } else {
+      await prisma.yo.create({
+        data: {
+          id: YO_CORE_ID,
+          operatorName: snap.operatorName,
+          exocortexName: snap.exocortexName,
+          exocortexNamedBy: snap.exocortexNamedBy,
+          operationalStatus: snap.operationalStatus || "CALIBRANDO",
+          energyLevel: snap.energyLevel,
+          mago12: snap.mago12,
+          mago3: snap.mago3,
+          calibration: snap.calibration as Prisma.InputJsonValue,
+          genesisCompletedAt: snap.genesisCompletedAt
+            ? new Date(snap.genesisCompletedAt)
+            : null,
+        },
+      });
+    }
+  } catch {
+    // Carrera / fila ya creada: el hub igual puede crearse con el nombre.
+  }
+
+  return snap.operatorName.trim();
+}
+
 function sanitizeAliases(
   nombrePrincipal: string,
   aliases: string[],
@@ -145,11 +197,7 @@ export async function createPersonaWithRelations(
 
   let operator: { id: string; primaryName: string } | null = null;
   if (relationToOperator.length > 0) {
-    const yo = await prisma.yo.findUnique({
-      where: { id: YO_CORE_ID },
-      select: { operatorName: true },
-    });
-    const operatorName = yo?.operatorName?.trim() || null;
+    const operatorName = await resolveOperatorNameForLink();
     operator = await ensureOperatorPersonaNode(operatorName);
 
     if (!operator && operatorName) {

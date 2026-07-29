@@ -288,18 +288,17 @@ export async function applyClientYoSnapshot(
           : null,
       },
     });
-  } else if (
-    !existing.operatorName?.trim() ||
-    !existing.exocortexName?.trim() ||
-    (!existing.genesisCompletedAt && merged.genesisCompletedAt)
-  ) {
+  } else {
+    // Siempre anclar nombres + calibration desde el cliente: en Vercel el
+    // SQLite puede ser una copia fresca del seed aunque la UI ya bautizó.
     await prisma.yo.update({
       where: { id: YO_CORE_ID },
       data: {
         operatorName: merged.operatorName,
         exocortexName: merged.exocortexName,
         exocortexNamedBy: merged.exocortexNamedBy,
-        operationalStatus: merged.operationalStatus || existing.operationalStatus,
+        operationalStatus:
+          merged.operationalStatus || existing.operationalStatus,
         energyLevel: merged.energyLevel,
         mago12: merged.mago12,
         mago3: merged.mago3,

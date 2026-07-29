@@ -9,7 +9,7 @@ import {
 } from "@/components/yo/mission-senado-graph";
 import { notifyDomainRefresh } from "@/lib/domain-refresh";
 import { cachePersonaEntity } from "@/lib/personas/client-cache";
-import { writeClientYoSnapshot } from "@/lib/yo/client-snapshot";
+import { writeClientYoSnapshot, readClientYoSnapshot } from "@/lib/yo/client-snapshot";
 import { useGenesis } from "@/components/yo/genesis-context";
 import { Loader2Icon, XIcon } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -74,6 +74,30 @@ export function MissionPersonaOverlay({
 
     setSaving(true);
     try {
+      // Empujar el bautismo al server action: en Vercel SQLite puede nacer vacío
+      // aunque la UI ya muestre nombres (ancla en localStorage / memoria).
+      if (yo?.operatorName?.trim() && yo.exocortexName?.trim()) {
+        writeClientYoSnapshot(yo);
+      }
+      const clientIdentity =
+        readClientYoSnapshot() ??
+        (yo?.operatorName?.trim() && yo.exocortexName?.trim()
+          ? {
+              operatorName: yo.operatorName.trim(),
+              exocortexName: yo.exocortexName.trim(),
+              exocortexNamedBy: yo.exocortexNamedBy,
+              operationalStatus: yo.operationalStatus,
+              energyLevel: yo.energyLevel,
+              mago12: yo.mago12,
+              mago3: yo.mago3,
+              calibration: yo.calibration,
+              genesisCompletedAt: yo.genesisCompletedAt,
+              updatedAt: yo.updatedAt,
+              senado: [],
+              prima: null,
+            }
+          : undefined);
+
       const result = await createPersonaAction({
         nombrePrincipal: trimmedName,
         aliases: [],
@@ -81,6 +105,7 @@ export function MissionPersonaOverlay({
         relationToOperator: trimmedRol,
         connections: [],
         universeSlug,
+        clientIdentity,
       });
 
       if (!result.ok) {

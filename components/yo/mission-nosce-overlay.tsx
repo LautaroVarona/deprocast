@@ -2,6 +2,7 @@
 
 import { completeNosceMissionAction } from "@/app/yo/actions";
 import { useYoNames } from "@/hooks/use-yo-names";
+import { readClientYoSnapshot } from "@/lib/yo/client-snapshot";
 import {
   NOSCE_BINARY_OPTIONS,
   NOSCE_PRIMA_MATERIA_CHIPS,
@@ -80,6 +81,7 @@ export function MissionNosceOverlay({
         exoesqueleto: binary,
         primaMateria: chips,
         esperanza: freeText.trim(),
+        clientIdentity: readClientYoSnapshot() ?? undefined,
       });
 
       if (!result.ok) {

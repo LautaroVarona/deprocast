@@ -9,7 +9,7 @@ import type {
 import { sealKgNodeInUniverse } from "@/lib/personas/universe-seal";
 import { ensureRuntimeReady } from "@/lib/runtime-setup";
 import { appendSenadoMemberToSnapshot } from "@/lib/yo/identity-snapshot";
-import { ensureYoShell } from "@/lib/yo/store";
+import { applyClientYoSnapshot, ensureYoShell } from "@/lib/yo/store";
 import { ensureOperatorPersonaNode } from "@/lib/yo/operator-node";
 
 export type PersonaActionResult<T> =
@@ -52,7 +52,11 @@ function parseConnections(raw: unknown): PersonaConnectionDraft[] {
 }
 
 export async function createPersonaAction(
-  input: CreatePersonaWithRelationsPayload & { universeSlug?: string },
+  input: CreatePersonaWithRelationsPayload & {
+    universeSlug?: string;
+    /** Ancla del navegador — obligatoria en Vercel (SQLite efímero). */
+    clientIdentity?: unknown;
+  },
 ): Promise<PersonaActionResult<Persona>> {
   try {
     await ensureRuntimeReady();
@@ -87,8 +91,22 @@ export async function createPersonaAction(
           ? input.crm.identity.vinculoOperador.trim()
           : "";
 
+    // Rehidratar bautismo desde el navegador antes de exigir el hub Operador.
+    // En Vercel cada action puede nacer con SQLite vacío aunque /yo ya esté listo en UI.
+    if (input.clientIdentity) {
+      await applyClientYoSnapshot(input.clientIdentity);
+    }
+
     // Asegurar shell Yo + nodo Operador antes del vínculo (Misión II / Senado).
-    const yo = await ensureYoShell();
+    let yo = await ensureYoShell();
+    if (
+      relationToOperator &&
+      !yo.operatorName?.trim() &&
+      input.clientIdentity
+    ) {
+      yo = await applyClientYoSnapshot(input.clientIdentity);
+    }
+
     const operator = await ensureOperatorPersonaNode(yo.operatorName);
     if (relationToOperator && !operator) {
       return {

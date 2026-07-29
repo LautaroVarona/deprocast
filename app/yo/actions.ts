@@ -251,9 +251,13 @@ export async function completeNosceMissionAction(input: {
   exoesqueleto: string;
   primaMateria: string[];
   esperanza: string;
+  clientIdentity?: unknown;
 }): Promise<YoActionResult<YoDto>> {
   try {
     await ready();
+    if (input.clientIdentity) {
+      await applyClientYoSnapshot(input.clientIdentity);
+    }
     const parsed = nosceMissionSchema.safeParse(input);
     if (!parsed.success) {
       return {
@@ -287,9 +291,13 @@ const primaMissionSchema = z.object({
 export async function completePrimaMissionAction(input: {
   title: string;
   why?: string;
+  clientIdentity?: unknown;
 }): Promise<YoActionResult<YoDto>> {
   try {
     await ready();
+    if (input.clientIdentity) {
+      await applyClientYoSnapshot(input.clientIdentity);
+    }
     const parsed = primaMissionSchema.safeParse(input);
     if (!parsed.success) {
       return {

@@ -121,26 +121,32 @@ export function GenesisProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const refreshGenesis = useCallback(async () => {
-    // Primero: empujar ancla del navegador si el servidor está vacío.
-    if (!hydratedRef.current) {
-      hydratedRef.current = true;
-      const local = readClientYoSnapshot();
-      if (local?.operatorName && local.exocortexName) {
+    const local = readClientYoSnapshot();
+    let next: YoDto | null = null;
+
+    const result = await getYoAction();
+    next = result.ok ? result.data : null;
+
+    const serverHasNames = Boolean(
+      next?.operatorName?.trim() && next?.exocortexName?.trim(),
+    );
+
+    // Rehidratar siempre que el server no tenga bautismo pero el navegador sí.
+    // hydratedRef solo evita re-pushes redundantes cuando ambos ya están alineados.
+    if (local?.operatorName && local.exocortexName) {
+      const shouldPush = !serverHasNames || !hydratedRef.current;
+      if (shouldPush) {
         if (local.genesisCompletedAt) {
           wasCompletedRef.current = true;
           setEverCompleted(true);
         }
         const hydrated = await hydrateYoFromClientSnapshotAction(local);
         if (hydrated.ok) {
-          applyYo(hydrated.data);
-          setReady(true);
-          return hydrated.data;
+          next = pickPreferredYo(next, hydrated.data);
         }
       }
+      hydratedRef.current = true;
     }
-
-    const result = await getYoAction();
-    let next = result.ok ? result.data : null;
 
     // Contrastar con REST por si action/API ven estados distintos.
     const apiYo = await fetchYoFromApi();

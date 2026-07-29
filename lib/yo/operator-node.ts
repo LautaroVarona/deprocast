@@ -34,7 +34,13 @@ async function readOperatorName(): Promise<string | null> {
     where: { id: YO_CORE_ID },
     select: { operatorName: true },
   });
-  return yo?.operatorName?.trim() || null;
+  const fromDb = yo?.operatorName?.trim() || null;
+  if (fromDb) return fromDb;
+
+  // Ancla en disco: sobrevive reseeds / cold starts donde SQLite nace vacío.
+  const { readYoIdentitySnapshot } = await import("@/lib/yo/identity-snapshot");
+  const snap = await readYoIdentitySnapshot();
+  return snap?.operatorName?.trim() || null;
 }
 
 /**

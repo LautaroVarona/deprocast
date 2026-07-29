@@ -5,6 +5,7 @@ import { useBabel } from "@/components/babel/babel-context";
 import { AliasTagInput } from "@/components/personas/alias-tag-input";
 import { ConnectionEntityPicker } from "@/components/personas/connection-entity-picker";
 import { cachePersonaEntity } from "@/lib/personas/client-cache";
+import { readClientYoSnapshot } from "@/lib/yo/client-snapshot";
 import { Button } from "@/components/ui/button";
 import {
   WorkspaceModal,
@@ -490,6 +491,7 @@ export function PersonaModularWorkspace({
           universeSlug: universeSlug ?? undefined,
           connections,
           crm,
+          clientIdentity: readClientYoSnapshot() ?? undefined,
         });
 
         if (!result.ok) {

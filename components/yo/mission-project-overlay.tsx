@@ -4,7 +4,10 @@ import { completePrimaMissionAction } from "@/app/yo/actions";
 import { Sheet, SheetBody, SheetHeader } from "@/components/ui/sheet";
 import { useGenesis } from "@/components/yo/genesis-context";
 import { notifyDomainRefresh } from "@/lib/domain-refresh";
-import { writeClientYoSnapshot } from "@/lib/yo/client-snapshot";
+import {
+  readClientYoSnapshot,
+  writeClientYoSnapshot,
+} from "@/lib/yo/client-snapshot";
 import type { YoDto } from "@/lib/yo/types";
 import { Loader2Icon } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -42,6 +45,7 @@ export function MissionProjectOverlay({
       const result = await completePrimaMissionAction({
         title: trimmed,
         why: horizon.trim() || undefined,
+        clientIdentity: readClientYoSnapshot() ?? undefined,
       });
 
       if (!result.ok) {
