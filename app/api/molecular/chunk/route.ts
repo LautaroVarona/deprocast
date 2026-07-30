@@ -1,3 +1,4 @@
+import { handleAudioUploadChunk } from "@/lib/audio-upload/handlers";
 import { runSemanticChunker } from "@/lib/molecular-processing/semantic-chunker";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
@@ -10,7 +11,26 @@ const bodySchema = z.object({
   fuenteOrigen: z.string().optional(),
 });
 
+/**
+ * Dual-mode:
+ * - multipart/form-data + uploadId → ingesta de audio por chunks
+ * - JSON { texto } → chunkeador semántico molecular (legado)
+ */
 export async function POST(request: NextRequest) {
+  const contentType = request.headers.get("content-type") ?? "";
+
+  if (contentType.includes("multipart/form-data")) {
+    try {
+      return await handleAudioUploadChunk(request);
+    } catch (error) {
+      console.error("Molecular audio chunk error:", error);
+      return NextResponse.json(
+        { error: "No se pudo recibir el chunk de audio." },
+        { status: 500 },
+      );
+    }
+  }
+
   try {
     const body = bodySchema.parse(await request.json());
     const result = await runSemanticChunker({

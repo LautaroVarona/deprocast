@@ -8,18 +8,10 @@ import { MetabolismView } from "@/components/audio-station/MetabolismView";
 import { PauseQueueButton } from "@/components/pause-queue-button";
 import { resolveAudioPipelineStage } from "@/lib/audio-station/pipeline-status";
 import { cn } from "@/lib/utils";
-import { AudioLinesIcon, ArrowRightIcon, WavesIcon } from "lucide-react";
 import Link from "next/link";
 
-type FlowChip = {
-  id: string;
-  label: string;
-  tone: string;
-  count: number;
-};
-
 function AudioStationShell() {
-  const { error, scan, assets, queueStatus, globalQueueStatus, reviewByAssetId, refresh } =
+  const { error, assets, queueStatus, globalQueueStatus, reviewByAssetId, refresh } =
     useAudioStation();
 
   const queuedIds = new Set(queueStatus?.queuedIds ?? []);
@@ -34,118 +26,72 @@ function AudioStationShell() {
       reviewByAssetId,
     });
 
-  const dedupBadge =
-    scan && scan.groups.length > 0 ? scan.duplicateCount : null;
-
-  const flowChips: FlowChip[] = [
+  const chips = [
     {
       id: "stt",
       label: "STT",
-      tone: "border-amber-500/35 bg-zinc-950 text-amber-500",
-      count: assets.filter((asset) => {
-        const stage = resolveStage(asset).distill.steps.STT;
-        return stage === "active";
-      }).length,
+      count: assets.filter((a) => resolveStage(a).distill.steps.STT === "active")
+        .length,
     },
     {
       id: "hitl",
       label: "HITL",
-      tone: "border-amber-500/35 bg-zinc-950 text-amber-500",
-      count: assets.filter(
-        (asset) => resolveStage(asset).stage === "in_validation",
-      ).length,
+      count: assets.filter((a) => resolveStage(a).stage === "in_validation")
+        .length,
     },
     {
       id: "coag",
       label: "COAG",
-      tone: "border-emerald-500/35 bg-zinc-950 text-emerald-500",
       count: assets.filter(
-        (asset) =>
-          resolveStage(asset).stage === "coagulated" ||
-          resolveStage(asset).stage === "validated",
+        (a) =>
+          resolveStage(a).stage === "coagulated" ||
+          resolveStage(a).stage === "validated",
       ).length,
     },
   ];
 
   return (
-    <div className="audio-noir-root mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 py-8 sm:px-6">
-      <header className="space-y-3">
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <AudioLinesIcon className="size-5 text-primary/70" />
-              <p className="font-mono text-[10px] uppercase tracking-[0.28em] text-muted-foreground">
-                Motor de metabolización activa
-              </p>
-            </div>
-            <h1 className="bg-gradient-to-r from-foreground via-foreground/85 to-foreground/50 bg-clip-text font-mono text-2xl font-semibold tracking-tight text-transparent sm:text-3xl">
-              Audio → Conocimiento → Acción
-            </h1>
-            <p className="max-w-2xl font-mono text-[11px] leading-relaxed text-muted-foreground">
-              Un tablero donde cada audio se metaboliza solo: transcripción,
-              purificación, chunks, grafo y action items al calendario.
-            </p>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-3">
-            {(globalQueueStatus?.active ||
-              (globalQueueStatus?.queuedCount ?? 0) > 0 ||
-              globalQueueStatus?.paused) && (
-              <PauseQueueButton
-                paused={globalQueueStatus?.paused === true}
-                onToggled={() => void refresh()}
-              />
-            )}
-            <Link
-              href="/ingesta"
-              className="font-mono text-[10px] text-primary/80 underline-offset-2 hover:underline"
+    <div className="mx-auto flex h-[calc(100vh-48px)] w-full max-w-[100vw] flex-col gap-2 overflow-y-hidden bg-zinc-950 px-3 py-3 sm:px-4">
+      <header className="flex shrink-0 flex-wrap items-center gap-3 border-b border-zinc-800 pb-2">
+        <p className="font-mono text-[10px] uppercase tracking-[0.28em] text-[#FFB000]">
+          [ATANOR · AUDIO]
+        </p>
+        <div className="flex items-center gap-2">
+          {chips.map((chip) => (
+            <span
+              key={chip.id}
+              className={cn(
+                "border border-zinc-800 bg-zinc-950 px-2 py-0.5 font-mono text-[9px] text-zinc-400 rounded-none",
+                chip.count > 0 && "border-[#FFB000]/40 text-[#FFB000]",
+              )}
             >
-              Ingesta con metadatos →
-            </Link>
-          </div>
+              {chip.count} {chip.label}
+            </span>
+          ))}
         </div>
-
-        {error ? (
-          <p className="rounded border border-destructive/25 bg-destructive/10 px-3 py-2 font-mono text-[10px] text-destructive/90">
-            {error}
-          </p>
-        ) : null}
-
-        {dedupBadge ? (
-          <p className="rounded border border-accent/25 bg-accent/8 px-3 py-2 font-mono text-[10px] text-accent/90">
-            {dedupBadge} posible{dedupBadge === 1 ? "" : "s"} duplicado
-            {dedupBadge === 1 ? "" : "s"} detectado{dedupBadge === 1 ? "" : "s"}.
-            Usá el botón Duplicados en el feed.
-          </p>
-        ) : null}
-
-        <div className="rounded border border-border bg-card/80 px-3 py-3">
-          <div className="mb-2 flex items-center gap-2">
-            <WavesIcon className="size-3.5 text-primary/80" />
-            <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
-              Flujo operacional
-            </p>
-          </div>
-          <div className="flex flex-wrap items-center gap-2">
-            {flowChips.map((chip, index) => (
-              <div key={chip.id} className="flex items-center gap-2">
-                <span
-                  className={cn(
-                    "inline-flex items-center gap-1 rounded-full border px-2.5 py-1 font-mono text-[10px]",
-                    chip.tone,
-                  )}
-                >
-                  <span className="font-semibold">{chip.count}</span>
-                  <span>{chip.label}</span>
-                </span>
-                {index < flowChips.length - 1 ? (
-                  <ArrowRightIcon className="size-3 text-muted-foreground" />
-                ) : null}
-              </div>
-            ))}
-          </div>
+        <div className="ml-auto flex items-center gap-3">
+          {(globalQueueStatus?.active ||
+            (globalQueueStatus?.queuedCount ?? 0) > 0 ||
+            globalQueueStatus?.paused) && (
+            <PauseQueueButton
+              paused={globalQueueStatus?.paused === true}
+              onToggled={() => void refresh()}
+            />
+          )}
+          <Link
+            href="/ingesta"
+            className="font-mono text-[9px] text-zinc-500 hover:text-[#FFB000]"
+          >
+            /ingesta →
+          </Link>
         </div>
       </header>
+
+      {error ? (
+        <p className="shrink-0 border border-red-900 bg-zinc-950 px-3 py-1 font-mono text-[10px] text-red-500 rounded-none">
+          {error}
+        </p>
+      ) : null}
 
       <MetabolismView />
     </div>

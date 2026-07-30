@@ -57,10 +57,36 @@ export async function GET(request: NextRequest) {
       select: audioAssetSelect,
     });
 
-    const scan = scanForDuplicates(assets);
+    const originIds = assets
+      .map((asset) => asset.originAttributionId)
+      .filter((id): id is string => Boolean(id));
+
+    const origins =
+      originIds.length > 0
+        ? await prisma.originAttribution.findMany({
+            where: { id: { in: originIds } },
+            select: {
+              id: true,
+              timestampExacto: true,
+              locationName: true,
+              ambientContext: true,
+            },
+          })
+        : [];
+
+    const originById = new Map(origins.map((row) => [row.id, row]));
+
+    const assetsWithLineage = assets.map((asset) => ({
+      ...asset,
+      originAttribution: asset.originAttributionId
+        ? (originById.get(asset.originAttributionId) ?? null)
+        : null,
+    }));
+
+    const scan = scanForDuplicates(assetsWithLineage);
 
     return NextResponse.json({
-      assets: mapAssetsToSummaries(assets),
+      assets: mapAssetsToSummaries(assetsWithLineage),
       scan,
       universe: universeSlug,
     });

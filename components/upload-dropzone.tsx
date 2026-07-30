@@ -10,36 +10,47 @@ import { toast } from "sonner";
 
 type UploadDropzoneProps = {
   onUploaded: (result?: { jobId?: string }) => void;
-  variant?: "default" | "embedded";
+  variant?: "default" | "embedded" | "hud";
   universeSlug?: string | null;
+  /** Si true, solo renderiza el rail de drop (las cards van en `renderQueue`). */
+  railOnly?: boolean;
 };
 
-type FileUploadState = {
+export type FileUploadState = {
   file: File;
   status: "pending" | "uploading" | "done" | "error";
   error?: string;
   errorCode?: number;
   progress?: string;
+  chunkIndex?: number;
+  totalChunks?: number;
   assetId?: string;
 };
+
+function formatBytes(size: number): string {
+  if (size < 1024) return `${size} B`;
+  if (size < 1024 * 1024) return `${(size / 1024).toFixed(0)} KB`;
+  return `${(size / (1024 * 1024)).toFixed(1)} MB`;
+}
 
 async function uploadFileInChunks(
   file: File,
   universeSlug?: string | null,
-  onProgress?: (label: string) => void,
+  onProgress?: (label: string, chunkIndex: number, totalChunks: number) => void,
 ): Promise<{ assetId: string; jobId: string }> {
   const totalChunks = Math.max(1, Math.ceil(file.size / UPLOAD_CHUNK_BYTES));
 
-  onProgress?.(`init 0/${totalChunks}`);
+  onProgress?.(`init 0/${totalChunks}`, 0, totalChunks);
 
   const initForm = new FormData();
   initForm.append("filename", file.name);
   initForm.append("mimeType", file.type || "");
   initForm.append("totalChunks", String(totalChunks));
   initForm.append("ambientContext", "caminata");
+  initForm.append("lastModified", String(file.lastModified || Date.now()));
 
   const initRes = await fetch(
-    "/api/upload/init",
+    "/api/molecular/init",
     withUniverseFetchInit({
       method: "POST",
       universeSlug,
@@ -63,7 +74,7 @@ async function uploadFileInChunks(
     const end = Math.min(start + UPLOAD_CHUNK_BYTES, file.size);
     const blob = file.slice(start, end);
 
-    onProgress?.(`chunk ${index + 1}/${totalChunks}`);
+    onProgress?.(`chunk ${index + 1}/${totalChunks}`, index + 1, totalChunks);
 
     const chunkForm = new FormData();
     chunkForm.append("uploadId", uploadId);
@@ -72,7 +83,7 @@ async function uploadFileInChunks(
     chunkForm.append("chunk", blob, `${file.name}.part${index}`);
 
     const chunkRes = await fetch(
-      "/api/upload/chunk",
+      "/api/molecular/chunk",
       withUniverseFetchInit({
         method: "POST",
         universeSlug,
@@ -89,13 +100,13 @@ async function uploadFileInChunks(
     }
   }
 
-  onProgress?.("complete");
+  onProgress?.("complete", totalChunks, totalChunks);
 
   const completeForm = new FormData();
   completeForm.append("uploadId", uploadId);
 
   const completeRes = await fetch(
-    "/api/upload/complete",
+    "/api/molecular/complete",
     withUniverseFetchInit({
       method: "POST",
       universeSlug,
@@ -117,10 +128,66 @@ async function uploadFileInChunks(
   };
 }
 
+export function UploadTacticalCard({ item }: { item: FileUploadState }) {
+  const isErr = item.status === "error";
+  const distill = buildDistillStepper({
+    pipelineStation: isErr
+      ? "ERROR"
+      : item.status === "done"
+        ? "STT"
+        : "QUEUED",
+    pipelineError: item.errorCode === 413 ? "413" : item.error,
+    status: isErr ? "ERROR" : "PENDING",
+  });
+
+  const footer = isErr
+    ? item.errorCode === 413
+      ? "[ERR: 413]"
+      : `[ERR: ${(item.error ?? "FAIL").slice(0, 28)}]`
+    : item.status === "done"
+      ? "[EN COLA STT]"
+      : "[DESTILANDO MOLÉCULAS]";
+
+  return (
+    <article
+      className={cn(
+        "flex h-[280px] w-80 min-w-[320px] flex-col justify-between border bg-zinc-950 p-4 font-mono rounded-none",
+        isErr ? "border-red-900" : "border-zinc-800",
+      )}
+    >
+      <header className="space-y-1">
+        <p className="truncate text-xs text-zinc-300">{item.file.name}</p>
+        <div className="flex items-center justify-between text-[10px] text-zinc-500">
+          <span>{formatBytes(item.file.size)}</span>
+          <span className="text-[#FFB000]/60">
+            Chunk {item.chunkIndex ?? 0}/{item.totalChunks ?? "?"}
+          </span>
+        </div>
+      </header>
+
+      <div className="grid grid-cols-3 gap-1 py-3">
+        <DistillationStepper distill={distill} compact={false} />
+      </div>
+
+      <footer
+        className={cn(
+          "text-[10px]",
+          isErr
+            ? "text-red-500"
+            : "animate-pulse text-[#FFB000]",
+        )}
+      >
+        {footer}
+      </footer>
+    </article>
+  );
+}
+
 export function UploadDropzone({
   onUploaded,
   variant = "default",
   universeSlug,
+  railOnly = false,
 }: UploadDropzoneProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -135,6 +202,8 @@ export function UploadDropzone({
       const initial: FileUploadState[] = files.map((file) => ({
         file,
         status: "pending",
+        totalChunks: Math.max(1, Math.ceil(file.size / UPLOAD_CHUNK_BYTES)),
+        chunkIndex: 0,
       }));
 
       setUploads(initial);
@@ -158,11 +227,11 @@ export function UploadDropzone({
           const result = await uploadFileInChunks(
             file,
             universeSlug,
-            (label) => {
+            (label, chunkIndex, totalChunks) => {
               setUploads((current) =>
                 current.map((item, itemIndex) =>
                   itemIndex === index
-                    ? { ...item, progress: label }
+                    ? { ...item, progress: label, chunkIndex, totalChunks }
                     : item,
                 ),
               );
@@ -226,7 +295,7 @@ export function UploadDropzone({
         );
       }
 
-      setTimeout(() => setUploads([]), 8000);
+      setTimeout(() => setUploads([]), 10000);
     },
     [onUploaded, universeSlug],
   );
@@ -266,57 +335,58 @@ export function UploadDropzone({
     />
   );
 
-  const queueFeed =
+  const queueCards =
     uploads.length > 0 ? (
-      <ul className="w-full space-y-1">
-        {uploads.map((item) => {
-          const isErr = item.status === "error";
-          const distill = buildDistillStepper({
-            pipelineStation: isErr
-              ? "ERROR"
-              : item.status === "done"
-                ? "STT"
-                : "QUEUED",
-            pipelineError:
-              item.errorCode === 413
-                ? "413"
-                : item.error,
-            status: isErr ? "ERROR" : "PENDING",
-          });
-
-          return (
-            <li
-              key={`${item.file.name}-${item.file.size}`}
-              className={cn(
-                "flex items-center gap-3 border bg-zinc-950 px-3 py-1.5",
-                isErr ? "border-red-900" : "border-zinc-800",
-              )}
-            >
-              <span className="truncate max-w-[180px] text-xs font-mono text-zinc-400">
-                {item.file.name}
-              </span>
-              <DistillationStepper distill={distill} className="ml-auto" />
-              {item.status === "uploading" && item.progress && (
-                <span className="shrink-0 font-mono text-[9px] text-amber-500/80">
-                  {item.progress}
-                </span>
-              )}
-            </li>
-          );
-        })}
-      </ul>
+      <div className="flex flex-row gap-4">
+        {uploads.map((item) => (
+          <UploadTacticalCard
+            key={`${item.file.name}-${item.file.size}`}
+            item={item}
+          />
+        ))}
+      </div>
     ) : null;
 
-  // Compacto cuando hay cola o subidas
-  if (hasQueue || variant === "embedded") {
+  // HUD: rail lateral compacto + cards horizontales
+  if (variant === "hud") {
     return (
-      <div className="space-y-2">
+      <div className="flex h-full flex-row items-start gap-4">
         <div
           className={cn(
-            "flex h-12 cursor-pointer items-center justify-between border bg-zinc-950 px-3 font-mono text-[10px] uppercase tracking-[0.2em] text-zinc-400 transition-colors rounded-none",
+            "flex h-[280px] w-36 min-w-[9rem] shrink-0 cursor-pointer flex-col items-center justify-center gap-2 border border-dashed border-[#FFB000]/40 bg-zinc-950 px-2 text-center font-mono rounded-none",
+            (isDragging || isUploading) && "animate-pulse border-[#FFB000]/70",
+          )}
+          {...dropHandlers}
+          onClick={() => !isUploading && inputRef.current?.click()}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(event) => {
+            if (event.key === "Enter" || event.key === " ") {
+              event.preventDefault();
+              inputRef.current?.click();
+            }
+          }}
+        >
+          <span className="text-[9px] uppercase tracking-[0.18em] text-[#FFB000]">
+            {isUploading ? "[RECIBIENDO]" : "[DROP]"}
+          </span>
+          <span className="text-[9px] text-zinc-600">.mp3 .m4a .wav</span>
+          {fileInput}
+        </div>
+        {!railOnly ? queueCards : null}
+      </div>
+    );
+  }
+
+  if (hasQueue || variant === "embedded") {
+    return (
+      <div className="space-y-3">
+        <div
+          className={cn(
+            "flex h-12 cursor-pointer items-center justify-between border bg-zinc-950 px-3 font-mono text-[10px] uppercase tracking-[0.2em] text-zinc-400 rounded-none",
             isDragging || isUploading
-              ? "animate-pulse border-amber-500/30 text-amber-500"
-              : "border-zinc-800 hover:border-amber-500/40",
+              ? "animate-pulse border-[#FFB000]/40 text-[#FFB000]"
+              : "border-dashed border-[#FFB000]/40 hover:border-[#FFB000]/60",
           )}
           {...dropHandlers}
           onClick={() => !isUploading && inputRef.current?.click()}
@@ -339,7 +409,7 @@ export function UploadDropzone({
           <span className="text-zinc-600">.mp3 · .m4a · .wav · .ogg</span>
           {fileInput}
         </div>
-        {queueFeed}
+        {queueCards}
       </div>
     );
   }
@@ -347,12 +417,12 @@ export function UploadDropzone({
   return (
     <div
       className={cn(
-        "flex flex-col items-center gap-4 border border-dashed border-zinc-800 bg-zinc-950 px-6 py-10 text-center transition-colors rounded-none",
-        isDragging && "border-amber-500/40 bg-zinc-950",
+        "flex flex-col items-center gap-4 border border-dashed border-[#FFB000]/40 bg-zinc-950 px-6 py-10 text-center rounded-none",
+        isDragging && "border-[#FFB000]/70",
       )}
       {...dropHandlers}
     >
-      <p className="font-mono text-[10px] uppercase tracking-[0.28em] text-amber-500">
+      <p className="font-mono text-[10px] uppercase tracking-[0.28em] text-[#FFB000]">
         [ATANOR: ESPERANDO MATERIA PRIMA]
       </p>
       <p className="font-mono text-xs text-zinc-500">
@@ -362,12 +432,12 @@ export function UploadDropzone({
         type="button"
         disabled={isUploading}
         onClick={() => inputRef.current?.click()}
-        className="border border-amber-500/40 bg-zinc-950 px-4 py-2 font-mono text-[10px] uppercase tracking-[0.2em] text-amber-500 hover:bg-amber-500/10 disabled:opacity-50 rounded-none"
+        className="border border-[#FFB000]/40 bg-zinc-950 px-4 py-2 font-mono text-[10px] uppercase tracking-[0.2em] text-[#FFB000] hover:bg-[#FFB000]/10 disabled:opacity-50 rounded-none"
       >
         {isUploading ? "Subiendo…" : "Seleccionar archivos"}
       </button>
       {fileInput}
-      {queueFeed}
+      {queueCards}
     </div>
   );
 }

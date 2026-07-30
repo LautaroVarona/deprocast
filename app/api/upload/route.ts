@@ -53,7 +53,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         {
           error:
-            "Archivo demasiado grande para single-shot. Usá upload por chunks (/api/upload/init).",
+            "Archivo demasiado grande para single-shot. Usá upload por chunks (/api/molecular/init).",
           code: 413,
           maxBytes: UPLOAD_SINGLE_SHOT_MAX_BYTES,
         },

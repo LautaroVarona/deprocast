@@ -80,11 +80,49 @@ export async function runDistillPipelineAfterStt(
   }
 
   const title = asset.filename.replace(/\.[^.]+$/, "");
-  const ambientContext = await readAmbientContext(assetId);
+  const ambientDefault = await readAmbientContext(assetId);
 
   try {
     // ── LINEAGE (+ Purifier interno; Quantador diferido) ─────
     await setStation(assetId, "LINEAGE");
+
+    const { resolveTemporalLineage } = await import(
+      "@/lib/ingesta/temporal-lineage"
+    );
+    const lineage = await resolveTemporalLineage({
+      filename: asset.filename,
+      originalCreatedAt: asset.originalCreatedAt,
+      transcript: rawText,
+      ambientDefault,
+    });
+
+    // Persistir desglose para HITL / tarjetas tácticas
+    try {
+      const { writeFile, mkdir } = await import("fs/promises");
+      await mkdir(getUploadDir(), { recursive: true });
+      await writeFile(
+        path.join(getUploadDir(), `${assetId}.lineage.json`),
+        JSON.stringify({
+          fecha: lineage.fechaLabel,
+          hora: lineage.horaLabel,
+          lugar: lineage.lugar,
+          ambientContext: lineage.ambientContext,
+          indefinido: lineage.indefinido,
+          source: lineage.source,
+          confidence: lineage.confidence,
+          rawHints: lineage.rawHints,
+          timestampExacto: lineage.timestampExacto.toISOString(),
+        }),
+        "utf8",
+      );
+    } catch (error) {
+      console.warn("Lineage sidecar write failed:", error);
+    }
+
+    await prisma.audioAsset.update({
+      where: { id: assetId },
+      data: { originalCreatedAt: lineage.timestampExacto },
+    });
 
     const gravity = await resolveAudioAssetGravity(asset.id, asset.filename);
     let reviewId: string | undefined;
@@ -97,12 +135,16 @@ export async function runDistillPipelineAfterStt(
           rawText,
           assetId: asset.id,
           filename: asset.filename,
-          locationName: ambientContext,
+          locationName: lineage.lugar ?? lineage.ambientContext,
           metadata: {
             estado: asset.status,
             transcritoEl: asset.transcript!.createdAt.toISOString(),
             autoPurify: "true",
-            ambientContext,
+            ambientContext: lineage.ambientContext,
+            lineageSource: lineage.source,
+            lineageIndefinido: lineage.indefinido ? "true" : "false",
+            lineageFecha: lineage.fechaLabel,
+            lineageHora: lineage.horaLabel,
           },
           gravity: {
             ...gravity,
@@ -111,11 +153,16 @@ export async function runDistillPipelineAfterStt(
           origin: buildOriginAttribution({
             channel: "audio",
             actors: [selfActor(), speakerActor(title, asset.id)],
-            capturedAt: asset.originalCreatedAt.toISOString(),
+            capturedAt: lineage.timestampExacto.toISOString(),
             meta: {
               assetId: asset.id,
               filename: asset.filename,
-              ambientContext,
+              ambientContext: lineage.ambientContext,
+              lineageSource: lineage.source,
+              indefinido: lineage.indefinido,
+              fecha: lineage.fechaLabel,
+              hora: lineage.horaLabel,
+              lugar: lineage.lugar,
             },
           }),
         },
@@ -130,7 +177,11 @@ export async function runDistillPipelineAfterStt(
     if (originAttributionId) {
       await prisma.originAttribution.update({
         where: { id: originAttributionId },
-        data: { ambientContext },
+        data: {
+          ambientContext: lineage.ambientContext,
+          locationName: lineage.lugar ?? lineage.ambientContext,
+          timestampExacto: lineage.timestampExacto,
+        },
       });
       await prisma.audioAsset.update({
         where: { id: assetId },

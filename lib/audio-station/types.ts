@@ -1,3 +1,12 @@
+export type AudioAssetLineageSummary = {
+  fecha: string;
+  hora: string;
+  lugar: string | null;
+  ambientContext: string | null;
+  indefinido: boolean;
+  source?: string;
+};
+
 export type AudioAssetSummary = {
   id: string;
   filename: string;
@@ -8,6 +17,7 @@ export type AudioAssetSummary = {
   createdAt: string;
   pipelineStation?: string | null;
   pipelineError?: string | null;
+  lineage?: AudioAssetLineageSummary | null;
   transcript: { id: string; preview?: string; validated?: boolean } | null;
 };
 

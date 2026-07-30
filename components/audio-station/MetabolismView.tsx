@@ -16,16 +16,15 @@ import {
 import { resolveAudioPipelineStage } from "@/lib/audio-station/pipeline-status";
 import { fetchJson } from "@/lib/fetch-json";
 import { cn } from "@/lib/utils";
-import { Loader2Icon, WavesIcon } from "lucide-react";
-import Link from "next/link";
+import { Loader2Icon } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 const FILTERS: Array<{ id: MetabolismFilter; label: string }> = [
   { id: "all", label: "Todos" },
   { id: "processing", label: "Procesando" },
-  { id: "attention", label: "Atención requerida" },
-  { id: "hitl", label: "Requiere validación" },
-  { id: "alma", label: "Metabolizado" },
+  { id: "attention", label: "Atención" },
+  { id: "hitl", label: "HITL" },
+  { id: "alma", label: "Coagulado" },
 ];
 
 export function MetabolismView() {
@@ -112,109 +111,87 @@ export function MetabolismView() {
   const dedupBadge = scan && scan.groups.length > 0 ? scan.duplicateCount : null;
 
   return (
-    <div className="space-y-4">
-      <section className="audio-noir-panel space-y-4 p-4">
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div className="space-y-1">
-            <div className="flex items-center gap-2">
-              <WavesIcon className="size-4 text-primary/80" />
-              <h2 className="font-mono text-sm font-medium text-muted-foreground">
-                Dashboard de metabolización
-              </h2>
-            </div>
-            <p className="max-w-2xl font-mono text-[10px] leading-relaxed text-muted-foreground">
-              Subís un audio y el motor arranca solo: transcripción, purificación
-              y validación HITL. Sin clicks intermedios.
-            </p>
-          </div>
+    <div className="flex h-[calc(100vh-120px)] flex-col gap-3 overflow-y-hidden">
+      <div className="flex shrink-0 flex-wrap items-center gap-2 px-1">
+        <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-[#FFB000]">
+          [HUD · DESTILACIÓN AUDIO]
+        </p>
+        {FILTERS.map((item) => (
+          <button
+            key={item.id}
+            type="button"
+            onClick={() => setFilter(item.id)}
+            className={cn(
+              "border px-2 py-0.5 font-mono text-[9px] uppercase tracking-wider rounded-none",
+              filter === item.id
+                ? "border-[#FFB000]/50 bg-zinc-950 text-[#FFB000]"
+                : "border-zinc-800 text-zinc-500 hover:border-zinc-600",
+            )}
+          >
+            {item.label}
+          </button>
+        ))}
+        {dedupBadge ? (
+          <button
+            type="button"
+            onClick={() => setShowDedup((value) => !value)}
+            className="border border-[#FFB000]/30 px-2 py-0.5 font-mono text-[9px] text-[#FFB000]/80 rounded-none"
+          >
+            Dup ({dedupBadge})
+          </button>
+        ) : null}
+        {showLivePanel || isPaused ? (
+          <PauseQueueButton
+            paused={isPaused}
+            onToggled={() => void refresh()}
+          />
+        ) : null}
+        {isLoadingMetabolism ? (
+          <span className="ml-auto flex items-center gap-1 font-mono text-[9px] text-zinc-600">
+            <Loader2Icon className="size-3 animate-spin" />
+            sync…
+          </span>
+        ) : null}
+      </div>
 
-          {showLivePanel || isPaused ? (
-            <PauseQueueButton
-              paused={isPaused}
-              onToggled={() => void refresh()}
-            />
-          ) : null}
+      {showDedup && scan ? (
+        <div className="max-h-24 shrink-0 overflow-hidden border border-zinc-800 bg-zinc-950 p-2">
+          <DeduplicatePanel />
         </div>
+      ) : null}
 
-        <UploadDropzone
-          variant="embedded"
-          universeSlug={activeUniverse?.slug}
-          onUploaded={() => void refresh()}
-        />
-
-        {showLivePanel ? (
+      {showLivePanel ? (
+        <div className="shrink-0">
           <LiveProcessingPanel
             refreshKey={refreshKey}
             outsideUniverse={outsideUniverse}
             onStopped={() => void refresh()}
             onQueueIdle={() => void refresh()}
           />
-        ) : null}
-
-        <div className="flex flex-wrap gap-2">
-          {FILTERS.map((item) => (
-            <button
-              key={item.id}
-              type="button"
-              onClick={() => setFilter(item.id)}
-              className={cn(
-                "rounded-full border px-3 py-1 font-mono text-[10px] uppercase tracking-wider transition",
-                filter === item.id
-                  ? "border-primary/40 bg-primary/10 text-primary"
-                  : "border-border text-muted-foreground hover:border-border",
-              )}
-            >
-              {item.label}
-            </button>
-          ))}
-          {dedupBadge ? (
-            <button
-              type="button"
-              onClick={() => setShowDedup((value) => !value)}
-              className={cn(
-                "rounded-full border px-3 py-1 font-mono text-[10px] uppercase tracking-wider",
-                showDedup
-                  ? "border-accent/40 bg-accent/10 text-accent"
-                  : "border-accent/25 text-accent/80",
-              )}
-            >
-              Duplicados ({dedupBadge})
-            </button>
-          ) : null}
-          {isLoadingMetabolism ? (
-            <span className="ml-auto flex items-center gap-1 font-mono text-[10px] text-muted-foreground">
-              <Loader2Icon className="size-3 animate-spin" />
-              Sincronizando conocimiento…
-            </span>
-          ) : null}
         </div>
-      </section>
-
-      {showDedup && scan ? (
-        <section className="audio-noir-panel p-4">
-          <DeduplicatePanel />
-        </section>
       ) : null}
 
-      {filteredAssets.length === 0 ? (
-        <div className="audio-noir-panel py-16 text-center">
-          <p className="font-mono text-[11px] text-muted-foreground">
+      {/* Viewport inmutable: scroll horizontal, sin scroll vertical masivo */}
+      <div
+        className={cn(
+          "flex flex-1 flex-row items-start gap-4 overflow-x-auto overflow-y-hidden p-1",
+          "scrollbar-thin scrollbar-thumb-zinc-800",
+        )}
+      >
+        <UploadDropzone
+          variant="hud"
+          universeSlug={activeUniverse?.slug}
+          onUploaded={() => void refresh()}
+        />
+
+        {filteredAssets.length === 0 ? (
+          <div className="flex h-[280px] min-w-[240px] items-center justify-center border border-dashed border-zinc-800 bg-zinc-950 px-6 font-mono text-[10px] text-zinc-600 rounded-none">
             {assets.length === 0
-              ? "Arrastrá audios para iniciar la metabolización activa."
-              : "No hay audios en este filtro."}
-          </p>
-          {assets.length === 0 ? (
-            <Link
-              href="/ingesta"
-              className="mt-3 inline-block font-mono text-[10px] text-primary/80 hover:underline"
-            >
-              Ingesta con metadatos →
-            </Link>
-          ) : null}
-        </div>
-      ) : (
-        <div className="grid gap-3 lg:grid-cols-2">
-          {filteredAssets.map((asset) => (
+              ? "[SIN MATERIA PRIMA]"
+              : "[FILTRO VACÍO]"}
+          </div>
+        ) : (
+          filteredAssets.map((asset) => (
             <AudioMetabolismCard
               key={asset.id}
               asset={asset}
@@ -224,10 +201,11 @@ export function MetabolismView() {
               reviewByAssetId={reviewByAssetId}
               metabolism={metabolismByAsset[asset.id]}
               onRefresh={() => void refresh()}
+              tactical
             />
-          ))}
-        </div>
-      )}
+          ))
+        )}
+      </div>
     </div>
   );
 }

@@ -220,28 +220,49 @@ export function mapAssetsToSummaries(
     createdAt: Date;
     pipelineStation?: string | null;
     pipelineError?: string | null;
+    originAttribution?: {
+      timestampExacto: Date;
+      locationName: string | null;
+      ambientContext: string | null;
+    } | null;
     transcript: { id: string; rawText?: string; _count?: { parentChunks: number } } | null;
   }>,
 ): AudioAssetSummary[] {
-  return assets.map((asset) => ({
-    id: asset.id,
-    filename: asset.filename,
-    fileUrl: asset.fileUrl,
-    durationMs: asset.durationMs,
-    originalCreatedAt: asset.originalCreatedAt.toISOString(),
-    status: asset.status,
-    createdAt: asset.createdAt.toISOString(),
-    pipelineStation: asset.pipelineStation ?? "QUEUED",
-    pipelineError: asset.pipelineError ?? null,
-    transcript: asset.transcript
-      ? {
-          id: asset.transcript.id,
-          preview: asset.transcript.rawText
-            ? asset.transcript.rawText.slice(0, 120).trim() +
-              (asset.transcript.rawText.length > 120 ? "…" : "")
-            : undefined,
-          validated: (asset.transcript._count?.parentChunks ?? 0) > 0,
-        }
-      : null,
-  }));
+  return assets.map((asset) => {
+    const ts = asset.originAttribution?.timestampExacto ?? asset.originalCreatedAt;
+    const pad = (n: number) => String(n).padStart(2, "0");
+    const fecha = `${pad(ts.getDate())}/${pad(ts.getMonth() + 1)}/${ts.getFullYear()}`;
+    const hora = `${pad(ts.getHours())}:${pad(ts.getMinutes())}`;
+    const ambient = asset.originAttribution?.ambientContext ?? null;
+    const indefinido = ambient === "indefinido";
+
+    return {
+      id: asset.id,
+      filename: asset.filename,
+      fileUrl: asset.fileUrl,
+      durationMs: asset.durationMs,
+      originalCreatedAt: asset.originalCreatedAt.toISOString(),
+      status: asset.status,
+      createdAt: asset.createdAt.toISOString(),
+      pipelineStation: asset.pipelineStation ?? "QUEUED",
+      pipelineError: asset.pipelineError ?? null,
+      lineage: {
+        fecha,
+        hora,
+        lugar: asset.originAttribution?.locationName ?? null,
+        ambientContext: ambient,
+        indefinido,
+      },
+      transcript: asset.transcript
+        ? {
+            id: asset.transcript.id,
+            preview: asset.transcript.rawText
+              ? asset.transcript.rawText.slice(0, 120).trim() +
+                (asset.transcript.rawText.length > 120 ? "…" : "")
+              : undefined,
+            validated: (asset.transcript._count?.parentChunks ?? 0) > 0,
+          }
+        : null,
+    };
+  });
 }

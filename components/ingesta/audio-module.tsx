@@ -1,9 +1,7 @@
 "use client";
 
 import { UploadDropzone } from "@/components/upload-dropzone";
-import { Badge } from "@/components/ui/badge";
 import { fetchJson } from "@/lib/fetch-json";
-import { AudioLinesIcon } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 
 type QueueStatus = {
@@ -31,36 +29,41 @@ export function AudioModule() {
 
   const queueLabel = queueStatus
     ? queueStatus.active
-      ? `Esterilizando 1 audio · ${queueStatus.queuedCount} en cola`
+      ? `STT activo · ${queueStatus.queuedCount} en cola`
       : queueStatus.queuedCount > 0
-        ? `${queueStatus.queuedCount} en cola de esterilización`
-        : "Cola de esterilización vacía"
-    : "Consultando cola...";
+        ? `${queueStatus.queuedCount} en cola molecular`
+        : "Cola vacía"
+    : "…";
 
   return (
-    <section aria-label="Ingesta de audio" className="space-y-3">
-      <div className="flex flex-wrap items-center gap-2">
-        <span className="flex size-8 items-center justify-center rounded-lg bg-primary/15 text-primary dark:text-primary">
-          <AudioLinesIcon className="size-4" aria-hidden />
-        </span>
-        <div className="min-w-0 flex-1">
-          <h3 className="text-sm font-semibold">Audio de caminatas</h3>
-          <p className="text-xs text-muted-foreground">
-            Los .wav / .m4a entran a la cola de esterilización local (Whisper).
+    <section
+      aria-label="Ingesta de audio"
+      className="flex h-[calc(100vh-160px)] flex-col gap-3 overflow-y-hidden"
+    >
+      <div className="flex shrink-0 items-center justify-between gap-2 font-mono">
+        <div>
+          <p className="text-[10px] uppercase tracking-[0.22em] text-[#FFB000]">
+            [INGESTA · AUDIO]
+          </p>
+          <p className="text-[10px] text-zinc-500">
+            Chunks moleculares · Deepgram · 6 estaciones
           </p>
         </div>
-        <Badge
-          variant="outline"
-          className={
-            queueStatus?.active
-              ? "border-primary/50 bg-primary/10 text-primary dark:text-primary"
-              : undefined
-          }
-        >
+        <span className="border border-zinc-800 bg-zinc-950 px-2 py-1 text-[9px] text-zinc-400 rounded-none">
           {queueLabel}
-        </Badge>
+        </span>
       </div>
-      <UploadDropzone onUploaded={() => void loadStatus()} />
+
+      <div
+        className={
+          "flex flex-1 flex-row items-start gap-4 overflow-x-auto overflow-y-hidden p-1 scrollbar-thin scrollbar-thumb-zinc-800"
+        }
+      >
+        <UploadDropzone
+          variant="hud"
+          onUploaded={() => void loadStatus()}
+        />
+      </div>
     </section>
   );
 }
