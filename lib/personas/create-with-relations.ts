@@ -206,10 +206,15 @@ export async function createPersonaWithRelations(
     }
 
     if (!operator) {
+      const { DEFAULT_SOVEREIGN_OPERATOR_NAME } = await import("@/lib/yo/types");
+      operator = await ensureOperatorPersonaNode(
+        operatorName || DEFAULT_SOVEREIGN_OPERATOR_NAME,
+      );
+    }
+
+    if (!operator) {
       throw new Error(
-        operatorName
-          ? `No se pudo anclar el vínculo a ${operatorName}. Recargá /yo e intentá de nuevo.`
-          : "Definí tu nombre en /yo antes de vincular personas.",
+        `No se pudo anclar el vínculo al Operador soberano. Reintentá desde /yo.`,
       );
     }
   }

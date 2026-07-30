@@ -52,7 +52,13 @@ function formatBytes(size: number): string {
   return `${(size / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-export function CrisolMicroCard({ item }: { item: FileUploadState }) {
+export function CrisolMicroCard({
+  item,
+  onRetry,
+}: {
+  item: FileUploadState;
+  onRetry?: () => void;
+}) {
   const isErr = item.status === "error";
   const distill = buildDistillStepper({
     pipelineStation: isErr
@@ -75,7 +81,7 @@ export function CrisolMicroCard({ item }: { item: FileUploadState }) {
   return (
     <article
       className={cn(
-        "flex h-32 flex-col justify-between border border-b-4 bg-stone-800 p-3 font-mono rounded-none transition-colors",
+        "flex h-36 flex-col justify-between border border-b-4 bg-stone-800 p-3 font-mono rounded-none transition-colors",
         isErr
           ? "border-rose-800 border-b-rose-950"
           : "border-stone-700 border-b-stone-950 hover:border-amber-700/50",
@@ -93,15 +99,29 @@ export function CrisolMicroCard({ item }: { item: FileUploadState }) {
 
       <MicroStationRow distill={distill} />
 
-      <p
-        className={cn(
-          "text-[10px] uppercase tracking-wide",
-          isErr ? "text-rose-800" : "text-legion-patina",
-          item.status === "uploading" && "animate-pulse text-amber-500/90",
-        )}
-      >
-        {consoleLine}
-      </p>
+      <div className="flex items-end justify-between gap-2">
+        <p
+          className={cn(
+            "min-w-0 truncate text-[10px] uppercase tracking-wide",
+            isErr ? "text-rose-800" : "text-legion-patina",
+            item.status === "uploading" && "animate-pulse text-amber-500/90",
+          )}
+        >
+          {consoleLine}
+        </p>
+        {isErr && onRetry ? (
+          <button
+            type="button"
+            className="shrink-0 border border-amber-700/50 bg-stone-950 px-1.5 py-0.5 font-serif text-[9px] uppercase tracking-wider text-amber-500 hover:border-amber-500 hover:text-legion-gold rounded-none"
+            onClick={(event) => {
+              event.stopPropagation();
+              onRetry();
+            }}
+          >
+            [ REINVOCAR COHORTE ]
+          </button>
+        ) : null}
+      </div>
     </article>
   );
 }
@@ -376,6 +396,22 @@ export function UploadDropzone({
     [uploadFiles],
   );
 
+  const retryUpload = useCallback(
+    (slot: number) => {
+      setUploads((current) => {
+        const target = current[slot];
+        if (!target || target.status !== "error") return current;
+        const file = target.file;
+        // Retirar la tablilla fallida y reiniciar la misiva.
+        queueMicrotask(() => {
+          void uploadFiles([file]);
+        });
+        return current.filter((_, index) => index !== slot);
+      });
+    },
+    [uploadFiles],
+  );
+
   const dropHandlers = {
     onDragOver: (event: DragEvent) => {
       event.preventDefault();
@@ -464,6 +500,11 @@ export function UploadDropzone({
               <CrisolMicroCard
                 key={`${item.file.name}-${item.file.size}-${item.uploadId ?? item.assetId ?? index}`}
                 item={item}
+                onRetry={
+                  item.status === "error"
+                    ? () => retryUpload(index)
+                    : undefined
+                }
               />
             ))}
             {children}

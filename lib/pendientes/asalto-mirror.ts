@@ -62,10 +62,26 @@ async function resolveProjectNodeId(task: PendingTaskDto): Promise<string> {
 }
 
 async function resolveSelfNodeId(): Promise<string> {
-  const operator = await ensureOperatorPersonaNode();
-  if (operator) return operator.id;
-  // Sin bautismo aún: no inventar un nodo "Observador" paralelo al hub.
-  throw new Error("Definí tu nombre en /yo antes de espejar asaltos al grafo.");
+  const { DEFAULT_SOVEREIGN_OPERATOR_NAME } = await import("@/lib/yo/types");
+  // Fallback soberano: nunca bloquear el Atanor por /yo vacío (SQLite efímero en Vercel).
+  const operator = await ensureOperatorPersonaNode(
+    DEFAULT_SOVEREIGN_OPERATOR_NAME,
+  );
+
+  try {
+    const { YO_CORE_ID } = await import("@/lib/yo/types");
+    await prisma.yo.updateMany({
+      where: { id: YO_CORE_ID, OR: [{ operatorName: null }, { operatorName: "" }] },
+      data: {
+        operatorName: operator.primaryName || DEFAULT_SOVEREIGN_OPERATOR_NAME,
+        operationalStatus: "OPERATIVO",
+      },
+    });
+  } catch {
+    /* shell Yo opcional */
+  }
+
+  return operator.id;
 }
 
 export type AsaltoMirrorAction = "suggest" | "recognize" | "calibrate" | "reject";

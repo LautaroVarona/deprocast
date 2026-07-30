@@ -94,8 +94,8 @@ export async function readMetaFromBlob(
   try {
     const raw = await readBlobBytes(blobMetaPath(uploadId));
     return JSON.parse(raw.toString("utf8")) as BlobChunkUploadMeta;
-  } catch (error) {
-    console.warn("readMetaFromBlob failed:", error);
+  } catch {
+    // Esperado en init: la meta aún no existe.
     return null;
   }
 }

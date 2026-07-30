@@ -345,6 +345,11 @@ export async function runQuantadorPipeline(
     await syncAsaltoMirrorFromTask(task, {
       action: "suggest",
       weight: 6,
+    }).catch((error) => {
+      console.warn(
+        `Asalto mirror omitido para task ${task.id} (no bloquea Quantador):`,
+        error,
+      );
     });
 
     taskIds.push(task.id);

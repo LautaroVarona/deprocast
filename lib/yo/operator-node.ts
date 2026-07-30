@@ -2,7 +2,7 @@ import "server-only";
 
 import { parseAliasesJson, parseMetadataJson } from "@/lib/kg/normalize";
 import { prisma } from "@/lib/prisma";
-import { YO_CORE_ID } from "@/lib/yo/types";
+import { YO_CORE_ID, DEFAULT_SOVEREIGN_OPERATOR_NAME } from "@/lib/yo/types";
 import type { Prisma } from "@prisma/client";
 
 export const OPERATOR_METADATA_ROLE = "operador";
@@ -26,10 +26,11 @@ function withOperatorMetadata(
     ...parseMetadataJson(existing),
     isOperator: true,
     role: OPERATOR_METADATA_ROLE,
+    aesthetic: "Legio Victrix",
   } as Prisma.InputJsonValue;
 }
 
-async function readOperatorName(): Promise<string | null> {
+async function readOperatorName(): Promise<string> {
   const yo = await prisma.yo.findUnique({
     where: { id: YO_CORE_ID },
     select: { operatorName: true },
@@ -38,9 +39,17 @@ async function readOperatorName(): Promise<string | null> {
   if (fromDb) return fromDb;
 
   // Ancla en disco: sobrevive reseeds / cold starts donde SQLite nace vacío.
-  const { readYoIdentitySnapshot } = await import("@/lib/yo/identity-snapshot");
-  const snap = await readYoIdentitySnapshot();
-  return snap?.operatorName?.trim() || null;
+  try {
+    const { readYoIdentitySnapshot } = await import("@/lib/yo/identity-snapshot");
+    const snap = await readYoIdentitySnapshot();
+    const fromSnap = snap?.operatorName?.trim();
+    if (fromSnap) return fromSnap;
+  } catch {
+    /* snapshot opcional */
+  }
+
+  // Fallback soberano (Legio Victrix): nunca devolver null al pipeline.
+  return DEFAULT_SOVEREIGN_OPERATOR_NAME;
 }
 
 /**
@@ -49,9 +58,11 @@ async function readOperatorName(): Promise<string | null> {
  */
 export async function ensureOperatorPersonaNode(
   nameOverride?: string | null,
-): Promise<OperatorPersonaNode | null> {
-  const primaryName = nameOverride?.trim() || (await readOperatorName());
-  if (!primaryName) return null;
+): Promise<OperatorPersonaNode> {
+  const primaryName =
+    nameOverride?.trim() ||
+    (await readOperatorName()) ||
+    DEFAULT_SOVEREIGN_OPERATOR_NAME;
 
   const personas = await prisma.kgNode.findMany({
     where: { type: "persona" },
@@ -161,7 +172,7 @@ export async function ensureOperatorPersonaNode(
   return { id: created.id, primaryName: created.primaryName };
 }
 
-export async function getOperatorPersonaNodeId(): Promise<string | null> {
+export async function getOperatorPersonaNodeId(): Promise<string> {
   const node = await ensureOperatorPersonaNode();
-  return node?.id ?? null;
+  return node.id;
 }

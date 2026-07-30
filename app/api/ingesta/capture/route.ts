@@ -112,30 +112,50 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const result = await captureAndPurify({
-      channel: channel as IngestaChannel,
-      rawText,
-      filename,
-      assetId,
-      metadata,
-      origin: parseOriginFromBody(body.origin),
-      locationName:
-        typeof body.locationName === "string"
-          ? body.locationName
-          : typeof parseGravity(body)?.locationName === "string"
-            ? parseGravity(body)!.locationName
+    // Fallback soberano: anclar operador antes de purificar (evita fallo post-STT).
+    try {
+      const { ensureOperatorPersonaNode } = await import(
+        "@/lib/yo/operator-node"
+      );
+      await ensureOperatorPersonaNode();
+    } catch (error) {
+      console.warn("ensureOperatorPersonaNode en captura:", error);
+    }
+
+    // Texto plano: purificar en línea para que el stub llegue a Aduana
+    // antes de que el cliente navegue a /validar (sin limbo async).
+    const syncTexto = channel === "texto";
+
+    const result = await captureAndPurify(
+      {
+        channel: channel as IngestaChannel,
+        rawText,
+        filename,
+        assetId,
+        metadata,
+        origin: parseOriginFromBody(body.origin),
+        locationName:
+          typeof body.locationName === "string"
+            ? body.locationName
+            : typeof parseGravity(body)?.locationName === "string"
+              ? parseGravity(body)!.locationName
+              : undefined,
+        geoLocationId:
+          typeof body.geoLocationId === "string"
+            ? body.geoLocationId
             : undefined,
-      geoLocationId:
-        typeof body.geoLocationId === "string" ? body.geoLocationId : undefined,
-      gravity: {
-        ...parseGravity(body),
-        universeSlug:
-          parseGravity(body)?.universeSlug ??
-          (typeof body.universeSlug === "string" && isUniverseSlug(body.universeSlug)
-            ? body.universeSlug
-            : request.headers.get("x-deprocast-universe") ?? undefined),
+        gravity: {
+          ...parseGravity(body),
+          universeSlug:
+            parseGravity(body)?.universeSlug ??
+            (typeof body.universeSlug === "string" &&
+            isUniverseSlug(body.universeSlug)
+              ? body.universeSlug
+              : (request.headers.get("x-deprocast-universe") ?? undefined)),
+        },
       },
-    });
+      { async: !syncTexto },
+    );
 
     return NextResponse.json(result, {
       status: result.queued ? 202 : 201,

@@ -1,6 +1,5 @@
 "use client";
 
-import { DistillationStepper } from "@/components/audio-station/distillation-stepper";
 import { MicroStationRow } from "@/components/audio-station/micro-station-row";
 import { DeleteAssetButton } from "@/components/delete-asset-button";
 import { ProcessButton } from "@/components/process-button";
@@ -15,7 +14,7 @@ import type { AudioAssetSummary } from "@/lib/audio-station/types";
 import { resolveAudioPipelineStage } from "@/lib/audio-station/pipeline-status";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 const TONE_BORDER: Record<MetabolismCardTone, string> = {
   processing: "border-amber-700/50",
@@ -75,33 +74,69 @@ export function AudioMetabolismCard({
         : `[${pipeline.pipelineStation ?? "DESTILANDO"}]`;
 
   const lineage = asset.lineage;
+  const [fecha, setFecha] = useState(lineage?.fecha ?? "");
+  const [hora, setHora] = useState(lineage?.hora ?? "");
+  const [savingLineage, setSavingLineage] = useState(false);
+
+  useEffect(() => {
+    setFecha(lineage?.fecha ?? "");
+    setHora(lineage?.hora ?? "");
+  }, [lineage?.fecha, lineage?.hora, asset.id]);
+
+  const saveLineage = async () => {
+    if (!fecha.trim() || !hora.trim()) return;
+    setSavingLineage(true);
+    try {
+      const res = await fetch(`/api/assets/${asset.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ fecha: fecha.trim(), hora: hora.trim() }),
+      });
+      if (res.ok) onRefresh();
+    } finally {
+      setSavingLineage(false);
+    }
+  };
 
   return (
     <article
       className={cn(
-        "flex h-32 flex-col justify-between border border-b-4 border-b-stone-950 bg-stone-800 p-3 font-mono rounded-none transition-colors hover:border-amber-700/40",
+        "flex h-36 flex-col justify-between border border-b-4 border-b-stone-950 bg-stone-800 p-3 font-mono rounded-none transition-colors hover:border-amber-700/40",
         TONE_BORDER[tone],
         isErr && "border-rose-800",
       )}
       onClick={(event) => event.stopPropagation()}
     >
-      <header className="space-y-0.5">
+      <header className="space-y-1">
         <p className="truncate font-serif text-xs tracking-tight text-legion-bone">
           {asset.filename}
         </p>
-        <div className="flex flex-wrap gap-x-2 text-[9px] text-legion-patina">
-          {lineage ? (
-            <>
-              <span>{lineage.fecha}</span>
-              <span className="text-amber-500/80">{lineage.hora}</span>
-              {lineage.lugar ? (
-                <span className="truncate max-w-[100px]">{lineage.lugar}</span>
-              ) : null}
-              {lineage.indefinido ? <span>[¿?]</span> : null}
-            </>
-          ) : (
-            <span>linaje…</span>
-          )}
+        <div className="flex flex-wrap items-center gap-1.5 text-[9px] text-legion-patina">
+          <input
+            type="text"
+            value={fecha}
+            onChange={(e) => setFecha(e.target.value)}
+            onBlur={() => void saveLineage()}
+            onClick={(e) => e.stopPropagation()}
+            placeholder="DD/MM/YYYY"
+            aria-label="Fecha de linaje"
+            className="w-[78px] border border-stone-700 bg-stone-950 px-1 py-0.5 text-[9px] text-legion-bone outline-none focus:border-amber-700 rounded-none"
+          />
+          <input
+            type="text"
+            value={hora}
+            onChange={(e) => setHora(e.target.value)}
+            onBlur={() => void saveLineage()}
+            onClick={(e) => e.stopPropagation()}
+            placeholder="HH:MM"
+            aria-label="Hora de linaje"
+            className="w-[44px] border border-stone-700 bg-stone-950 px-1 py-0.5 text-[9px] text-amber-500/90 outline-none focus:border-amber-700 rounded-none"
+          />
+          {lineage?.lugar ? (
+            <span className="truncate max-w-[80px]">{lineage.lugar}</span>
+          ) : null}
+          {lineage?.indefinido ? <span>[¿?]</span> : null}
+          {savingLineage ? <span className="animate-pulse">…</span> : null}
         </div>
       </header>
 
@@ -122,7 +157,7 @@ export function AudioMetabolismCard({
           {footer}
         </p>
         <div className="flex shrink-0 items-center gap-1">
-          {pipeline.stage === "stt_error" ? (
+          {pipeline.stage === "stt_error" || isErr ? (
             <ProcessButton assetId={asset.id} onProcessed={onRefresh} />
           ) : null}
           {isProcessing ? (
@@ -148,11 +183,5 @@ export function AudioMetabolismCard({
   );
 }
 
-/** @deprecated alias */
-export function AudioMetabolismLegacyStepper({
-  distill,
-}: {
-  distill: ReturnType<typeof resolveAudioPipelineStage>["distill"];
-}) {
-  return <DistillationStepper distill={distill} />;
-}
+/** @deprecated Prefer AudioMetabolismCard with tactical prop. */
+export { DistillationStepper } from "@/components/audio-station/distillation-stepper";

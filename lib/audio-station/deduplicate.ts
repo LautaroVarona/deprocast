@@ -7,6 +7,7 @@ import type {
   DuplicateMember,
   DuplicateReason,
 } from "@/lib/audio-station/types";
+import { extractLineageFromFilename } from "@/lib/ingesta/temporal-lineage";
 
 type AssetInput = {
   id: string;
@@ -229,12 +230,27 @@ export function mapAssetsToSummaries(
   }>,
 ): AudioAssetSummary[] {
   return assets.map((asset) => {
-    const ts = asset.originAttribution?.timestampExacto ?? asset.originalCreatedAt;
+    let ts = asset.originAttribution?.timestampExacto ?? asset.originalCreatedAt;
+    let source: string | undefined = asset.originAttribution
+      ? "origin"
+      : "filesystem";
+    let indefinido =
+      asset.originAttribution?.ambientContext === "indefinido";
+
+    // Preferir título borgeano si aún no hay OriginAttribution calibrado.
+    if (!asset.originAttribution) {
+      const fromName = extractLineageFromFilename(asset.filename);
+      if (fromName) {
+        ts = fromName.timestampExacto;
+        source = fromName.source;
+        indefinido = fromName.indefinido;
+      }
+    }
+
     const pad = (n: number) => String(n).padStart(2, "0");
     const fecha = `${pad(ts.getDate())}/${pad(ts.getMonth() + 1)}/${ts.getFullYear()}`;
     const hora = `${pad(ts.getHours())}:${pad(ts.getMinutes())}`;
     const ambient = asset.originAttribution?.ambientContext ?? null;
-    const indefinido = ambient === "indefinido";
 
     return {
       id: asset.id,
@@ -252,6 +268,7 @@ export function mapAssetsToSummaries(
         lugar: asset.originAttribution?.locationName ?? null,
         ambientContext: ambient,
         indefinido,
+        source,
       },
       transcript: asset.transcript
         ? {

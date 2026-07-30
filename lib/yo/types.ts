@@ -4,6 +4,9 @@ export const YO_CORE_ID = "core";
 
 export const DEFAULT_EXOCORTEX_NAME = "Mastropiero";
 
+/** Nombre soberano del Operador cuando /yo está vacío (Vercel efímero). */
+export const DEFAULT_SOVEREIGN_OPERATOR_NAME = "Mastropiero";
+
 export const OPERATIONAL_STATUSES = [
   "STANDBY",
   "OPERATIVO",

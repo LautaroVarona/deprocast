@@ -125,7 +125,10 @@ export function MetabolismView() {
           <button
             key={item.id}
             type="button"
-            onClick={() => setFilter(item.id)}
+            onClick={() => {
+              setFilter(item.id);
+              void refresh();
+            }}
             className={cn(
               "border px-2.5 py-1 font-serif text-[10px] uppercase tracking-wider rounded-none",
               filter === item.id

@@ -18,6 +18,7 @@ export const PIPELINE_STATUS_LABELS: Record<PipelineStatus, string> = {
 
 /** Estados visibles en la cola HITL de `/validar` (Aduana). */
 export const ADUANA_QUEUE_STATUSES: readonly PipelineStatus[] = [
+  "pendiente_purificacion",
   "pendiente_validacion",
 ] as const;
 
