@@ -48,13 +48,13 @@ export function getRawDocumentsPath(...segments: string[]): string {
 }
 
 export function getUploadDir(): string {
-  // Local-first: data/uploads/ (y /tmp/deprocast/uploads en Vercel).
+  // Local-first: data/uploads/ (y /tmp/deprocast/data/uploads en Vercel).
   return path.join(getWritableBase(), "data", "uploads");
 }
 
-/** Staging de chunks multipart antes del reensamble. */
+/** Staging de chunks: data/uploads/tmp/{uploadId}/ */
 export function getUploadStagingDir(uploadId?: string): string {
-  const base = path.join(getUploadDir(), "staging");
+  const base = path.join(getUploadDir(), "tmp");
   return uploadId ? path.join(base, uploadId) : base;
 }
 

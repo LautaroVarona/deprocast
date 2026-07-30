@@ -9,6 +9,7 @@ import {
   writeChunk,
   writeFinalAudio,
   writeMeta,
+  type ChunkUploadMeta,
 } from "@/lib/audio-upload/staging";
 import { resolveContextSealFromRequest } from "@/lib/babel/context-seal";
 import { registerBabelRecord } from "@/lib/babel/record-store";
@@ -32,6 +33,84 @@ function readOptionalField(formData: FormData, key: string): string | undefined 
   return trimmed || undefined;
 }
 
+function readChunkIndex(formData: FormData): number | null {
+  const raw =
+    readOptionalField(formData, "chunkIndex") ??
+    readOptionalField(formData, "index");
+  const n = Number(raw);
+  return Number.isInteger(n) && n >= 0 ? n : null;
+}
+
+async function ensureAssetAndMeta(input: {
+  uploadId: string;
+  filename: string;
+  mimeType: string;
+  totalChunks: number;
+  ambientContext: string;
+  lastModifiedMs?: number;
+  request: NextRequest;
+}): Promise<ChunkUploadMeta> {
+  const existing = await readMeta(input.uploadId);
+  if (existing) return existing;
+
+  if (!isAllowedAudioFile(input.filename, input.mimeType)) {
+    throw new Error("Formato no permitido. Usá .mp3, .m4a, .wav, .ogg o .webm.");
+  }
+
+  const extension = getFileExtension(input.filename);
+  const assetId = randomUUID();
+  const storedFilename = `${assetId}${extension}`;
+  const originalCreatedAt =
+    input.lastModifiedMs && input.lastModifiedMs > 0
+      ? new Date(input.lastModifiedMs)
+      : new Date();
+
+  await prisma.audioAsset.create({
+    data: {
+      id: assetId,
+      filename: input.filename,
+      fileUrl: getUploadPublicUrl(storedFilename),
+      originalCreatedAt,
+      status: "PENDING",
+      pipelineStation: "QUEUED",
+      pipelineError: null,
+    },
+  });
+
+  const meta: ChunkUploadMeta = {
+    uploadId: input.uploadId,
+    assetId,
+    filename: input.filename,
+    extension,
+    totalChunks: input.totalChunks,
+    ambientContext: input.ambientContext,
+    received: [],
+  };
+  await writeMeta(meta);
+
+  const contextSeal = resolveContextSealFromRequest(input.request);
+  void registerBabelRecord({
+    kind: "audio",
+    physicalRef: assetId,
+    contentPreview: input.filename,
+    occurredAt: originalCreatedAt,
+    contextSeal,
+    channel: "audio",
+    metadata: {
+      filename: input.filename,
+      storedFilename,
+      uploadId: input.uploadId,
+      ambientContext: input.ambientContext,
+      chunked: true,
+    },
+  }).catch((error) => {
+    console.error("Babel audio record error:", error);
+  });
+
+  return meta;
+}
+
+/** Init explícito (opcional): el chunk también auto-inicializa. */
 export async function handleAudioUploadInit(
   request: NextRequest,
 ): Promise<NextResponse> {
@@ -44,16 +123,10 @@ export async function handleAudioUploadInit(
   const ambientContext =
     readOptionalField(formData, "ambientContext") ?? "caminata";
   const lastModifiedRaw = readOptionalField(formData, "lastModified");
+  const clientUploadId = readOptionalField(formData, "uploadId");
 
   if (!filename) {
     return NextResponse.json({ error: "Falta filename." }, { status: 400 });
-  }
-
-  if (!isAllowedAudioFile(filename, mimeType)) {
-    return NextResponse.json(
-      { error: "Formato no permitido. Usá .mp3, .m4a, .wav, .ogg o .webm." },
-      { status: 400 },
-    );
   }
 
   const totalChunks = Number(totalChunksRaw);
@@ -64,71 +137,42 @@ export async function handleAudioUploadInit(
     );
   }
 
-  const extension = getFileExtension(filename);
-  const uploadId = randomUUID();
-  const assetId = randomUUID();
-  const storedFilename = `${assetId}${extension}`;
-
+  const uploadId = clientUploadId || randomUUID();
   const lastModifiedMs = Number(lastModifiedRaw);
-  const originalCreatedAt =
-    Number.isFinite(lastModifiedMs) && lastModifiedMs > 0
-      ? new Date(lastModifiedMs)
-      : new Date();
 
-  const asset = await prisma.audioAsset.create({
-    data: {
-      id: assetId,
-      filename,
-      fileUrl: getUploadPublicUrl(storedFilename),
-      originalCreatedAt,
-      status: "PENDING",
-      pipelineStation: "QUEUED",
-      pipelineError: null,
-    },
-  });
-
-  await writeMeta({
-    uploadId,
-    assetId: asset.id,
-    filename,
-    extension,
-    totalChunks,
-    ambientContext,
-    received: [],
-  });
-
-  const contextSeal = resolveContextSealFromRequest(request);
-  void registerBabelRecord({
-    kind: "audio",
-    physicalRef: asset.id,
-    contentPreview: filename,
-    occurredAt: asset.originalCreatedAt,
-    contextSeal,
-    channel: "audio",
-    metadata: {
-      filename,
-      storedFilename,
+  try {
+    const meta = await ensureAssetAndMeta({
       uploadId,
-      ambientContext,
-      chunked: true,
-      lastModifiedMs: Number.isFinite(lastModifiedMs) ? lastModifiedMs : null,
-    },
-  }).catch((error) => {
-    console.error("Babel audio record error:", error);
-  });
-
-  return NextResponse.json(
-    {
-      uploadId,
-      assetId: asset.id,
-      jobId: asset.id,
+      filename,
+      mimeType,
       totalChunks,
-      status: "QUEUED",
-    },
-    { status: 201 },
-  );
+      ambientContext,
+      lastModifiedMs: Number.isFinite(lastModifiedMs) ? lastModifiedMs : undefined,
+      request,
+    });
+
+    return NextResponse.json(
+      {
+        uploadId: meta.uploadId,
+        assetId: meta.assetId,
+        jobId: meta.assetId,
+        totalChunks: meta.totalChunks,
+        status: "QUEUED",
+      },
+      { status: 201 },
+    );
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "No se pudo iniciar la subida.";
+    return NextResponse.json({ error: message }, { status: 400 });
+  }
 }
 
+/**
+ * Recibe un chunk de audio.
+ * Auto-crea sesión en data/uploads/tmp/{uploadId}/ si aún no existe
+ * (evita "Upload no inicializado" por carrera o init fallido).
+ */
 export async function handleAudioUploadChunk(
   request: NextRequest,
 ): Promise<NextResponse> {
@@ -143,39 +187,30 @@ export async function handleAudioUploadChunk(
   }
 
   const formData = await request.formData();
-  const uploadId = readOptionalField(formData, "uploadId");
-  const indexRaw = readOptionalField(formData, "index");
-  const totalRaw = readOptionalField(formData, "total");
+  const uploadId =
+    readOptionalField(formData, "uploadId") || randomUUID();
+  const filename = readOptionalField(formData, "filename") ?? "audio.bin";
+  const mimeType = readOptionalField(formData, "mimeType") ?? "";
+  const totalRaw =
+    readOptionalField(formData, "totalChunks") ??
+    readOptionalField(formData, "total");
+  const ambientContext =
+    readOptionalField(formData, "ambientContext") ?? "caminata";
+  const lastModifiedRaw = readOptionalField(formData, "lastModified");
+  const index = readChunkIndex(formData);
   const chunk = formData.get("chunk");
 
-  if (!uploadId) {
-    return NextResponse.json({ error: "Falta uploadId." }, { status: 400 });
-  }
-
-  const index = Number(indexRaw);
-  const total = Number(totalRaw);
-  if (!Number.isInteger(index) || index < 0) {
-    return NextResponse.json({ error: "index inválido." }, { status: 400 });
-  }
-
-  const meta = await readMeta(uploadId);
-  if (!meta) {
+  if (index === null) {
     return NextResponse.json(
-      { error: "Upload no inicializado." },
-      { status: 404 },
-    );
-  }
-
-  if (Number.isInteger(total) && total !== meta.totalChunks) {
-    return NextResponse.json(
-      { error: "total no coincide con init." },
+      { error: "chunkIndex inválido." },
       { status: 400 },
     );
   }
 
-  if (index >= meta.totalChunks) {
+  const totalChunks = Number(totalRaw);
+  if (!Number.isInteger(totalChunks) || totalChunks < 1) {
     return NextResponse.json(
-      { error: "index fuera de rango." },
+      { error: "totalChunks inválido." },
       { status: 400 },
     );
   }
@@ -192,6 +227,35 @@ export async function handleAudioUploadChunk(
     );
   }
 
+  if (index >= totalChunks) {
+    return NextResponse.json(
+      { error: "chunkIndex fuera de rango." },
+      { status: 400 },
+    );
+  }
+
+  let meta: ChunkUploadMeta;
+  try {
+    meta = await ensureAssetAndMeta({
+      uploadId,
+      filename,
+      mimeType,
+      totalChunks,
+      ambientContext,
+      lastModifiedMs: Number(lastModifiedRaw) || undefined,
+      request,
+    });
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "No se pudo inicializar upload.";
+    return NextResponse.json({ error: message }, { status: 400 });
+  }
+
+  if (totalChunks !== meta.totalChunks) {
+    // Cliente reintentó con distinto total: actualizar
+    meta.totalChunks = totalChunks;
+  }
+
   await writeChunk(uploadId, index, buffer);
 
   if (!meta.received.includes(index)) {
@@ -201,11 +265,13 @@ export async function handleAudioUploadChunk(
   }
 
   return NextResponse.json({
-    uploadId,
+    uploadId: meta.uploadId,
     assetId: meta.assetId,
+    chunkIndex: index,
     index,
     received: meta.received.length,
     totalChunks: meta.totalChunks,
+    tmpDir: `data/uploads/tmp/${meta.uploadId}`,
   });
 }
 
@@ -216,12 +282,24 @@ export async function handleAudioUploadComplete(
 
   const formData = await request.formData();
   const uploadId = readOptionalField(formData, "uploadId");
+  const filenameHint = readOptionalField(formData, "filename");
 
   if (!uploadId) {
     return NextResponse.json({ error: "Falta uploadId." }, { status: 400 });
   }
 
-  const meta = await readMeta(uploadId);
+  let meta = await readMeta(uploadId);
+  if (!meta && filenameHint) {
+    // Último recurso: sesión nunca persistió meta
+    return NextResponse.json(
+      {
+        error:
+          "Upload no encontrado en tmp/. Reintentá desde el primer chunk.",
+      },
+      { status: 404 },
+    );
+  }
+
   if (!meta) {
     return NextResponse.json(
       { error: "Upload no inicializado." },
@@ -235,6 +313,9 @@ export async function handleAudioUploadComplete(
         error: "Faltan chunks.",
         received: meta.received.length,
         totalChunks: meta.totalChunks,
+        missing: Array.from({ length: meta.totalChunks }, (_, i) => i).filter(
+          (i) => !meta!.received.includes(i),
+        ),
       },
       { status: 400 },
     );
@@ -253,12 +334,15 @@ export async function handleAudioUploadComplete(
     },
   });
 
-  const ambientContext = meta.ambientContext;
   const uploadDir = getUploadDir();
   await mkdir(uploadDir, { recursive: true });
   await writeFile(
     path.join(uploadDir, `${meta.assetId}.meta.json`),
-    JSON.stringify({ ambientContext, uploadId }),
+    JSON.stringify({
+      ambientContext: meta.ambientContext,
+      uploadId,
+      filename: meta.filename,
+    }),
     "utf8",
   );
 
@@ -278,7 +362,7 @@ export async function handleAudioUploadComplete(
       status: queued ? "QUEUED" : "PENDING",
       pipelineStation: "STT",
       metabolismStarted: queued,
-      ambientContext,
+      ambientContext: meta.ambientContext,
     },
     { status: 201 },
   );

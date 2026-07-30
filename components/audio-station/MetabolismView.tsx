@@ -111,7 +111,7 @@ export function MetabolismView() {
   const dedupBadge = scan && scan.groups.length > 0 ? scan.duplicateCount : null;
 
   return (
-    <div className="flex h-[calc(100vh-120px)] flex-col gap-3 overflow-y-hidden">
+    <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-hidden">
       <div className="flex shrink-0 flex-wrap items-center gap-2 px-1">
         <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-[#FFB000]">
           [HUD · DESTILACIÓN AUDIO]
@@ -155,7 +155,7 @@ export function MetabolismView() {
       </div>
 
       {showDedup && scan ? (
-        <div className="max-h-24 shrink-0 overflow-hidden border border-zinc-800 bg-zinc-950 p-2">
+        <div className="max-h-20 shrink-0 overflow-hidden border border-zinc-800 bg-zinc-950 p-2">
           <DeduplicatePanel />
         </div>
       ) : null}
@@ -171,27 +171,15 @@ export function MetabolismView() {
         </div>
       ) : null}
 
-      {/* Viewport inmutable: scroll horizontal, sin scroll vertical masivo */}
-      <div
-        className={cn(
-          "flex flex-1 flex-row items-start gap-4 overflow-x-auto overflow-y-hidden p-1",
-          "scrollbar-thin scrollbar-thumb-zinc-800",
-        )}
-      >
+      {/* Crisol unificado: dropzone = contenedor completo + grid de rack */}
+      <div className="min-h-0 flex-1 overflow-y-auto">
         <UploadDropzone
-          variant="hud"
+          variant="crisol"
           universeSlug={activeUniverse?.slug}
           onUploaded={() => void refresh()}
-        />
-
-        {filteredAssets.length === 0 ? (
-          <div className="flex h-[280px] min-w-[240px] items-center justify-center border border-dashed border-zinc-800 bg-zinc-950 px-6 font-mono text-[10px] text-zinc-600 rounded-none">
-            {assets.length === 0
-              ? "[SIN MATERIA PRIMA]"
-              : "[FILTRO VACÍO]"}
-          </div>
-        ) : (
-          filteredAssets.map((asset) => (
+          hasRackItems={filteredAssets.length > 0}
+        >
+          {filteredAssets.map((asset) => (
             <AudioMetabolismCard
               key={asset.id}
               asset={asset}
@@ -203,8 +191,8 @@ export function MetabolismView() {
               onRefresh={() => void refresh()}
               tactical
             />
-          ))
-        )}
+          ))}
+        </UploadDropzone>
       </div>
     </div>
   );

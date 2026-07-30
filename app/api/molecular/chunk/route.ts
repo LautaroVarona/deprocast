@@ -12,9 +12,9 @@ const bodySchema = z.object({
 });
 
 /**
- * Dual-mode:
- * - multipart/form-data + uploadId → ingesta de audio por chunks
- * - JSON { texto } → chunkeador semántico molecular (legado)
+ * Dual-mode canónico:
+ * - multipart (campo `chunk`) → ingesta audio Local-First en data/uploads/tmp/
+ * - JSON { texto } → chunkeador semántico molecular
  */
 export async function POST(request: NextRequest) {
   const contentType = request.headers.get("content-type") ?? "";
@@ -25,7 +25,12 @@ export async function POST(request: NextRequest) {
     } catch (error) {
       console.error("Molecular audio chunk error:", error);
       return NextResponse.json(
-        { error: "No se pudo recibir el chunk de audio." },
+        {
+          error:
+            error instanceof Error
+              ? error.message
+              : "No se pudo recibir el chunk de audio.",
+        },
         { status: 500 },
       );
     }
@@ -37,7 +42,6 @@ export async function POST(request: NextRequest) {
       texto: body.texto,
       fuenteOrigen: body.fuenteOrigen,
     });
-
     return NextResponse.json(result, { status: 201 });
   } catch (error) {
     console.error("Molecular chunk error:", error);

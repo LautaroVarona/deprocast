@@ -38,15 +38,15 @@ export function AudioModule() {
   return (
     <section
       aria-label="Ingesta de audio"
-      className="flex h-[calc(100vh-160px)] flex-col gap-3 overflow-y-hidden"
+      className="flex min-h-[70vh] flex-col gap-3"
     >
       <div className="flex shrink-0 items-center justify-between gap-2 font-mono">
         <div>
           <p className="text-[10px] uppercase tracking-[0.22em] text-[#FFB000]">
-            [INGESTA · AUDIO]
+            [INGESTA · AUDIO · CRISOL]
           </p>
           <p className="text-[10px] text-zinc-500">
-            Chunks moleculares · Deepgram · 6 estaciones
+            Chunks → tmp/ → Deepgram · 6 estaciones
           </p>
         </div>
         <span className="border border-zinc-800 bg-zinc-950 px-2 py-1 text-[9px] text-zinc-400 rounded-none">
@@ -54,16 +54,10 @@ export function AudioModule() {
         </span>
       </div>
 
-      <div
-        className={
-          "flex flex-1 flex-row items-start gap-4 overflow-x-auto overflow-y-hidden p-1 scrollbar-thin scrollbar-thumb-zinc-800"
-        }
-      >
-        <UploadDropzone
-          variant="hud"
-          onUploaded={() => void loadStatus()}
-        />
-      </div>
+      <UploadDropzone
+        variant="crisol"
+        onUploaded={() => void loadStatus()}
+      />
     </section>
   );
 }
