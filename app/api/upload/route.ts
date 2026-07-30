@@ -1,4 +1,5 @@
 import { isAllowedAudioFile } from "@/lib/audio-validation";
+import { UPLOAD_SINGLE_SHOT_MAX_BYTES } from "@/lib/audio-upload/constants";
 import { resolveContextSealFromRequest } from "@/lib/babel/context-seal";
 import { registerBabelRecord } from "@/lib/babel/record-store";
 import { isSourceType } from "@/lib/document-constants";
@@ -8,6 +9,7 @@ import { prisma } from "@/lib/prisma";
 import {
   getUploadDir,
   getUploadPublicUrl,
+  isVercelRuntime,
 } from "@/lib/runtime-paths";
 import { ensureRuntimeReady } from "@/lib/runtime-setup";
 import { randomUUID } from "crypto";
@@ -16,6 +18,7 @@ import { NextRequest, NextResponse } from "next/server";
 import path from "path";
 
 export const runtime = "nodejs";
+export const maxDuration = 120;
 
 function readOptionalField(formData: FormData, key: string): string | undefined {
   const value = formData.get(key);
@@ -45,11 +48,25 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Fallback legacy: en Vercel el techo de body es ~4.5 MB — forzar chunking.
+    if (isVercelRuntime() && file.size > UPLOAD_SINGLE_SHOT_MAX_BYTES) {
+      return NextResponse.json(
+        {
+          error:
+            "Archivo demasiado grande para single-shot. Usá upload por chunks (/api/upload/init).",
+          code: 413,
+          maxBytes: UPLOAD_SINGLE_SHOT_MAX_BYTES,
+        },
+        { status: 413 },
+      );
+    }
+
     const uploadDir = getUploadDir();
     await mkdir(uploadDir, { recursive: true });
 
     const extension = path.extname(file.name).toLowerCase();
-    const storedFilename = `${randomUUID()}${extension}`;
+    const assetId = randomUUID();
+    const storedFilename = `${assetId}${extension}`;
     const filePath = path.join(uploadDir, storedFilename);
 
     const buffer = Buffer.from(await file.arrayBuffer());
@@ -69,12 +86,24 @@ export async function POST(request: NextRequest) {
       readOptionalField(formData, "title") ??
       file.name.replace(/\.[^.]+$/, "");
 
+    const ambientContext =
+      readOptionalField(formData, "ambientContext") ?? "caminata";
+
+    await writeFile(
+      path.join(uploadDir, `${assetId}.meta.json`),
+      JSON.stringify({ ambientContext }),
+      "utf8",
+    );
+
     const asset = await prisma.audioAsset.create({
       data: {
+        id: assetId,
         filename: file.name,
         fileUrl: getUploadPublicUrl(storedFilename),
         originalCreatedAt: fileStats.birthtime,
         status: "PENDING",
+        pipelineStation: "STT",
+        pipelineError: null,
       },
     });
 

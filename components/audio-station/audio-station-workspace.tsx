@@ -34,42 +34,36 @@ function AudioStationShell() {
       reviewByAssetId,
     });
 
-  const inValidationCount = assets.filter(
-    (asset) => resolveStage(asset).stage === "in_validation",
-  ).length;
-
   const dedupBadge =
     scan && scan.groups.length > 0 ? scan.duplicateCount : null;
 
   const flowChips: FlowChip[] = [
     {
-      id: "transcription",
-      label: "Transcripción",
-      tone: "border-primary/35 bg-primary/10 text-primary",
+      id: "stt",
+      label: "STT",
+      tone: "border-amber-500/35 bg-zinc-950 text-amber-500",
       count: assets.filter((asset) => {
-        const stage = resolveStage(asset).stage;
-        return (
-          stage === "pending_stt" ||
-          stage === "stt_queued" ||
-          stage === "stt_processing" ||
-          stage === "stt_error"
-        );
+        const stage = resolveStage(asset).distill.steps.STT;
+        return stage === "active";
       }).length,
     },
     {
-      id: "purification",
-      label: "Purificación",
-      tone: "border-primary/35 bg-primary/10 text-primary",
-      count: assets.filter((asset) => {
-        const stage = resolveStage(asset).stage;
-        return stage === "purifying" || stage === "pending_purify";
-      }).length,
+      id: "hitl",
+      label: "HITL",
+      tone: "border-amber-500/35 bg-zinc-950 text-amber-500",
+      count: assets.filter(
+        (asset) => resolveStage(asset).stage === "in_validation",
+      ).length,
     },
     {
-      id: "validation",
-      label: "Validación (HITL)",
-      tone: "border-primary/35 bg-primary/10 text-primary",
-      count: inValidationCount,
+      id: "coag",
+      label: "COAG",
+      tone: "border-emerald-500/35 bg-zinc-950 text-emerald-500",
+      count: assets.filter(
+        (asset) =>
+          resolveStage(asset).stage === "coagulated" ||
+          resolveStage(asset).stage === "validated",
+      ).length,
     },
   ];
 

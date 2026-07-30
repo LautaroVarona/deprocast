@@ -73,25 +73,29 @@ function extractResult(response: unknown): TranscriptionResult {
   return { rawText, confidence };
 }
 
-async function transcribeFile(
+async function transcribeSource(
   assetId: string,
-  wavPath: string,
+  source: string | Buffer,
 ): Promise<TranscriptionResult> {
   const config = getDeepgramConfig();
   const client = getDeepgramClient();
 
-  logInfo(assetId, "Enviando audio a Deepgram (transcribeFile)...");
+  const label = Buffer.isBuffer(source)
+    ? "transcribeBuffer"
+    : "transcribeFile";
+  logInfo(assetId, `Enviando audio a Deepgram (${label})...`);
 
   try {
-    const response = await client.listen.v1.media.transcribeFile(
-      createReadStream(wavPath),
-      {
-        model: config.model,
-        language: config.language,
-        punctuate: true,
-        smart_format: true,
-      },
-    );
+    const payload = Buffer.isBuffer(source)
+      ? source
+      : createReadStream(source);
+
+    const response = await client.listen.v1.media.transcribeFile(payload, {
+      model: config.model,
+      language: config.language,
+      punctuate: true,
+      smart_format: true,
+    });
 
     return extractResult(response);
   } catch (error) {
@@ -107,6 +111,16 @@ export async function transcribeSync(
   wavPath: string,
 ): Promise<TranscriptionResult> {
   return withDeepgramRetry(assetId, "Deepgram API", () =>
-    transcribeFile(assetId, wavPath),
+    transcribeSource(assetId, wavPath),
+  );
+}
+
+/** STT directo desde buffer (serverless / sin depender del FS durable). */
+export async function transcribeBuffer(
+  assetId: string,
+  buffer: Buffer,
+): Promise<TranscriptionResult> {
+  return withDeepgramRetry(assetId, "Deepgram API", () =>
+    transcribeSource(assetId, buffer),
   );
 }

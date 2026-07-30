@@ -48,19 +48,19 @@ export function getRawDocumentsPath(...segments: string[]): string {
 }
 
 export function getUploadDir(): string {
-  if (isVercelRuntime() || process.env.DEPROCAST_DATA_ROOT?.trim()) {
-    return path.join(getWritableBase(), "uploads");
-  }
+  // Local-first: data/uploads/ (y /tmp/deprocast/uploads en Vercel).
+  return path.join(getWritableBase(), "data", "uploads");
+}
 
-  return path.join(APP_ROOT, "public", "uploads");
+/** Staging de chunks multipart antes del reensamble. */
+export function getUploadStagingDir(uploadId?: string): string {
+  const base = path.join(getUploadDir(), "staging");
+  return uploadId ? path.join(base, uploadId) : base;
 }
 
 export function getUploadPublicUrl(filename: string): string {
-  if (isVercelRuntime() || process.env.DEPROCAST_DATA_ROOT?.trim()) {
-    return `/api/uploads/${filename}`;
-  }
-
-  return `/uploads/${filename}`;
+  // Siempre vía API: el FS ya no es public/uploads.
+  return `/api/uploads/${filename}`;
 }
 
 export function resolveUploadPath(fileUrl: string): string {
@@ -71,7 +71,12 @@ export function resolveUploadPath(fileUrl: string): string {
 
   const publicMatch = fileUrl.match(/\/uploads\/(.+)$/);
   if (publicMatch) {
-    return path.join(getUploadDir(), publicMatch[1]);
+    const inData = path.join(getUploadDir(), publicMatch[1]);
+    if (fs.existsSync(inData)) {
+      return inData;
+    }
+    // Legacy: archivos previos en public/uploads/
+    return path.join(APP_ROOT, "public", "uploads", publicMatch[1]);
   }
 
   const relativePath = fileUrl.startsWith("/") ? fileUrl.slice(1) : fileUrl;

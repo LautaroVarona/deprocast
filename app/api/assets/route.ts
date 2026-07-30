@@ -17,6 +17,9 @@ const assetSelect = {
   originalCreatedAt: true,
   status: true,
   partialText: true,
+  pipelineStation: true,
+  pipelineError: true,
+  originAttributionId: true,
   createdAt: true,
   updatedAt: true,
   transcript: {

@@ -6,6 +6,8 @@ export type AudioAssetSummary = {
   originalCreatedAt: string;
   status: string;
   createdAt: string;
+  pipelineStation?: string | null;
+  pipelineError?: string | null;
   transcript: { id: string; preview?: string; validated?: boolean } | null;
 };
 

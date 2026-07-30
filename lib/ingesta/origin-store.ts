@@ -12,6 +12,7 @@ export type PersistOriginInput = {
   origin: OriginAttribution;
   locationName?: string | null;
   geoLocationId?: string | null;
+  ambientContext?: string | null;
 };
 
 export async function persistOriginAttribution(
@@ -31,6 +32,14 @@ export async function persistOriginAttribution(
       : "") ||
     null;
 
+  const ambientFromMeta =
+    typeof input.origin.meta?.ambientContext === "string"
+      ? input.origin.meta.ambientContext.trim()
+      : "";
+
+  const ambientContext =
+    input.ambientContext?.trim() || ambientFromMeta || null;
+
   const row = await prisma.originAttribution.create({
     data: {
       id: randomUUID(),
@@ -38,6 +47,7 @@ export async function persistOriginAttribution(
       timestampExacto,
       diaSemana: computeDiaSemana(timestampExacto),
       locationName,
+      ambientContext,
       actors: input.origin.actors,
     },
   });

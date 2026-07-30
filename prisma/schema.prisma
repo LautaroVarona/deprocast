@@ -8,19 +8,24 @@ datasource db {
 
 // Status values: PENDING | PROCESSING | COMPLETED | ERROR
 model AudioAsset {
-  id                String   @id @default(uuid())
-  filename          String
-  fileUrl           String
-  durationMs        Int?
-  originalCreatedAt DateTime
-  status            String   @default("PENDING")
-  partialText       String?
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  id                  String   @id @default(uuid())
+  filename            String
+  fileUrl             String
+  durationMs          Int?
+  originalCreatedAt   DateTime
+  status              String   @default("PENDING")
+  partialText         String?
+  /// Estación molecular: QUEUED|STT|LINEAGE|QUANT|VECTORS|HITL|COAG|ERROR
+  pipelineStation     String   @default("QUEUED")
+  pipelineError       String?
+  originAttributionId String?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
 
   transcript Transcript?
 
   @@index([status])
+  @@index([pipelineStation])
 }
 
 model Transcript {
@@ -271,6 +276,8 @@ model OriginAttribution {
   timestampExacto DateTime
   diaSemana       String
   locationName    String?
+  /// Contexto ambiental: caminata | metro | oficina | …
+  ambientContext  String?
   actors          Json
   createdAt       DateTime @default(now())
 

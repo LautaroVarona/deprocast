@@ -21,6 +21,9 @@ const audioAssetSelect = {
   originalCreatedAt: true,
   status: true,
   createdAt: true,
+  pipelineStation: true,
+  pipelineError: true,
+  originAttributionId: true,
   transcript: {
     select: {
       id: true,

@@ -162,6 +162,14 @@ export async function recognizePendingTask(
     "@/lib/pendientes/asalto-mirror"
   );
   await syncAsaltoMirrorFromTask(task, { action: "recognize" });
+
+  void import("@/lib/audio-station/distill-pipeline").then(
+    ({ tryMarkCoagFromSourceRef }) =>
+      tryMarkCoagFromSourceRef(task.sourceRef ?? task.id).catch((error) => {
+        console.error("COAG mark error:", error);
+      }),
+  );
+
   return task;
 }
 
@@ -245,6 +253,14 @@ export async function calibratePendingTask(
     action: "calibrate",
     weight: clamped,
   });
+
+  void import("@/lib/audio-station/distill-pipeline").then(
+    ({ tryMarkCoagFromSourceRef }) =>
+      tryMarkCoagFromSourceRef(task.sourceRef ?? task.id).catch((error) => {
+        console.error("COAG mark from calibrate error:", error);
+      }),
+  );
+
   return task;
 }
 

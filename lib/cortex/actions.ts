@@ -60,7 +60,7 @@ export async function coagulateEntity(
     } else if (type === "quantomo") {
       const quantomo = await prisma.quantomo.findUnique({
         where: { id },
-        select: { kgNodeId: true },
+        select: { kgNodeId: true, originAttributionId: true },
       });
       if (!quantomo) {
         return { ok: false, error: "Quántomo no encontrado." };
@@ -70,6 +70,16 @@ export async function coagulateEntity(
           where: { id: quantomo.kgNodeId },
           data: { reconocido: true },
         });
+      }
+      const asset = await prisma.audioAsset.findFirst({
+        where: { originAttributionId: quantomo.originAttributionId },
+        select: { id: true },
+      });
+      if (asset) {
+        const { markAssetCoagulated } = await import(
+          "@/lib/audio-station/distill-pipeline"
+        );
+        await markAssetCoagulated(asset.id);
       }
     } else {
       const edge = await prisma.kgEdge.findUnique({ where: { id } });

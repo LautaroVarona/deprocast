@@ -188,6 +188,13 @@ export async function approveToProposal(
         input.reviewId,
       );
     }
+
+    void import("@/lib/audio-station/distill-pipeline").then(
+      ({ markAssetCoagulated }) =>
+        markAssetCoagulated(loaded.record.assetId!).catch((error) => {
+          console.error("COAG mark from approve error:", error);
+        }),
+    );
   }
 
   // Estado final: molecularizado (aprobado + vectorizado). Queda fuera de la Aduana.

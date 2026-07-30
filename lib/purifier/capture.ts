@@ -84,6 +84,8 @@ export type CaptureOptions = {
    * en background (fire-and-forget). Por defecto true para evitar timeouts.
    */
   async?: boolean;
+  /** Si true, no encola Quantador (el pipeline de destilación lo corre explícito). */
+  skipQuantador?: boolean;
 };
 
 async function fileExists(filePath: string): Promise<boolean> {
@@ -257,6 +259,7 @@ async function runSideEffects(input: {
   resolvedField: CampoSlug;
   title: string;
   record: PurifierReviewRecord;
+  skipQuantador?: boolean;
 }) {
   void registerBabelRecord({
     kind: "capture",
@@ -303,14 +306,17 @@ async function runSideEffects(input: {
     });
   });
 
-  void import("@/lib/agentes/quantador").then(({ enqueueQuantadorPipeline }) =>
-    enqueueQuantadorPipeline({
-      rawText: input.trimmed,
-      originAttributionId: input.originAttributionId,
-      universoSlug: input.contextSeal,
-      reviewId: input.reviewId,
-    }),
-  );
+  if (!input.skipQuantador) {
+    void import("@/lib/agentes/quantador").then(({ enqueueQuantadorPipeline }) =>
+      enqueueQuantadorPipeline({
+        rawText: input.trimmed,
+        originAttributionId: input.originAttributionId,
+        universoSlug: input.contextSeal,
+        reviewId: input.reviewId,
+        assetId: input.assetId,
+      }),
+    );
+  }
 }
 
 async function purifyCaptureStub(input: {
@@ -474,6 +480,7 @@ export async function captureAndPurify(
         input.gravity?.title ??
         filename,
       record,
+      skipQuantador: options?.skipQuantador === true,
     });
 
     return record;

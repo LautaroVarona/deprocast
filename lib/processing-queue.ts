@@ -267,17 +267,18 @@ class ProcessingQueue {
       this.purifyingIds.add(assetId);
       void (async () => {
         try {
-          const { autoPurifyAudioAsset } = await import(
-            "@/lib/audio-station/auto-purify"
+          const { runDistillPipelineAfterStt } = await import(
+            "@/lib/audio-station/distill-pipeline"
           );
-          const result = await autoPurifyAudioAsset(assetId);
-          if (result.status === "purified") {
+          const result = await runDistillPipelineAfterStt(assetId);
+          if (result.status === "advanced") {
             console.info(
-              `Auto-purify OK: asset ${assetId} → review ${result.reviewId}`,
+              `Distill OK: asset ${assetId} → station ${result.station}` +
+                (result.reviewId ? ` review ${result.reviewId}` : ""),
             );
           }
         } catch (error) {
-          console.error(`Auto-purify hook error for ${assetId}:`, error);
+          console.error(`Distill hook error for ${assetId}:`, error);
         } finally {
           this.purifyingIds.delete(assetId);
         }

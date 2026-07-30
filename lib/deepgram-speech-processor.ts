@@ -30,7 +30,12 @@ async function markAssetError(assetId: string, reason: string): Promise<void> {
   await prisma.audioAsset
     .update({
       where: { id: assetId },
-      data: { status: "ERROR", partialText: null },
+      data: {
+        status: "ERROR",
+        partialText: null,
+        pipelineStation: "ERROR",
+        pipelineError: reason.slice(0, 500),
+      },
     })
     .catch((error) => {
       logError(assetId, "No se pudo actualizar el estado a ERROR", error);
@@ -152,7 +157,12 @@ export async function processAssetDeepgram(assetId: string): Promise<void> {
 
       await tx.audioAsset.update({
         where: { id: assetId },
-        data: { status: "COMPLETED", partialText: null },
+        data: {
+          status: "COMPLETED",
+          partialText: null,
+          pipelineStation: "STT",
+          pipelineError: null,
+        },
       });
     });
 
@@ -180,8 +190,11 @@ export async function processAssetDeepgram(assetId: string): Promise<void> {
     logInfo(assetId, "Transcripción guardada. Iniciando limpieza de archivos...");
 
     removeFile(wavPath, "WAV temporal");
-    if (inputPath) {
-      removeFile(inputPath, "archivo de entrada original");
+    // Local-first: conservar materia prima en data/uploads/.
+    // En Vercel el FS es efímero; borrar libera /tmp.
+    const { isVercelRuntime } = await import("@/lib/runtime-paths");
+    if (inputPath && isVercelRuntime()) {
+      removeFile(inputPath, "archivo de entrada efímero");
     }
   } catch (error) {
     if (error instanceof ProcessingCancelledError || isCancelled(assetId)) {

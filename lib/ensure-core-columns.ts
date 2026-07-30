@@ -442,6 +442,34 @@ export function ensureCoreColumnPatches(): void {
         `CREATE INDEX IF NOT EXISTS "AtanorProject_updatedAt_idx" ON "AtanorProject"("updatedAt");`,
       );
     }
+
+    if (tableExists(db, "AudioAsset")) {
+      if (!columnExists(db, "AudioAsset", "pipelineStation")) {
+        db.exec(
+          `ALTER TABLE "AudioAsset" ADD COLUMN "pipelineStation" TEXT NOT NULL DEFAULT 'QUEUED';`,
+        );
+        db.exec(
+          `CREATE INDEX IF NOT EXISTS "AudioAsset_pipelineStation_idx" ON "AudioAsset"("pipelineStation");`,
+        );
+      }
+      if (!columnExists(db, "AudioAsset", "pipelineError")) {
+        db.exec(`ALTER TABLE "AudioAsset" ADD COLUMN "pipelineError" TEXT;`);
+      }
+      if (!columnExists(db, "AudioAsset", "originAttributionId")) {
+        db.exec(
+          `ALTER TABLE "AudioAsset" ADD COLUMN "originAttributionId" TEXT;`,
+        );
+      }
+    }
+
+    if (
+      tableExists(db, "OriginAttribution") &&
+      !columnExists(db, "OriginAttribution", "ambientContext")
+    ) {
+      db.exec(
+        `ALTER TABLE "OriginAttribution" ADD COLUMN "ambientContext" TEXT;`,
+      );
+    }
   } finally {
     db.close();
   }

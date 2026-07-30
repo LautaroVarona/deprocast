@@ -4,7 +4,7 @@ import {
   AudioPipelineBadge,
   AudioPipelineNextAction,
 } from "@/components/audio-station/audio-pipeline-badge";
-import { MetabolismPhaseStrip } from "@/components/audio-station/metabolism-phase-strip";
+import { DistillationStepper } from "@/components/audio-station/distillation-stepper";
 import { DeleteAssetButton } from "@/components/delete-asset-button";
 import { DownloadTranscriptButton } from "@/components/download-transcript-button";
 import { LiveTranscript } from "@/components/live-transcript";
@@ -29,56 +29,29 @@ import {
   GitBranchIcon,
   ListTodoIcon,
   SparklesIcon,
-  WavesIcon,
 } from "lucide-react";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 
 const TONE_STYLES: Record<
   MetabolismCardTone,
-  { border: string; glow: string; label?: string }
+  { border: string; label?: string }
 > = {
-  processing: {
-    border: "border-primary/35",
-    glow: "shadow-[0_0_24px_rgba(56,189,248,0.08)]",
-  },
+  processing: { border: "border-amber-500/30" },
   hitl: {
-    border: "border-accent/40",
-    glow: "shadow-[0_0_24px_rgba(251,191,36,0.1)]",
+    border: "border-amber-500/40",
     label: "Requiere validación HITL",
   },
   alma: {
-    border: "border-primary/25",
-    glow: "shadow-[0_0_20px_rgba(52,211,153,0.06)]",
-    label: "Alma · Restricción superada",
+    border: "border-emerald-500/30",
+    label: "Coagulado · reconocido",
   },
   attention: {
-    border: "border-accent/30",
-    glow: "shadow-[0_0_20px_rgba(251,191,36,0.06)]",
+    border: "border-red-900",
     label: "Atención requerida",
   },
-  idle: {
-    border: "border-border",
-    glow: "",
-  },
+  idle: { border: "border-zinc-800" },
 };
-
-function WaveformPulse() {
-  return (
-    <div className="flex h-5 items-end gap-0.5" aria-hidden>
-      {[0, 1, 2, 3, 4].map((bar) => (
-        <span
-          key={bar}
-          className="w-0.5 rounded-full bg-primary/80 animate-pulse"
-          style={{
-            height: `${8 + (bar % 3) * 6}px`,
-            animationDelay: `${bar * 120}ms`,
-          }}
-        />
-      ))}
-    </div>
-  );
-}
 
 type AudioMetabolismCardProps = {
   asset: AudioAssetSummary;
@@ -118,11 +91,15 @@ export function AudioMetabolismCard({
   const isProcessing =
     pipeline.stage === "stt_processing" ||
     pipeline.stage === "stt_queued" ||
-    pipeline.stage === "purifying";
+    pipeline.stage === "purifying" ||
+    pipeline.stage === "lineage" ||
+    pipeline.stage === "quant" ||
+    pipeline.stage === "vectors";
   const canExpand =
     Boolean(asset.transcript) ||
     pipeline.stage === "in_validation" ||
-    pipeline.stage === "validated";
+    pipeline.stage === "validated" ||
+    pipeline.stage === "coagulated";
 
   const createdLabel = new Date(asset.createdAt).toLocaleString("es-AR", {
     day: "2-digit",
@@ -134,10 +111,8 @@ export function AudioMetabolismCard({
   return (
     <article
       className={cn(
-        "rounded-xl border bg-muted/40 transition-all",
+        "border bg-zinc-950 transition-all rounded-none",
         toneStyle.border,
-        toneStyle.glow,
-        expanded && "bg-background/45",
       )}
     >
       <button
@@ -145,34 +120,43 @@ export function AudioMetabolismCard({
         disabled={!canExpand}
         onClick={() => canExpand && setExpanded((value) => !value)}
         className={cn(
-          "flex w-full flex-col gap-3 p-4 text-left",
-          canExpand && "cursor-pointer hover:bg-foreground/[0.02]",
+          "flex w-full items-center gap-3 px-3 py-1.5 text-left",
+          canExpand && "cursor-pointer hover:bg-zinc-900/80",
           !canExpand && "cursor-default",
         )}
       >
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0 flex-1 space-y-2">
-            <div className="flex flex-wrap items-center gap-2">
-              {isProcessing ? <WaveformPulse /> : null}
-              <p className="truncate font-mono text-sm text-muted-foreground">
-                {asset.filename}
-              </p>
-            </div>
-            <div className="flex flex-wrap items-center gap-2">
-              <AudioPipelineBadge pipeline={pipeline} />
-              <StatusBadge status={displayStatus} />
-              <span className="font-mono text-[10px] text-muted-foreground">
-                {createdLabel}
-              </span>
-            </div>
-            <MetabolismPhaseStrip pipeline={pipeline} compact />
+        <span className="truncate max-w-[180px] text-xs font-mono text-zinc-400">
+          {asset.filename}
+        </span>
+        <DistillationStepper
+          distill={pipeline.distill}
+          className="min-w-0 flex-1"
+        />
+        <span className="shrink-0 font-mono text-[9px] text-zinc-600">
+          {createdLabel}
+        </span>
+        {canExpand ? (
+          <ChevronDownIcon
+            className={cn(
+              "size-3.5 shrink-0 text-zinc-600 transition-transform",
+              expanded && "rotate-180",
+            )}
+          />
+        ) : null}
+      </button>
+
+      {expanded ? (
+        <div className="space-y-3 border-t border-zinc-800 px-3 pb-3 pt-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <AudioPipelineBadge pipeline={pipeline} />
+            <StatusBadge status={displayStatus} />
             {toneStyle.label ? (
               <p
                 className={cn(
                   "flex items-center gap-1.5 font-mono text-[10px]",
-                  tone === "hitl" && "text-accent/90",
-                  tone === "alma" && "text-primary/80",
-                  tone === "attention" && "text-accent/80",
+                  tone === "hitl" && "text-amber-500",
+                  tone === "alma" && "text-emerald-500",
+                  tone === "attention" && "text-red-500",
                 )}
               >
                 {tone === "hitl" || tone === "attention" ? (
@@ -183,52 +167,8 @@ export function AudioMetabolismCard({
                 {toneStyle.label}
               </p>
             ) : null}
-            {!expanded && asset.transcript?.preview ? (
-              <p className="line-clamp-2 font-mono text-[10px] leading-relaxed text-muted-foreground">
-                {asset.transcript.preview}
-              </p>
-            ) : null}
           </div>
 
-          {canExpand ? (
-            <ChevronDownIcon
-              className={cn(
-                "size-4 shrink-0 text-muted-foreground transition-transform",
-                expanded && "rotate-180",
-              )}
-            />
-          ) : null}
-        </div>
-
-        {!expanded && metabolism && tone !== "idle" && tone !== "processing" ? (
-          <div className="flex flex-wrap gap-2 font-mono text-[10px] text-muted-foreground">
-            {metabolism.taskCount > 0 ? (
-              <span className="rounded border border-border px-1.5 py-0.5">
-                {metabolism.taskCount} tarea
-                {metabolism.taskCount === 1 ? "" : "s"}
-              </span>
-            ) : null}
-            {metabolism.eventCount > 0 ? (
-              <span className="rounded border border-primary/20 px-1.5 py-0.5 text-primary/70">
-                {metabolism.eventCount} en calendario
-              </span>
-            ) : null}
-            {metabolism.chunkCount > 0 ? (
-              <span className="rounded border border-primary/20 px-1.5 py-0.5 text-primary/70">
-                {metabolism.chunkCount} chunks
-              </span>
-            ) : null}
-            {metabolism.nodeCount > 0 ? (
-              <span className="rounded border border-primary/20 px-1.5 py-0.5 text-primary/70">
-                {metabolism.nodeCount} nodos KG
-              </span>
-            ) : null}
-          </div>
-        ) : null}
-      </button>
-
-      {expanded ? (
-        <div className="space-y-4 border-t border-border px-4 pb-4 pt-3">
           {isProcessing && asset.id === activeId ? (
             <LiveTranscript
               assetId={asset.id}
@@ -236,7 +176,7 @@ export function AudioMetabolismCard({
               initialStatus={asset.status}
             />
           ) : asset.transcript?.preview ? (
-            <p className="rounded border border-border bg-card/80 p-3 font-mono text-[10px] leading-relaxed text-muted-foreground">
+            <p className="border border-zinc-800 bg-zinc-950 p-3 font-mono text-[10px] leading-relaxed text-zinc-500 rounded-none">
               {asset.transcript.preview}
             </p>
           ) : null}
@@ -245,7 +185,7 @@ export function AudioMetabolismCard({
             <div className="grid gap-3 sm:grid-cols-2">
               {metabolism.tasks.length > 0 ? (
                 <div className="space-y-2">
-                  <p className="flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+                  <p className="flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-wider text-zinc-500">
                     <ListTodoIcon className="size-3" />
                     Action items
                   </p>
@@ -253,7 +193,7 @@ export function AudioMetabolismCard({
                     {metabolism.tasks.map((task) => (
                       <li
                         key={task.id}
-                        className="rounded border border-border bg-muted/40 px-2 py-1.5 font-mono text-[10px] text-muted-foreground"
+                        className="border border-zinc-800 bg-zinc-950 px-2 py-1.5 font-mono text-[10px] text-zinc-400 rounded-none"
                       >
                         {task.title}
                       </li>
@@ -264,7 +204,7 @@ export function AudioMetabolismCard({
 
               {metabolism.events.length > 0 ? (
                 <div className="space-y-2">
-                  <p className="flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+                  <p className="flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-wider text-zinc-500">
                     <CalendarIcon className="size-3" />
                     Calendario
                   </p>
@@ -272,7 +212,7 @@ export function AudioMetabolismCard({
                     {metabolism.events.map((event) => (
                       <li
                         key={event.id}
-                        className="rounded border border-primary/15 bg-primary/5 px-2 py-1.5 font-mono text-[10px] text-primary/80"
+                        className="border border-zinc-800 px-2 py-1.5 font-mono text-[10px] text-amber-500/80 rounded-none"
                       >
                         {event.content}
                       </li>
@@ -283,7 +223,7 @@ export function AudioMetabolismCard({
 
               {metabolism.tags.length > 0 ? (
                 <div className="space-y-2 sm:col-span-2">
-                  <p className="flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+                  <p className="flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-wider text-zinc-500">
                     <SparklesIcon className="size-3" />
                     Esencias
                   </p>
@@ -291,7 +231,7 @@ export function AudioMetabolismCard({
                     {metabolism.tags.map((tag) => (
                       <span
                         key={tag}
-                        className="rounded border border-accent/20 bg-accent/8 px-1.5 py-0.5 font-mono text-[10px] text-accent/80"
+                        className="border border-zinc-800 px-1.5 py-0.5 font-mono text-[10px] text-zinc-400 rounded-none"
                       >
                         {tag}
                       </span>
@@ -303,7 +243,7 @@ export function AudioMetabolismCard({
               {metabolism.chunkCount > 0 || metabolism.nodeCount > 0 ? (
                 <div className="flex flex-wrap gap-2 sm:col-span-2">
                   {metabolism.chunkCount > 0 ? (
-                    <span className="inline-flex items-center gap-1 rounded border border-primary/20 bg-primary/8 px-2 py-1 font-mono text-[10px] text-primary/80">
+                    <span className="inline-flex items-center gap-1 border border-zinc-800 px-2 py-1 font-mono text-[10px] text-zinc-400 rounded-none">
                       <GitBranchIcon className="size-3" />
                       {metabolism.chunkCount} chunks fractales
                     </span>
@@ -311,7 +251,7 @@ export function AudioMetabolismCard({
                   {metabolism.nodeCount > 0 ? (
                     <Link
                       href="/grafo"
-                      className="inline-flex items-center gap-1 rounded border border-primary/20 bg-primary/8 px-2 py-1 font-mono text-[10px] text-primary/80 hover:bg-primary/12"
+                      className="inline-flex items-center gap-1 border border-zinc-800 px-2 py-1 font-mono text-[10px] text-amber-500/80 hover:border-amber-500/40 rounded-none"
                     >
                       {metabolism.nodeCount} nodos en Grafo →
                     </Link>
@@ -321,7 +261,7 @@ export function AudioMetabolismCard({
             </div>
           ) : null}
 
-          <div className="flex flex-wrap items-center gap-2 border-t border-border/6 pt-3">
+          <div className="flex flex-wrap items-center gap-2 border-t border-zinc-800 pt-3">
             {pipeline.stage === "stt_error" ? (
               <ProcessButton assetId={asset.id} onProcessed={onRefresh} />
             ) : null}
@@ -346,7 +286,7 @@ export function AudioMetabolismCard({
             {pipeline.stage === "in_validation" && pipeline.reviewId ? (
               <Link
                 href={`/validar?id=${pipeline.reviewId}`}
-                className="ml-auto font-mono text-[10px] text-accent/90 underline-offset-2 hover:underline"
+                className="ml-auto font-mono text-[10px] text-amber-500 underline-offset-2 hover:underline"
               >
                 Validar ahora →
               </Link>

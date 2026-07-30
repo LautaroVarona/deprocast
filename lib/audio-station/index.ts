@@ -6,6 +6,10 @@ export {
   mapAssetsToSummaries,
   scanForDuplicates,
 } from "@/lib/audio-station/deduplicate";
+export {
+  buildDistillStepper,
+  resolveAudioPipelineStage,
+} from "@/lib/audio-station/pipeline-status";
 export type {
   AudioAssetSummary,
   AudioStationPhase,

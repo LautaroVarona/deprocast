@@ -291,6 +291,7 @@ export type QuantadorPipelineInput = {
   originAttributionId: string;
   universoSlug?: string;
   reviewId?: string;
+  assetId?: string;
 };
 
 export async function runQuantadorPipeline(
@@ -326,7 +327,7 @@ export async function runQuantadorPipeline(
   for (const draft of segmented.quantomos) {
     const duplicate = await findDuplicateTask({
       title: draft.titleSugerido,
-      sourceRef: input.reviewId,
+      sourceRef: input.assetId ?? input.reviewId,
     });
     if (duplicate) continue;
 
@@ -334,7 +335,7 @@ export async function runQuantadorPipeline(
       title: draft.titleSugerido,
       description: draft.content.slice(0, 500),
       source: "quantador",
-      sourceRef: input.reviewId,
+      sourceRef: input.assetId ?? input.reviewId,
       reviewId: input.reviewId,
       universeSlug: draft.universo ?? input.universoSlug ?? "babel",
       status: "suggested",

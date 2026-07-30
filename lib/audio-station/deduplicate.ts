@@ -218,6 +218,8 @@ export function mapAssetsToSummaries(
     originalCreatedAt: Date;
     status: string;
     createdAt: Date;
+    pipelineStation?: string | null;
+    pipelineError?: string | null;
     transcript: { id: string; rawText?: string; _count?: { parentChunks: number } } | null;
   }>,
 ): AudioAssetSummary[] {
@@ -229,6 +231,8 @@ export function mapAssetsToSummaries(
     originalCreatedAt: asset.originalCreatedAt.toISOString(),
     status: asset.status,
     createdAt: asset.createdAt.toISOString(),
+    pipelineStation: asset.pipelineStation ?? "QUEUED",
+    pipelineError: asset.pipelineError ?? null,
     transcript: asset.transcript
       ? {
           id: asset.transcript.id,

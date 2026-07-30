@@ -6,14 +6,18 @@ import Link from "next/link";
 import { PurifyAudioButton } from "@/components/audio-station/purify-audio-button";
 
 const STAGE_STYLES: Record<AudioPipelineInfo["stage"], string> = {
-  pending_stt: "border-primary/20 bg-primary/8 text-primary/70",
-  stt_queued: "border-primary/25 bg-primary/10 text-primary/80",
-  stt_processing: "border-primary/35 bg-primary/12 text-primary/90",
-  stt_error: "border-accent/30 bg-accent/10 text-accent/85",
-  purifying: "border-primary/35 bg-primary/12 text-foreground/90",
-  pending_purify: "border-accent/30 bg-accent/10 text-accent/85",
-  in_validation: "border-primary/30 bg-primary/10 text-primary/90",
-  validated: "border-border bg-muted/40 text-muted-foreground",
+  pending_stt: "border-zinc-700 bg-zinc-950 text-zinc-500",
+  stt_queued: "border-amber-500/25 bg-zinc-950 text-amber-500/80",
+  stt_processing: "border-amber-500/40 bg-zinc-950 text-amber-500",
+  stt_error: "border-red-900 bg-zinc-950 text-red-500",
+  lineage: "border-amber-500/30 bg-zinc-950 text-amber-500",
+  quant: "border-amber-500/30 bg-zinc-950 text-amber-500",
+  vectors: "border-amber-500/30 bg-zinc-950 text-amber-500",
+  purifying: "border-amber-500/30 bg-zinc-950 text-amber-500",
+  pending_purify: "border-amber-500/25 bg-zinc-950 text-amber-500/80",
+  in_validation: "border-amber-500/40 bg-zinc-950 text-amber-500",
+  validated: "border-emerald-500/30 bg-zinc-950 text-emerald-500",
+  coagulated: "border-emerald-500/40 bg-zinc-950 text-emerald-500",
 };
 
 type AudioPipelineBadgeProps = {

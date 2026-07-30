@@ -1,14 +1,39 @@
+import type {
+  DistillStation,
+  PipelineStation,
+} from "@/lib/audio-upload/constants";
+import { DISTILL_STATIONS } from "@/lib/audio-upload/constants";
+
+export type DistillStepState = "idle" | "active" | "done" | "error";
+
+export type DistillStepperState = {
+  station: PipelineStation;
+  steps: Record<DistillStation, DistillStepState>;
+  errorCode?: string;
+  errorLabel?: string;
+};
+
 export type AudioPipelineStage =
   | "pending_stt"
   | "stt_queued"
   | "stt_processing"
   | "stt_error"
+  | "lineage"
+  | "quant"
+  | "vectors"
   | "purifying"
   | "pending_purify"
   | "in_validation"
-  | "validated";
+  | "validated"
+  | "coagulated";
 
-export type MetabolismPhase = "transcription" | "purification" | "validation";
+export type MetabolismPhase =
+  | "transcription"
+  | "lineage"
+  | "quant"
+  | "vectors"
+  | "validation"
+  | "coagulation";
 
 export type AudioPipelineInfo = {
   stage: AudioPipelineStage;
@@ -17,13 +42,95 @@ export type AudioPipelineInfo = {
   hint: string;
   reviewId?: string;
   needsAttention?: boolean;
+  pipelineStation?: PipelineStation;
+  pipelineError?: string | null;
+  distill: DistillStepperState;
 };
 
 type AssetLike = {
   id: string;
   status: string;
+  pipelineStation?: string | null;
+  pipelineError?: string | null;
   transcript: { validated?: boolean } | null;
 };
+
+function asPipelineStation(value: string | null | undefined): PipelineStation {
+  const normalized = (value ?? "QUEUED").toUpperCase();
+  if (
+    normalized === "QUEUED" ||
+    normalized === "ERROR" ||
+    (DISTILL_STATIONS as readonly string[]).includes(normalized)
+  ) {
+    return normalized as PipelineStation;
+  }
+  return "QUEUED";
+}
+
+export function buildDistillStepper(input: {
+  pipelineStation?: string | null;
+  pipelineError?: string | null;
+  status?: string;
+  validated?: boolean;
+}): DistillStepperState {
+  const station = asPipelineStation(input.pipelineStation);
+  const steps = Object.fromEntries(
+    DISTILL_STATIONS.map((s) => [s, "idle" as DistillStepState]),
+  ) as Record<DistillStation, DistillStepState>;
+
+  if (station === "ERROR" || input.status === "ERROR") {
+    const err = input.pipelineError?.trim() || "ERROR";
+    const codeMatch = /\b413\b/.exec(err);
+    return {
+      station: "ERROR",
+      steps: {
+        ...steps,
+        STT: "error",
+      },
+      errorCode: codeMatch ? "413" : undefined,
+      errorLabel: codeMatch ? "[ERR: 413]" : `[ERR: ${err.slice(0, 24)}]`,
+    };
+  }
+
+  if (station === "COAG" || input.validated) {
+    for (const s of DISTILL_STATIONS) {
+      steps[s] = "done";
+    }
+    return { station: "COAG", steps };
+  }
+
+  const order: PipelineStation[] = [
+    "QUEUED",
+    "STT",
+    "LINEAGE",
+    "QUANT",
+    "VECTORS",
+    "HITL",
+    "COAG",
+  ];
+  const idx = order.indexOf(station);
+
+  for (let i = 0; i < DISTILL_STATIONS.length; i += 1) {
+    const s = DISTILL_STATIONS[i]!;
+    const stationIdx = order.indexOf(s);
+    if (idx < 0) {
+      steps[s] = "idle";
+    } else if (stationIdx < idx) {
+      steps[s] = "done";
+    } else if (stationIdx === idx) {
+      steps[s] = "active";
+    } else {
+      steps[s] = "idle";
+    }
+  }
+
+  // QUEUED → STT activo visualmente
+  if (station === "QUEUED") {
+    steps.STT = "active";
+  }
+
+  return { station, steps };
+}
 
 export function resolveAudioPipelineStage(
   asset: AssetLike,
@@ -37,43 +144,97 @@ export function resolveAudioPipelineStage(
   const { queuedIds, activeId, reviewByAssetId } = options;
   const purifyingIds = options.purifyingIds ?? new Set<string>();
   const reviewId = reviewByAssetId.get(asset.id);
+  const pipelineStation = asPipelineStation(asset.pipelineStation);
+  const distill = buildDistillStepper({
+    pipelineStation: asset.pipelineStation,
+    pipelineError: asset.pipelineError,
+    status: asset.status,
+    validated: asset.transcript?.validated,
+  });
 
-  if (asset.transcript?.validated) {
+  if (pipelineStation === "COAG" || asset.transcript?.validated) {
     return {
-      stage: "validated",
-      phase: "validation",
-      label: "Metabolizado",
-      hint: "Validado en HITL. Chunks y grafo persistidos.",
+      stage: "coagulated",
+      phase: "coagulation",
+      label: "Coagulado",
+      hint: "Sellado en el grafo (reconocido: true).",
       reviewId,
+      pipelineStation: "COAG",
+      pipelineError: asset.pipelineError,
+      distill,
     };
   }
 
-  if (reviewId) {
+  if (pipelineStation === "HITL" || reviewId) {
     return {
       stage: "in_validation",
       phase: "validation",
-      label: "Validación (HITL)",
-      hint: "Purificado. Revisá y aprobá en /validar.",
+      label: "HITL",
+      hint: "Calibrá Escala Hermética (1–12) y reconocé en /validar.",
       reviewId,
+      pipelineStation: "HITL",
+      pipelineError: asset.pipelineError,
+      distill,
+    };
+  }
+
+  if (pipelineStation === "VECTORS") {
+    return {
+      stage: "vectors",
+      phase: "vectors",
+      label: "Vectores",
+      hint: "Acción · Entidades · Semántica.",
+      pipelineStation,
+      pipelineError: asset.pipelineError,
+      distill,
+    };
+  }
+
+  if (pipelineStation === "QUANT") {
+    return {
+      stage: "quant",
+      phase: "quant",
+      label: "Quantador",
+      hint: "Fragmentando Quántomos.",
+      pipelineStation,
+      pipelineError: asset.pipelineError,
+      distill,
+    };
+  }
+
+  if (pipelineStation === "LINEAGE") {
+    return {
+      stage: "lineage",
+      phase: "lineage",
+      label: "Linaje",
+      hint: "OriginAttribution + contexto ambiental.",
+      pipelineStation,
+      pipelineError: asset.pipelineError,
+      distill,
     };
   }
 
   if (asset.transcript && purifyingIds.has(asset.id)) {
     return {
       stage: "purifying",
-      phase: "purification",
-      label: "Purificación",
-      hint: "Pipeline de 6 estaciones en curso. Action items al final.",
+      phase: "lineage",
+      label: "Destilación",
+      hint: "Pipeline molecular en curso.",
+      pipelineStation,
+      pipelineError: asset.pipelineError,
+      distill,
     };
   }
 
-  if (asset.transcript) {
+  if (asset.transcript && pipelineStation === "STT") {
     return {
       stage: "pending_purify",
-      phase: "purification",
-      label: "Atención requerida",
-      hint: "Transcripción lista. Reintentá la purificación.",
-      needsAttention: true,
+      phase: "lineage",
+      label: "Post-STT",
+      hint: "Transcripción lista. Avanzando destilación.",
+      pipelineStation,
+      pipelineError: asset.pipelineError,
+      distill,
     };
   }
 
@@ -82,7 +243,14 @@ export function resolveAudioPipelineStage(
       stage: "stt_processing",
       phase: "transcription",
       label: "Transcripción",
-      hint: "Deepgram transcribiendo en tiempo real.",
+      hint: "Deepgram transcribiendo.",
+      pipelineStation: "STT",
+      pipelineError: asset.pipelineError,
+      distill: buildDistillStepper({
+        pipelineStation: "STT",
+        pipelineError: asset.pipelineError,
+        status: asset.status,
+      }),
     };
   }
 
@@ -94,25 +262,38 @@ export function resolveAudioPipelineStage(
       stage: "stt_queued",
       phase: "transcription",
       label: "Transcripción",
-      hint: "En cola. Arranca automáticamente.",
+      hint: "En cola STT.",
+      pipelineStation: "STT",
+      pipelineError: asset.pipelineError,
+      distill: buildDistillStepper({
+        pipelineStation: "STT",
+        pipelineError: asset.pipelineError,
+        status: asset.status,
+      }),
     };
   }
 
-  if (asset.status === "ERROR") {
+  if (asset.status === "ERROR" || pipelineStation === "ERROR") {
     return {
       stage: "stt_error",
       phase: "transcription",
-      label: "Atención requerida",
-      hint: "Falló la transcripción. Podés reintentar.",
+      label: "Error",
+      hint: asset.pipelineError ?? "Falló la metabolización.",
       needsAttention: true,
+      pipelineStation: "ERROR",
+      pipelineError: asset.pipelineError,
+      distill,
     };
   }
 
   return {
     stage: "pending_stt",
     phase: "transcription",
-    label: "Transcripción",
-    hint: "Metabolización iniciada. Esperando turno.",
+    label: "En cola",
+    hint: "Esperando turno de destilación.",
+    pipelineStation,
+    pipelineError: asset.pipelineError,
+    distill,
   };
 }
 
@@ -120,9 +301,12 @@ export const METABOLISM_PHASES: Array<{
   id: MetabolismPhase;
   label: string;
 }> = [
-  { id: "transcription", label: "Transcripción" },
-  { id: "purification", label: "Purificación" },
-  { id: "validation", label: "Validación" },
+  { id: "transcription", label: "STT" },
+  { id: "lineage", label: "LINEAGE" },
+  { id: "quant", label: "QUANT" },
+  { id: "vectors", label: "VECTORS" },
+  { id: "validation", label: "HITL" },
+  { id: "coagulation", label: "COAG" },
 ];
 
 export function resolvePhaseProgress(
@@ -133,45 +317,32 @@ export function resolvePhaseProgress(
     "pending" | "active" | "done" | "attention"
   > = {
     transcription: "pending",
-    purification: "pending",
+    lineage: "pending",
+    quant: "pending",
+    vectors: "pending",
     validation: "pending",
+    coagulation: "pending",
   };
+
+  const map: Record<DistillStation, MetabolismPhase> = {
+    STT: "transcription",
+    LINEAGE: "lineage",
+    QUANT: "quant",
+    VECTORS: "vectors",
+    HITL: "validation",
+    COAG: "coagulation",
+  };
+
+  for (const station of DISTILL_STATIONS) {
+    const phase = map[station];
+    const state = pipeline.distill.steps[station];
+    if (state === "done") progress[phase] = "done";
+    else if (state === "active") progress[phase] = "active";
+    else if (state === "error") progress[phase] = "attention";
+  }
 
   if (pipeline.needsAttention) {
     progress[pipeline.phase] = "attention";
-    if (pipeline.phase === "purification") {
-      progress.transcription = "done";
-    }
-    return progress;
-  }
-
-  switch (pipeline.stage) {
-    case "validated":
-      progress.transcription = "done";
-      progress.purification = "done";
-      progress.validation = "done";
-      break;
-    case "in_validation":
-      progress.transcription = "done";
-      progress.purification = "done";
-      progress.validation = "active";
-      break;
-    case "purifying":
-    case "pending_purify":
-      progress.transcription = "done";
-      progress.purification =
-        pipeline.stage === "purifying" ? "active" : "attention";
-      break;
-    case "stt_processing":
-    case "stt_queued":
-    case "pending_stt":
-      progress.transcription = "active";
-      break;
-    case "stt_error":
-      progress.transcription = "attention";
-      break;
-    default:
-      break;
   }
 
   return progress;

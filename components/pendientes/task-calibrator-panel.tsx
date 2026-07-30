@@ -49,14 +49,14 @@ export function TaskCalibratorPanel({
   };
 
   return (
-    <div className="space-y-4 rounded-xl border border-accent/20 bg-background p-4 shadow-[inset_0_1px_0_rgba(251,191,36,0.06)]">
+    <div className="space-y-4 border border-amber-500/30 bg-zinc-950 p-4 rounded-none">
       <div>
-        <p className="font-mono text-[10px] tracking-wider text-accent uppercase">
-          Calibrador de Tareas
+        <p className="font-mono text-[10px] tracking-wider text-amber-500 uppercase">
+          Calibrador · Escala Hermética 1–12
         </p>
-        <h3 className="text-sm font-medium">{task.title}</h3>
+        <h3 className="font-mono text-sm text-zinc-200">{task.title}</h3>
         {task.description ? (
-          <p className="mt-1 text-xs text-muted-foreground">{task.description}</p>
+          <p className="mt-1 font-mono text-xs text-zinc-500">{task.description}</p>
         ) : null}
       </div>
       <HermeticScale

@@ -39,11 +39,18 @@ export function resolveMetabolismCardTone(
     case "stt_queued":
     case "purifying":
     case "pending_stt":
+    case "lineage":
+    case "quant":
+    case "vectors":
+    case "pending_purify":
       return "processing";
     case "in_validation":
       return "hitl";
     case "validated":
+    case "coagulated":
       return "alma";
+    case "stt_error":
+      return "attention";
     default:
       return "idle";
   }
