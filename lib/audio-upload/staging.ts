@@ -115,11 +115,20 @@ export async function readMeta(
   }
 }
 
+/** Copia estable para Prisma Bytes (evita Buffer/ArrayBufferLike vs Uint8Array<ArrayBuffer>). */
+function toPrismaBytes(buffer: Buffer): Uint8Array<ArrayBuffer> {
+  const copy = new Uint8Array(buffer.byteLength);
+  copy.set(buffer);
+  return copy;
+}
+
 export async function writeChunk(
   uploadId: string,
   index: number,
   buffer: Buffer,
 ): Promise<void> {
+  const data = toPrismaBytes(buffer);
+
   await prisma.$transaction(async (tx) => {
     await tx.audioUploadChunk.upsert({
       where: {
@@ -128,10 +137,10 @@ export async function writeChunk(
       create: {
         uploadId,
         chunkIndex: index,
-        data: buffer,
+        data,
       },
       update: {
-        data: buffer,
+        data,
       },
     });
 
