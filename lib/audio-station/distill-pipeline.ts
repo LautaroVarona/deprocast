@@ -58,6 +58,31 @@ async function readAmbientContext(assetId: string): Promise<string> {
 export async function runDistillPipelineAfterStt(
   assetId: string,
 ): Promise<DistillPipelineResult> {
+  try {
+    return await runDistillPipelineAfterSttInner(assetId);
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "distill_failed";
+    console.error(`Distill fatal for ${assetId}:`, error);
+    // Schema ausente (P2021) u otros: no tumbar el request; marcar HITL degradado.
+    try {
+      await setStation(
+        assetId,
+        message.includes("does not exist") || message.includes("P2021")
+          ? "HITL"
+          : "ERROR",
+        message.slice(0, 500),
+      );
+    } catch {
+      /* ignore */
+    }
+    return { status: "error", message, station: "ERROR" };
+  }
+}
+
+async function runDistillPipelineAfterSttInner(
+  assetId: string,
+): Promise<DistillPipelineResult> {
   const existingIds = await getReviewQueueAssetIds();
   if (existingIds.includes(assetId)) {
     await setStation(assetId, "HITL");

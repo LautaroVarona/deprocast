@@ -29,19 +29,19 @@ function AudioStationShell() {
   const chips = [
     {
       id: "stt",
-      label: "STT",
+      label: "ORACVLO",
       count: assets.filter((a) => resolveStage(a).distill.steps.STT === "active")
         .length,
     },
     {
       id: "hitl",
-      label: "HITL",
+      label: "SENADO",
       count: assets.filter((a) => resolveStage(a).stage === "in_validation")
         .length,
     },
     {
       id: "coag",
-      label: "COAG",
+      label: "COAGVLO",
       count: assets.filter(
         (a) =>
           resolveStage(a).stage === "coagulated" ||
@@ -51,18 +51,18 @@ function AudioStationShell() {
   ];
 
   return (
-    <div className="mx-auto flex h-[calc(100vh-48px)] w-full max-w-[100vw] flex-col gap-2 overflow-y-hidden bg-zinc-950 px-3 py-3 sm:px-4">
-      <header className="flex shrink-0 flex-wrap items-center gap-3 border-b border-zinc-800 pb-2">
-        <p className="font-mono text-[10px] uppercase tracking-[0.28em] text-[#FFB000]">
-          [ATANOR · AUDIO]
+    <div className="mx-auto flex h-[calc(100vh-48px)] w-full max-w-[100vw] flex-col gap-2 overflow-y-hidden bg-stone-950 px-3 py-3 sm:px-4">
+      <header className="flex shrink-0 flex-wrap items-center gap-3 border-b border-amber-700/30 pb-2">
+        <p className="font-serif text-[11px] uppercase tracking-[0.28em] text-amber-500">
+          [LEGIO VICTRIX · AUDIO]
         </p>
         <div className="flex items-center gap-2">
           {chips.map((chip) => (
             <span
               key={chip.id}
               className={cn(
-                "border border-zinc-800 bg-zinc-950 px-2 py-0.5 font-mono text-[9px] text-zinc-400 rounded-none",
-                chip.count > 0 && "border-[#FFB000]/40 text-[#FFB000]",
+                "border border-stone-700 bg-stone-900 px-2 py-0.5 font-mono text-[9px] text-legion-patina rounded-none",
+                chip.count > 0 && "border-amber-700/50 text-amber-500",
               )}
             >
               {chip.count} {chip.label}
@@ -80,7 +80,7 @@ function AudioStationShell() {
           )}
           <Link
             href="/ingesta"
-            className="font-mono text-[9px] text-zinc-500 hover:text-[#FFB000]"
+            className="font-mono text-[9px] text-legion-patina hover:text-amber-500"
           >
             /ingesta →
           </Link>
@@ -88,7 +88,7 @@ function AudioStationShell() {
       </header>
 
       {error ? (
-        <p className="shrink-0 border border-red-900 bg-zinc-950 px-3 py-1 font-mono text-[10px] text-red-500 rounded-none">
+        <p className="shrink-0 border border-rose-800 bg-stone-900 px-3 py-1 font-mono text-[10px] text-rose-800 rounded-none">
           {error}
         </p>
       ) : null}

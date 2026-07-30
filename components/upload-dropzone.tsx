@@ -2,15 +2,13 @@
 
 import { withUniverseFetchInit } from "@/lib/babel/universe-fetch";
 import { UPLOAD_CHUNK_BYTES } from "@/lib/audio-upload/constants";
-import {
-  DISTILL_STATIONS,
-  type DistillStation,
-} from "@/lib/audio-upload/constants";
 import type { DistillStepperState } from "@/lib/audio-station/pipeline-status";
 import { buildDistillStepper } from "@/lib/audio-station/pipeline-status";
+import { MicroStationRow } from "@/components/audio-station/micro-station-row";
 import { cn } from "@/lib/utils";
 import {
   useCallback,
+  useEffect,
   useId,
   useRef,
   useState,
@@ -23,10 +21,12 @@ type UploadDropzoneProps = {
   onUploaded: (result?: { jobId?: string }) => void;
   variant?: "default" | "embedded" | "hud" | "crisol";
   universeSlug?: string | null;
-  /** Cards de assets ya en pipeline (rack del Crisol). */
+  /** Tablillas de assets ya en pipeline (rack del Altar). */
   children?: ReactNode;
   /** Hay materia en el rack (assets filtrados). */
   hasRackItems?: boolean;
+  /** IDs ya visibles en el rack — se usan para retirar tablillas de subida. */
+  rackAssetIds?: string[];
 };
 
 export type FileUploadState = {
@@ -41,46 +41,10 @@ export type FileUploadState = {
   uploadId?: string;
 };
 
-const SHORT_GLYPH: Record<DistillStation, string> = {
-  STT: "STT",
-  LINEAGE: "LIN",
-  QUANT: "QNT",
-  VECTORS: "VCT",
-  HITL: "HTL",
-  COAG: "COG",
-};
-
 function formatBytes(size: number): string {
   if (size < 1024) return `${size} B`;
   if (size < 1024 * 1024) return `${(size / 1024).toFixed(0)} KB`;
   return `${(size / (1024 * 1024)).toFixed(1)} MB`;
-}
-
-function MicroStationRow({ distill }: { distill: DistillStepperState }) {
-  return (
-    <div className="flex flex-wrap items-center gap-x-1 font-mono text-[9px] tracking-tight">
-      {DISTILL_STATIONS.map((station, index) => {
-        const state = distill.steps[station];
-        return (
-          <span key={station} className="inline-flex items-center gap-1">
-            <span
-              className={cn(
-                state === "done" && "text-emerald-500",
-                state === "active" && "animate-pulse text-[#FFB000]",
-                state === "error" && "text-red-500",
-                state === "idle" && "text-zinc-600",
-              )}
-            >
-              {SHORT_GLYPH[station]}
-            </span>
-            {index < DISTILL_STATIONS.length - 1 ? (
-              <span className="text-zinc-700">|</span>
-            ) : null}
-          </span>
-        );
-      })}
-    </div>
-  );
 }
 
 export function CrisolMicroCard({ item }: { item: FileUploadState }) {
@@ -97,24 +61,27 @@ export function CrisolMicroCard({ item }: { item: FileUploadState }) {
 
   const consoleLine = isErr
     ? item.errorCode === 413
-      ? "[ERR: 413]"
-      : `[ERR: ${(item.error ?? "FAIL").slice(0, 36)}]`
+      ? "[ERR: 413 · MISIVA RECHAZADA]"
+      : `[ERR: ${(item.error ?? "FALLA").slice(0, 36)}]`
     : item.status === "done"
-      ? "[CHUNK OK · EN COLA STT]"
-      : `[CHUNK ${item.chunkIndex ?? 0}/${item.totalChunks ?? "?"}: ENSAMBLANDO]`;
+      ? "[MISIVA CONSAGRADA · ORÁCVLO]"
+      : `[FRAGMENTVM ${item.chunkIndex ?? 0}/${item.totalChunks ?? "?"}]`;
 
   return (
     <article
       className={cn(
-        "flex h-32 flex-col justify-between border bg-zinc-950 p-3 font-mono rounded-none transition-colors",
+        "flex h-32 flex-col justify-between border border-b-4 bg-stone-800 p-3 font-mono rounded-none transition-colors",
         isErr
-          ? "border-red-900"
-          : "border-zinc-800 hover:border-[#FFB000]/30",
+          ? "border-rose-800 border-b-rose-950"
+          : "border-stone-700 border-b-stone-950 hover:border-amber-700/50",
       )}
+      onClick={(event) => event.stopPropagation()}
     >
       <header className="flex items-start justify-between gap-2">
-        <p className="truncate text-xs text-zinc-400">{item.file.name}</p>
-        <span className="shrink-0 text-[10px] text-zinc-600">
+        <p className="truncate font-serif text-xs tracking-tight text-legion-bone">
+          {item.file.name}
+        </p>
+        <span className="shrink-0 text-[10px] text-legion-patina">
           {formatBytes(item.file.size)}
         </span>
       </header>
@@ -124,8 +91,8 @@ export function CrisolMicroCard({ item }: { item: FileUploadState }) {
       <p
         className={cn(
           "text-[10px] uppercase tracking-wide",
-          isErr ? "text-red-500" : "text-zinc-600",
-          item.status === "uploading" && "animate-pulse text-[#FFB000]/80",
+          isErr ? "text-rose-800" : "text-legion-patina",
+          item.status === "uploading" && "animate-pulse text-amber-500/90",
         )}
       >
         {consoleLine}
@@ -147,7 +114,6 @@ async function uploadFileInChunks(
 
   onProgress?.(`init 0/${totalChunks}`, 0, totalChunks);
 
-  // Init best-effort (chunk auto-inicializa si falla)
   try {
     const initForm = new FormData();
     initForm.append("uploadId", uploadId);
@@ -225,8 +191,8 @@ async function uploadFileInChunks(
       body: completeForm,
     }),
   );
-  const completeData = await completeRes.json();
-  if (!completeRes.ok) {
+  const completeData = await completeRes.json().catch(() => ({}));
+  if (!completeRes.ok || completeData.ok === false) {
     const err = new Error(
       completeData.error ?? "No se pudo completar la subida",
     ) as Error & { status?: number };
@@ -246,6 +212,7 @@ export function UploadDropzone({
   universeSlug,
   children,
   hasRackItems = false,
+  rackAssetIds = [],
 }: UploadDropzoneProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const inputId = useId();
@@ -254,6 +221,22 @@ export function UploadDropzone({
   const isUploading = uploads.some((item) => item.status === "uploading");
   const hasUploads = uploads.length > 0;
   const showGrid = hasUploads || hasRackItems || Boolean(children);
+
+  // Retirar tablillas de subida solo cuando el rack ya muestra el asset.
+  useEffect(() => {
+    if (rackAssetIds.length === 0) return;
+    const known = new Set(rackAssetIds);
+    setUploads((current) =>
+      current.filter(
+        (item) =>
+          item.status === "uploading" ||
+          item.status === "pending" ||
+          item.status === "error" ||
+          !item.assetId ||
+          !known.has(item.assetId),
+      ),
+    );
+  }, [rackAssetIds]);
 
   const uploadFiles = useCallback(
     async (files: File[]) => {
@@ -272,7 +255,6 @@ export function UploadDropzone({
         return [...prev, ...initial];
       });
 
-      // Esperar un tick para que startIndex quede fijado tras el setState sync path
       await Promise.resolve();
 
       let successCount = 0;
@@ -350,27 +332,18 @@ export function UploadDropzone({
         onUploaded({ jobId: lastJobId });
         toast.success(
           successCount === 1
-            ? "Materia en el Atanor. Destilación iniciada."
-            : `${successCount} audios en el Crisol.`,
+            ? "Misiva en el Altar. Oráculo iniciado."
+            : `${successCount} misivas consagradas.`,
         );
       }
 
       if (errorCount > 0) {
         toast.error(
           errorCount === 1
-            ? "1 archivo falló al subir"
-            : `${errorCount} archivos fallaron al subir`,
+            ? "1 misiva falló al depositarse"
+            : `${errorCount} misivas fallaron`,
         );
       }
-
-      setTimeout(() => {
-        setUploads((current) =>
-          current.filter(
-            (item) =>
-              item.status === "uploading" || item.status === "pending",
-          ),
-        );
-      }, 8000);
     },
     [onUploaded, universeSlug],
   );
@@ -389,7 +362,6 @@ export function UploadDropzone({
       setIsDragging(true);
     },
     onDragLeave: (event: DragEvent) => {
-      // Evitar flicker al cruzar hijos
       if (event.currentTarget.contains(event.relatedTarget as Node)) return;
       setIsDragging(false);
     },
@@ -415,19 +387,22 @@ export function UploadDropzone({
     />
   );
 
-  // ── CRISOL UNIFICADO ──────────────────────────────────────
-  if (variant === "crisol" || variant === "hud" || variant === "default" || variant === "embedded") {
+  if (
+    variant === "crisol" ||
+    variant === "hud" ||
+    variant === "default" ||
+    variant === "embedded"
+  ) {
     return (
       <div
         className={cn(
-          "relative min-h-[70vh] w-full border-2 border-dashed bg-zinc-950/40 p-8 transition-colors rounded-none",
+          "relative flex min-h-[min(70vh,40rem)] w-full flex-col border-2 border-double bg-stone-900 p-6 transition-colors rounded-none sm:p-8",
           isDragging
-            ? "border-[#FFB000]/60 bg-[#FFB000]/5"
-            : "border-zinc-800",
+            ? "border-amber-700 bg-amber-950/20"
+            : "border-stone-700",
         )}
         {...dropHandlers}
         onClick={(event) => {
-          // Click en vacío abre file picker; no si clickea una card
           if (event.target === event.currentTarget && !isUploading) {
             inputRef.current?.click();
           }
@@ -440,21 +415,24 @@ export function UploadDropzone({
             inputRef.current?.click();
           }
         }}
-        aria-label="Crisol de destilación — soltá audios aquí"
+        aria-label="Altar de Consagración — depositá misivas de audio aquí"
       >
         {fileInput}
 
         {!showGrid ? (
-          <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-            <p className="font-mono text-sm tracking-[0.12em] text-zinc-600">
-              [ATANOR: ARRASTRA LA MATERIA PRIMA AQUÍ]
+          <div className="pointer-events-none flex flex-1 flex-col items-center justify-center gap-3 py-16">
+            <p className="font-serif text-sm tracking-[0.14em] text-amber-500/90 sm:text-base">
+              [ INVOCATIO: DEPOSITA LAS MISIVAS EN EL ALTAR ]
+            </p>
+            <p className="max-w-md text-center font-mono text-[10px] uppercase tracking-wider text-legion-patina">
+              [ ORACVLO | LINAJE | QVANTA | VECTORES | SENADO (HITL) | COAGVLO ]
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 content-start items-start gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {uploads.map((item) => (
+          <div className="grid flex-1 grid-cols-1 content-start items-start gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {uploads.map((item, index) => (
               <CrisolMicroCard
-                key={`${item.file.name}-${item.file.size}-${item.uploadId ?? item.assetId ?? "u"}`}
+                key={`${item.file.name}-${item.file.size}-${item.uploadId ?? item.assetId ?? index}`}
                 item={item}
               />
             ))}
@@ -464,7 +442,7 @@ export function UploadDropzone({
 
         <button
           type="button"
-          className="absolute bottom-3 right-3 border border-zinc-800 bg-zinc-950 px-2 py-1 font-mono text-[9px] uppercase tracking-wider text-zinc-500 hover:border-[#FFB000]/40 hover:text-[#FFB000] rounded-none"
+          className="absolute bottom-3 right-3 border border-amber-700/40 bg-stone-900 px-2 py-1 font-serif text-[10px] uppercase tracking-wider text-amber-500 hover:border-amber-500 hover:text-legion-gold rounded-none"
           onClick={(event) => {
             event.stopPropagation();
             inputRef.current?.click();
@@ -480,3 +458,4 @@ export function UploadDropzone({
 }
 
 export { MicroStationRow };
+export type { DistillStepperState };

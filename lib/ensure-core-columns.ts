@@ -470,6 +470,129 @@ export function ensureCoreColumnPatches(): void {
         `ALTER TABLE "OriginAttribution" ADD COLUMN "ambientContext" TEXT;`,
       );
     }
+
+    // KG + molecular tables (seed vercel-build.db a menudo viene sin ellas → P2021).
+    if (!tableExists(db, "KgNode")) {
+      db.exec(`
+        CREATE TABLE "KgNode" (
+          "id" TEXT NOT NULL PRIMARY KEY,
+          "primaryName" TEXT NOT NULL,
+          "type" TEXT NOT NULL,
+          "aliases" JSONB NOT NULL,
+          "metadata" JSONB NOT NULL,
+          "confidence" REAL NOT NULL DEFAULT 0.6,
+          "reconocido" BOOLEAN NOT NULL DEFAULT false,
+          "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          "updatedAt" DATETIME NOT NULL
+        );
+        CREATE UNIQUE INDEX "KgNode_primaryName_type_key" ON "KgNode"("primaryName", "type");
+        CREATE INDEX "KgNode_type_idx" ON "KgNode"("type");
+        CREATE INDEX "KgNode_primaryName_idx" ON "KgNode"("primaryName");
+        CREATE INDEX "KgNode_reconocido_idx" ON "KgNode"("reconocido");
+      `);
+    }
+
+    if (!tableExists(db, "KgEdge")) {
+      db.exec(`
+        CREATE TABLE "KgEdge" (
+          "id" TEXT NOT NULL PRIMARY KEY,
+          "sourceNodeId" TEXT NOT NULL,
+          "targetNodeId" TEXT NOT NULL,
+          "relationType" TEXT NOT NULL,
+          "context" TEXT NOT NULL,
+          "weight" INTEGER,
+          "metadata" JSONB NOT NULL,
+          "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          CONSTRAINT "KgEdge_sourceNodeId_fkey" FOREIGN KEY ("sourceNodeId") REFERENCES "KgNode" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
+          CONSTRAINT "KgEdge_targetNodeId_fkey" FOREIGN KEY ("targetNodeId") REFERENCES "KgNode" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+        );
+        CREATE UNIQUE INDEX "KgEdge_sourceNodeId_targetNodeId_relationType_key" ON "KgEdge"("sourceNodeId", "targetNodeId", "relationType");
+        CREATE INDEX "KgEdge_sourceNodeId_idx" ON "KgEdge"("sourceNodeId");
+        CREATE INDEX "KgEdge_targetNodeId_idx" ON "KgEdge"("targetNodeId");
+        CREATE INDEX "KgEdge_relationType_idx" ON "KgEdge"("relationType");
+      `);
+    }
+
+    if (!tableExists(db, "KgMention")) {
+      db.exec(`
+        CREATE TABLE "KgMention" (
+          "id" TEXT NOT NULL PRIMARY KEY,
+          "nodeId" TEXT NOT NULL,
+          "sourceType" TEXT NOT NULL,
+          "sourceId" TEXT NOT NULL,
+          "fragment" TEXT NOT NULL,
+          "offsetStart" INTEGER,
+          "offsetEnd" INTEGER,
+          "metadata" JSONB NOT NULL,
+          "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          CONSTRAINT "KgMention_nodeId_fkey" FOREIGN KEY ("nodeId") REFERENCES "KgNode" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+        );
+        CREATE INDEX "KgMention_sourceType_sourceId_idx" ON "KgMention"("sourceType", "sourceId");
+        CREATE INDEX "KgMention_nodeId_idx" ON "KgMention"("nodeId");
+      `);
+    }
+
+    if (!tableExists(db, "OriginAttribution")) {
+      db.exec(`
+        CREATE TABLE "OriginAttribution" (
+          "id" TEXT NOT NULL PRIMARY KEY,
+          "channel" TEXT NOT NULL,
+          "timestampExacto" DATETIME NOT NULL,
+          "diaSemana" TEXT NOT NULL,
+          "locationName" TEXT,
+          "ambientContext" TEXT,
+          "actors" JSONB NOT NULL,
+          "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+        );
+        CREATE INDEX "OriginAttribution_channel_idx" ON "OriginAttribution"("channel");
+        CREATE INDEX "OriginAttribution_timestampExacto_idx" ON "OriginAttribution"("timestampExacto");
+      `);
+    }
+
+    if (!tableExists(db, "Quantomo")) {
+      db.exec(`
+        CREATE TABLE "Quantomo" (
+          "id" TEXT NOT NULL PRIMARY KEY,
+          "titleSugerido" TEXT NOT NULL,
+          "content" TEXT NOT NULL,
+          "tagsSemanticos" JSONB NOT NULL DEFAULT '[]',
+          "universo" TEXT NOT NULL,
+          "embedding" TEXT,
+          "embedModel" TEXT,
+          "dimensions" INTEGER,
+          "kgNodeId" TEXT,
+          "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          "originAttributionId" TEXT NOT NULL,
+          CONSTRAINT "Quantomo_originAttributionId_fkey" FOREIGN KEY ("originAttributionId") REFERENCES "OriginAttribution" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
+          CONSTRAINT "Quantomo_kgNodeId_fkey" FOREIGN KEY ("kgNodeId") REFERENCES "KgNode" ("id") ON DELETE SET NULL ON UPDATE CASCADE
+        );
+        CREATE UNIQUE INDEX "Quantomo_kgNodeId_key" ON "Quantomo"("kgNodeId");
+        CREATE INDEX "Quantomo_universo_idx" ON "Quantomo"("universo");
+        CREATE INDEX "Quantomo_originAttributionId_idx" ON "Quantomo"("originAttributionId");
+        CREATE INDEX "Quantomo_createdAt_idx" ON "Quantomo"("createdAt");
+      `);
+    }
+
+    if (!tableExists(db, "EntityCandidate")) {
+      db.exec(`
+        CREATE TABLE "EntityCandidate" (
+          "id" TEXT NOT NULL PRIMARY KEY,
+          "name" TEXT NOT NULL,
+          "type" TEXT NOT NULL,
+          "contextSnippet" TEXT NOT NULL,
+          "sourceId" TEXT,
+          "status" TEXT NOT NULL DEFAULT 'PENDING',
+          "resolvedNodeId" TEXT,
+          "metadata" JSONB NOT NULL DEFAULT '{}',
+          "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          "updatedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+        );
+        CREATE INDEX "EntityCandidate_status_createdAt_idx" ON "EntityCandidate"("status", "createdAt");
+        CREATE INDEX "EntityCandidate_type_status_idx" ON "EntityCandidate"("type", "status");
+        CREATE INDEX "EntityCandidate_sourceId_idx" ON "EntityCandidate"("sourceId");
+        CREATE INDEX "EntityCandidate_name_idx" ON "EntityCandidate"("name");
+      `);
+    }
   } finally {
     db.close();
   }

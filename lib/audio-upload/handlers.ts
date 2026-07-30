@@ -278,92 +278,215 @@ export async function handleAudioUploadChunk(
 export async function handleAudioUploadComplete(
   request: NextRequest,
 ): Promise<NextResponse> {
-  await ensureRuntimeReady();
+  try {
+    await ensureRuntimeReady();
 
-  const formData = await request.formData();
-  const uploadId = readOptionalField(formData, "uploadId");
-  const filenameHint = readOptionalField(formData, "filename");
+    const formData = await request.formData();
+    const uploadId = readOptionalField(formData, "uploadId");
+    const filenameHint = readOptionalField(formData, "filename");
 
-  if (!uploadId) {
-    return NextResponse.json({ error: "Falta uploadId." }, { status: 400 });
-  }
+    if (!uploadId) {
+      return NextResponse.json({ error: "Falta uploadId.", ok: false }, { status: 400 });
+    }
 
-  let meta = await readMeta(uploadId);
-  if (!meta && filenameHint) {
-    // Último recurso: sesión nunca persistió meta
+    const meta = await readMeta(uploadId);
+    if (!meta) {
+      return NextResponse.json(
+        {
+          error: filenameHint
+            ? "Upload no encontrado en tmp/. Reintentá desde el primer chunk."
+            : "Upload no inicializado.",
+          ok: false,
+        },
+        { status: 404 },
+      );
+    }
+
+    if (meta.received.length !== meta.totalChunks) {
+      return NextResponse.json(
+        {
+          error: "Faltan chunks.",
+          ok: false,
+          received: meta.received.length,
+          totalChunks: meta.totalChunks,
+          missing: Array.from({ length: meta.totalChunks }, (_, i) => i).filter(
+            (i) => !meta.received.includes(i),
+          ),
+        },
+        { status: 400 },
+      );
+    }
+
+    const buffer = await assembleChunks(uploadId, meta.totalChunks);
+    const storedFilename = `${meta.assetId}${meta.extension}`;
+    const onVercel = isVercelRuntime();
+
+    // En local: persistir archivo para la cola FFmpeg. En Vercel el FS es efímero;
+    // el buffer va directo a Deepgram en esta misma request.
+    if (!onVercel) {
+      await writeFinalAudio(storedFilename, buffer);
+    } else {
+      // Best-effort: por si algún worker local reusa el path en la misma instancia.
+      try {
+        await writeFinalAudio(storedFilename, buffer);
+      } catch {
+        /* ignore */
+      }
+    }
+
+    try {
+      await prisma.audioAsset.update({
+        where: { id: meta.assetId },
+        data: {
+          pipelineStation: "STT",
+          pipelineError: null,
+          status: onVercel ? "PROCESSING" : "PENDING",
+        },
+      });
+    } catch (error) {
+      console.error("AudioAsset update failed:", error);
+      return NextResponse.json(
+        {
+          error: "No se pudo actualizar el asset en Prisma.",
+          ok: false,
+          pipelineStation: "ERROR",
+        },
+        { status: 200 },
+      );
+    }
+
+    try {
+      const uploadDir = getUploadDir();
+      await mkdir(uploadDir, { recursive: true });
+      await writeFile(
+        path.join(uploadDir, `${meta.assetId}.meta.json`),
+        JSON.stringify({
+          ambientContext: meta.ambientContext,
+          uploadId,
+          filename: meta.filename,
+        }),
+        "utf8",
+      );
+    } catch (error) {
+      console.warn("meta.json write failed (non-fatal):", error);
+    }
+
+    await cleanupStaging(uploadId).catch(() => undefined);
+
+    if (onVercel) {
+      const {
+        persistTranscriptFromBuffer,
+        isPrismaSchemaError,
+      } = await import("@/lib/audio-upload/stt-from-buffer");
+
+      try {
+        const transcript = await persistTranscriptFromBuffer(
+          meta.assetId,
+          buffer,
+        );
+
+        void (async () => {
+          try {
+            const { runDistillPipelineAfterStt } = await import(
+              "@/lib/audio-station/distill-pipeline"
+            );
+            await runDistillPipelineAfterStt(meta.assetId);
+          } catch (error) {
+            console.error(`Distill post-STT (Vercel) ${meta.assetId}:`, error);
+            if (!isPrismaSchemaError(error)) {
+              await prisma.audioAsset
+                .update({
+                  where: { id: meta.assetId },
+                  data: {
+                    pipelineStation: "HITL",
+                    pipelineError:
+                      error instanceof Error
+                        ? error.message.slice(0, 400)
+                        : "distill_failed",
+                  },
+                })
+                .catch(() => undefined);
+            }
+          }
+        })();
+
+        return NextResponse.json(
+          {
+            id: meta.assetId,
+            jobId: meta.assetId,
+            uploadId,
+            filename: meta.filename,
+            status: "COMPLETED",
+            pipelineStation: "STT",
+            metabolismStarted: true,
+            ambientContext: meta.ambientContext,
+            ok: true,
+            sttMode: "in_memory",
+            transcriptChars: transcript.rawText.length,
+          },
+          { status: 201 },
+        );
+      } catch (error) {
+        console.error("Vercel in-memory STT failed:", error);
+        const message =
+          error instanceof Error ? error.message : "STT falló en memoria.";
+        await prisma.audioAsset
+          .update({
+            where: { id: meta.assetId },
+            data: {
+              status: "ERROR",
+              pipelineStation: "ERROR",
+              pipelineError: message.slice(0, 500),
+            },
+          })
+          .catch(() => undefined);
+
+        return NextResponse.json(
+          {
+            id: meta.assetId,
+            jobId: meta.assetId,
+            uploadId,
+            filename: meta.filename,
+            status: "ERROR",
+            pipelineStation: "ERROR",
+            error: message,
+            ok: false,
+            sttMode: "in_memory",
+          },
+          { status: 200 },
+        );
+      }
+    }
+
+    const queued = processingQueue.enqueue(meta.assetId);
+
+    return NextResponse.json(
+      {
+        id: meta.assetId,
+        jobId: meta.assetId,
+        uploadId,
+        filename: meta.filename,
+        status: queued ? "QUEUED" : "PENDING",
+        pipelineStation: "STT",
+        metabolismStarted: queued,
+        ambientContext: meta.ambientContext,
+        ok: true,
+        sttMode: "queue",
+      },
+      { status: 201 },
+    );
+  } catch (error) {
+    console.error("handleAudioUploadComplete fatal:", error);
     return NextResponse.json(
       {
         error:
-          "Upload no encontrado en tmp/. Reintentá desde el primer chunk.",
+          error instanceof Error
+            ? error.message
+            : "Fallo al completar la subida.",
+        ok: false,
+        pipelineStation: "ERROR",
       },
-      { status: 404 },
+      { status: 200 },
     );
   }
-
-  if (!meta) {
-    return NextResponse.json(
-      { error: "Upload no inicializado." },
-      { status: 404 },
-    );
-  }
-
-  if (meta.received.length !== meta.totalChunks) {
-    return NextResponse.json(
-      {
-        error: "Faltan chunks.",
-        received: meta.received.length,
-        totalChunks: meta.totalChunks,
-        missing: Array.from({ length: meta.totalChunks }, (_, i) => i).filter(
-          (i) => !meta!.received.includes(i),
-        ),
-      },
-      { status: 400 },
-    );
-  }
-
-  const buffer = await assembleChunks(uploadId, meta.totalChunks);
-  const storedFilename = `${meta.assetId}${meta.extension}`;
-  await writeFinalAudio(storedFilename, buffer);
-
-  await prisma.audioAsset.update({
-    where: { id: meta.assetId },
-    data: {
-      pipelineStation: "STT",
-      pipelineError: null,
-      status: "PENDING",
-    },
-  });
-
-  const uploadDir = getUploadDir();
-  await mkdir(uploadDir, { recursive: true });
-  await writeFile(
-    path.join(uploadDir, `${meta.assetId}.meta.json`),
-    JSON.stringify({
-      ambientContext: meta.ambientContext,
-      uploadId,
-      filename: meta.filename,
-    }),
-    "utf8",
-  );
-
-  await cleanupStaging(uploadId);
-
-  const queued = processingQueue.enqueue(meta.assetId);
-  if (isVercelRuntime()) {
-    void processingQueue.reclaimAndDrain().catch(() => undefined);
-  }
-
-  return NextResponse.json(
-    {
-      id: meta.assetId,
-      jobId: meta.assetId,
-      uploadId,
-      filename: meta.filename,
-      status: queued ? "QUEUED" : "PENDING",
-      pipelineStation: "STT",
-      metabolismStarted: queued,
-      ambientContext: meta.ambientContext,
-    },
-    { status: 201 },
-  );
 }

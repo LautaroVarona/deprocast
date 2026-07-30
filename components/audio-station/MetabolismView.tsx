@@ -23,8 +23,8 @@ const FILTERS: Array<{ id: MetabolismFilter; label: string }> = [
   { id: "all", label: "Todos" },
   { id: "processing", label: "Procesando" },
   { id: "attention", label: "Atención" },
-  { id: "hitl", label: "HITL" },
-  { id: "alma", label: "Coagulado" },
+  { id: "hitl", label: "Senado" },
+  { id: "alma", label: "Coágulo" },
 ];
 
 export function MetabolismView() {
@@ -79,6 +79,11 @@ export function MetabolismView() {
     });
   }, [assets, queuedIds, activeId, purifyingIds, reviewByAssetId, filter]);
 
+  const rackAssetIds = useMemo(
+    () => filteredAssets.map((asset) => asset.id),
+    [filteredAssets],
+  );
+
   const loadMetabolism = useCallback(async () => {
     const idsWithKnowledge = assets
       .filter((asset) => asset.transcript || reviewByAssetId.has(asset.id))
@@ -113,8 +118,8 @@ export function MetabolismView() {
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-hidden">
       <div className="flex shrink-0 flex-wrap items-center gap-2 px-1">
-        <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-[#FFB000]">
-          [HUD · DESTILACIÓN AUDIO]
+        <p className="font-serif text-[11px] uppercase tracking-[0.22em] text-amber-500">
+          [LEGIO · ALTAR DE AUDIO]
         </p>
         {FILTERS.map((item) => (
           <button
@@ -122,10 +127,10 @@ export function MetabolismView() {
             type="button"
             onClick={() => setFilter(item.id)}
             className={cn(
-              "border px-2 py-0.5 font-mono text-[9px] uppercase tracking-wider rounded-none",
+              "border px-2.5 py-1 font-serif text-[10px] uppercase tracking-wider rounded-none",
               filter === item.id
-                ? "border-[#FFB000]/50 bg-zinc-950 text-[#FFB000]"
-                : "border-zinc-800 text-zinc-500 hover:border-zinc-600",
+                ? "border-amber-700 bg-stone-900 text-amber-500"
+                : "border-stone-700 text-legion-patina hover:border-amber-700/40 hover:text-legion-bone",
             )}
           >
             {item.label}
@@ -135,7 +140,7 @@ export function MetabolismView() {
           <button
             type="button"
             onClick={() => setShowDedup((value) => !value)}
-            className="border border-[#FFB000]/30 px-2 py-0.5 font-mono text-[9px] text-[#FFB000]/80 rounded-none"
+            className="border border-amber-700/40 px-2 py-1 font-mono text-[9px] text-amber-500/80 rounded-none"
           >
             Dup ({dedupBadge})
           </button>
@@ -147,7 +152,7 @@ export function MetabolismView() {
           />
         ) : null}
         {isLoadingMetabolism ? (
-          <span className="ml-auto flex items-center gap-1 font-mono text-[9px] text-zinc-600">
+          <span className="ml-auto flex items-center gap-1 font-mono text-[9px] text-legion-patina">
             <Loader2Icon className="size-3 animate-spin" />
             sync…
           </span>
@@ -155,7 +160,7 @@ export function MetabolismView() {
       </div>
 
       {showDedup && scan ? (
-        <div className="max-h-20 shrink-0 overflow-hidden border border-zinc-800 bg-zinc-950 p-2">
+        <div className="max-h-20 shrink-0 overflow-hidden border border-stone-700 bg-stone-900 p-2">
           <DeduplicatePanel />
         </div>
       ) : null}
@@ -171,13 +176,13 @@ export function MetabolismView() {
         </div>
       ) : null}
 
-      {/* Crisol unificado: dropzone = contenedor completo + grid de rack */}
       <div className="min-h-0 flex-1 overflow-y-auto">
         <UploadDropzone
           variant="crisol"
           universeSlug={activeUniverse?.slug}
           onUploaded={() => void refresh()}
           hasRackItems={filteredAssets.length > 0}
+          rackAssetIds={rackAssetIds}
         >
           {filteredAssets.map((asset) => (
             <AudioMetabolismCard

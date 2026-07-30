@@ -40,16 +40,16 @@ export function AudioModule() {
       aria-label="Ingesta de audio"
       className="flex min-h-[70vh] flex-col gap-3"
     >
-      <div className="flex shrink-0 items-center justify-between gap-2 font-mono">
+      <div className="flex shrink-0 items-center justify-between gap-2">
         <div>
-          <p className="text-[10px] uppercase tracking-[0.22em] text-[#FFB000]">
-            [INGESTA · AUDIO · CRISOL]
+          <p className="font-serif text-[11px] uppercase tracking-[0.22em] text-amber-500">
+            [INGESTA · AUDIO · ALTAR]
           </p>
-          <p className="text-[10px] text-zinc-500">
-            Chunks → tmp/ → Deepgram · 6 estaciones
+          <p className="font-mono text-[10px] text-legion-patina">
+            Misivas → Oráculo → Senado · 6 estaciones
           </p>
         </div>
-        <span className="border border-zinc-800 bg-zinc-950 px-2 py-1 text-[9px] text-zinc-400 rounded-none">
+        <span className="border border-stone-700 bg-stone-900 px-2 py-1 font-mono text-[9px] text-legion-patina rounded-none">
           {queueLabel}
         </span>
       </div>

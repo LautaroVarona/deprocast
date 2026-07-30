@@ -27,8 +27,25 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ candidates, universe: universeSlug });
   } catch (error) {
     console.error("KG duplicates error:", error);
+    const code =
+      error && typeof error === "object" && "code" in error
+        ? String((error as { code?: string }).code)
+        : "";
     const message =
       error instanceof Error ? error.message : "No se pudieron detectar duplicados.";
+    // Schema desfasado (P2021): no tumbar /grafo — degradar a lista vacía.
+    if (
+      code === "P2021" ||
+      message.includes("does not exist") ||
+      message.includes("TableDoesNotExist")
+    ) {
+      return NextResponse.json({
+        candidates: [],
+        universe: resolveContextSealFromRequest(request),
+        degraded: true,
+        reason: "kg_schema_missing",
+      });
+    }
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

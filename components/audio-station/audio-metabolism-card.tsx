@@ -1,7 +1,7 @@
 "use client";
 
 import { DistillationStepper } from "@/components/audio-station/distillation-stepper";
-import { MicroStationRow } from "@/components/upload-dropzone";
+import { MicroStationRow } from "@/components/audio-station/micro-station-row";
 import { DeleteAssetButton } from "@/components/delete-asset-button";
 import { ProcessButton } from "@/components/process-button";
 import { StopProcessButton } from "@/components/stop-process-button";
@@ -18,11 +18,11 @@ import Link from "next/link";
 import { useMemo } from "react";
 
 const TONE_BORDER: Record<MetabolismCardTone, string> = {
-  processing: "border-[#FFB000]/35",
-  hitl: "border-[#FFB000]/50",
-  alma: "border-emerald-500/40",
-  attention: "border-red-900",
-  idle: "border-zinc-800",
+  processing: "border-amber-700/50",
+  hitl: "border-amber-600/60",
+  alma: "border-legion-marble/50",
+  attention: "border-rose-800",
+  idle: "border-stone-700",
 };
 
 type AudioMetabolismCardProps = {
@@ -69,9 +69,9 @@ export function AudioMetabolismCard({
   const footer = isErr
     ? pipeline.distill.errorLabel ?? "[ERR]"
     : pipeline.stage === "coagulated" || pipeline.stage === "validated"
-      ? "[COAGULADO]"
+      ? "[COAGVLADO]"
       : pipeline.stage === "in_validation"
-        ? "[HITL · VALIDAR]"
+        ? "[SENADO · VALIDAR]"
         : `[${pipeline.pipelineStation ?? "DESTILANDO"}]`;
 
   const lineage = asset.lineage;
@@ -79,19 +79,21 @@ export function AudioMetabolismCard({
   return (
     <article
       className={cn(
-        "flex h-32 flex-col justify-between border bg-zinc-950 p-3 font-mono rounded-none transition-colors hover:border-[#FFB000]/30",
+        "flex h-32 flex-col justify-between border border-b-4 border-b-stone-950 bg-stone-800 p-3 font-mono rounded-none transition-colors hover:border-amber-700/40",
         TONE_BORDER[tone],
-        isErr && "border-red-900",
+        isErr && "border-rose-800",
       )}
       onClick={(event) => event.stopPropagation()}
     >
       <header className="space-y-0.5">
-        <p className="truncate text-xs text-zinc-400">{asset.filename}</p>
-        <div className="flex flex-wrap gap-x-2 text-[9px] text-zinc-600">
+        <p className="truncate font-serif text-xs tracking-tight text-legion-bone">
+          {asset.filename}
+        </p>
+        <div className="flex flex-wrap gap-x-2 text-[9px] text-legion-patina">
           {lineage ? (
             <>
               <span>{lineage.fecha}</span>
-              <span className="text-[#FFB000]/70">{lineage.hora}</span>
+              <span className="text-amber-500/80">{lineage.hora}</span>
               {lineage.lugar ? (
                 <span className="truncate max-w-[100px]">{lineage.lugar}</span>
               ) : null}
@@ -110,11 +112,11 @@ export function AudioMetabolismCard({
           className={cn(
             "truncate text-[10px] uppercase",
             isErr
-              ? "text-red-500"
+              ? "text-rose-800"
               : pipeline.stage === "coagulated"
-                ? "text-emerald-500"
-                : "text-zinc-600",
-            isProcessing && "animate-pulse text-[#FFB000]/80",
+                ? "text-legion-marble"
+                : "text-legion-patina",
+            isProcessing && "animate-pulse text-amber-500/90",
           )}
         >
           {footer}
@@ -129,9 +131,9 @@ export function AudioMetabolismCard({
           {pipeline.stage === "in_validation" && pipeline.reviewId ? (
             <Link
               href={`/validar?id=${pipeline.reviewId}`}
-              className="text-[9px] text-[#FFB000] hover:underline"
+              className="text-[9px] text-amber-500 hover:underline"
             >
-              HITL
+              Senado
             </Link>
           ) : null}
           <ViewDetailsLink assetId={asset.id} />
@@ -146,7 +148,7 @@ export function AudioMetabolismCard({
   );
 }
 
-/** @deprecated alias — MicroStationRow vive en upload-dropzone */
+/** @deprecated alias */
 export function AudioMetabolismLegacyStepper({
   distill,
 }: {
