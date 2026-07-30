@@ -240,7 +240,7 @@ export function UploadDropzone({
   const [uploads, setUploads] = useState<FileUploadState[]>([]);
   const isUploading = uploads.some((item) => item.status === "uploading");
   const hasUploads = uploads.length > 0;
-  const showGrid = hasUploads || hasRackItems || Boolean(children);
+  const showGrid = hasUploads || hasRackItems;
 
   // Retirar tablillas de subida solo cuando el rack ya muestra el asset.
   useEffect(() => {
@@ -442,9 +442,11 @@ export function UploadDropzone({
         {!showGrid ? (
           <div className="pointer-events-none flex flex-1 flex-col items-center justify-center gap-3 py-16">
             {emptyFilterLabel ? (
-              <p className="font-mono text-sm tracking-[0.12em] text-legion-patina">
-                {emptyFilterLabel}
-              </p>
+              <div className="flex h-full min-h-40 w-full items-center justify-center border border-dashed border-stone-800 px-4 py-16">
+                <p className="text-center font-serif text-sm uppercase tracking-[0.18em] text-stone-500">
+                  {emptyFilterLabel}
+                </p>
+              </div>
             ) : (
               <>
                 <p className="font-serif text-sm tracking-[0.14em] text-amber-500/90 sm:text-base">

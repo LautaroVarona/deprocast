@@ -1,10 +1,12 @@
 import "server-only";
 
 import { getFileExtension, isAllowedAudioFile } from "@/lib/audio-validation";
+import { assertBlobTokenConfigured } from "@/lib/audio-upload/blob-staging";
 import { UPLOAD_CHUNK_BYTES } from "@/lib/audio-upload/constants";
 import {
   assembleChunks,
   cleanupStaging,
+  listReceivedChunks,
   readMeta,
   writeChunk,
   writeFinalAudio,
@@ -13,6 +15,7 @@ import {
 } from "@/lib/audio-upload/staging";
 import { resolveContextSealFromRequest } from "@/lib/babel/context-seal";
 import { registerBabelRecord } from "@/lib/babel/record-store";
+import { extractLineageFromFilename } from "@/lib/ingesta/temporal-lineage";
 import { processingQueue } from "@/lib/processing-queue";
 import { prisma } from "@/lib/prisma";
 import {
@@ -57,17 +60,32 @@ async function ensureAssetAndMeta(input: {
     throw new Error("Formato no permitido. Usá .mp3, .m4a, .wav, .ogg o .webm.");
   }
 
+  if (isVercelRuntime()) {
+    assertBlobTokenConfigured();
+  }
+
   const extension = getFileExtension(input.filename);
   const assetId = randomUUID();
   const storedFilename = `${assetId}${extension}`;
+  const fromFilename = extractLineageFromFilename(input.filename);
   const originalCreatedAt =
-    input.lastModifiedMs && input.lastModifiedMs > 0
+    fromFilename?.timestampExacto ??
+    (input.lastModifiedMs && input.lastModifiedMs > 0
       ? new Date(input.lastModifiedMs)
-      : new Date();
+      : new Date());
 
-  await prisma.audioAsset.create({
-    data: {
+  await prisma.audioAsset.upsert({
+    where: { id: assetId },
+    create: {
       id: assetId,
+      filename: input.filename,
+      fileUrl: getUploadPublicUrl(storedFilename),
+      originalCreatedAt,
+      status: "PENDING",
+      pipelineStation: "QUEUED",
+      pipelineError: null,
+    },
+    update: {
       filename: input.filename,
       fileUrl: getUploadPublicUrl(storedFilename),
       originalCreatedAt,
@@ -296,28 +314,39 @@ export async function handleAudioUploadComplete(
 
     let meta = uploadId ? await readMeta(uploadId) : null;
 
-    // Preferir buffer del cliente (evita /tmp multi-instancia en Vercel).
+    // Preferir buffer del cliente (disparo único ≤3.5MB).
     let buffer: Buffer | null = null;
     if (fileField instanceof Blob && fileField.size > 0) {
       buffer = Buffer.from(await fileField.arrayBuffer());
     }
 
-    if (!meta && assetIdHint) {
-      const asset = await prisma.audioAsset.findUnique({
-        where: { id: assetIdHint },
-        select: { id: true, filename: true },
-      });
-      if (asset && buffer) {
-        const name = filenameHint || asset.filename;
-        const extension = getFileExtension(name);
+    // Reconstruir meta mínima si hay assetId + file (single-shot) o hints.
+    if (!meta && assetIdHint && (buffer || filenameHint)) {
+      const name = filenameHint || "audio.bin";
+      const extension = getFileExtension(name);
+      meta = {
+        uploadId: uploadId || assetIdHint,
+        assetId: assetIdHint,
+        filename: name,
+        extension,
+        totalChunks: 1,
+        ambientContext: "caminata",
+        received: [0],
+      };
+    }
+
+    // En Vercel: si hay uploadId, listar chunks Blob aunque meta Prisma/local falte.
+    if (!meta && uploadId && isVercelRuntime()) {
+      const receivedLive = await listReceivedChunks(uploadId);
+      if (receivedLive.length > 0 && filenameHint && assetIdHint) {
         meta = {
-          uploadId: uploadId || assetIdHint,
-          assetId: asset.id,
-          filename: name,
-          extension,
-          totalChunks: 1,
+          uploadId,
+          assetId: assetIdHint,
+          filename: filenameHint,
+          extension: getFileExtension(filenameHint),
+          totalChunks: receivedLive.length,
           ambientContext: "caminata",
-          received: [0],
+          received: receivedLive,
         };
       }
     }
@@ -325,8 +354,9 @@ export async function handleAudioUploadComplete(
     if (!meta) {
       return NextResponse.json(
         {
-          error:
-            "Sesión de upload no encontrada. En Vercel sin DB compartida, reenviá el archivo en complete o usá archivos <3.5MB (disparo único).",
+          error: isVercelRuntime()
+            ? "Sesión de upload no encontrada en Blob. Verificá BLOB_READ_WRITE_TOKEN y reintentá init+chunks."
+            : "Sesión de upload no encontrada.",
           ok: false,
           code: "UPLOAD_SESSION_MISSING",
         },
@@ -335,62 +365,78 @@ export async function handleAudioUploadComplete(
     }
 
     if (!buffer) {
-      const { listReceivedChunks } = await import("@/lib/audio-upload/staging");
       const receivedLive = await listReceivedChunks(meta.uploadId);
       const effectiveReceived =
         receivedLive.length >= meta.received.length
           ? receivedLive
           : meta.received;
 
-      if (effectiveReceived.length !== meta.totalChunks) {
+      const total =
+        meta.totalChunks > 0
+          ? meta.totalChunks
+          : Math.max(effectiveReceived.length, 1);
+
+      if (effectiveReceived.length < total) {
         return NextResponse.json(
           {
             error: "Faltan chunks.",
             ok: false,
             received: effectiveReceived.length,
-            totalChunks: meta.totalChunks,
-            missing: Array.from(
-              { length: meta.totalChunks },
-              (_, i) => i,
-            ).filter((i) => !effectiveReceived.includes(i)),
+            totalChunks: total,
+            missing: Array.from({ length: total }, (_, i) => i).filter(
+              (i) => !effectiveReceived.includes(i),
+            ),
           },
           { status: 400 },
         );
       }
 
-      buffer = await assembleChunks(meta.uploadId, meta.totalChunks);
+      buffer = await assembleChunks(meta.uploadId, total);
+      meta.totalChunks = total;
     }
 
     const storedFilename = `${meta.assetId}${meta.extension}`;
     const onVercel = isVercelRuntime();
+    const fromFilename = extractLineageFromFilename(meta.filename);
+    const originalCreatedAt = fromFilename?.timestampExacto ?? new Date();
 
-    // En local: persistir archivo para la cola FFmpeg. En Vercel el FS es efímero;
-    // el buffer va directo a Deepgram en esta misma request.
+    // En local: persistir archivo para la cola FFmpeg. En Vercel el buffer va a STT.
     if (!onVercel) {
       await writeFinalAudio(storedFilename, buffer);
     } else {
-      // Best-effort: por si algún worker local reusa el path en la misma instancia.
       try {
         await writeFinalAudio(storedFilename, buffer);
       } catch {
-        /* ignore */
+        /* ignore FS efímero */
       }
     }
 
     try {
-      await prisma.audioAsset.update({
+      await prisma.audioAsset.upsert({
         where: { id: meta.assetId },
-        data: {
+        create: {
+          id: meta.assetId,
+          filename: meta.filename,
+          fileUrl: getUploadPublicUrl(storedFilename),
+          originalCreatedAt,
+          status: onVercel ? "PROCESSING" : "PENDING",
+          pipelineStation: "STT",
+          pipelineError: null,
+        },
+        update: {
+          filename: meta.filename,
+          fileUrl: getUploadPublicUrl(storedFilename),
+          originalCreatedAt,
           pipelineStation: "STT",
           pipelineError: null,
           status: onVercel ? "PROCESSING" : "PENDING",
         },
       });
     } catch (error) {
-      console.error("AudioAsset update failed:", error);
+      console.error("AudioAsset upsert failed:", error);
       return NextResponse.json(
         {
-          error: "No se pudo actualizar el asset en Prisma.",
+          error: "No se pudo persistir el asset en Prisma.",
           ok: false,
           pipelineStation: "ERROR",
         },

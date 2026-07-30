@@ -184,7 +184,7 @@ export function MetabolismView() {
           hasRackItems={filteredAssets.length > 0}
           rackAssetIds={rackAssetIds}
           emptyFilterLabel={
-            filter !== "all" && filteredAssets.length === 0
+            filteredAssets.length === 0
               ? "[ LEGIO IX: NINGUNA COHORTE EN ESTA SECCIÓN ]"
               : null
           }

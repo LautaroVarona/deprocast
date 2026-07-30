@@ -41,8 +41,8 @@ export function TextChannel() {
       toast.success(queued ? CAPTURE_QUEUED_TOAST : CAPTURE_SUCCESS_TOAST, {
         duration: 12_000,
         description: queued
-          ? `En cola de purificación. Abrí Validar para seguirla (id ${data.reviewId.slice(0, 8)}…).`
-          : `Lista en la Aduana. Id ${data.reviewId.slice(0, 8)}…`,
+          ? `Capturado en la Aduana (/validar), no en el Altar de audio. En cola (id ${data.reviewId.slice(0, 8)}…).`
+          : `Capturado en la Aduana (/validar), no en el Altar de audio. Id ${data.reviewId.slice(0, 8)}…`,
         action: {
           label: "Ir a Validar →",
           onClick: () => {

@@ -124,9 +124,9 @@ export function extractLineageFromFilename(
   const base = filename.replace(/\.[^.]+$/, "").toLowerCase();
   const hints: string[] = [];
 
-  // 29_jul__21.09  |  29-jul-21.09  |  29_julio_21-09
+  // 29_jul__21.09  |  29 jul, 19.19  |  29-jul-21.09  |  29_julio_21-09
   const named = base.match(
-    /(\d{1,2})[_\-\s]*(ene|enero|feb|febrero|mar|marzo|abr|abril|may|mayo|jun|junio|jul|julio|ago|agosto|sep|sept|septiembre|oct|octubre|nov|noviembre|dic|diciembre)[_\-\s]*(\d{1,2})[.\-:](\d{2})/i,
+    /(\d{1,2})[_\-\s,]*(?:(?:en|del)[_\-\s,]*)?(ene|enero|feb|febrero|mar|marzo|abr|abril|may|mayo|jun|junio|jul|julio|ago|agosto|sep|sept|septiembre|oct|octubre|nov|noviembre|dic|diciembre)[_\-\s,]*(?:(?:de|del)[_\-\s,]*)?(\d{1,2})[.\-:](\d{2})/i,
   );
   if (named) {
     const day = Number(named[1]);

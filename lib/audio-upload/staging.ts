@@ -1,5 +1,14 @@
 import "server-only";
 
+import {
+  assembleChunksFromBlob,
+  assertBlobTokenConfigured,
+  cleanupBlobStaging,
+  listReceivedChunksFromBlob,
+  readMetaFromBlob,
+  writeChunkToBlob,
+  writeMetaToBlob,
+} from "@/lib/audio-upload/blob-staging";
 import { prisma } from "@/lib/prisma";
 import {
   getUploadDir,
@@ -52,8 +61,21 @@ function rowToMeta(row: {
   };
 }
 
-/** Preferir Prisma (multi-instancia). FS solo como espejo local. */
+/** Copia estable para Prisma Bytes (evita Buffer/ArrayBufferLike vs Uint8Array<ArrayBuffer>). */
+function toPrismaBytes(buffer: Buffer): Uint8Array<ArrayBuffer> {
+  const copy = new Uint8Array(buffer.byteLength);
+  copy.set(buffer);
+  return copy;
+}
+
+/** Preferir Blob en Vercel (multi-instancia). Local: Prisma + espejo FS. */
 export async function writeMeta(meta: ChunkUploadMeta): Promise<void> {
+  if (isVercelRuntime()) {
+    assertBlobTokenConfigured();
+    await writeMetaToBlob(meta);
+    return;
+  }
+
   await prisma.audioUploadSession.upsert({
     where: { id: meta.uploadId },
     create: {
@@ -75,24 +97,26 @@ export async function writeMeta(meta: ChunkUploadMeta): Promise<void> {
     },
   });
 
-  if (!isVercelRuntime()) {
-    try {
-      const dir = getUploadStagingDir(meta.uploadId);
-      await mkdir(dir, { recursive: true });
-      await writeFile(
-        path.join(dir, "meta.json"),
-        JSON.stringify(meta),
-        "utf8",
-      );
-    } catch {
-      /* espejo local no crítico */
-    }
+  try {
+    const dir = getUploadStagingDir(meta.uploadId);
+    await mkdir(dir, { recursive: true });
+    await writeFile(
+      path.join(dir, "meta.json"),
+      JSON.stringify(meta),
+      "utf8",
+    );
+  } catch {
+    /* espejo local no crítico */
   }
 }
 
 export async function readMeta(
   uploadId: string,
 ): Promise<ChunkUploadMeta | null> {
+  if (isVercelRuntime()) {
+    return readMetaFromBlob(uploadId);
+  }
+
   try {
     const row = await prisma.audioUploadSession.findUnique({
       where: { id: uploadId },
@@ -101,8 +125,6 @@ export async function readMeta(
   } catch (error) {
     console.warn("readMeta Prisma failed, fallback FS:", error);
   }
-
-  if (isVercelRuntime()) return null;
 
   try {
     const raw = await readFile(
@@ -115,18 +137,24 @@ export async function readMeta(
   }
 }
 
-/** Copia estable para Prisma Bytes (evita Buffer/ArrayBufferLike vs Uint8Array<ArrayBuffer>). */
-function toPrismaBytes(buffer: Buffer): Uint8Array<ArrayBuffer> {
-  const copy = new Uint8Array(buffer.byteLength);
-  copy.set(buffer);
-  return copy;
-}
-
 export async function writeChunk(
   uploadId: string,
   index: number,
   buffer: Buffer,
 ): Promise<void> {
+  if (isVercelRuntime()) {
+    assertBlobTokenConfigured();
+    await writeChunkToBlob(uploadId, index, buffer);
+    // Actualizar received en meta Blob
+    const meta = await readMetaFromBlob(uploadId);
+    if (meta && !meta.received.includes(index)) {
+      meta.received.push(index);
+      meta.received.sort((a, b) => a - b);
+      await writeMetaToBlob(meta);
+    }
+    return;
+  }
+
   const data = toPrismaBytes(buffer);
 
   await prisma.$transaction(async (tx) => {
@@ -160,14 +188,12 @@ export async function writeChunk(
     }
   });
 
-  if (!isVercelRuntime()) {
-    try {
-      const dir = getUploadStagingDir(uploadId);
-      await mkdir(dir, { recursive: true });
-      await writeFile(path.join(dir, `chunk-${index}.part`), buffer);
-    } catch {
-      /* espejo local no crítico */
-    }
+  try {
+    const dir = getUploadStagingDir(uploadId);
+    await mkdir(dir, { recursive: true });
+    await writeFile(path.join(dir, `chunk-${index}.part`), buffer);
+  } catch {
+    /* espejo local no crítico */
   }
 }
 
@@ -175,6 +201,10 @@ export async function assembleChunks(
   uploadId: string,
   totalChunks: number,
 ): Promise<Buffer> {
+  if (isVercelRuntime()) {
+    return assembleChunksFromBlob(uploadId, totalChunks);
+  }
+
   const rows = await prisma.audioUploadChunk.findMany({
     where: { uploadId },
     orderBy: { chunkIndex: "asc" },
@@ -182,7 +212,9 @@ export async function assembleChunks(
   });
 
   if (rows.length >= totalChunks) {
-    const byIndex = new Map(rows.map((r) => [r.chunkIndex, Buffer.from(r.data)]));
+    const byIndex = new Map(
+      rows.map((r) => [r.chunkIndex, Buffer.from(r.data)]),
+    );
     const parts: Buffer[] = [];
     for (let i = 0; i < totalChunks; i += 1) {
       const part = byIndex.get(i);
@@ -194,22 +226,15 @@ export async function assembleChunks(
     return Buffer.concat(parts);
   }
 
-  // Fallback FS (dev local sin filas Prisma)
-  if (!isVercelRuntime()) {
-    const parts: Buffer[] = [];
-    for (let i = 0; i < totalChunks; i += 1) {
-      parts.push(
-        await readFile(
-          path.join(getUploadStagingDir(uploadId), `chunk-${i}.part`),
-        ),
-      );
-    }
-    return Buffer.concat(parts);
+  const parts: Buffer[] = [];
+  for (let i = 0; i < totalChunks; i += 1) {
+    parts.push(
+      await readFile(
+        path.join(getUploadStagingDir(uploadId), `chunk-${i}.part`),
+      ),
+    );
   }
-
-  throw new Error(
-    `Chunks incompletos en Prisma (${rows.length}/${totalChunks}).`,
-  );
+  return Buffer.concat(parts);
 }
 
 export async function writeFinalAudio(
@@ -224,6 +249,11 @@ export async function writeFinalAudio(
 }
 
 export async function cleanupStaging(uploadId: string): Promise<void> {
+  if (isVercelRuntime()) {
+    await cleanupBlobStaging(uploadId).catch(() => undefined);
+    return;
+  }
+
   await prisma.audioUploadSession
     .delete({ where: { id: uploadId } })
     .catch(() => undefined);
@@ -233,6 +263,10 @@ export async function cleanupStaging(uploadId: string): Promise<void> {
 }
 
 export async function listReceivedChunks(uploadId: string): Promise<number[]> {
+  if (isVercelRuntime()) {
+    return listReceivedChunksFromBlob(uploadId);
+  }
+
   try {
     const rows = await prisma.audioUploadChunk.findMany({
       where: { uploadId },
@@ -259,7 +293,7 @@ export async function listReceivedChunks(uploadId: string): Promise<number[]> {
   }
 }
 
-/** @deprecated path helpers — staging durable es Prisma */
+/** @deprecated path helpers — staging durable es Prisma/Blob */
 export async function ensureStagingDir(uploadId: string): Promise<string> {
   const dir = getUploadStagingDir(uploadId);
   await mkdir(dir, { recursive: true });
