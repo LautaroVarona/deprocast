@@ -28,6 +28,33 @@ model AudioAsset {
   @@index([pipelineStation])
 }
 
+/// Staging durable de chunks (multi-instancia Vercel: /tmp no se comparte).
+model AudioUploadSession {
+  id             String   @id
+  assetId        String   @unique
+  filename       String
+  extension      String
+  totalChunks    Int
+  ambientContext String   @default("caminata")
+  receivedJson   String   @default("[]")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  chunks AudioUploadChunk[]
+}
+
+model AudioUploadChunk {
+  id         String @id @default(uuid())
+  uploadId   String
+  chunkIndex Int
+  data       Bytes
+
+  session AudioUploadSession @relation(fields: [uploadId], references: [id], onDelete: Cascade)
+
+  @@unique([uploadId, chunkIndex])
+  @@index([uploadId])
+}
+
 model Transcript {
   id         String   @id @default(uuid())
   assetId    String   @unique

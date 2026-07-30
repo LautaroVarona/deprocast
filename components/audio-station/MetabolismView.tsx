@@ -183,6 +183,11 @@ export function MetabolismView() {
           onUploaded={() => void refresh()}
           hasRackItems={filteredAssets.length > 0}
           rackAssetIds={rackAssetIds}
+          emptyFilterLabel={
+            filter !== "all" && filteredAssets.length === 0
+              ? "[ LEGIO IX: NINGUNA COHORTE EN ESTA SECCIÓN ]"
+              : null
+          }
         >
           {filteredAssets.map((asset) => (
             <AudioMetabolismCard

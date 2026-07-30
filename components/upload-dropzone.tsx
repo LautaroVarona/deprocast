@@ -1,7 +1,10 @@
 "use client";
 
 import { withUniverseFetchInit } from "@/lib/babel/universe-fetch";
-import { UPLOAD_CHUNK_BYTES } from "@/lib/audio-upload/constants";
+import {
+  UPLOAD_CHUNK_BYTES,
+  UPLOAD_SINGLE_SHOT_MAX_BYTES,
+} from "@/lib/audio-upload/constants";
 import type { DistillStepperState } from "@/lib/audio-station/pipeline-status";
 import { buildDistillStepper } from "@/lib/audio-station/pipeline-status";
 import { MicroStationRow } from "@/components/audio-station/micro-station-row";
@@ -27,6 +30,8 @@ type UploadDropzoneProps = {
   hasRackItems?: boolean;
   /** IDs ya visibles en el rack — se usan para retirar tablillas de subida. */
   rackAssetIds?: string[];
+  /** Filtro activo distinto de "all" sin resultados. */
+  emptyFilterLabel?: string | null;
 };
 
 export type FileUploadState = {
@@ -106,13 +111,18 @@ async function uploadFileInChunks(
   universeSlug?: string | null,
   onProgress?: (label: string, chunkIndex: number, totalChunks: number) => void,
 ): Promise<{ assetId: string; jobId: string }> {
-  const totalChunks = Math.max(1, Math.ceil(file.size / UPLOAD_CHUNK_BYTES));
+  const useSingleShot = file.size <= UPLOAD_SINGLE_SHOT_MAX_BYTES;
+  const totalChunks = useSingleShot
+    ? 1
+    : Math.max(1, Math.ceil(file.size / UPLOAD_CHUNK_BYTES));
   const uploadId =
     typeof crypto !== "undefined" && "randomUUID" in crypto
       ? crypto.randomUUID()
       : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 
   onProgress?.(`init 0/${totalChunks}`, 0, totalChunks);
+
+  let assetId = uploadId;
 
   try {
     const initForm = new FormData();
@@ -123,7 +133,7 @@ async function uploadFileInChunks(
     initForm.append("ambientContext", "caminata");
     initForm.append("lastModified", String(file.lastModified || Date.now()));
 
-    await fetch(
+    const initRes = await fetch(
       "/api/molecular/init",
       withUniverseFetchInit({
         method: "POST",
@@ -131,49 +141,53 @@ async function uploadFileInChunks(
         body: initForm,
       }),
     );
+    const initData = await initRes.json().catch(() => ({}));
+    if (initRes.ok && typeof initData.assetId === "string") {
+      assetId = initData.assetId;
+    }
   } catch {
-    // El primer chunk creará la sesión en tmp/
+    // El primer chunk / complete creará la sesión
   }
 
-  let assetId = uploadId;
+  if (!useSingleShot) {
+    for (let index = 0; index < totalChunks; index += 1) {
+      const start = index * UPLOAD_CHUNK_BYTES;
+      const end = Math.min(start + UPLOAD_CHUNK_BYTES, file.size);
+      const blob = file.slice(start, end);
 
-  for (let index = 0; index < totalChunks; index += 1) {
-    const start = index * UPLOAD_CHUNK_BYTES;
-    const end = Math.min(start + UPLOAD_CHUNK_BYTES, file.size);
-    const blob = file.slice(start, end);
+      onProgress?.(`chunk ${index + 1}/${totalChunks}`, index + 1, totalChunks);
 
-    onProgress?.(`chunk ${index + 1}/${totalChunks}`, index + 1, totalChunks);
+      const chunkForm = new FormData();
+      chunkForm.append("uploadId", uploadId);
+      chunkForm.append("filename", file.name);
+      chunkForm.append("mimeType", file.type || "");
+      chunkForm.append("chunkIndex", String(index));
+      chunkForm.append("index", String(index));
+      chunkForm.append("totalChunks", String(totalChunks));
+      chunkForm.append("total", String(totalChunks));
+      chunkForm.append("ambientContext", "caminata");
+      chunkForm.append("lastModified", String(file.lastModified || Date.now()));
+      chunkForm.append("chunk", blob, `${file.name}.part${index}`);
 
-    const chunkForm = new FormData();
-    chunkForm.append("uploadId", uploadId);
-    chunkForm.append("filename", file.name);
-    chunkForm.append("mimeType", file.type || "");
-    chunkForm.append("chunkIndex", String(index));
-    chunkForm.append("index", String(index));
-    chunkForm.append("totalChunks", String(totalChunks));
-    chunkForm.append("total", String(totalChunks));
-    chunkForm.append("ambientContext", "caminata");
-    chunkForm.append("lastModified", String(file.lastModified || Date.now()));
-    chunkForm.append("chunk", blob, `${file.name}.part${index}`);
-
-    const chunkRes = await fetch(
-      "/api/molecular/chunk",
-      withUniverseFetchInit({
-        method: "POST",
-        universeSlug,
-        body: chunkForm,
-      }),
-    );
-    const chunkData = await chunkRes.json().catch(() => ({}));
-    if (!chunkRes.ok) {
-      const err = new Error(
-        chunkData.error ?? `Chunk ${index + 1} falló`,
-      ) as Error & { status?: number };
-      err.status = chunkRes.status;
-      throw err;
-    }
-    if (typeof chunkData.assetId === "string") {
-      assetId = chunkData.assetId;
+      const chunkRes = await fetch(
+        "/api/molecular/chunk",
+        withUniverseFetchInit({
+          method: "POST",
+          universeSlug,
+          body: chunkForm,
+        }),
+      );
+      const chunkData = await chunkRes.json().catch(() => ({}));
+      if (!chunkRes.ok) {
+        const err = new Error(
+          chunkData.error ?? `Chunk ${index + 1} falló`,
+        ) as Error & { status?: number };
+        err.status = chunkRes.status;
+        throw err;
+      }
+      if (typeof chunkData.assetId === "string") {
+        assetId = chunkData.assetId;
+      }
     }
   }
 
@@ -182,6 +196,11 @@ async function uploadFileInChunks(
   const completeForm = new FormData();
   completeForm.append("uploadId", uploadId);
   completeForm.append("filename", file.name);
+  completeForm.append("assetId", assetId);
+  // Reenviar el archivo en complete: evita 404 por /tmp multi-instancia en Vercel.
+  if (useSingleShot || file.size <= UPLOAD_SINGLE_SHOT_MAX_BYTES) {
+    completeForm.append("file", file, file.name);
+  }
 
   const completeRes = await fetch(
     "/api/molecular/complete",
@@ -213,6 +232,7 @@ export function UploadDropzone({
   children,
   hasRackItems = false,
   rackAssetIds = [],
+  emptyFilterLabel = null,
 }: UploadDropzoneProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const inputId = useId();
@@ -421,12 +441,20 @@ export function UploadDropzone({
 
         {!showGrid ? (
           <div className="pointer-events-none flex flex-1 flex-col items-center justify-center gap-3 py-16">
-            <p className="font-serif text-sm tracking-[0.14em] text-amber-500/90 sm:text-base">
-              [ INVOCATIO: DEPOSITA LAS MISIVAS EN EL ALTAR ]
-            </p>
-            <p className="max-w-md text-center font-mono text-[10px] uppercase tracking-wider text-legion-patina">
-              [ ORACVLO | LINAJE | QVANTA | VECTORES | SENADO (HITL) | COAGVLO ]
-            </p>
+            {emptyFilterLabel ? (
+              <p className="font-mono text-sm tracking-[0.12em] text-legion-patina">
+                {emptyFilterLabel}
+              </p>
+            ) : (
+              <>
+                <p className="font-serif text-sm tracking-[0.14em] text-amber-500/90 sm:text-base">
+                  [ INVOCATIO: DEPOSITA LAS MISIVAS EN EL ALTAR ]
+                </p>
+                <p className="max-w-md text-center font-mono text-[10px] uppercase tracking-wider text-legion-patina">
+                  [ ORACVLO | LINAJE | QVANTA | VECTORES | SENADO (HITL) | COAGVLO ]
+                </p>
+              </>
+            )}
           </div>
         ) : (
           <div className="grid flex-1 grid-cols-1 content-start items-start gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">

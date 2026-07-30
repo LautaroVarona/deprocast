@@ -593,6 +593,37 @@ export function ensureCoreColumnPatches(): void {
         CREATE INDEX "EntityCandidate_name_idx" ON "EntityCandidate"("name");
       `);
     }
+
+    if (!tableExists(db, "AudioUploadSession")) {
+      db.exec(`
+        CREATE TABLE "AudioUploadSession" (
+          "id" TEXT NOT NULL PRIMARY KEY,
+          "assetId" TEXT NOT NULL,
+          "filename" TEXT NOT NULL,
+          "extension" TEXT NOT NULL,
+          "totalChunks" INTEGER NOT NULL,
+          "ambientContext" TEXT NOT NULL DEFAULT 'caminata',
+          "receivedJson" TEXT NOT NULL DEFAULT '[]',
+          "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          "updatedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+        );
+        CREATE UNIQUE INDEX "AudioUploadSession_assetId_key" ON "AudioUploadSession"("assetId");
+      `);
+    }
+
+    if (!tableExists(db, "AudioUploadChunk")) {
+      db.exec(`
+        CREATE TABLE "AudioUploadChunk" (
+          "id" TEXT NOT NULL PRIMARY KEY,
+          "uploadId" TEXT NOT NULL,
+          "chunkIndex" INTEGER NOT NULL,
+          "data" BLOB NOT NULL,
+          CONSTRAINT "AudioUploadChunk_uploadId_fkey" FOREIGN KEY ("uploadId") REFERENCES "AudioUploadSession" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+        );
+        CREATE UNIQUE INDEX "AudioUploadChunk_uploadId_chunkIndex_key" ON "AudioUploadChunk"("uploadId", "chunkIndex");
+        CREATE INDEX "AudioUploadChunk_uploadId_idx" ON "AudioUploadChunk"("uploadId");
+      `);
+    }
   } finally {
     db.close();
   }

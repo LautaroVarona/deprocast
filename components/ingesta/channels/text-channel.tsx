@@ -39,11 +39,12 @@ export function TextChannel() {
 
       const queued = data.queued !== false;
       toast.success(queued ? CAPTURE_QUEUED_TOAST : CAPTURE_SUCCESS_TOAST, {
+        duration: 12_000,
         description: queued
-          ? "Cuando termine la purificación aparecerá en la Aduana."
-          : "Lista para validar en la Aduana.",
+          ? `En cola de purificación. Abrí Validar para seguirla (id ${data.reviewId.slice(0, 8)}…).`
+          : `Lista en la Aduana. Id ${data.reviewId.slice(0, 8)}…`,
         action: {
-          label: "Validar →",
+          label: "Ir a Validar →",
           onClick: () => {
             window.location.href = `/validar?id=${data.reviewId}`;
           },

@@ -283,41 +283,84 @@ export async function handleAudioUploadComplete(
 
     const formData = await request.formData();
     const uploadId = readOptionalField(formData, "uploadId");
+    const assetIdHint = readOptionalField(formData, "assetId");
     const filenameHint = readOptionalField(formData, "filename");
+    const fileField = formData.get("file");
 
-    if (!uploadId) {
-      return NextResponse.json({ error: "Falta uploadId.", ok: false }, { status: 400 });
+    if (!uploadId && !assetIdHint) {
+      return NextResponse.json(
+        { error: "Falta uploadId o assetId.", ok: false },
+        { status: 400 },
+      );
     }
 
-    const meta = await readMeta(uploadId);
+    let meta = uploadId ? await readMeta(uploadId) : null;
+
+    // Preferir buffer del cliente (evita /tmp multi-instancia en Vercel).
+    let buffer: Buffer | null = null;
+    if (fileField instanceof Blob && fileField.size > 0) {
+      buffer = Buffer.from(await fileField.arrayBuffer());
+    }
+
+    if (!meta && assetIdHint) {
+      const asset = await prisma.audioAsset.findUnique({
+        where: { id: assetIdHint },
+        select: { id: true, filename: true },
+      });
+      if (asset && buffer) {
+        const name = filenameHint || asset.filename;
+        const extension = getFileExtension(name);
+        meta = {
+          uploadId: uploadId || assetIdHint,
+          assetId: asset.id,
+          filename: name,
+          extension,
+          totalChunks: 1,
+          ambientContext: "caminata",
+          received: [0],
+        };
+      }
+    }
+
     if (!meta) {
       return NextResponse.json(
         {
-          error: filenameHint
-            ? "Upload no encontrado en tmp/. Reintentá desde el primer chunk."
-            : "Upload no inicializado.",
+          error:
+            "Sesión de upload no encontrada. En Vercel sin DB compartida, reenviá el archivo en complete o usá archivos <3.5MB (disparo único).",
           ok: false,
+          code: "UPLOAD_SESSION_MISSING",
         },
         { status: 404 },
       );
     }
 
-    if (meta.received.length !== meta.totalChunks) {
-      return NextResponse.json(
-        {
-          error: "Faltan chunks.",
-          ok: false,
-          received: meta.received.length,
-          totalChunks: meta.totalChunks,
-          missing: Array.from({ length: meta.totalChunks }, (_, i) => i).filter(
-            (i) => !meta.received.includes(i),
-          ),
-        },
-        { status: 400 },
-      );
+    if (!buffer) {
+      const { listReceivedChunks } = await import("@/lib/audio-upload/staging");
+      const receivedLive = await listReceivedChunks(meta.uploadId);
+      const effectiveReceived =
+        receivedLive.length >= meta.received.length
+          ? receivedLive
+          : meta.received;
+
+      if (effectiveReceived.length !== meta.totalChunks) {
+        return NextResponse.json(
+          {
+            error: "Faltan chunks.",
+            ok: false,
+            received: effectiveReceived.length,
+            totalChunks: meta.totalChunks,
+            missing: Array.from(
+              { length: meta.totalChunks },
+              (_, i) => i,
+            ).filter((i) => !effectiveReceived.includes(i)),
+          },
+          { status: 400 },
+        );
+      }
+
+      buffer = await assembleChunks(meta.uploadId, meta.totalChunks);
     }
 
-    const buffer = await assembleChunks(uploadId, meta.totalChunks);
     const storedFilename = `${meta.assetId}${meta.extension}`;
     const onVercel = isVercelRuntime();
 
@@ -362,7 +405,7 @@ export async function handleAudioUploadComplete(
         path.join(uploadDir, `${meta.assetId}.meta.json`),
         JSON.stringify({
           ambientContext: meta.ambientContext,
-          uploadId,
+          uploadId: meta.uploadId,
           filename: meta.filename,
         }),
         "utf8",
@@ -371,7 +414,7 @@ export async function handleAudioUploadComplete(
       console.warn("meta.json write failed (non-fatal):", error);
     }
 
-    await cleanupStaging(uploadId).catch(() => undefined);
+    await cleanupStaging(meta.uploadId).catch(() => undefined);
 
     if (onVercel) {
       const {
@@ -414,7 +457,7 @@ export async function handleAudioUploadComplete(
           {
             id: meta.assetId,
             jobId: meta.assetId,
-            uploadId,
+            uploadId: meta.uploadId,
             filename: meta.filename,
             status: "COMPLETED",
             pipelineStation: "STT",
@@ -445,7 +488,7 @@ export async function handleAudioUploadComplete(
           {
             id: meta.assetId,
             jobId: meta.assetId,
-            uploadId,
+            uploadId: meta.uploadId,
             filename: meta.filename,
             status: "ERROR",
             pipelineStation: "ERROR",
@@ -464,7 +507,7 @@ export async function handleAudioUploadComplete(
       {
         id: meta.assetId,
         jobId: meta.assetId,
-        uploadId,
+        uploadId: meta.uploadId,
         filename: meta.filename,
         status: queued ? "QUEUED" : "PENDING",
         pipelineStation: "STT",
