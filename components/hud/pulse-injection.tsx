@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { useYoNames } from "@/hooks/use-yo-names";
 import { withUniverseFetchInit } from "@/lib/babel/universe-fetch";
 import { CAPTURE_SUCCESS_TOAST } from "@/lib/purifier/constants";
+import { buildValidarAduanaHref } from "@/lib/navigation/resolve-href";
 import { cn } from "@/lib/utils";
 import {
   Loader2Icon,
@@ -117,7 +118,7 @@ export function PulseInjection() {
         action: {
           label: "Validar →",
           onClick: () => {
-            window.location.href = `/validar?id=${data.reviewId}`;
+            window.location.href = buildValidarAduanaHref(data.reviewId);
           },
         },
       });
@@ -193,7 +194,7 @@ export function PulseInjection() {
           action: {
             label: "Validar →",
             onClick: () => {
-              window.location.href = `/validar?id=${data.reviewId}`;
+              window.location.href = buildValidarAduanaHref(data.reviewId);
             },
           },
         });

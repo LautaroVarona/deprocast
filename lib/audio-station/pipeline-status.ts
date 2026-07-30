@@ -81,14 +81,32 @@ export function buildDistillStepper(input: {
   if (station === "ERROR" || input.status === "ERROR") {
     const err = input.pipelineError?.trim() || "ERROR";
     const codeMatch = /\b413\b/.exec(err);
+    const failedStep: DistillStation =
+      /LINEAGE/i.test(err)
+        ? "LINEAGE"
+        : /QUANT/i.test(err)
+          ? "QUANT"
+          : /VECTOR/i.test(err)
+            ? "VECTORS"
+            : /HITL|PURIF/i.test(err)
+              ? "HITL"
+              : "STT";
+    const stepsWithError = { ...steps } as Record<DistillStation, DistillStepState>;
+    const order: DistillStation[] = ["STT", "LINEAGE", "QUANT", "VECTORS", "HITL"];
+    const failIdx = order.indexOf(failedStep);
+    for (let i = 0; i < order.length; i += 1) {
+      const s = order[i]!;
+      if (i < failIdx) stepsWithError[s] = "done";
+      else if (i === failIdx) stepsWithError[s] = "error";
+      else stepsWithError[s] = "idle";
+    }
     return {
       station: "ERROR",
-      steps: {
-        ...steps,
-        STT: "error",
-      },
+      steps: stepsWithError,
       errorCode: codeMatch ? "413" : undefined,
-      errorLabel: codeMatch ? "[ERR: 413]" : `[ERR: ${err.slice(0, 24)}]`,
+      errorLabel: codeMatch
+        ? "[ERR: 413]"
+        : `[ERR: ${err.slice(0, 48)}]`,
     };
   }
 

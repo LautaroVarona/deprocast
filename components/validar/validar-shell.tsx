@@ -2,10 +2,11 @@
 
 import { TriageStack } from "@/components/cortex/TriageStack";
 import { ValidarWorkspace } from "@/components/validar/validar-workspace";
+import { listTriageQueueAction } from "@/lib/cortex/actions";
 import type { TriageCardDto } from "@/lib/cortex/triage-types";
 import { cn } from "@/lib/utils";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 type ValidarMode = "entropia" | "aduana";
 
@@ -13,29 +14,84 @@ type ValidarShellProps = {
   initialTriageItems: TriageCardDto[];
 };
 
+const ENTROPIA_POLL_MS = 8_000;
+
 export function ValidarShell({ initialTriageItems }: ValidarShellProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const modeParam = searchParams.get("modo");
-  const mode: ValidarMode =
-    modeParam === "aduana" ? "aduana" : "entropia";
+  const reviewDeepLink =
+    searchParams.get("id")?.trim() || searchParams.get("review")?.trim() || null;
 
-  const [triageItems] = useState<TriageCardDto[]>(initialTriageItems);
+  // Deep-link a un PurifierReview → Aduana (nunca Entropía vacía).
+  const mode: ValidarMode =
+    modeParam === "aduana" || (Boolean(reviewDeepLink) && modeParam !== "entropia")
+      ? "aduana"
+      : "entropia";
+
+  const [triageItems, setTriageItems] =
+    useState<TriageCardDto[]>(initialTriageItems);
   const [remaining, setRemaining] = useState(initialTriageItems.length);
+
+  const refreshEntropia = useCallback(async () => {
+    const result = await listTriageQueueAction();
+    if (!result.ok) return;
+    setTriageItems(result.data);
+    setRemaining(result.data.length);
+  }, []);
+
+  useEffect(() => {
+    setTriageItems(initialTriageItems);
+    setRemaining(initialTriageItems.length);
+  }, [initialTriageItems]);
+
+  // Poll Cola de Entropía: Quantador escribe PendingTask/Quantomo en background.
+  useEffect(() => {
+    if (mode !== "entropia") return;
+
+    void refreshEntropia();
+    const timer = window.setInterval(() => {
+      void refreshEntropia();
+    }, ENTROPIA_POLL_MS);
+
+    const onFocus = () => {
+      void refreshEntropia();
+    };
+    window.addEventListener("focus", onFocus);
+
+    return () => {
+      window.clearInterval(timer);
+      window.removeEventListener("focus", onFocus);
+    };
+  }, [mode, refreshEntropia]);
 
   const setMode = useCallback(
     (next: ValidarMode) => {
       const params = new URLSearchParams(searchParams.toString());
       if (next === "entropia") {
         params.delete("modo");
+        params.delete("id");
+        params.delete("review");
       } else {
-        params.set("modo", next);
+        params.set("modo", "aduana");
       }
       const qs = params.toString();
       router.replace(qs ? `/validar?${qs}` : "/validar", { scroll: false });
     },
     [router, searchParams],
   );
+
+  // Normalizar `?review=` → `?modo=aduana&id=` para ValidarWorkspace.
+  useEffect(() => {
+    const reviewOnly = searchParams.get("review")?.trim();
+    const idParam = searchParams.get("id")?.trim();
+    if (!reviewOnly || idParam) return;
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete("review");
+    params.set("modo", "aduana");
+    params.set("id", reviewOnly);
+    router.replace(`/validar?${params.toString()}`, { scroll: false });
+  }, [router, searchParams]);
 
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden">

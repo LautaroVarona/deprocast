@@ -257,7 +257,10 @@ export function ValidarWorkspace() {
   const { universeSlug, universeFetch, isLoading: isUniverseLoading } = useBabel();
   const { operatorName } = useYoNames();
 
-  const selectedId = searchParams.get("id");
+  const selectedId =
+    searchParams.get("id")?.trim() ||
+    searchParams.get("review")?.trim() ||
+    null;
 
 
 
@@ -439,7 +442,9 @@ export function ValidarWorkspace() {
 
     } else if (records.length > 0) {
 
-      router.replace(`/validar?id=${records[0].reviewId}`);
+      router.replace(
+        `/validar?modo=aduana&id=${encodeURIComponent(records[0].reviewId)}`,
+      );
 
     } else {
 
@@ -576,13 +581,15 @@ export function ValidarWorkspace() {
 
       if (remaining.length > 0) {
 
-        router.replace(`/validar?id=${remaining[0].reviewId}`);
+        router.replace(
+          `/validar?modo=aduana&id=${encodeURIComponent(remaining[0].reviewId)}`,
+        );
 
       } else {
 
         setRecord(null);
 
-        router.replace("/validar");
+        router.replace("/validar?modo=aduana");
 
       }
 
@@ -664,13 +671,15 @@ export function ValidarWorkspace() {
 
       if (remaining.length > 0) {
 
-        router.replace(`/validar?id=${remaining[0].reviewId}`);
+        router.replace(
+          `/validar?modo=aduana&id=${encodeURIComponent(remaining[0].reviewId)}`,
+        );
 
       } else {
 
         setRecord(null);
 
-        router.replace("/validar");
+        router.replace("/validar?modo=aduana");
 
       }
 
@@ -724,7 +733,11 @@ export function ValidarWorkspace() {
 
             value={selectedId ?? ""}
 
-            onChange={(e) => router.push(`/validar?id=${e.target.value}`)}
+            onChange={(e) =>
+              router.push(
+                `/validar?modo=aduana&id=${encodeURIComponent(e.target.value)}`,
+              )
+            }
 
             className="h-7 max-w-xs rounded border border-input bg-background px-2 font-mono text-[10px] outline-none"
 

@@ -5,6 +5,7 @@ import { isJournalOnda } from "@/lib/journal/types";
 import { ingestJournalFile } from "@/lib/kg/sources";
 import { DEFAULT_CAMPO_SLUG } from "@/lib/projects/campos";
 import { runPurificationPipeline } from "@/lib/purifier/engine";
+import { buildValidarAduanaHref } from "@/lib/navigation/resolve-href";
 import { resolveDataRelativePath } from "@/lib/runtime-paths";
 import { ensureRuntimeReady } from "@/lib/runtime-setup";
 import { NextRequest, NextResponse } from "next/server";
@@ -125,7 +126,7 @@ export async function POST(request: NextRequest) {
       );
 
       reviewId = record.reviewId;
-      validarUrl = `/validar?id=${record.reviewId}`;
+      validarUrl = buildValidarAduanaHref(record.reviewId);
     }
 
     return NextResponse.json(

@@ -1,6 +1,7 @@
 "use client";
 
 import { CAPTURE_SUCCESS_TOAST } from "@/lib/purifier/constants";
+import { buildValidarAduanaHref } from "@/lib/navigation/resolve-href";
 import { cn } from "@/lib/utils";
 import { Loader2Icon, ShieldCheckIcon } from "lucide-react";
 import { useState } from "react";
@@ -55,7 +56,7 @@ export function PurifyAudioButton({
         action: {
           label: "Validar →",
           onClick: () => {
-            window.location.href = `/validar?id=${data.reviewId}`;
+            window.location.href = buildValidarAduanaHref(data.reviewId);
           },
         },
       });

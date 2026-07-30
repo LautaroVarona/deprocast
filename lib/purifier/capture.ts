@@ -261,23 +261,26 @@ async function runSideEffects(input: {
   record: PurifierReviewRecord;
   skipQuantador?: boolean;
 }) {
-  void registerBabelRecord({
-    kind: "capture",
-    physicalRef: input.reviewId,
-    contentPreview: input.trimmed,
-    occurredAt: new Date(),
-    contextSeal: input.contextSeal,
-    campoSlug: input.resolvedField,
-    channel: input.channel,
-    metadata: {
-      captureId: input.captureId,
-      pendingFilename: input.filename,
-      assetId: input.assetId ?? null,
-      pipelineStatus: input.record.pipelineStatus,
-    },
-  }).catch((error) => {
+  // Babel seal: await para que filtros de universo no oculten el review recién creado.
+  try {
+    await registerBabelRecord({
+      kind: "capture",
+      physicalRef: input.reviewId,
+      contentPreview: input.trimmed,
+      occurredAt: new Date(),
+      contextSeal: input.contextSeal,
+      campoSlug: input.resolvedField,
+      channel: input.channel,
+      metadata: {
+        captureId: input.captureId,
+        pendingFilename: input.filename,
+        assetId: input.assetId ?? null,
+        pipelineStatus: input.record.pipelineStatus,
+      },
+    });
+  } catch (error) {
     console.error("Babel record hook error:", error);
-  });
+  }
 
   void import("@/lib/trailing-commands/process").then(
     ({ processTrailingCommands }) =>

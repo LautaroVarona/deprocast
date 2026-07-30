@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/card";
 import { formatDate, formatDuration } from "@/lib/format";
 import { getReviewIdForAsset } from "@/lib/audio-station/review-lookup";
+import { buildValidarAduanaHref } from "@/lib/navigation/resolve-href";
 import { getAssetDetail } from "@/lib/queries/get-asset-detail";
 import { ArrowLeftIcon } from "lucide-react";
 import Link from "next/link";
@@ -126,7 +127,7 @@ export default async function AudioDetailPage({ params }: PageProps) {
             <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/5 px-4 py-3 text-sm text-emerald-900 dark:text-emerald-200">
               Este audio ya está en la cola de Validar.{" "}
               <Link
-                href={`/validar?id=${reviewId}`}
+                href={buildValidarAduanaHref(reviewId)}
                 className="font-medium underline underline-offset-2"
               >
                 Revisar ahora →

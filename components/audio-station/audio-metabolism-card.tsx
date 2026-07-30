@@ -12,6 +12,7 @@ import {
 } from "@/lib/audio-station/asset-display";
 import type { AudioAssetSummary } from "@/lib/audio-station/types";
 import { resolveAudioPipelineStage } from "@/lib/audio-station/pipeline-status";
+import { buildValidarAduanaHref } from "@/lib/navigation/resolve-href";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
@@ -66,7 +67,10 @@ export function AudioMetabolismCard({
     pipeline.stage === "stt_error" || pipeline.distill.station === "ERROR";
 
   const footer = isErr
-    ? pipeline.distill.errorLabel ?? "[ERR]"
+    ? pipeline.distill.errorLabel ??
+      (pipeline.pipelineError
+        ? `[ERR: ${pipeline.pipelineError.slice(0, 40)}]`
+        : "[ERR]")
     : pipeline.stage === "coagulated" || pipeline.stage === "validated"
       ? "[COAGVLADO]"
       : pipeline.stage === "in_validation"
@@ -153,6 +157,11 @@ export function AudioMetabolismCard({
                 : "text-legion-patina",
             isProcessing && "animate-pulse text-amber-500/90",
           )}
+          title={
+            isErr
+              ? (pipeline.pipelineError ?? pipeline.distill.errorLabel ?? "Error")
+              : undefined
+          }
         >
           {footer}
         </p>
@@ -165,7 +174,7 @@ export function AudioMetabolismCard({
           ) : null}
           {pipeline.stage === "in_validation" && pipeline.reviewId ? (
             <Link
-              href={`/validar?id=${pipeline.reviewId}`}
+              href={buildValidarAduanaHref(pipeline.reviewId)}
               className="text-[9px] text-amber-500 hover:underline"
             >
               Senado

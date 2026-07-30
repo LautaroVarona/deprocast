@@ -23,12 +23,20 @@ export function resolveArchivoHref(input: {
         ? `/proyectos?highlight=${input.sourceId}`
         : "/proyectos";
     case "purifier_review":
-      return `/validar?review=${input.sourceId}`;
+      return buildValidarAduanaHref(input.sourceId);
     case "raw_document":
       return "/archivo";
     default:
       return "/archivo";
   }
+}
+
+/** Deep-link a Aduana Purifier (nunca a Cola de Entropía). */
+export function buildValidarAduanaHref(reviewId: string): string {
+  const id = reviewId.trim();
+  return id
+    ? `/validar?modo=aduana&id=${encodeURIComponent(id)}`
+    : "/validar?modo=aduana";
 }
 
 export function resolveHybridHitHref(hit: HybridSearchHit): string {
@@ -53,7 +61,7 @@ export function resolveHybridHitHref(hit: HybridSearchHit): string {
     if (prefix === "journal") return "/diario";
     if (prefix === "project") return `/proyectos?highlight=${id}`;
     if (prefix === "purifier_doc" || prefix === "purifier_review") {
-      return `/validar?review=${id}`;
+      return buildValidarAduanaHref(id);
     }
     if (prefix === "notebook_page" || prefix === "cuaderno_page") {
       return "/ingesta/cuadernos";

@@ -7,6 +7,7 @@ import { PurifyAudioButton } from "@/components/audio-station/purify-audio-butto
 import { useAudioStation } from "@/components/audio-station/audio-station-context";
 import { POSTPROCESS_PIPELINE } from "@/lib/audio-station/constants";
 import { resolveAudioPipelineStage } from "@/lib/audio-station/pipeline-status";
+import { buildValidarAduanaHref } from "@/lib/navigation/resolve-href";
 import { cn } from "@/lib/utils";
 import { GitBranchIcon, Loader2Icon, ShieldCheckIcon } from "lucide-react";
 import Link from "next/link";
@@ -195,7 +196,7 @@ export function DownstreamPanel() {
                       {asset.filename}
                     </p>
                     <Link
-                      href={`/validar?id=${reviewId}`}
+                      href={buildValidarAduanaHref(reviewId)}
                       className="inline-flex shrink-0 items-center gap-1 font-mono text-[10px] text-primary/90 underline-offset-2 hover:underline"
                     >
                       <ShieldCheckIcon className="size-3" />

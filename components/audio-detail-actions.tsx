@@ -3,6 +3,7 @@
 import { DeleteAssetButton } from "@/components/delete-asset-button";
 import { PurifyAudioButton } from "@/components/audio-station/purify-audio-button";
 import { StopProcessButton } from "@/components/stop-process-button";
+import { buildValidarAduanaHref } from "@/lib/navigation/resolve-href";
 import Link from "next/link";
 
 type AudioDetailActionsProps = {
@@ -24,7 +25,7 @@ export function AudioDetailActions({
     <div className="flex flex-wrap items-center gap-2">
       {hasTranscript && reviewId ? (
         <Link
-          href={`/validar?id=${reviewId}`}
+          href={buildValidarAduanaHref(reviewId)}
           className="inline-flex h-9 items-center rounded-md border border-primary/30 bg-primary/10 px-3 text-sm font-medium text-primary hover:bg-primary/15"
         >
           Abrir en Validar →
@@ -37,7 +38,7 @@ export function AudioDetailActions({
           filename={filename}
           size="default"
           onPurified={(id) => {
-            window.location.href = `/validar?id=${id}`;
+            window.location.href = buildValidarAduanaHref(id);
           }}
         />
       ) : null}

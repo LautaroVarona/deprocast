@@ -1,6 +1,7 @@
 "use client";
 
 import type { AudioPipelineInfo } from "@/lib/audio-station/pipeline-status";
+import { buildValidarAduanaHref } from "@/lib/navigation/resolve-href";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { PurifyAudioButton } from "@/components/audio-station/purify-audio-button";
@@ -54,7 +55,7 @@ export function AudioPipelineNextAction({
   if (pipeline.stage === "in_validation" && pipeline.reviewId) {
     return (
       <Link
-        href={`/validar?id=${pipeline.reviewId}`}
+        href={buildValidarAduanaHref(pipeline.reviewId)}
         className="font-mono text-[10px] text-primary/90 underline-offset-2 hover:underline"
       >
         Validar →

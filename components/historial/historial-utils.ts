@@ -1,5 +1,6 @@
 import type { ActivityEntry } from "@/lib/historial/types";
 import { CATEGORY_LABELS } from "@/lib/historial/types";
+import { buildValidarAduanaHref } from "@/lib/navigation/resolve-href";
 
 export const CATEGORY_ICONS: Record<string, string> = {
   ingesta: "📥",
@@ -39,7 +40,9 @@ export function toDayKey(date: Date): string {
 
 export function resolveSourceLink(entry: ActivityEntry): string | null {
   if (entry.category === "purifier" || entry.category === "validation") {
-    return entry.correlationId ? `/validar?id=${entry.correlationId}` : "/validar";
+    return entry.correlationId
+      ? buildValidarAduanaHref(entry.correlationId)
+      : "/validar?modo=aduana";
   }
   if (entry.category === "audio" && entry.sourceRef) {
     return `/audio/${entry.sourceRef}`;

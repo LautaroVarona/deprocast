@@ -11,6 +11,7 @@ import {
   CAPTURE_QUEUED_TOAST,
   CAPTURE_SUCCESS_TOAST,
 } from "@/lib/purifier/constants";
+import { buildValidarAduanaHref } from "@/lib/navigation/resolve-href";
 import { Loader2Icon, SparklesIcon } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -38,6 +39,7 @@ export function TextChannel() {
       );
 
       const queued = data.queued !== false;
+      const validarHref = buildValidarAduanaHref(data.reviewId);
       toast.success(queued ? CAPTURE_QUEUED_TOAST : CAPTURE_SUCCESS_TOAST, {
         duration: 12_000,
         description: queued
@@ -46,7 +48,7 @@ export function TextChannel() {
         action: {
           label: "Ir a Validar →",
           onClick: () => {
-            window.location.href = `/validar?id=${data.reviewId}`;
+            window.location.href = validarHref;
           },
         },
       });

@@ -4,6 +4,7 @@ import { captureVisionFileAction } from "@/app/ingesta/actions";
 import { useIngesta } from "@/components/ingesta/ingesta-context";
 import { Button } from "@/components/ui/button";
 import { CAPTURE_SUCCESS_TOAST } from "@/lib/purifier/constants";
+import { buildValidarAduanaHref } from "@/lib/navigation/resolve-href";
 import { cn } from "@/lib/utils";
 import {
   Loader2Icon,
@@ -60,7 +61,7 @@ export function VisionChannel() {
               ? {
                   label: "Validar →",
                   onClick: () => {
-                    window.location.href = `/validar?id=${reviewId}`;
+                    window.location.href = buildValidarAduanaHref(reviewId);
                   },
                 }
               : undefined,
@@ -168,7 +169,7 @@ export function VisionChannel() {
         <p className="shrink-0 font-mono text-[10px] text-muted-foreground">
           En cola de validación ·{" "}
           <Link
-            href={`/validar?id=${lastReviewId}`}
+            href={buildValidarAduanaHref(lastReviewId)}
             className="text-primary underline-offset-2 hover:underline"
           >
             Revisar →

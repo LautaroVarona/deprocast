@@ -10,6 +10,7 @@ import { UploadDropzone } from "@/components/upload-dropzone";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { CAPTURE_SUCCESS_TOAST } from "@/lib/purifier/constants";
+import { buildValidarAduanaHref } from "@/lib/navigation/resolve-href";
 import { fetchJson } from "@/lib/fetch-json";
 import { cn } from "@/lib/utils";
 import {
@@ -229,7 +230,7 @@ export function AudioChannel() {
             action: {
               label: "Validar →",
               onClick: () => {
-                window.location.href = `/validar?id=${data.reviewId}`;
+                window.location.href = buildValidarAduanaHref(data.reviewId);
               },
             },
           });
@@ -420,7 +421,7 @@ export function AudioChannel() {
                         <AssetPreview asset={asset} />
                         {reviewId ? (
                           <Link
-                            href={`/validar?id=${reviewId}`}
+                            href={buildValidarAduanaHref(reviewId)}
                             className="flex shrink-0 items-center gap-1 font-mono text-[10px] text-primary underline-offset-2 hover:underline"
                           >
                             <CheckCircle2Icon className="size-3" />
